@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ReactNode } from "react";
-
+import { Toaster } from "@/components/ui/toaster";
 import localFont from "next/font/local";
+import { auth } from "@/auth";
+import { SessionProvider } from "next-auth/react";
 
 
 const ibmPlexSans = localFont({
@@ -26,14 +28,19 @@ export const metadata: Metadata = {
   description: "KOSyachts is the leading yacht charter experience in the South Florida area.",
 };
 
-const RootLayout = ({ children }: { children: ReactNode }) => {
+const RootLayout = async ({ children }: { children: ReactNode }) => {
+  const session = await auth();
+
   return (
     <html lang="en">
-      <body className={`${ibmPlexSans.className} ${bebasNeue.variable} antialiased`}>
-        {children}
-      </body>
+      <SessionProvider session={session}>
+        <body className={`${ibmPlexSans.className} ${bebasNeue.variable} antialiased`}>
+          {children}
+          <Toaster />
+        </body>
+      </SessionProvider>
     </html>
   );
 }
-
 export default RootLayout;
+

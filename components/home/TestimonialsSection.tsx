@@ -1,69 +1,98 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { FaQuoteLeft, FaStar } from 'react-icons/fa';
 
-interface Testimonial {
-  id: number;
-  quote: string;
-  author: string;
-  title: string;
-  image: string;
+interface Review {
+  author_name: string;
   rating: number;
-  location: string;
-  tripDetails: string;
-  date: string;
+  text: string;
+  profile_photo_url: string;
+  time: number;
 }
 
-const testimonials: Testimonial[] = [
-  {
-    id: 1,
-    quote: "An unforgettable experience that exceeded all expectations. The attention to detail and personalized service made our journey truly extraordinary.",
-    author: "James Hamilton",
-    title: "CEO, Hamilton Industries",
-    image: "/images/testimonials/1.jpg",
-    rating: 5,
-    location: "Mediterranean Sea",
-    tripDetails: "7-day luxury yacht charter",
-    date: "August 2023"
-  },
-  {
-    id: 2,
-    quote: "KOS Yachts provided the perfect blend of luxury and adventure. The crew was exceptional and the yacht was immaculate.",
-    author: "Sarah Mitchell",
-    title: "Travel Enthusiast",
-    image: "/images/testimonials/2.jpg",
-    rating: 5,
-    location: "Caribbean Islands",
-    tripDetails: "14-day island hopping",
-    date: "December 2023"
-  },
-  {
-    id: 3,
-    quote: "The attention to detail and personalized service made our journey truly special. A world-class experience from start to finish.",
-    author: "Michael Chen",
-    title: "Executive Director",
-    image: "/images/testimonials/3.jpg",
-    rating: 5,
-    location: "French Riviera",
-    tripDetails: "5-day coastal cruise",
-    date: "July 2023"
-  }
-];
+interface ReviewsData {
+  reviews: Review[];
+  businessName: string;
+  overallRating: number;
+}
 
 export default function TestimonialsSection() {
   const [active, setActive] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [reviewsData, setReviewsData] = useState<ReviewsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    const fetchReviews = async () => {
+      try {
+        const response = await fetch('/api/reviews');
+        const data = await response.json();
+        
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        
+        setReviewsData(data);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        setError(error instanceof Error ? error.message : 'Failed to fetch reviews');
+        setLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, []);
+
+  useEffect(() => {
+    if (!isAutoPlaying || !reviewsData?.reviews.length) return;
     
     const timer = setInterval(() => {
-      setActive((prev) => (prev + 1) % testimonials.length);
+      setActive((prev) => (prev + 1) % reviewsData.reviews.length);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, reviewsData?.reviews.length]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px] bg-white">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#21336a]"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Reviews</h2>
+            <p className="text-gray-600">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!reviewsData?.reviews.length) {
+    return (
+      <div className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">No Reviews Available</h2>
+            <p className="text-gray-600">There are currently no reviews to display.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentReview = reviewsData.reviews[active];
 
   return (
     <section className="relative py-24 bg-white overflow-hidden">
@@ -75,10 +104,10 @@ export default function TestimonialsSection() {
           className="text-center max-w-3xl mx-auto mb-16"
         >
           <span className="text-[#21336a] dark:text-blue-400 text-sm font-semibold tracking-wider uppercase">
-            Testimonials
+            Reviews
           </span>
           <h2 className="mt-4 text-3xl font-bold text-gray-900 dark:text-white">
-            What Our Clients Say
+            What Our Customers Say
           </h2>
         </motion.div>
 
@@ -100,8 +129,8 @@ export default function TestimonialsSection() {
                 >
                   <div className="w-24 h-24 rounded-full overflow-hidden ring-4 ring-[#21336a]/20">
                     <Image
-                      src={testimonials[active].image}
-                      alt={testimonials[active].author}
+                      src={currentReview.profile_photo_url}
+                      alt={currentReview.author_name}
                       fill
                       className="object-cover"
                     />
@@ -118,7 +147,7 @@ export default function TestimonialsSection() {
 
                 {/* Rating Stars */}
                 <div className="flex space-x-1 mb-6">
-                  {[...Array(testimonials[active].rating)].map((_, i) => (
+                  {[...Array(currentReview.rating)].map((_, i) => (
                     <motion.div
                       key={i}
                       initial={{ opacity: 0, scale: 0 }}
@@ -137,7 +166,7 @@ export default function TestimonialsSection() {
                   transition={{ delay: 0.3 }}
                   className="text-2xl font-light text-gray-700 dark:text-gray-300 italic text-center max-w-4xl mb-8"
                 >
-                  "{testimonials[active].quote}"
+                  "{currentReview.text}"
                 </motion.blockquote>
 
                 {/* Author Info */}
@@ -148,23 +177,13 @@ export default function TestimonialsSection() {
                   className="text-center"
                 >
                   <div className="font-semibold text-[#21336a] dark:text-white text-lg">
-                    {testimonials[active].author}
+                    {currentReview.author_name}
                   </div>
                   <div className="text-gray-500 dark:text-gray-400">
-                    {testimonials[active].title}
-                  </div>
-                  
-                  {/* Trip Details */}
-                  <div className="mt-4 flex items-center justify-center space-x-4 text-sm">
-                    <span className="px-3 py-1 bg-[#21336a]/10 rounded-full text-[#21336a] dark:text-blue-400">
-                      {testimonials[active].location}
-                    </span>
-                    <span className="px-3 py-1 bg-[#21336a]/10 rounded-full text-[#21336a] dark:text-blue-400">
-                      {testimonials[active].tripDetails}
-                    </span>
-                    <span className="px-3 py-1 bg-[#21336a]/10 rounded-full text-[#21336a] dark:text-blue-400">
-                      {testimonials[active].date}
-                    </span>
+                    {new Date(currentReview.time * 1000).toLocaleDateString(undefined, {
+                      year: 'numeric',
+                      month: 'long'
+                    })}
                   </div>
                 </motion.div>
               </div>
@@ -174,7 +193,7 @@ export default function TestimonialsSection() {
           {/* Navigation */}
           <div className="flex justify-center items-center space-x-4 mt-12">
             <div className="flex space-x-2">
-              {testimonials.map((_, index) => (
+              {reviewsData.reviews.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => {
@@ -186,7 +205,7 @@ export default function TestimonialsSection() {
                       ? 'bg-[#21336a] w-8' 
                       : 'bg-gray-300 hover:bg-gray-400'
                     }`}
-                  aria-label={`Go to testimonial ${index + 1}`}
+                  aria-label={`Go to review ${index + 1}`}
                 />
               ))}
             </div>

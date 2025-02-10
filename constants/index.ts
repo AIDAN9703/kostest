@@ -41,21 +41,23 @@ export const navigationLinks = [
   ];
   
   export const FIELD_NAMES = {
-    fullName: "Full name",
+    firstName: "First Name",
+    lastName: "Last Name",
+    username: "Username",
     email: "Email",
     phoneNumber: "Phone Number",
-    birthDate: "Birth Date",
+    birthday: "Birthday",
     password: "Password",
-    confirmPassword: "Confirm Password",
   };
   
   export const FIELD_TYPES = {
-    fullName: "text",
+    firstName: "text",
+    lastName: "text",
+    username: "text",
     email: "email",
     phoneNumber: "number",
-    birthDate: "date",
+    birthday: "date",
     password: "password",
-    confirmPassword: "password",
   };
   
   export const sampleBoats = [

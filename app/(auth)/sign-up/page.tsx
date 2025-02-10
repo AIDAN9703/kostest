@@ -1,6 +1,7 @@
 "use client";
 
 import AuthForm from "@/components/AuthForm";
+import { signUpAction } from "@/lib/actions/auth";
 import { signUpSchema } from "@/lib/validations";
 
 const Page = () => (
@@ -9,16 +10,14 @@ const Page = () => (
     schema={signUpSchema}
     defaultValues={{
       email: "",
-      fullName: "",
+      firstName: "",
+      lastName: "",
+      username: "",
       phoneNumber: "",
-      birthDate: "",
+      birthday: "",
       password: "",
-      confirmPassword: "",
     }}
-    onSubmit={async (data) => {
-      console.log(data);
-      return { success: true };
-    }}
+    onSubmit={signUpAction}
   />
 );
 

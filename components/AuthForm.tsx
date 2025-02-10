@@ -26,6 +26,7 @@ import Link from "next/link";
 import { FIELD_NAMES, FIELD_TYPES } from "@/constants";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { toast } from "@/hooks/use-toast";
 
 interface Props<T extends FieldValues> {
   schema: ZodType<T>;
@@ -96,7 +97,7 @@ const AuthForm = <T extends FieldValues>({
     const result = await onSubmit(data);
 
     if (result.success) {
-      ({
+      toast({
         title: "Success",
         description: isSignIn
           ? "You have successfully signed in."
@@ -105,7 +106,7 @@ const AuthForm = <T extends FieldValues>({
 
       router.push("/");
     } else {
-    ({
+      toast({
         title: `Error ${isSignIn ? "signing in" : "signing up"}`,
         description: result.error ?? "An error occurred.",
         variant: "destructive",
@@ -254,9 +255,7 @@ const AuthForm = <T extends FieldValues>({
                             }
                             {...field}
                             className="auth-input"
-                            placeholder={`Enter your ${FIELD_NAMES[
-                              field.name as keyof typeof FIELD_NAMES
-                            ].toLowerCase()}`}
+                            placeholder={`Enter your ${((FIELD_NAMES[field.name as keyof typeof FIELD_NAMES] ?? field.name) || '').toLowerCase()}`}
                           />
                         </div>
                       </FormControl>
@@ -269,6 +268,7 @@ const AuthForm = <T extends FieldValues>({
 
             <Button type="submit" className="auth-button">
               {isSignIn ? "Sign In" : "Create Account"}
+              
             </Button>
           </form>
         </Form>
