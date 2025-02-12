@@ -27,49 +27,56 @@ const Header = ({session}: {session: Session | null}) => {
     const router = useRouter();
     const [scrolled, setScrolled] = useState(false);
     const user = session?.user;
+    const isHomePage = pathname === '/';
 
-    // Function to get user initials
-    const getInitials = (name: string | null | undefined, email: string | null | undefined) => {
-        if (name) {
-            // Split name and get initials for first and last name
-            const nameParts = name.split(' ');
-            if (nameParts.length >= 2) {
-                return `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase();
-            }
-            return name[0].toUpperCase();
-        }
-        // Fallback to email initial if no name
-        return email?.[0].toUpperCase() || '?';
-    };
-
-    useEffect(() => {
-        const handleScroll = () => {
-            const isScrolled = window.scrollY > 50;
-            setScrolled(isScrolled);
-        };
-
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
+    // Static navigation items - no need for useMemo in React 19
     const navItems = [
         { href: "/term-charter", label: "Term Charter" },
         { href: "/our-services", label: "Our Services" },
         { href: "/experiences", label: "Experiences" },
         { href: "/contact", label: "Contact" },
+        { href: "/boats/cc124af1-c51d-41d3-94be-375a56aa30f4", label: "Test Booking" },
     ];
 
-    // Add user-specific nav items when signed in
+    // User navigation items - derived from user state, no need for useMemo
     const userNavItems = user ? [
         { href: "/dashboard", label: "Dashboard" },
         { href: "/bookings", label: "My Bookings" },
         { href: "/profile", label: "Profile" },
     ] : [];
 
+    // Keep useCallback for event listener to prevent unnecessary re-attachments
+    const handleScroll = React.useCallback(() => {
+        if (!isHomePage) return;
+        const isScrolled = window.scrollY > 50;
+        setScrolled(isScrolled);
+    }, [isHomePage]);
+
+    useEffect(() => {
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [handleScroll]);
+
+    // Simple utility function, no need for useCallback in React 19
+    const getInitials = (name: string | null | undefined, email: string | null | undefined) => {
+        if (name) {
+            const nameParts = name.split(' ');
+            if (nameParts.length >= 2) {
+                return `${nameParts[0][0]}${nameParts[nameParts.length - 1][0]}`.toUpperCase();
+            }
+            return name[0].toUpperCase();
+        }
+        return email?.[0].toUpperCase() || '?';
+    };
+
     return (
         <header className={cn(
             "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-            scrolled ? "bg-white backdrop-blur-md py-4 shadow-md" : "bg-transparent py-6"
+            isHomePage 
+                ? scrolled 
+                    ? "bg-white backdrop-blur-md shadow-md py-4" 
+                    : "bg-transparent py-6"
+                : "bg-white backdrop-blur-md shadow-md py-4"
         )}>
             <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center">
@@ -82,10 +89,10 @@ const Header = ({session}: {session: Session | null}) => {
                             className="transition-transform duration-300 hover:scale-110" 
                         />
                         <span className={cn(
-                            "text-xl font-semibold transition-colors duration-300",
-                            scrolled ? "text-gray-900" : "text-white"
+                            "text-3xl font- transition-colors duration-300 font-bebas-neue tracking-wide",
+                            isHomePage && !scrolled ? "text-white" : "text-primary"
                         )}>
-                            KOSyachts
+                            KOS Yachts
                         </span>
                     </Link>
 
@@ -97,8 +104,8 @@ const Header = ({session}: {session: Session | null}) => {
                                     <Link 
                                         href={item.href}
                                         className={cn(
-                                            "text-base font-medium transition-colors duration-300 hover:text-primary", 
-                                            pathname === item.href ? "text-gold" : scrolled ? "text-gray-900" : "text-white"
+                                            "text-xl font-bebas-neue transition-colors tracking-wide duration-300 hover:text-primary",
+                                            isHomePage && !scrolled ? "text-white" : "text-primary"
                                         )}
                                     >
                                         {item.label}
@@ -108,21 +115,23 @@ const Header = ({session}: {session: Session | null}) => {
                             <li className="-ml-4">
                                 {user ? (
                                     <div className="flex items-center gap-4">
-                                        <DropdownMenu>
+                                        <DropdownMenu modal={false}>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" className={cn(
-                                                    "relative h-10 w-10 rounded-full focus-visible:ring-offset-0 focus-visible:ring-0 hover:bg-transparent p-0",
+                                                    "relative h-10 w-10 rounded-full focus-visible:ring-offset-0 focus-visible:ring-0 hover:bg-transparent p-0"
                                                 )}>
                                                     <Avatar className={cn(
-                                                        "border-2 border-transparent ring-1 transition-colors",
-                                                        scrolled 
-                                                            ? "ring-black/20 hover:ring-black/30" 
-                                                            : "ring-white/50 hover:ring-white/75"
+                                                        "border-2 border-transparent transition-colors",
+                                                        isHomePage && !scrolled 
+                                                            ? "ring-2 ring-white/90" 
+                                                            : "ring-2 ring-primary/90"
                                                     )}>
                                                         <AvatarImage src={user.image || ''} alt={user.name || ''} />
                                                         <AvatarFallback className={cn(
-                                                            "font-medium text-sm",
-                                                            scrolled ? "bg-primary/10 text-primary" : "bg-white/10 text-white"
+                                                            "text-sm font-semibold",
+                                                            isHomePage && !scrolled 
+                                                                ? "bg-white/20 text-white" 
+                                                                : "bg-primary/10 text-primary"
                                                         )}>
                                                             {getInitials(user.name, user.email)}
                                                         </AvatarFallback>
@@ -148,14 +157,16 @@ const Header = ({session}: {session: Session | null}) => {
                                                 </div>
                                                 {userNavItems.map((item) => (
                                                     <DropdownMenuItem key={item.href} asChild>
-                                                        <Link href={item.href}>{item.label}</Link>
+                                                        <Link href={item.href} className="text-xl font-bebas-neue">
+                                                            {item.label}
+                                                        </Link>
                                                     </DropdownMenuItem>
                                                 ))}
                                                 <DropdownMenuItem asChild>
                                                     <Button 
                                                         onClick={() => signOut()}
                                                         variant="ghost"
-                                                        className="w-full text-base font-medium text-gray-900 hover:text-gold"
+                                                        className="w-full text-xl font-bebas-neue text-primary hover:text-primary/80"
                                                     >
                                                         Sign Out
                                                     </Button>
@@ -170,10 +181,10 @@ const Header = ({session}: {session: Session | null}) => {
                                                 onClick={() => router.push('/sign-in')}
                                                 variant="ghost"
                                                 className={cn(
-                                                    "text-base font-medium transition-all duration-300",
-                                                    scrolled 
-                                                        ? "text-gray-900 hover:text-primary" 
-                                                        : "text-white hover:text-primary",
+                                                    "text-xl font-bebas-neue transition-all duration-300",
+                                                    isHomePage && !scrolled
+                                                        ? "text-white hover:text-primary"
+                                                        : "text-gray-900 hover:text-primary",
                                                     "h-auto px-4 py-2 hover:bg-transparent"
                                                 )}
                                             >
@@ -185,11 +196,11 @@ const Header = ({session}: {session: Session | null}) => {
                                                 onClick={() => router.push('/sign-up')}
                                                 variant="ghost"
                                                 className={cn(
-                                                    "text-base font-medium transition-all duration-300",
+                                                    "text-xl font-bebas-neue transition-all duration-300",
                                                     "border-2 rounded-md",
-                                                    scrolled 
-                                                        ? "border-primary text-primary hover:bg-primary hover:text-white" 
-                                                        : "border-white text-white hover:bg-primary hover:text-white hover:border-primary",
+                                                    isHomePage && !scrolled
+                                                        ? "border-white text-white hover:bg-primary hover:text-white hover:border-primary"
+                                                        : "border-primary text-primary hover:bg-primary hover:text-white",
                                                     "h-auto px-4 py-2"
                                                 )}
                                             >
@@ -208,9 +219,9 @@ const Header = ({session}: {session: Session | null}) => {
                             <button
                                 className={cn(
                                     "lg:hidden transition-colors px-2",
-                                    scrolled 
-                                        ? "text-gray-900 hover:text-primary" 
-                                        : "text-white hover:text-white/80"
+                                    isHomePage && !scrolled 
+                                        ? "text-white hover:text-white/80" 
+                                        : "text-primary hover:text-primary/80"
                                 )}
                                 aria-label="Open menu"
                             >
@@ -249,12 +260,12 @@ const Header = ({session}: {session: Session | null}) => {
                                             <div className="flex items-center gap-2">
                                                 <Avatar className="h-8 w-8">
                                                     <AvatarImage src={user.image || ''} alt={user.name || ''} />
-                                                    <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
+                                                    <AvatarFallback className="bg-primary/10 text-primary font-bebas-neue text-sm">
                                                         {getInitials(user.name, user.email)}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex flex-col">
-                                                    <p className="text-sm font-medium">{user.name}</p>
+                                                    <p className="text-sm font-bebas-neue">{user.name}</p>
                                                     <p className="text-xs text-gray-600">{user.email}</p>
                                                 </div>
                                             </div>
@@ -269,7 +280,7 @@ const Header = ({session}: {session: Session | null}) => {
                                                 <Link 
                                                     href={item.href}
                                                     className={cn(
-                                                        "block text-base font-medium transition-colors", 
+                                                        "block text-xl font-bebas-neue transition-colors", 
                                                         pathname === item.href 
                                                             ? "text-primary" 
                                                             : "text-gray-900 hover:text-primary"
@@ -283,7 +294,7 @@ const Header = ({session}: {session: Session | null}) => {
                                             <li key={item.href}>
                                                 <Link 
                                                     href={item.href}
-                                                    className="block text-base font-medium transition-colors text-gray-900 hover:text-gold"
+                                                    className="block text-xl font-bebas-neue transition-colors text-primary hover:text-primary/80"
                                                 >
                                                     {item.label}
                                                 </Link>
@@ -297,7 +308,7 @@ const Header = ({session}: {session: Session | null}) => {
                                         <Button 
                                             onClick={() => signOut()}
                                             variant="ghost"
-                                            className="w-full text-base font-medium text-gray-700 hover:text-primary hover:bg-primary/10"
+                                            className="w-full text-xl font-bebas-neue text-gray-700 hover:text-primary hover:bg-primary/10"
                                         >
                                             Sign out
                                         </Button>
@@ -306,7 +317,7 @@ const Header = ({session}: {session: Session | null}) => {
                                             <Button 
                                                 onClick={() => router.push('/sign-in')}
                                                 variant="ghost"
-                                                className="w-full text-base font-medium text-gray-700 hover:text-primary hover:bg-primary/10"
+                                                className="w-full text-xl font-bebas-neue text-gray-700 hover:text-primary hover:bg-primary/10"
                                             >
                                                 Sign in
                                             </Button>
@@ -314,7 +325,7 @@ const Header = ({session}: {session: Session | null}) => {
                                                 onClick={() => router.push('/sign-up')}
                                                 variant="ghost"
                                                 className={cn(
-                                                    "w-full text-base font-medium",
+                                                    "w-full text-xl font-bebas-neue",
                                                     "border-2 border-primary rounded-md",
                                                     "text-primary hover:bg-primary hover:text-white",
                                                     "transition-all duration-300"

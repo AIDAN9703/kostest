@@ -12,7 +12,7 @@ export default function Home() {
       <HeroSection />
       
       <div className="space-y-20 w-full">
-      <TestimonialsSection />
+        <TestimonialsSection />
         <BrandsCarousel />
       </div>
 

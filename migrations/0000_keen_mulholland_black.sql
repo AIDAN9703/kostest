@@ -1,6 +1,6 @@
 CREATE TYPE "public"."BoatCategory" AS ENUM('PONTOON', 'YACHT', 'SAILBOAT', 'FISHING', 'SPEEDBOAT', 'HOUSEBOAT', 'JET_SKI', 'OTHER');--> statement-breakpoint
 CREATE TYPE "public"."BoatStatus" AS ENUM('PENDING', 'ACTIVE', 'INACTIVE', 'MAINTENANCE', 'ARCHIVED');--> statement-breakpoint
-CREATE TYPE "public"."BookingStatus" AS ENUM('PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'REFUNDED');--> statement-breakpoint
+CREATE TYPE "public"."BookingRequestStatus" AS ENUM('PENDING', 'APPROVED', 'AWAITING', 'CONFIRMED', 'DENIED', 'EXPIRED', 'CANCELLED');--> statement-breakpoint
 CREATE TYPE "public"."LineItemType" AS ENUM('CLEANING', 'CAPTAIN', 'OWNER', 'BOOKING_FEE');--> statement-breakpoint
 CREATE TYPE "public"."PaymentStatus" AS ENUM('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED');--> statement-breakpoint
 CREATE TYPE "public"."UserRole" AS ENUM('USER', 'ADMIN', 'CAPTAIN', 'BROKER');--> statement-breakpoint
@@ -22,6 +22,12 @@ CREATE TABLE "boat" (
 	"num_of_bathrooms" integer,
 	"num_of_showers" integer,
 	"sleeps_num" integer,
+	"beam" double precision,
+	"draft" double precision,
+	"gross_tonnage" integer,
+	"cruising_speed" integer,
+	"max_speed" integer,
+	"range" integer,
 	"description" text,
 	"features" text[] NOT NULL,
 	"special_instructions" text,
@@ -31,38 +37,89 @@ CREATE TABLE "boat" (
 	"notes" text,
 	"primary_photo" text,
 	"primary_photo_abs_path" text,
+	"gallery_photos" text[],
+	"virtual_tour_url" text,
 	"youtube_link" text,
 	"hourly_rate" double precision NOT NULL,
 	"half_day_price" double precision,
 	"full_day_price" double precision,
+	"weekly_rate" double precision,
+	"monthly_rate" double precision,
+	"seasonal_rates" json,
 	"additional_hours" double precision,
 	"deposit_amount" double precision,
 	"cash_value" double precision,
+	"home_port" text,
+	"current_location" text,
+	"available_destinations" text[],
+	"seasonal_locations" json,
 	"status" "BoatStatus" DEFAULT 'PENDING' NOT NULL,
 	"active" boolean DEFAULT false NOT NULL,
 	"featured" boolean DEFAULT false,
 	"featured_order" integer,
 	"list_boat" boolean DEFAULT false NOT NULL,
-	"crew_required" boolean DEFAULT false NOT NULL,
-	"day_charter" boolean DEFAULT true NOT NULL,
-	"term_charter" boolean DEFAULT false NOT NULL,
+	"crew_required" boolean DEFAULT true NOT NULL,
+	"crew_included" boolean DEFAULT true NOT NULL,
+	"crew_num" integer,
 	"primary_captain_id" uuid,
+	"day_charter" boolean DEFAULT true NOT NULL,
+	"term_charter" boolean DEFAULT true NOT NULL,
+	"minimum_charter_days" integer,
+	"preferred_charter_duration" text,
 	"fuel_included" boolean DEFAULT false NOT NULL,
 	"fuel_billing_rate" double precision,
 	"fuel_reimbursement_rate" double precision,
 	"fuel_payee_type" text,
+	"fuel_capacity" integer,
+	"water_capacity" integer,
 	"hull_id" text,
+	"registration_number" text,
+	"flag_state" text,
+	"classification_society" text,
 	"insurance_photo" text,
 	"insurance_photo_abs_path" text,
-	"charter_agreement_url" text,
-	"charter_agreement_upload_date" timestamp with time zone,
-	"calendar_id" text,
-	"calendar_summary" text,
-	"calendar_sync_token" text,
-	"is_deleted" boolean DEFAULT false NOT NULL,
-	"deleted_at" timestamp with time zone,
+	"insurance_expiry_date" timestamp,
+	"last_survey_date" timestamp,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"last_maintenance_date" timestamp,
+	"next_maintenance_date" timestamp
+);
+--> statement-breakpoint
+CREATE TABLE "booking_requests" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"boat_id" uuid NOT NULL,
+	"user_id" uuid,
+	"customer_name" text NOT NULL,
+	"customer_email" text NOT NULL,
+	"customer_phone" text NOT NULL,
+	"is_multi_day" boolean NOT NULL,
+	"start_date" timestamp NOT NULL,
+	"end_date" timestamp,
+	"start_time" text NOT NULL,
+	"end_time" text NOT NULL,
+	"number_of_hours" integer,
+	"number_of_passengers" integer NOT NULL,
+	"special_requests" text,
+	"occasion_type" text,
+	"needs_captain" boolean DEFAULT false,
+	"total_amount" double precision NOT NULL,
+	"deposit_amount" double precision,
+	"currency" text DEFAULT 'USD' NOT NULL,
+	"payment_due_date" timestamp,
+	"status" "BookingRequestStatus" DEFAULT 'PENDING' NOT NULL,
+	"reviewed_by" uuid,
+	"reviewed_at" timestamp,
+	"review_notes" text,
+	"stripe_payment_link_id" text,
+	"stripe_payment_link_url" text,
+	"stripe_payment_link_expires_at" timestamp,
+	"stripe_payment_intent_id" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"expires_at" timestamp,
+	"is_deleted" boolean DEFAULT false NOT NULL,
+	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
 CREATE TABLE "captain" (
@@ -143,8 +200,15 @@ CREATE TABLE "user" (
 --> statement-breakpoint
 ALTER TABLE "boat" ADD CONSTRAINT "boat_owner_id_user_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "boat" ADD CONSTRAINT "boat_primary_captain_id_captain_id_fk" FOREIGN KEY ("primary_captain_id") REFERENCES "public"."captain"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "booking_requests" ADD CONSTRAINT "booking_requests_boat_id_boat_id_fk" FOREIGN KEY ("boat_id") REFERENCES "public"."boat"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "booking_requests" ADD CONSTRAINT "booking_requests_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "booking_requests" ADD CONSTRAINT "booking_requests_reviewed_by_user_id_fk" FOREIGN KEY ("reviewed_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "captain" ADD CONSTRAINT "captain_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "boat_owner_idx" ON "boat" USING btree ("owner_id");--> statement-breakpoint
 CREATE INDEX "boat_captain_idx" ON "boat" USING btree ("primary_captain_id");--> statement-breakpoint
 CREATE INDEX "boat_status_idx" ON "boat" USING btree ("status");--> statement-breakpoint
-CREATE INDEX "boat_category_idx" ON "boat" USING btree ("category");
+CREATE INDEX "boat_category_idx" ON "boat" USING btree ("category");--> statement-breakpoint
+CREATE INDEX "booking_requests_boat_id_idx" ON "booking_requests" USING btree ("boat_id");--> statement-breakpoint
+CREATE INDEX "booking_requests_user_id_idx" ON "booking_requests" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "booking_requests_status_idx" ON "booking_requests" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "booking_requests_date_range_idx" ON "booking_requests" USING btree ("start_date","end_date");

@@ -212,7 +212,7 @@
   }
 
   .hero-title-gradient {
-    @apply block bg-gradient-to-r from-blue-400 to-emerald-400 text-transparent bg-clip-text mt-2;
+    @apply block bg-gradient-to-r from-primary via-primary/85 to-primary/60 text-transparent bg-clip-text mt-2;
   }
 
   .hero-title-gradient span {
@@ -220,7 +220,7 @@
   }
 
   .hero-description {
-    @apply text-lg sm:text-xl text-white/90 max-w-2xl mx-auto;
+    @apply text-lg sm:text-xl text-primary max-w-2xl mx-auto;
   }
 
   /* Responsive Layout Helpers */

@@ -15,21 +15,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-export const lineItemTypeEnum = pgEnum("LineItemType", [
-  "CLEANING",
-  "CAPTAIN",
-  "OWNER",
-  "BOOKING_FEE",
-]);
-
-export const bookingStatusEnum = pgEnum("BookingStatus", [
-  "PENDING",
-  "CONFIRMED",
-  "COMPLETED",
-  "CANCELLED",
-  "REFUNDED",
-]);
-
+// Payment related enums
 export const paymentStatusEnum = pgEnum("PaymentStatus", [
   "PENDING",
   "COMPLETED",
@@ -37,6 +23,7 @@ export const paymentStatusEnum = pgEnum("PaymentStatus", [
   "REFUNDED",
 ]);
 
+// Verification related enums
 export const verificationTypeEnum = pgEnum("VerificationType", [
   "PHONE",
   "EMAIL",
@@ -52,9 +39,15 @@ export const verificationStatusEnum = pgEnum("VerificationStatus", [
   "EXPIRED",
 ]);
 
-export const userRoleEnum = pgEnum("UserRole", ["USER", "ADMIN", "CAPTAIN", "BROKER"]);
+// User related enums
+export const userRoleEnum = pgEnum("UserRole", [
+  "USER", 
+  "ADMIN", 
+  "CAPTAIN", 
+  "BROKER"
+]);
 
-// Add new boat-related enums
+// Boat related enums
 export const boatStatusEnum = pgEnum("BoatStatus", [
   "PENDING",
   "ACTIVE",
@@ -74,9 +67,26 @@ export const boatCategoryEnum = pgEnum("BoatCategory", [
   "OTHER",
 ]);
 
-// Order of tables has been arranged to satisfy foreign-key dependencies.
+// Booking related enums
+export const bookingRequestStatusEnum = pgEnum("BookingRequestStatus", [
+  "PENDING",           // Just submitted, waiting for KOS team review
+  "APPROVED",         // KOS team approved, waiting for customer payment
+  "AWAITING",        // Payment link sent, waiting for payment
+  "CONFIRMED",       // Payment received, booking confirmed
+  "DENIED",          // KOS team denied the request
+  "EXPIRED",         // Payment wasn't made within 24 hours
+  "CANCELLED"        // Cancelled by customer or KOS team
+]);
 
-// 1. User
+// Optional: Keep if you need to itemize charges
+export const lineItemTypeEnum = pgEnum("LineItemType", [
+  "CLEANING",
+  "CAPTAIN",
+  "OWNER",
+  "BOOKING_FEE",
+]);
+
+// Tables
 export const users = pgTable("user", {
   id: uuid("id").defaultRandom().notNull().primaryKey(),
   username: text("username").notNull().unique(),
@@ -136,7 +146,6 @@ export const users = pgTable("user", {
   forcePasswordChange: boolean("force_password_change").default(false).notNull(),
 });
 
-// 2.--------------------------------------------Captain-------------------------------------------------------------
 export const captains = pgTable("captain", {
   id: uuid("id").defaultRandom().notNull().primaryKey(),
   status: text("status"),
@@ -173,7 +182,6 @@ export const captains = pgTable("captain", {
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
 });
 
-// 3. Boat
 export const boats = pgTable(
   "boat",
   {
@@ -289,6 +297,66 @@ export const boats = pgTable(
     index("boat_category_idx").on(table.category)
   ]
 );
+
+export const bookingRequests = pgTable("booking_requests", {
+  id: uuid("id").defaultRandom().notNull().primaryKey(),
+  
+  // Boat and User Info
+  boatId: uuid("boat_id").notNull().references(() => boats.id),
+  userId: uuid("user_id").references(() => users.id), // Optional, in case user is not logged in
+  customerName: text("customer_name").notNull(),
+  customerEmail: text("customer_email").notNull(),
+  customerPhone: text("customer_phone").notNull(),
+  
+  // Booking Type
+  isMultiDay: boolean("is_multi_day").notNull(),
+  
+  // Dates and Times
+  startDate: timestamp("start_date", { mode: "date" }).notNull(),
+  endDate: timestamp("end_date", { mode: "date" }), // Nullable for single-day bookings
+  startTime: text("start_time").notNull(), // Store as HH:mm in 24h format
+  endTime: text("end_time").notNull(), // Store as HH:mm in 24h format
+  numberOfHours: integer("number_of_hours"), // Only for single-day bookings
+  
+  // Other Details
+  numberOfPassengers: integer("number_of_passengers").notNull(),
+  specialRequests: text("special_requests"),
+  occasionType: text("occasion_type"),
+  needsCaptain: boolean("needs_captain").default(false),
+  
+  // Pricing
+  totalAmount: doublePrecision("total_amount").notNull(),
+  depositAmount: doublePrecision("deposit_amount"),
+  currency: text("currency").default("USD").notNull(),
+  paymentDueDate: timestamp("payment_due_date", { mode: "date" }),
+  
+  // Status Management
+  status: bookingRequestStatusEnum("status").default("PENDING").notNull(),
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at", { mode: "date" }),
+  reviewNotes: text("review_notes"),
+  
+  // Stripe Integration
+  stripePaymentLinkId: text("stripe_payment_link_id"),
+  stripePaymentLinkUrl: text("stripe_payment_link_url"),
+  stripePaymentLinkExpiresAt: timestamp("stripe_payment_link_expires_at", { mode: "date" }),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  
+  // Timestamps
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+  expiresAt: timestamp("expires_at", { mode: "date" }), // 24 hours after approval
+  
+  // Soft delete
+  isDeleted: boolean("is_deleted").default(false).notNull(),
+  deletedAt: timestamp("deleted_at", { mode: "date", withTimezone: true }),
+}, (table) => [
+  // Indexes for common queries
+  index("booking_requests_boat_id_idx").on(table.boatId),
+  index("booking_requests_user_id_idx").on(table.userId),
+  index("booking_requests_status_idx").on(table.status),
+  index("booking_requests_date_range_idx").on(table.startDate, table.endDate)
+]);
 
 /* // 4. MooringLocation
 export const mooringLocations = pgTable("mooring_location", {
@@ -500,7 +568,7 @@ export const bookings = pgTable(
     userId: integer("user_id").notNull().references(() => users.id),
     captainId: integer("captain_id").references(() => captains.id),
     buyflowId: integer("buyflow_id").notNull().unique().references(() => buyflows.id),
-    status: bookingStatusEnum("status").notNull(),
+    status: bookingRequestStatusEnum("status").notNull(),
     startTime: timestamp("start_time", { mode: "date" }).notNull(),
     endTime: timestamp("end_time", { mode: "date" }).notNull(),
     totalAmount: doublePrecision("total_amount").notNull(),

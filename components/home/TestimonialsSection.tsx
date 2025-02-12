@@ -103,12 +103,8 @@ export default function TestimonialsSection() {
           transition={{ duration: 0.6 }}
           className="text-center max-w-3xl mx-auto mb-16"
         >
-          <span className="text-[#21336a] dark:text-blue-400 text-sm font-semibold tracking-wider uppercase">
-            Reviews
-          </span>
-          <h2 className="mt-4 text-3xl font-bold text-gray-900 dark:text-white">
-            What Our Customers Say
-          </h2>
+          <h2 className="mt-4 font-bebas-neue tracking-wide text-4xl font-bold text-primary">
+Dive Into Our Reviews          </h2>
         </motion.div>
 
         <div className="relative">

@@ -1,7 +1,7 @@
 import NextAuth, { User } from "next-auth"
 import { compare } from "bcryptjs"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { users } from "@/database/schema"
+import { users, userRoleEnum } from "@/database/schema"
 import { eq } from "drizzle-orm"
 import { db } from "@/database/db"
  
@@ -37,6 +37,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 email: user[0].email,
                 name: user[0].firstName + " " + user[0].lastName,
                 role: user[0].role,
+                phoneNumber: user[0].phoneNumber || "",
             } as User;
         },
     }),
@@ -49,6 +50,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
         token.name = user.name;
+        token.role = user.role;
+        token.phoneNumber = user.phoneNumber;
       }
       return token;
     },
@@ -56,6 +59,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if(session.user) {
             session.user.id = token.id as string;
             session.user.name = token.name as string;
+            session.user.role = token.role as typeof userRoleEnum.enumValues[number];
+            session.user.phoneNumber = token.phoneNumber as string;
         }
         return session;
     },

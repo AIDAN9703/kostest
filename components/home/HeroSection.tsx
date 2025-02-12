@@ -25,41 +25,36 @@ export default function HeroSection() {
     3000,
     'Vacation',
     3000,
-    'Corporate Event',
+    'Family Cruise',
     3000,
-    'Wedding',
+    'Island Adventure',
     3000,
-    'Birthday Party',
+    'Yacht Party',
     3000,
     'Sunset Cruise',
     3000,
   ];
 
   return (
-    <div className="hero-container">
-      {/* Background Image with Overlay */}
-      <div className="hero-background">
-        <Image 
-          src="/images/koshero.jpg" 
-          alt="Luxury Yacht Experience" 
-          fill 
-          className="hero-background-image"
-          priority
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 100vw"
-          quality={95}
-          loading="eager"
-          placeholder="blur"
-          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx0cHBwcHy4lJyctLzkyMi8nLy0wO0BCPzhLPS0yRWFFS1NWW1xfOUNXZWJkYlNfW1v/2wBDARUXFxwbHBonHR0nW0tLW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1v/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+    <div className="relative min-h-screen w-full">
+      {/* Background Video with Overlay */}
+      <div className="absolute inset-0 z-0">
+        <video 
+          src="/images/hero-video.mp4" 
+          autoPlay 
+          loop 
+          muted 
+          playsInline 
+          className="h-full w-full object-cover"
         />
-        <div className="hero-overlay-gradient" />
-        <div className="hero-overlay-gradient-2" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/20 to-white" />
       </div>
 
       {/* Main Content */}
       <div className="hero-content">
         <div className="hero-content-wrapper">
           {/* Hero Text */}
-          <div className="hero-text-container">
+          <div className="hero-text-container font-bebas-neue">
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -109,7 +104,7 @@ export default function HeroSection() {
                 />
                 <button
                   onClick={handleSearch}
-                  className="absolute right-2 bg-[#21336a] hover:bg-[#2a4086] text-white px-5 py-2 
+                  className="absolute right-2 bg-primary hover:bg-primary/80 text-white px-5 py-2 
                            rounded-full transition-all duration-300 text-sm font-medium"
                 >
                   Search

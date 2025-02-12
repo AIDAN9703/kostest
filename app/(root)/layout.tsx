@@ -1,4 +1,5 @@
 import Header from '@/components/Header';
+import PageWrapper from '@/components/PageWrapper';
 import { ReactNode } from 'react'
 import { auth } from "@/auth";
 import { db } from "@/database/db";
@@ -23,7 +24,9 @@ const Layout = async ({ children }: { children: ReactNode }) => {
     <>
       <Header session={session}/>
       <main>
-        {children}
+        <PageWrapper>
+          {children}
+        </PageWrapper>
       </main>
     </>
   );
