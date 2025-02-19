@@ -10,76 +10,28 @@ interface Review {
   rating: number;
   text: string;
   profile_photo_url: string;
-  time: number;
+  relative_time_description: string;
 }
 
-interface ReviewsData {
+interface TestimonialsSectionProps {
   reviews: Review[];
-  businessName: string;
-  overallRating: number;
 }
 
-export default function TestimonialsSection() {
+export default function TestimonialsSection({ reviews }: TestimonialsSectionProps) {
   const [active, setActive] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-  const [reviewsData, setReviewsData] = useState<ReviewsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        const response = await fetch('/api/reviews');
-        const data = await response.json();
-        
-        if (data.error) {
-          throw new Error(data.error);
-        }
-        
-        setReviewsData(data);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error fetching reviews:', error);
-        setError(error instanceof Error ? error.message : 'Failed to fetch reviews');
-        setLoading(false);
-      }
-    };
-
-    fetchReviews();
-  }, []);
-
-  useEffect(() => {
-    if (!isAutoPlaying || !reviewsData?.reviews.length) return;
+    if (!isAutoPlaying || !reviews.length) return;
     
     const timer = setInterval(() => {
-      setActive((prev) => (prev + 1) % reviewsData.reviews.length);
+      setActive((prev) => (prev + 1) % reviews.length);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [isAutoPlaying, reviewsData?.reviews.length]);
+  }, [isAutoPlaying, reviews.length]);
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px] bg-white">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#21336a]"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="py-16 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Reviews</h2>
-            <p className="text-gray-600">{error}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!reviewsData?.reviews.length) {
+  if (!reviews.length) {
     return (
       <div className="py-16 bg-white">
         <div className="container mx-auto px-4">
@@ -92,7 +44,7 @@ export default function TestimonialsSection() {
     );
   }
 
-  const currentReview = reviewsData.reviews[active];
+  const currentReview = reviews[active];
 
   return (
     <section className="relative py-24 bg-white overflow-hidden">
@@ -104,7 +56,8 @@ export default function TestimonialsSection() {
           className="text-center max-w-3xl mx-auto mb-16"
         >
           <h2 className="mt-4 font-bebas-neue tracking-wide text-4xl font-bold text-primary">
-Dive Into Our Reviews          </h2>
+            Dive Into Our Reviews
+          </h2>
         </motion.div>
 
         <div className="relative">
@@ -176,10 +129,7 @@ Dive Into Our Reviews          </h2>
                     {currentReview.author_name}
                   </div>
                   <div className="text-gray-500 dark:text-gray-400">
-                    {new Date(currentReview.time * 1000).toLocaleDateString(undefined, {
-                      year: 'numeric',
-                      month: 'long'
-                    })}
+                    {currentReview.relative_time_description}
                   </div>
                 </motion.div>
               </div>
@@ -189,7 +139,7 @@ Dive Into Our Reviews          </h2>
           {/* Navigation */}
           <div className="flex justify-center items-center space-x-4 mt-12">
             <div className="flex space-x-2">
-              {reviewsData.reviews.map((_, index) => (
+              {reviews.map((_, index) => (
                 <button
                   key={index}
                   onClick={() => {

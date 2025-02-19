@@ -3,6 +3,8 @@ import { bookingRequests } from "@/database/schema";
 import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { bookingRequestSchema } from "@/lib/validations";
+import { ActionResponse } from "@/lib/types";
+import { cachedFetch } from "@/lib/utils";
 import type { z } from "zod";
 
 export type CreateBookingRequestInput = z.infer<typeof bookingRequestSchema> & {
@@ -16,7 +18,9 @@ export type CreateBookingRequestInput = z.infer<typeof bookingRequestSchema> & {
   currency?: string;
 };
 
-export async function createBookingRequest(data: CreateBookingRequestInput) {
+export async function createBookingRequest(data: CreateBookingRequestInput): Promise<ActionResponse<typeof bookingRequests.$inferSelect>> {
+  "use server";
+  
   try {
     const [newBooking] = await db.insert(bookingRequests).values({
       boatId: data.boatId,
@@ -47,31 +51,44 @@ export async function createBookingRequest(data: CreateBookingRequestInput) {
   }
 }
 
-export async function getBookingRequest(id: string) {
-  try {
-    const booking = await db
-      .select()
-      .from(bookingRequests)
-      .where(eq(bookingRequests.id, id))
-      .limit(1)
-      .then(res => res[0]);
+export async function getBookingRequest(id: string): Promise<ActionResponse<typeof bookingRequests.$inferSelect>> {
+  "use server";
+  
+  return cachedFetch(
+    `booking-${id}`,
+    async () => {
+      try {
+        const booking = await db
+          .select()
+          .from(bookingRequests)
+          .where(eq(bookingRequests.id, id))
+          .limit(1)
+          .then(res => res[0]);
 
-    if (!booking) {
-      return { success: false, error: "Booking request not found" };
+        if (!booking) {
+          return { success: false, error: "Booking request not found" };
+        }
+
+        return { success: true, data: booking };
+      } catch (error) {
+        console.error("Error fetching booking request:", error);
+        return { success: false, error: "Failed to fetch booking request" };
+      }
+    },
+    {
+      revalidate: 60, // Cache for 1 minute since bookings change frequently
+      tags: ['bookings', `booking-${id}`]
     }
-
-    return { success: true, data: booking };
-  } catch (error) {
-    console.error("Error fetching booking request:", error);
-    return { success: false, error: "Failed to fetch booking request" };
-  }
+  );
 }
 
 export async function updateBookingRequestStatus(
   id: string,
   status: "PENDING" | "APPROVED" | "AWAITING" | "CONFIRMED" | "DENIED" | "EXPIRED" | "CANCELLED",
   reviewNotes?: string
-) {
+): Promise<ActionResponse<typeof bookingRequests.$inferSelect>> {
+  "use server";
+  
   try {
     const [updatedBooking] = await db
       .update(bookingRequests)
@@ -92,34 +109,56 @@ export async function updateBookingRequestStatus(
   }
 }
 
-export async function getUserBookingRequests(userId: string) {
-  try {
-    const bookings = await db
-      .select()
-      .from(bookingRequests)
-      .where(eq(bookingRequests.userId, userId))
-      .orderBy(desc(bookingRequests.createdAt));
+export async function getUserBookingRequests(userId: string): Promise<ActionResponse<Array<typeof bookingRequests.$inferSelect>>> {
+  "use server";
+  
+  return cachedFetch(
+    `user-bookings-${userId}`,
+    async () => {
+      try {
+        const bookings = await db
+          .select()
+          .from(bookingRequests)
+          .where(eq(bookingRequests.userId, userId))
+          .orderBy(desc(bookingRequests.createdAt));
 
-    return { success: true, data: bookings };
-  } catch (error) {
-    console.error("Error fetching user booking requests:", error);
-    return { success: false, error: "Failed to fetch booking requests" };
-  }
+        return { success: true, data: bookings };
+      } catch (error) {
+        console.error("Error fetching user booking requests:", error);
+        return { success: false, error: "Failed to fetch booking requests" };
+      }
+    },
+    {
+      revalidate: 60,
+      tags: ['bookings', `user-bookings-${userId}`]
+    }
+  );
 }
 
-export async function getBoatBookingRequests(boatId: string) {
-  try {
-    const bookings = await db
-      .select()
-      .from(bookingRequests)
-      .where(eq(bookingRequests.boatId, boatId))
-      .orderBy(desc(bookingRequests.createdAt));
+export async function getBoatBookingRequests(boatId: string): Promise<ActionResponse<Array<typeof bookingRequests.$inferSelect>>> {
+  "use server";
+  
+  return cachedFetch(
+    `boat-bookings-${boatId}`,
+    async () => {
+      try {
+        const bookings = await db
+          .select()
+          .from(bookingRequests)
+          .where(eq(bookingRequests.boatId, boatId))
+          .orderBy(desc(bookingRequests.createdAt));
 
-    return { success: true, data: bookings };
-  } catch (error) {
-    console.error("Error fetching boat booking requests:", error);
-    return { success: false, error: "Failed to fetch booking requests" };
-  }
+        return { success: true, data: bookings };
+      } catch (error) {
+        console.error("Error fetching boat booking requests:", error);
+        return { success: false, error: "Failed to fetch booking requests" };
+      }
+    },
+    {
+      revalidate: 60,
+      tags: ['bookings', `boat-bookings-${boatId}`]
+    }
+  );
 }
 
 export async function updateBookingRequestPaymentInfo(
@@ -130,7 +169,9 @@ export async function updateBookingRequestPaymentInfo(
     stripePaymentLinkExpiresAt?: Date;
     stripePaymentIntentId?: string;
   }
-) {
+): Promise<ActionResponse<typeof bookingRequests.$inferSelect>> {
+  "use server";
+  
   try {
     const [updatedBooking] = await db
       .update(bookingRequests)

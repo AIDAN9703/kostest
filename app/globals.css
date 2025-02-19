@@ -208,19 +208,38 @@
   }
 
   .hero-title {
-    @apply text-4xl sm:text-5xl md:text-7xl font-bold text-white mb-4 sm:mb-6 leading-tight;
+    @apply text-4xl sm:text-5xl md:text-7xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight;
   }
 
   .hero-title-gradient {
-    @apply block bg-gradient-to-r from-primary via-primary/85 to-primary/60 text-transparent bg-clip-text mt-2;
+    @apply block bg-gradient-to-r from-primary via-primary to-primary text-transparent bg-clip-text relative;
+    text-shadow: 0 0 40px rgba(255,255,255,0.2);
+    animation: shimmerText 3s ease-in-out infinite;
   }
 
   .hero-title-gradient span {
-    @apply block min-h-[1.2em];
+    @apply block min-h-[1.2em] relative;
+  }
+
+  .hero-title-gradient::after {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-primary/30 via-primary/20 to-primary/10 blur-xl;
+    mask-image: linear-gradient(to right, transparent, white, transparent);
+    animation: shimmerGlow 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmerText {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.9; }
+  }
+
+  @keyframes shimmerGlow {
+    0%, 100% { transform: translateX(-10px); opacity: 0.5; }
+    50% { transform: translateX(10px); opacity: 1; }
   }
 
   .hero-description {
-    @apply text-lg sm:text-xl text-primary max-w-2xl mx-auto;
+    @apply text-lg sm:text-xl text-gray-700 max-w-2xl mx-auto font-medium;
   }
 
   /* Responsive Layout Helpers */
@@ -584,4 +603,21 @@
 
 .animate-marquee-reverse {
   animation: marquee-reverse 40s linear infinite;
+}
+
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-flow {
+  background-size: 200% auto;
+  animation: gradient-flow 3s ease infinite;
 }

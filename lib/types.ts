@@ -117,5 +117,11 @@ export const seasonalLocationsSchema = z.record(
 
 export type SeasonalLocations = z.infer<typeof seasonalLocationsSchema>;
 
+export type ActionResponse<T> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+};
+
 // Re-export booking types for convenience
 export type { BookingRequest } from "./validations"; 
