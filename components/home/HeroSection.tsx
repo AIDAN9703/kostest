@@ -59,16 +59,28 @@ export default function HeroSection() {
         <div className="max-w-[1000px] mx-auto w-full text-center space-y-10">
           {/* Hero Text */}
           <div className="flex flex-col items-center">
-            <h1 className="text-7xl lg:text-8xl xl:text-[105px] font-bebas-neue text-white">
-              <div className="mb-2">Find <span className="text-primary">Your</span> Perfect</div>
-              <TypeAnimation
-                sequence={rotatingTexts}
-                wrapper="div"
-                speed={50}
-                repeat={Infinity}
-                className="ml-12 bg-gradient-to-r from-primary via-primary to-primary text-transparent bg-clip-text"
-              />
-            </h1>
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-7xl lg:text-8xl xl:text-[105px] font-bebas-neue leading-tight"
+            >
+              <div className="text-white mb-2">
+                Find <span className="bg-gradient-to-r from-[#21336a] to-blue-400 text-transparent bg-clip-text">Your</span> Perfect
+              </div>
+              <div className="bg-gradient-to-r from-[#21336a] via-blue-400 to-sky-400 text-transparent bg-clip-text">
+                Yacht Experience
+              </div>
+            </motion.h1>
+            
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-xl text-white/90 max-w-2xl mx-auto mt-6"
+            >
+              Discover and book unforgettable yacht charters with verified captains worldwide
+            </motion.p>
           </div>
 
           {/* Search Box */}
