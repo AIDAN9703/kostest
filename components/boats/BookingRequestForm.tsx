@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Boat } from "@/lib/types";
+import { Boat } from "@/types/types";
 import { User } from "next-auth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -395,13 +395,13 @@ export default function BookingRequestForm({ boat, user }: BookingRequestFormPro
                   <Input
                     type="number"
                     min={1}
-                    max={boat.numOfPassengers}
+                    max={(boat.capacity || boat.numOfPassengers || 1)}
                     {...field}
                     onChange={e => field.onChange(parseInt(e.target.value))}
                   />
                 </FormControl>
                 <p className="text-xs text-gray-500">
-                  Maximum {boat.numOfPassengers} passengers
+                  Maximum {boat.capacity || boat.numOfPassengers} passengers
                 </p>
                 <FormMessage />
               </FormItem>

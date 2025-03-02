@@ -4,7 +4,7 @@ import React, { useOptimistic, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Boat } from "@/lib/types";
+import { Boat } from "@/types/types";
 import { Anchor, Users, MapPin, Star, Ruler, DoorOpenIcon } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,14 +20,12 @@ import {
 
 // Client component for the interactive boat card
 const BoatCard = ({ boat, index }: { boat: Boat; index: number }) => {
-  const highlightedFeatures = boat.features.slice(0, 3);
-
   return (
-    <Card className="group relative overflow-hidden shadow-lg bg-white flex flex-col h-full">
+    <Card className="group relative overflow-hidden hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] bg-white flex flex-col h-full rounded-3xl transition-shadow duration-500">
       <CardHeader className="p-0">
-        <AspectRatio ratio={4/3} className="overflow-hidden rounded-t-lg">
+        <AspectRatio ratio={4/3} className="overflow-hidden">
           <Image
-            src={boat.primaryPhotoAbsPath || '/images/boats/yacht1.jpg'}
+            src={boat.mainImage || boat.primaryPhotoAbsPath || '/images/boats/yacht1.jpg'}
             alt={boat.name}
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -37,92 +35,64 @@ const BoatCard = ({ boat, index }: { boat: Boat; index: number }) => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           
           {boat.homePort && boat.homePort !== 'N/A' && (
-            <div className="absolute top-6 left-6 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium text-gray-700">{boat.homePort}</span>
+            <div className="absolute top-8 left-8 bg-white/95 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg">
+              <div className="flex items-center gap-3">
+                <MapPin className="w-4 h-4 text-[#1E293B]" />
+                <span className="text-sm font-medium text-[#1E293B]">{boat.homePort}</span>
               </div>
             </div>
           )}
 
-          <div className="absolute top-6 right-6 bg-white/95 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
-            <span className="text-lg font-semibold text-primary">
+          <div className="absolute top-8 right-8 bg-white/95 backdrop-blur-sm px-6 py-3 rounded-full shadow-lg">
+            <span className="text-lg font-medium text-[#1E293B]">
               {formatCurrency(boat.hourlyRate)}/hr
             </span>
           </div>
           
-          <div className="absolute bottom-6 left-6 right-6 flex justify-between items-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+          <div className="absolute bottom-8 left-8 right-8 flex justify-between items-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
             <Button
               asChild
               variant="secondary"
               size="lg"
-              className="rounded-full shadow-lg hover:shadow-xl"
+              className="rounded-full shadow-lg hover:shadow-xl bg-white/95 backdrop-blur-sm hover:bg-white/100 text-[#1E293B]"
             >
               <Link href={`/boats/${boat.id}`}>
                 View Details
               </Link>
             </Button>
-            <div className="flex items-center gap-2 bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm">
-              <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              <span className="text-white font-medium">4.9</span>
+            <div className="flex items-center gap-2 bg-white/95 px-6 py-3 rounded-full backdrop-blur-sm">
+              <Star className="w-4 h-4 text-[#1E293B]" />
+              <span className="text-[#1E293B] font-medium">4.9</span>
             </div>
           </div>
         </AspectRatio>
       </CardHeader>
 
-      <CardContent className="p-6 flex-1 flex flex-col gap-6">
-        <div>
-          <h3 className="font-bebas-neue text-4xl text-gray-900 group-hover:text-primary transition-colors tracking-wide mb-2">
-            {boat.name}
-          </h3>
-          <p className="text-gray-600 font-medium uppercase tracking-wider text-sm">{boat.category}</p>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-3 text-gray-700">
-            <Users className="w-5 h-5 text-primary" />
-            <span className="font-medium">{boat.numOfPassengers} Guests</span>
+      <CardContent className="p-8 flex-1 flex flex-col">
+        <div className="flex items-start gap-6">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-2xl font-medium text-[#1E293B] group-hover:text-primary transition-colors mb-2 truncate">
+              {boat.name}
+            </h3>
+            <p className="text-gray-600 font-light tracking-wide truncate">
+              {boat.category}
+            </p>
           </div>
-          <div className="flex items-center gap-3 text-gray-700">
-            <Ruler className="w-5 h-5 text-primary" />
-            <span className="font-medium">{boat.lengthFt}ft Length</span>
+          <div className="flex items-center gap-3 text-[#1E293B] flex-shrink-0 bg-gray-50 px-5 py-2.5 rounded-full">
+            <Users className="w-4 h-4" />
+            <span className="font-medium whitespace-nowrap text-sm">{boat.capacity || boat.numOfPassengers} Guests</span>
           </div>
-          {boat.sleepsNum && boat.sleepsNum > 0 && (
-            <div className="flex items-center gap-3 text-gray-700">
-              <Anchor className="w-5 h-5 text-primary" />
-              <span className="font-medium">Sleeps {boat.sleepsNum}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-3 text-gray-700">
-            <DoorOpenIcon className="w-5 h-5 text-primary" />
-            <span className="font-medium">{boat.numOfCabins || 0} Cabins</span>
-          </div>
-        </div>
-
-        <div>
-          <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-2">
-            Highlighted Features
-          </h4>
-          <ul className="space-y-1.5">
-            {highlightedFeatures.map((feature, idx) => (
-              <li key={idx} className="text-gray-600 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                {feature}
-              </li>
-            ))}
-          </ul>
         </div>
       </CardContent>
 
-      <CardFooter className="p-6">
+      <CardFooter className="px-8 pb-8 bg-white">
         <Button
           asChild
-          variant="outline"
           size="lg"
-          className="w-full rounded-2xl border-2 border-primary hover:bg-primary hover:text-white"
+          className="w-full rounded-full bg-[#1E293B] hover:bg-[#2C3E50] text-white text-base font-medium py-6 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
         >
           <Link href={`/boats/${boat.id}`}>
-            Book Now
+            Book Your Journey
           </Link>
         </Button>
       </CardFooter>
@@ -133,20 +103,20 @@ const BoatCard = ({ boat, index }: { boat: Boat; index: number }) => {
 // Server component for the overall section
 const FeaturedFleet = ({ boats }: { boats: Boat[] }) => {
   return (
-    <section className="py-32 bg-white">
+    <section className="py-32 bg-white relative overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div 
-          className="text-center mb-20"
+          className="text-center mb-24"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="font-bebas-neue text-5xl md:text-6xl xl:text-7xl text-primary mb-6 tracking-wide">
-            Featured Yachts
+          <h2 className="font-serif text-5xl md:text-6xl xl:text-7xl text-[#1E293B] mb-6">
+            <span className="text-gold">Discover</span> Our Fleet
           </h2>
-          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto font-light leading-relaxed">
-            Discover our handpicked selection of luxury vessels, each offering an unmatched blend of comfort, style, and maritime excellence.
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto font-light leading-relaxed">
+            Explore our curated collection of luxury vessels, each promising an unforgettable journey on the open waters.
           </p>
         </motion.div>
 
@@ -155,25 +125,32 @@ const FeaturedFleet = ({ boats }: { boats: Boat[] }) => {
             align: "start",
             loop: true,
           }}
-          className="relative w-full"
+          className="relative w-full overflow-visible"
         >
-          <CarouselContent className="-ml-4">
+          <CarouselContent className="-ml-4 overflow-visible">
             {boats.map((boat, idx) => (
-              <CarouselItem key={boat.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
-                <BoatCard boat={boat} index={idx} />
+              <CarouselItem key={boat.id} className="pl-4 md:basis-1/2 lg:basis-1/3 overflow-visible">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1, duration: 0.6 }}
+                >
+                  <BoatCard boat={boat} index={idx} />
+                </motion.div>
               </CarouselItem>
             ))}
           </CarouselContent>
           {boats.length > 3 && (
             <>
-              <CarouselPrevious className="left-2 lg:-left-10" />
-              <CarouselNext className="right-2 lg:-right-10" />
+              <CarouselPrevious className="left-4 lg:-left-12" />
+              <CarouselNext className="right-4 lg:-right-12" />
             </>
           )}
         </Carousel>
 
         <motion.div 
-          className="text-center mt-20"
+          className="text-center mt-24"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -182,10 +159,10 @@ const FeaturedFleet = ({ boats }: { boats: Boat[] }) => {
           <Button
             asChild
             size="lg"
-            className="font-bebas-neue text-2xl px-16 py-8 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary text-white rounded-full tracking-wider shadow-lg hover:shadow-xl transition-all duration-300"
+            className="font-serif text-xl px-12 py-6 bg-[#1E293B] hover:bg-[#2C3E50] text-white rounded-full tracking-wide shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
           >
             <Link href="/boats">
-              View All Yachts
+              View All Vessels
             </Link>
           </Button>
         </motion.div>

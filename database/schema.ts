@@ -39,12 +39,59 @@ export const verificationStatusEnum = pgEnum("VerificationStatus", [
   "EXPIRED",
 ]);
 
+// Add new verification channel enum
+export const verificationChannelEnum = pgEnum("VerificationChannel", [
+  "SMS",
+  "CALL",
+  "EMAIL",
+  "WHATSAPP",
+]);
+
 // User related enums
 export const userRoleEnum = pgEnum("UserRole", [
   "USER", 
   "ADMIN", 
   "CAPTAIN", 
-  "BROKER"
+  "BROKER",
+  "OWNER"  // Adding OWNER as a distinct role
+]);
+
+export const userStatusEnum = pgEnum("UserStatus", [
+  "ACTIVE",
+  "INACTIVE",
+  "SUSPENDED",
+  "PENDING_VERIFICATION",
+  "BANNED"
+]);
+
+export const authProviderEnum = pgEnum("AuthProvider", [
+  "EMAIL",
+  "GOOGLE",
+  "FACEBOOK",
+  "APPLE"
+]);
+
+export const notificationPreferenceEnum = pgEnum("NotificationPreference", [
+  "ALL",
+  "IMPORTANT_ONLY",
+  "NONE"
+]);
+
+export const boatingExperienceLevelEnum = pgEnum("BoatingExperienceLevel", [
+  "NONE",
+  "BEGINNER",
+  "INTERMEDIATE",
+  "ADVANCED",
+  "EXPERT",
+  "PROFESSIONAL"
+]);
+
+export const boatingLicenseTypeEnum = pgEnum("BoatingLicenseType", [
+  "NONE",
+  "STATE_BOATING_LICENSE",
+  "USCG_LICENSE",
+  "INTERNATIONAL_LICENSE",
+  "OTHER"
 ]);
 
 // Boat related enums
@@ -87,214 +134,338 @@ export const lineItemTypeEnum = pgEnum("LineItemType", [
 ]);
 
 // Tables
-export const users = pgTable("user", {
-  id: uuid("id").defaultRandom().notNull().primaryKey(),
-  username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  firstName: text("first_name"),
-  lastName: text("last_name"),
-  phoneNumber: text("phone_number"),
-  birthday: timestamp("birthday", { mode: "date" }),
-  profileAbsPath: text("profile_abs_path"),
-  status: text("status").default('active'),
-  
-  // New security fields
-  lastLoginAt: timestamp("last_login_at", { mode: "date", withTimezone: true }),
-  failedLoginAttempts: integer("failed_login_attempts").default(0),
-  accountLockedUntil: timestamp("account_locked_until", { mode: "date", withTimezone: true }),
-  
-  // New role/type field
-  role: userRoleEnum("role").default("USER").notNull(),
-  
-  // New preferences
-  language: text("language").default("en"),
-  timezone: text("timezone").default("UTC"),
-  emailNotificationsEnabled: boolean("email_notifications_enabled").default(true).notNull(),
-  
-  // Basic verification flags
-  emailVerified: boolean("email_verified").default(false).notNull(),
-  phoneConfirmed: boolean("phone_confirmed").default(false).notNull(),
-  
-  // Password reset (important for security)
-  resetPasswordToken: text("reset_password_token"),
-  resetPasswordExpires: timestamp("reset_password_expires", { mode: "date" }),
-  
-  // Important flags
-  signupComplete: boolean("signup_complete").default(false).notNull(),
-  acceptedAnchorCode: boolean("accepted_anchor_code").default(false).notNull(),
-  
-  // Soft delete
-  isDeleted: boolean("is_deleted").default(false).notNull(),
-  deletedAt: timestamp("deleted_at", { mode: "date", withTimezone: true }),
-  
-  // Timestamps
-  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
-
-  // Terms and Marketing
-  termsAcceptedAt: timestamp("terms_accepted_at", { mode: "date", withTimezone: true }),
-  marketingEmailsEnabled: boolean("marketing_emails_enabled").default(true).notNull(),
-  privacyPolicyAcceptedAt: timestamp("privacy_policy_accepted_at", { mode: "date", withTimezone: true }),
-
-  // Account verification (additional)
-  isVerified: boolean("is_verified").default(false).notNull(),
-  verificationToken: text("verification_token"),
-
-  // Session management
-  lastActiveAt: timestamp("last_active_at", { mode: "date", withTimezone: true }),
-  forcePasswordChange: boolean("force_password_change").default(false).notNull(),
-});
+export const users = pgTable(
+  "user", 
+  {
+    // Core Identity
+    id: uuid("id").defaultRandom().notNull().primaryKey(),
+    email: text("email").notNull().unique(),
+    username: text("username").notNull().unique(),
+    password: text("password").notNull(),
+    status: userStatusEnum("status").default("ACTIVE").notNull(),
+    role: userRoleEnum("role").default("USER").notNull(),
+    
+    // Personal Information
+    firstName: text("first_name"),
+    lastName: text("last_name"),
+    displayName: text("display_name"),
+    phoneNumber: text("phone_number"),
+    birthday: timestamp("birthday", { mode: "date" }),
+    bio: text("bio"),
+    
+    // Profile Media
+    profileImage: text("profile_image"),
+    coverImage: text("cover_image"),
+    
+    // Authentication & Security
+    emailVerified: boolean("email_verified").default(false).notNull(),
+    phoneVerified: boolean("phone_verified").default(false).notNull(),
+    twoFactorEnabled: boolean("two_factor_enabled").default(false).notNull(),
+    twoFactorSecret: text("two_factor_secret"),
+    authProvider: authProviderEnum("auth_provider").default("EMAIL"),
+    providerAccountId: text("provider_account_id"),
+    
+    // Login Information
+    lastLoginAt: timestamp("last_login_at", { mode: "date", withTimezone: true }),
+    lastLoginIp: text("last_login_ip"),
+    lastLoginDevice: text("last_login_device"),
+    failedLoginAttempts: integer("failed_login_attempts").default(0),
+    accountLockedUntil: timestamp("account_locked_until", { mode: "date", withTimezone: true }),
+    
+    // Password Management
+    passwordChangedAt: timestamp("password_changed_at", { mode: "date", withTimezone: true }),
+    resetPasswordToken: text("reset_password_token"),
+    resetPasswordExpires: timestamp("reset_password_expires", { mode: "date" }),
+    forcePasswordChange: boolean("force_password_change").default(false).notNull(),
+    
+    // User Preferences
+    language: text("language").default("en"),
+    timezone: text("timezone").default("UTC"),
+    currency: text("currency").default("USD"),
+    theme: text("theme").default("light"),
+    
+    // Notification Preferences
+    emailNotifications: notificationPreferenceEnum("email_notifications").default("ALL"),
+    pushNotifications: notificationPreferenceEnum("push_notifications").default("ALL"),
+    smsNotifications: notificationPreferenceEnum("sms_notifications").default("IMPORTANT_ONLY"),
+    marketingEmailsEnabled: boolean("marketing_emails_enabled").default(true).notNull(),
+    
+    // Location Information
+    country: text("country"),
+    state: text("state"),
+    city: text("city"),
+    address: text("address"),
+    postalCode: text("postal_code"),
+    
+    // Verification & Compliance
+    identityVerified: boolean("identity_verified").default(false),
+    verificationToken: text("verification_token"),
+    verificationTokenExpires: timestamp("verification_token_expires", { mode: "date" }),
+    governmentIdVerified: boolean("government_id_verified").default(false),
+    governmentIdType: text("government_id_type"),
+    governmentIdExpiry: timestamp("government_id_expiry", { mode: "date" }),
+    backgroundCheckStatus: text("background_check_status"),
+    backgroundCheckDate: timestamp("background_check_date", { mode: "date" }),
+    
+    // Boating Qualifications
+    boatingExperience: boatingExperienceLevelEnum("boating_experience").default("NONE"),
+    boatingLicenseType: boatingLicenseTypeEnum("boating_license_type").default("NONE"),
+    boatingLicenseNumber: text("boating_license_number"),
+    boatingLicenseExpiry: timestamp("boating_license_expiry", { mode: "date" }),
+    boatingLicenseVerified: boolean("boating_license_verified").default(false),
+    boatingCertifications: text("boating_certifications").array(),
+    
+    // Insurance Information
+    hasInsurance: boolean("has_insurance").default(false),
+    insuranceProvider: text("insurance_provider"),
+    insurancePolicyNumber: text("insurance_policy_number"),
+    insuranceExpiryDate: timestamp("insurance_expiry_date", { mode: "date" }),
+    insuranceVerified: boolean("insurance_verified").default(false),
+    
+    // Payment Information
+    stripeCustomerId: text("stripe_customer_id"),
+    defaultPaymentMethodId: text("default_payment_method_id"),
+    hasBankAccountConnected: boolean("has_bank_account_connected").default(false),
+    stripeConnectAccountId: text("stripe_connect_account_id"),
+    payoutPreference: text("payout_preference").default("AUTOMATIC"),
+    
+    // Owner/Renter Specific
+    isBoatOwner: boolean("is_boat_owner").default(false),
+    ownerOnboardingComplete: boolean("owner_onboarding_complete").default(false),
+    ownerVerificationStatus: text("owner_verification_status"),
+    totalBoatsListed: integer("total_boats_listed").default(0),
+    preferredRentalTypes: text("preferred_rental_types").array(),
+    
+    // Renter Preferences
+    preferredBoatTypes: text("preferred_boat_types").array(),
+    preferredDestinations: text("preferred_destinations").array(),
+    rentalHistory: json("rental_history"),
+    
+    // Terms & Agreements
+    termsAcceptedAt: timestamp("terms_accepted_at", { mode: "date", withTimezone: true }),
+    privacyPolicyAcceptedAt: timestamp("privacy_policy_accepted_at", { mode: "date", withTimezone: true }),
+    acceptedAnchorCode: boolean("accepted_anchor_code").default(false).notNull(),
+    rentalAgreementAcceptedAt: timestamp("rental_agreement_accepted_at", { mode: "date", withTimezone: true }),
+    liabilityWaiverAcceptedAt: timestamp("liability_waiver_accepted_at", { mode: "date", withTimezone: true }),
+    
+    // Onboarding & Progress
+    signupComplete: boolean("signup_complete").default(false).notNull(),
+    onboardingStep: integer("onboarding_step").default(1),
+    profileCompletionPercentage: integer("profile_completion_percentage").default(0),
+    
+    // Activity Metrics
+    lastActiveAt: timestamp("last_active_at", { mode: "date", withTimezone: true }),
+    totalBookings: integer("total_bookings").default(0),
+    totalReviews: integer("total_reviews").default(0),
+    averageRating: doublePrecision("average_rating"),
+    totalTripsAsRenter: integer("total_trips_as_renter").default(0),
+    totalTripsAsOwner: integer("total_trips_as_owner").default(0),
+    cancellationRate: doublePrecision("cancellation_rate").default(0),
+    responseRate: doublePrecision("response_rate").default(0),
+    responseTime: integer("response_time"), // Average response time in minutes
+    
+    // Referral Program
+    referralCode: text("referral_code"),
+    referredById: uuid("referred_by_id"), // Store just the ID without foreign key constraint
+    totalReferrals: integer("total_referrals").default(0),
+    referralCredits: doublePrecision("referral_credits").default(0),
+    
+    // Soft Delete
+    isDeleted: boolean("is_deleted").default(false).notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "date", withTimezone: true }),
+    deletionReason: text("deletion_reason"),
+    
+    // Timestamps
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("email_idx").on(table.email),
+    index("status_idx").on(table.status),
+    index("role_idx").on(table.role),
+    index("boating_exp_idx").on(table.boatingExperience),
+    index("referral_code_idx").on(table.referralCode),
+    index("referred_by_idx").on(table.referredById)
+  ]
+);
 
 export const captains = pgTable("captain", {
+  // Core Information
   id: uuid("id").defaultRandom().notNull().primaryKey(),
-  status: text("status"),
-  uscgLicensed: boolean("uscg_licensed").default(false).notNull(),
-  uscgLicenseNumber: text("uscg_license_number"),
-  licenseExpDate: text("license_exp_date"),
-  licenseType: text("license_type"),
+  userId: uuid("user_id").notNull().unique().references(() => users.id),
+  status: text("status").default("PENDING"),
+  
+  // Personal Information
   description: text("description"),
   hireRate: doublePrecision("hire_rate"),
-  userId: uuid("user_id").notNull().unique().references(() => users.id),
+  availableForHire: boolean("available_for_hire").default(false),
+  
+  // Location
   street: text("street"),
   streetSecond: text("street_second"),
   city: text("city"),
   state: text("state"),
   zip: text("zip"),
-  captainForHire: boolean("captain_for_hire"),
-  anchorAcademy: boolean("anchor_academy"),
-  listBoat: boolean("list_boat"),
-  previousExperience: text("previous_experience"),
-  resumeUrl: text("resume_url"),
-  licenseUrl: text("license_url"),
-  licenseKey: json("license_key"),
-  primaryCrewId: uuid("primary_crew_id"),
-  icaSignature: text("ica_signature"),
-  icaType: text("ica_type"),
-  icaDate: timestamp("ica_date", { mode: "date" }),
-  academyQualified: boolean("academy_qualified"),
-  academyStatusId: integer("academy_status_id"),
-  drugInfoId: integer("drug_info_id"),
-  personalInfoId: integer("personal_info_id"),
+  
+  // Licensing & Qualifications
+  uscgLicensed: boolean("uscg_licensed").default(false).notNull(),
+  licenseType: text("license_type"),
+  licenseNumber: text("license_number"),
+  licenseExpiry: timestamp("license_expiry", { mode: "date" }),
+  licenseImage: text("license_image"),
+  yearsExperience: integer("years_experience"),
+  
+  // Professional Details
+  specialties: text("specialties").array(),
+  languages: text("languages").array(),
+  certifications: text("certifications").array(),
+  resume: text("resume"),
+  
+  // Availability & Preferences
   availability: json("availability"),
-  preferredVessels: json("preferred_vessels"),
+  preferredBoatTypes: text("preferred_boat_types").array(),
+  preferredLocations: text("preferred_locations").array(),
+  maxPassengers: integer("max_passengers"),
+  
+  // Academy & Training
+  academyQualified: boolean("academy_qualified").default(false),
+  academyStatus: text("academy_status"),
+  trainingCompleted: text("training_completed").array(),
+  
+  // Agreement Information
+  agreementSigned: boolean("agreement_signed").default(false),
+  agreementDate: timestamp("agreement_date", { mode: "date" }),
+  agreementType: text("agreement_type"),
+  
+  // Reviews & Ratings
+  totalTrips: integer("total_trips").default(0),
+  averageRating: doublePrecision("average_rating"),
+  
+  // Timestamps
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
-});
+}, (table) => [
+  index("captain_status_idx").on(table.status),
+  index("captain_location_idx").on(table.city, table.state),
+  index("captain_license_idx").on(table.licenseType)
+]);
 
 export const boats = pgTable(
   "boat",
   {
-    // Primary Key
+    // Core Information
     id: uuid("id").defaultRandom().notNull().primaryKey(),
+    name: text("name").notNull(),
+    displayTitle: text("display_title"),
+    description: text("description"),
+    category: boatCategoryEnum("category").notNull(),
+    status: boatStatusEnum("status").default("PENDING").notNull(),
+    active: boolean("active").default(false).notNull(),
+    featured: boolean("featured").default(false),
+    featuredOrder: integer("featured_order"),
     
-    // Owner information
+    // Owner Information
     ownerId: uuid("owner_id").notNull().references(() => users.id),
     ownerEmail: text("owner_email"),
     
-    // Basic boat info
-    name: text("name").notNull(),
-    displayTitle: text("display_title"),
-    category: boatCategoryEnum("category").notNull(),
+    // Boat Specifications
     make: text("make"),
     model: text("model"),
     yearBuilt: integer("year_built"),
     lengthFt: integer("length_ft").notNull(),
-    
-    // Specifications
-    numOfPassengers: integer("num_of_passengers").notNull(),
-    numOfCabins: integer("num_of_cabins"),
-    numOfBathrooms: integer("num_of_bathrooms"),
-    numOfShowers: integer("num_of_showers"),
-    sleepsNum: integer("sleeps_num"),
-    beam: doublePrecision("beam"), // Width of the yacht
-    draft: doublePrecision("draft"), // Depth below waterline
-    grossTonnage: integer("gross_tonnage"),
-    cruisingSpeed: integer("cruising_speed"),
+    capacity: integer("capacity").notNull(), // Renamed from numOfPassengers
+    cabins: integer("cabins"),               // Renamed from numOfCabins
+    bathrooms: integer("bathrooms"),         // Renamed from numOfBathrooms
+    showers: integer("showers"),             // Renamed from numOfShowers
+    sleeps: integer("sleeps"),               // Renamed from sleepsNum
+    beam: doublePrecision("beam"),           // Width of the boat
+    draft: doublePrecision("draft"),         // Depth below waterline
+    weight: integer("weight"),               // Added weight (in tons)
+    fuelType: text("fuel_type"),             // Added fuel type
+    engineType: text("engine_type"),         // Added engine type
+    enginePower: text("engine_power"),       // Added engine power
     maxSpeed: integer("max_speed"),
-    range: integer("range"), // Nautical miles at cruising speed
+    cruisingSpeed: integer("cruising_speed"),
+    range: integer("range"),                 // Nautical miles at cruising speed
     
-    // Features and descriptions
-    description: text("description"),
+    // Features
     features: text("features").array().notNull(),
-    specialInstructions: text("special_instructions"),
-    parkingNotes: text("parking_notes"),
-    instructionsAndRules: text("instructions_and_rules"),
-    dockInfo: text("dock_info"),
-    notes: text("notes"),
+    amenities: text("amenities").array(),    // Added amenities
+    safetyEquipment: text("safety_equipment").array(), // Added safety equipment
     
-    // Enhanced media
-    primaryPhoto: text("primary_photo"),
-    primaryPhotoAbsPath: text("primary_photo_abs_path"),
-    galleryPhotos: text("gallery_photos").array(),
+    // Media
+    mainImage: text("main_image"),           // Renamed from primaryPhoto
+    galleryImages: text("gallery_images").array(), // Renamed from galleryPhotos
     virtualTourUrl: text("virtual_tour_url"),
-    youtubeLink: text("youtube_link"),
+    videoUrl: text("video_url"),             // Renamed from youtubeLink
     
-    // Enhanced pricing
+    // Pricing
     hourlyRate: doublePrecision("hourly_rate").notNull(),
     halfDayPrice: doublePrecision("half_day_price"),
     fullDayPrice: doublePrecision("full_day_price"),
     weeklyRate: doublePrecision("weekly_rate"),
     monthlyRate: doublePrecision("monthly_rate"),
-    seasonalRates: json("seasonal_rates"), // JSON object with seasonal pricing
-    additionalHours: doublePrecision("additional_hours"),
     depositAmount: doublePrecision("deposit_amount"),
-    cashValue: doublePrecision("cash_value"),
+    cleaningFee: doublePrecision("cleaning_fee"), // Added cleaning fee
+    taxRate: doublePrecision("tax_rate"),     // Added tax rate
+    seasonalRates: json("seasonal_rates"),    // JSON object with seasonal pricing
     
-    // Location and availability
+    // Location
     homePort: text("home_port"),
     currentLocation: text("current_location"),
+    latitude: doublePrecision("latitude"),    // Added latitude
+    longitude: doublePrecision("longitude"),  // Added longitude
     availableDestinations: text("available_destinations").array(),
-    seasonalLocations: json("seasonal_locations"), // JSON object with seasonal locations
+    dockInfo: text("dock_info"),
+    parkingInfo: text("parking_info"),        // Renamed from parkingNotes
     
-    // Status and visibility
-    status: boatStatusEnum("status").default("PENDING").notNull(),
-    active: boolean("active").default(false).notNull(),
-    featured: boolean("featured").default(false),
-    featuredOrder: integer("featured_order"),
-    listBoat: boolean("list_boat").default(false).notNull(),
-    
-    // Enhanced crew information
+    // Charter Options
     crewRequired: boolean("crew_required").default(true).notNull(),
     crewIncluded: boolean("crew_included").default(true).notNull(),
-    crewNum: integer("crew_num"),
+    crewSize: integer("crew_size"),           // Renamed from crewNum
     primaryCaptainId: uuid("primary_captain_id").references(() => captains.id),
-    
-    // Charter options
     dayCharter: boolean("day_charter").default(true).notNull(),
-    termCharter: boolean("term_charter").default(true).notNull(),
+    termCharter: boolean("term_charter").default(false).notNull(),
     minimumCharterDays: integer("minimum_charter_days"),
-    preferredCharterDuration: text("preferred_charter_duration"),
     
-    // Enhanced fuel and technical details
+    // Fuel Details
     fuelIncluded: boolean("fuel_included").default(false).notNull(),
-    fuelBillingRate: doublePrecision("fuel_billing_rate"),
-    fuelReimbursementRate: doublePrecision("fuel_reimbursement_rate"),
-    fuelPayeeType: text("fuel_payee_type"),
     fuelCapacity: integer("fuel_capacity"),
     waterCapacity: integer("water_capacity"),
     
-    // Documentation and certification
-    hullId: text("hull_id"),
-    registrationNumber: text("registration_number"),
-    flagState: text("flag_state"),
-    classificationSociety: text("classification_society"),
-    insurancePhoto: text("insurance_photo"),
-    insurancePhotoAbsPath: text("insurance_photo_abs_path"),
-    insuranceExpiryDate: timestamp("insurance_expiry_date", { mode: "date" }),
-    lastSurveyDate: timestamp("last_survey_date", { mode: "date" }),
+    // Rules & Instructions
+    rules: text("rules"),                     // Renamed from instructionsAndRules
+    specialInstructions: text("special_instructions"),
+    cancellationPolicy: text("cancellation_policy"), // Added cancellation policy
     
-    // Timestamps and metadata
+    // Documentation
+    registrationNumber: text("registration_number"),
+    hullId: text("hull_id"),
+    insuranceInfo: text("insurance_info"),    // Simplified insurance fields
+    insuranceExpiry: timestamp("insurance_expiry", { mode: "date" }),
+    
+    // Availability
+    availableWeekdays: text("available_weekdays").array(), // Added available days
+    minRentalHours: integer("min_rental_hours"), // Added minimum rental hours
+    maxRentalDays: integer("max_rental_days"),   // Added maximum rental days
+    advanceBookingDays: integer("advance_booking_days"), // Added advance booking days
+    seasonalAvailability: json("seasonal_availability"), // Added seasonal availability
+    
+    // Maintenance
+    lastMaintenanceDate: timestamp("last_maintenance_date", { mode: "date" }),
+    nextMaintenanceDate: timestamp("next_maintenance_date", { mode: "date" }),
+    maintenanceNotes: text("maintenance_notes"), // Added maintenance notes
+    
+    // Timestamps
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
-    lastMaintenanceDate: timestamp("last_maintenance_date", { mode: "date" }),
-    nextMaintenanceDate: timestamp("next_maintenance_date", { mode: "date" })
   },
   (table) => [
     index("boat_owner_idx").on(table.ownerId),
     index("boat_captain_idx").on(table.primaryCaptainId),
     index("boat_status_idx").on(table.status),
-    index("boat_category_idx").on(table.category)
+    index("boat_category_idx").on(table.category),
+    index("boat_location_idx").on(table.homePort)
   ]
 );
 
@@ -358,358 +529,195 @@ export const bookingRequests = pgTable("booking_requests", {
   index("booking_requests_date_range_idx").on(table.startDate, table.endDate)
 ]);
 
-/* // 4. MooringLocation
-export const mooringLocations = pgTable("mooring_location", {
+export const bookings = pgTable("booking", {
+  // Core Information
   id: uuid("id").defaultRandom().notNull().primaryKey(),
-  boatId: uuid("boat_id").notNull().unique().references(() => boats.id),
+  status: text("status").default("PENDING").notNull(),
+  type: text("type").notNull(),
   
-  // Location details
-  address: text("address").notNull(),
-  lat: doublePrecision("lat"),
-  long: doublePrecision("long"),
-  mooringAddressComponents: json("mooring_address_components"),
-  
-  // Parking information
-  parkingAddress: text("parking_address"),
-  parkingLat: doublePrecision("parking_lat"),
-  parkingLong: doublePrecision("parking_long"),
-  parkingAddressComponents: json("parking_address_components"),
-  
-  // Timestamps
-  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
-});
-
-// 5. BoatImage
-export const boatImages = pgTable("boat_image", {
-  id: uuid("id").defaultRandom().notNull().primaryKey(),
+  // Relationships
+  renterId: uuid("renter_id").notNull().references(() => users.id),
   boatId: uuid("boat_id").notNull().references(() => boats.id),
+  captainId: uuid("captain_id").references(() => captains.id),
   
-  // Image details
-  url: text("url").notNull(),
-  resourceKey: text("resource_key"),
-  thumbUrl: text("thumb_url"),
-  thumbKey: text("thumb_key"),
-  sortOrder: integer("sort_order"),
+  // Booking Details
+  startDate: timestamp("start_date", { mode: "date", withTimezone: true }).notNull(),
+  endDate: timestamp("end_date", { mode: "date", withTimezone: true }).notNull(),
+  duration: integer("duration").notNull(),
+  passengers: integer("passengers").notNull(),
   
-  // Processing flags
-  needsCrop: boolean("needs_crop").default(false).notNull(),
-  
-  // Timestamps
-  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
-});
-
-// 6. BoatRate
-export const boatRates = pgTable("boat_rate", {
-  id: uuid("id").defaultRandom().notNull().primaryKey(),
-  boatId: uuid("boat_id").notNull().references(() => boats.id),
-  
-  // Rate details
-  name: text("name").notNull(),
-  rateType: text("rate_type").notNull(),
-  ratePayee: text("rate_payee"),
+  // Location
+  pickupLocation: text("pickup_location"),
+  dropoffLocation: text("dropoff_location"),
+  destinationDetails: text("destination_details"),
   
   // Pricing
-  hourlyRate: doublePrecision("hourly_rate"),
-  halfDayRate: doublePrecision("half_day_rate"),
-  fullDayRate: doublePrecision("full_day_rate"),
-  customRate: doublePrecision("custom_rate"),
+  basePrice: doublePrecision("base_price").notNull(),
+  captainFee: doublePrecision("captain_fee"),
+  cleaningFee: doublePrecision("cleaning_fee"),
+  serviceFee: doublePrecision("service_fee").notNull(),
+  taxAmount: doublePrecision("tax_amount"),
+  totalPrice: doublePrecision("total_price").notNull(),
   
-  // Calculations
-  taxPercentage: doublePrecision("tax_percentage"),
-  markupPercentage: doublePrecision("markup_percentage"),
-  percentageBasedRatePercent: doublePrecision("percentage_based_rate_percent"),
-  percentBasedOn: text("percent_based_on"),
+  // Payment
+  paymentStatus: text("payment_status").default("PENDING"),
+  paymentMethod: text("payment_method"),
+  paymentIntentId: text("payment_intent_id"),
+  depositAmount: doublePrecision("deposit_amount"),
+  depositPaid: boolean("deposit_paid").default(false),
+  refundAmount: doublePrecision("refund_amount"),
   
-  // Payout settings
-  generatePayouts: boolean("generate_payouts").default(true).notNull(),
-  payToUserId: uuid("pay_to_user_id").references(() => users.id),
+  // Special Requests
+  specialRequests: text("special_requests"),
+  addOns: json("add_ons"),
+  
+  // Cancellation
+  cancelledAt: timestamp("cancelled_at", { mode: "date", withTimezone: true }),
+  cancellationReason: text("cancellation_reason"),
+  cancelledBy: uuid("cancelled_by").references(() => users.id),
+  refundStatus: text("refund_status"),
+  
+  // Communication
+  messageThreadId: uuid("message_thread_id"),
+  lastMessageAt: timestamp("last_message_at", { mode: "date", withTimezone: true }),
+  
+  // Reviews
+  renterReviewId: uuid("renter_review_id"),
+  ownerReviewId: uuid("owner_review_id"),
   
   // Timestamps
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
-});
-
-// 7. BoatCaptainMap (formerly VesselCaptainMap)
-export const boatCaptainMap = pgTable(
-  "boat_captain_map",
-  {
-    boatId: uuid("boat_id").notNull().references(() => boats.id),
-    captainId: uuid("captain_id").notNull().references(() => captains.id),
-  },
-  (table) => ({
-    pk: primaryKey(table.boatId, table.captainId),
-  })
-);
-
-// 8. BoatWaterBodyMap (formerly VesselWaterBodyMap)
-export const boatWaterBodyMap = pgTable(
-  "boat_water_body_map",
-  {
-    boatId: uuid("boat_id").notNull().references(() => boats.id),
-    waterBodyId: uuid("water_body_id").notNull().references(() => waterBodies.id),
-    featuredBoat: boolean("featured_boat").default(false).notNull(),
-  },
-  (table) => ({
-    pk: primaryKey(table.boatId, table.waterBodyId),
-  })
-);
-
-// 9. ProductOffering
-export const productOfferings = pgTable("product_offering", {
-  id: serial("id").primaryKey(),
-  boatId: integer("boat_id").notNull().references(() => boats.id),
-  duration: integer("duration").notNull(),
-  openAvailability: boolean("open_availability").default(true).notNull(),
-  availabilityStartTime: text("availability_start_time").notNull(),
-  availabilityEndTime: text("availability_end_time").notNull(),
-  discount: doublePrecision("discount").default(0).notNull(),
-  premium: doublePrecision("premium").default(0).notNull(),
-  advanceNoticeMinHours: integer("advance_notice_min_hours")
-    .default(3)
-    .notNull(),
-  hoursBetween: integer("hours_between").default(1).notNull(),
-  customAvailabilityTimes: json("custom_availability_times"),
-  price: doublePrecision("price"),
-  fromCalendarPref: boolean("from_calendar_pref").default(false).notNull(),
-  selectableTimes: text("selectable_times").array().notNull(),
-  requiredAddOns: json("required_add_ons"),
-  optionalAddOns: json("optional_add_ons"),
-  monday: boolean("monday").default(true).notNull(),
-  tuesday: boolean("tuesday").default(true).notNull(),
-  wednesday: boolean("wednesday").default(true).notNull(),
-  thursday: boolean("thursday").default(true).notNull(),
-  friday: boolean("friday").default(true).notNull(),
-  saturday: boolean("saturday").default(true).notNull(),
-  sunday: boolean("sunday").default(true).notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
-});
-
-// 10. LineItem
-export const lineItems = pgTable("line_item", {
-  id: serial("id").primaryKey(),
-  productOfferingId: integer("product_offering_id")
-    .notNull()
-    .references(() => productOfferings.id),
-  name: lineItemTypeEnum("name").notNull(),
-  price: doublePrecision("price").notNull(),
-  estimatedTax: doublePrecision("estimated_tax").default(0).notNull(),
-  originalPrice: doublePrecision("original_price").notNull(),
-});
-
-// 11. BoatUnavailability
-export const boatUnavailabilities = pgTable(
-  "boat_unavailability",
-  {
-    id: serial("id").primaryKey(),
-    boatId: integer("boat_id").notNull().references(() => boats.id),
-    startTime: timestamp("start_time", { mode: "date" }).notNull(),
-    endTime: timestamp("end_time", { mode: "date" }).notNull(),
-    reason: text("reason"),
-    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
-  },
-  (table) => ({
-    index_boat_time: index("boat_unavailability_index").on(
-      table.boatId,
-      table.startTime,
-      table.endTime,
-    ),
-  })
-);
-
-// 12. Buyflow
-export const buyflows = pgTable("buyflow", {
-  id: serial("id").primaryKey(),
-  boatId: integer("boat_id").notNull().references(() => boats.id),
-  productOfferingId: integer("product_offering_id")
-    .notNull()
-    .references(() => productOfferings.id),
-  status: text("status").notNull(),
-  step: integer("step").notNull(),
-  totalPrice: doublePrecision("total_price").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
-  userVerified: boolean("user_verified").default(false).notNull(),
-  userVerifiedAt: timestamp("user_verified_at", { mode: "date" }),
-  verificationNotes: text("verification_notes"),
-  phoneVerified: boolean("phone_verified").default(false).notNull(),
-  emailVerified: boolean("email_verified").default(false).notNull(),
-  identityVerified: boolean("identity_verified").default(false).notNull(),
-  requirePhoneVerification: boolean("require_phone_verification")
-    .default(true)
-    .notNull(),
-  requireEmailVerification: boolean("require_email_verification")
-    .default(true)
-    .notNull(),
-  requireIdentityVerification: boolean("require_identity_verification")
-    .default(true)
-    .notNull(),
-});
-
-// 13. BuyflowItem
-export const buyflowItems = pgTable("buyflow_item", {
-  id: serial("id").primaryKey(),
-  buyflowId: integer("buyflow_id").notNull().references(() => buyflows.id),
-  itemType: text("item_type").notNull(),
-  amount: doublePrecision("amount").notNull(),
-  required: boolean("required").default(true).notNull(),
-  selected: boolean("selected").default(false).notNull(),
-});
-
-// 14. Booking
-export const bookings = pgTable(
-  "booking",
-  {
-    id: serial("id").primaryKey(),
-    boatId: integer("boat_id").notNull().references(() => boats.id),
-    userId: integer("user_id").notNull().references(() => users.id),
-    captainId: integer("captain_id").references(() => captains.id),
-    buyflowId: integer("buyflow_id").notNull().unique().references(() => buyflows.id),
-    status: bookingRequestStatusEnum("status").notNull(),
-    startTime: timestamp("start_time", { mode: "date" }).notNull(),
-    endTime: timestamp("end_time", { mode: "date" }).notNull(),
-    totalAmount: doublePrecision("total_amount").notNull(),
-    depositPaid: boolean("deposit_paid").default(false).notNull(),
-    depositAmount: doublePrecision("deposit_amount"),
-    specialRequests: text("special_requests"),
-    apiToken: text("api_token"),
-    apiResponse: json("api_response"),
-    apiStatus: text("api_status"),
-    apiErrorMessage: text("api_error_message"),
-    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
-  },
-  (table) => ({
-    booking_index: index("booking_index").on(
-      table.boatId,
-      table.startTime,
-      table.endTime,
-    ),
-  })
-);
-
-// 15. Payment
-export const payments = pgTable("payment", {
-  id: serial("id").primaryKey(),
-  bookingId: integer("booking_id").notNull().references(() => bookings.id),
-  amount: doublePrecision("amount").notNull(),
-  status: paymentStatusEnum("status").notNull(),
-  paymentMethod: text("payment_method").notNull(),
-  transactionId: text("transaction_id"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
-});
-
-// 16. UserVerificationCheck
-export const userVerificationChecks = pgTable("user_verification_check", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  buyflowId: integer("buyflow_id").notNull().references(() => buyflows.id),
-  verificationType: verificationTypeEnum("verification_type").notNull(),
-  status: verificationStatusEnum("status").notNull(),
-  attemptedAt: timestamp("attempted_at", { mode: "date" }).defaultNow().notNull(),
-  completedAt: timestamp("completed_at", { mode: "date" }),
-  failureReason: text("failure_reason"),
-  ipAddress: text("ip_address"),
-  deviceInfo: text("device_info"),
-});
-
-// 17. UsernameHistory
-export const usernameHistories = pgTable( "username_history",
-  {
-    id: serial("id").primaryKey(),
-    userId: integer("user_id").notNull().references(() => users.id),
-    oldUsername: text("old_username").notNull(),
-    newUsername: text("new_username").notNull(),
-    changedAt: timestamp("changed_at", { mode: "date" }).defaultNow().notNull(),
-    reason: text("reason"),
-  },
-  (table) => ({
-    user_changed_idx: index("username_history_userid_changedat_idx").on(
-      table.userId,
-      table.changedAt,
-    ),
-  })
-);
-
-// ========================================================
-// New Tables and Enums for Additional Functionality
-// ========================================================
-
-// Support Ticket Status Enum
-export const supportTicketStatusEnum = pgEnum("SupportTicketStatus", [
-  "OPEN",
-  "IN_PROGRESS",
-  "CLOSED",
-  "ON_HOLD",
+}, (table) => [
+  index("booking_status_idx").on(table.status),
+  index("booking_renter_idx").on(table.renterId),
+  index("booking_boat_idx").on(table.boatId),
+  index("booking_date_idx").on(table.startDate, table.endDate)
 ]);
 
-// Water Body Table - to capture details about a water body (e.g., bay, lake, strait)
-export const waterBodies = pgTable("water_body", {
-  id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description"),
-  lat: doublePrecision("lat"),
-  long: doublePrecision("long"),
-  imageUrl: text("image_url"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
-});
+export const reviews = pgTable("review", {
+  // Core Information
+  id: uuid("id").defaultRandom().notNull().primaryKey(),
+  type: text("type").notNull(), // BOAT, CAPTAIN, RENTER
+  status: text("status").default("PUBLISHED").notNull(),
+  
+  // Relationships
+  bookingId: uuid("booking_id").references(() => bookings.id),
+  reviewerId: uuid("reviewer_id").notNull().references(() => users.id),
+  reviewedUserId: uuid("reviewed_user_id").references(() => users.id),
+  reviewedBoatId: uuid("reviewed_boat_id").references(() => boats.id),
+  reviewedCaptainId: uuid("reviewed_captain_id").references(() => captains.id),
+  
+  // Review Content
+  rating: integer("rating").notNull(),
+  title: text("title"),
+  content: text("content"),
+  response: text("response"),
+  responseDate: timestamp("response_date", { mode: "date", withTimezone: true }),
+  
+  // Media
+  photos: text("photos").array(),
+  
+  // Flags
+  isVerified: boolean("is_verified").default(false),
+  isFeatured: boolean("is_featured").default(false),
+  isReported: boolean("is_reported").default(false),
+  reportReason: text("report_reason"),
+  
+  // Metrics
+  helpfulCount: integer("helpful_count").default(0),
+  unhelpfulCount: integer("unhelpful_count").default(0),
+  
+  // Timestamps
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+}, (table) => [
+  index("review_type_idx").on(table.type),
+  index("review_booking_idx").on(table.bookingId),
+  index("review_reviewer_idx").on(table.reviewerId),
+  index("review_boat_idx").on(table.reviewedBoatId),
+  index("review_captain_idx").on(table.reviewedCaptainId),
+  index("review_user_idx").on(table.reviewedUserId)
+]);
 
-// Employee Table - for internal staff/employee portal and admin functions
-export const employees = pgTable("employee", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().unique().references(() => users.id),
-  role: text("role").notNull(),  // e.g., "ADMIN", "SUPPORT", "MANAGER"
-  department: text("department"),
-  isActive: boolean("is_active").default(true).notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
-});
+// Add new verifications table after the existing tables
+export const verifications = pgTable("verification", {
+  // Core Information
+  id: uuid("id").defaultRandom().notNull().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  
+  // Verification Details
+  type: verificationTypeEnum("type").notNull(),
+  channel: verificationChannelEnum("channel").notNull(),
+  status: verificationStatusEnum("status").default("PENDING").notNull(),
+  
+  // Contact Information
+  phoneNumber: text("phone_number"),
+  email: text("email"),
+  
+  // Verification Code
+  code: text("code").notNull(),
+  codeHash: text("code_hash"), // For additional security
+  
+  // Twilio Information
+  twilioSid: text("twilio_sid"), // Twilio verification SID
+  twilioStatus: text("twilio_status"), // Status from Twilio API
+  
+  // Attempt Tracking
+  attempts: integer("attempts").default(0).notNull(),
+  maxAttempts: integer("max_attempts").default(3).notNull(),
+  
+  // Timing
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+  expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true }).notNull(),
+  verifiedAt: timestamp("verified_at", { mode: "date", withTimezone: true }),
+  
+  // Metadata
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  metadata: json("metadata"), // For storing additional context (e.g., booking ID for booking-related verifications)
+}, (table) => [
+  index("verification_user_idx").on(table.userId),
+  index("verification_status_idx").on(table.status),
+  index("verification_type_idx").on(table.type),
+  index("verification_expires_idx").on(table.expiresAt),
+]);
 
-// Support Ticket Table - allowing customers to file support queries
-export const supportTickets = pgTable("support_ticket", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
-  subject: text("subject").notNull(),
-  description: text("description").notNull(),
-  status: supportTicketStatusEnum("status").default("OPEN").notNull(),
-  assignedEmployeeId: integer("assigned_employee_id").references(() => employees.id),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
-});
-
-// Notification Table - for sending alerts/messages to users (or employees)
+// Add new notifications table for future messaging needs
 export const notifications = pgTable("notification", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull().references(() => users.id),
+  // Core Information
+  id: uuid("id").defaultRandom().notNull().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id),
+  
+  // Notification Content
   title: text("title").notNull(),
-  message: text("message").notNull(),
-  type: text("type"), // e.g., "SYSTEM", "PROMOTION", etc.
-  isRead: boolean("is_read").default(false).notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-});
-
-// Boat Review Table - to allow users to leave reviews about boats
-export const boatReviews = pgTable("boat_review", {
-  id: serial("id").primaryKey(),
-  boatId: integer("boat_id").notNull().references(() => boats.id),
-  userId: integer("user_id").notNull().references(() => users.id),
-  rating: integer("rating").notNull(), // e.g., 1-5 scale
-  comment: text("comment"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
-});
-
-// Admin Log Table - to track actions performed by employees on the admin portal
-export const adminLogs = pgTable("admin_log", {
-  id: serial("id").primaryKey(),
-  employeeId: integer("employee_id").notNull().references(() => employees.id),
-  action: text("action").notNull(),
-  details: json("details"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
-});
-*/
+  body: text("body").notNull(),
+  type: text("type").notNull(), // e.g., BOOKING_CONFIRMATION, BOOKING_REQUEST, VERIFICATION, etc.
+  
+  // Delivery Information
+  channel: text("channel").notNull(), // SMS, EMAIL, PUSH, IN_APP
+  status: text("status").default("PENDING").notNull(), // PENDING, SENT, DELIVERED, FAILED
+  
+  // Twilio Information (for SMS/WhatsApp)
+  twilioSid: text("twilio_sid"),
+  twilioStatus: text("twilio_status"),
+  
+  // Related Records
+  relatedId: uuid("related_id"), // e.g., bookingId, verificationId
+  relatedType: text("related_type"), // e.g., BOOKING, VERIFICATION
+  
+  // Timing
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+  sentAt: timestamp("sent_at", { mode: "date", withTimezone: true }),
+  deliveredAt: timestamp("delivered_at", { mode: "date", withTimezone: true }),
+  readAt: timestamp("read_at", { mode: "date", withTimezone: true }),
+  
+  // Metadata
+  metadata: json("metadata"),
+}, (table) => [
+  index("notification_user_idx").on(table.userId),
+  index("notification_status_idx").on(table.status),
+  index("notification_type_idx").on(table.type),
+  index("notification_related_idx").on(table.relatedId, table.relatedType),
+]);

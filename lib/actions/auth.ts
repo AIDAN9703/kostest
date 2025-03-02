@@ -5,7 +5,7 @@ import { db } from "@/database/db";
 import { users } from "@/database/schema";
 import { hash } from "bcryptjs";
 import { signIn } from "@/auth";
-import { ActionResponse } from "@/lib/types";
+import { ActionResponse } from "@/types/types";
 
 export const signInAction = async (
   params: Pick<AuthCredentials, "email" | "password">

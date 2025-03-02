@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   images: {
     remotePatterns: [
       {
@@ -21,6 +20,13 @@ const nextConfig: NextConfig = {
         hostname: 'lh3.google.com',
       },
     ],
+    domains: ['localhost'],
+  },
+  typescript: {
+    ignoreBuildErrors: false, // Re-enable type checking
+  },
+  eslint: {
+    ignoreDuringBuilds: false, // Re-enable linting
   },
 };
 

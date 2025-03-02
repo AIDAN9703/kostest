@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Boat } from "@/lib/types";
+import { Boat } from "@/types/types";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { 
@@ -23,7 +23,7 @@ export default function BoatDetails({ boat }: BoatDetailsProps) {
       {/* Image Gallery */}
       <div className="relative aspect-video w-full overflow-hidden rounded-lg">
         <Image
-          src={boat.primaryPhotoAbsPath || "/images/placeholder-boat.jpg"}
+          src={boat.mainImage || boat.primaryPhotoAbsPath || "/images/placeholder-boat.jpg"}
           alt={boat.name}
           fill
           className="object-cover"
@@ -45,10 +45,10 @@ export default function BoatDetails({ boat }: BoatDetailsProps) {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <StatCard icon={<Users />} label="Passengers" value={boat.numOfPassengers} />
-          <StatCard icon={<Bed />} label="Cabins" value={boat.numOfCabins || 0} />
-          <StatCard icon={<Bed />} label="Bathrooms" value={boat.numOfBathrooms || 0} />
-          <StatCard icon={<Ruler />} label="Length" value={`${boat.lengthFt}ft`} />
+          <StatCard icon={<Users />} label="Passengers" value={(boat.capacity || boat.numOfPassengers || 0)} />
+          <StatCard icon={<Bed />} label="Cabins" value={(boat.cabins || boat.numOfCabins || 0)} />
+          <StatCard icon={<Bed />} label="Bathrooms" value={(boat.bathrooms || boat.numOfBathrooms || 0)} />
+          <StatCard icon={<Ruler />} label="Length" value={`${boat.lengthFt} ft`} />
         </div>
       </div>
 

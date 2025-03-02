@@ -43,3 +43,5 @@ next-env.d.ts
 .vercel
 
 /images/hero-video.mp4
+
+.vercel

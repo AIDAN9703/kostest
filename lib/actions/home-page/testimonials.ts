@@ -1,5 +1,5 @@
 import { cachedFetch } from '@/lib/utils';
-import { ActionResponse } from '@/lib/types';
+import { ActionResponse } from '@/types/types';
 
 interface Review {
   author_name: string;

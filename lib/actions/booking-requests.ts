@@ -3,7 +3,7 @@ import { bookingRequests } from "@/database/schema";
 import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { bookingRequestSchema } from "@/lib/validations";
-import { ActionResponse } from "@/lib/types";
+import { ActionResponse } from "@/types/types";
 import { cachedFetch } from "@/lib/utils";
 import type { z } from "zod";
 
