@@ -107,7 +107,7 @@ const ProfileSidebar = ({ user }: ProfileSidebarProps) => {
           collapsed ? "justify-center" : "justify-start"
         )}>
           <Avatar className="h-10 w-10">
-            <AvatarImage src={user?.image || ""} alt={user?.name || "User"} />
+            <AvatarImage src={user?.profileImage || ""} alt={user?.name || "User"} />
             <AvatarFallback className="bg-primary text-white">
               {user?.name?.charAt(0) || "U"}
             </AvatarFallback>

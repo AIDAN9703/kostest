@@ -7,6 +7,13 @@
     --radius: 0.5rem;
   }
 
+  /* Prevent horizontal scrolling */
+  html, body {
+    overflow-x: hidden;
+    position: relative;
+    width: 100%;
+  }
+
   .hide-scrollbar::-webkit-scrollbar {
     width: 0px;
     height: 0px;
@@ -392,7 +399,14 @@
 
 /* Auth Pages */
 .auth-page {
-  @apply min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden;
+  @apply min-h-screen bg-white overflow-hidden;
+}
+
+/* Make sure the image container stays fixed during scroll */
+.auth-page .h-screen {
+  height: 100vh;
+  position: sticky;
+  top: 0;
 }
 
 .auth-background {

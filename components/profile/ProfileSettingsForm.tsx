@@ -175,7 +175,11 @@ export default function ProfileSettingsForm({ user }: ProfileSettingsFormProps) 
                 <FormItem>
                   <FormLabel>First Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="John" {...field} />
+                    <Input 
+                      placeholder="John" 
+                      {...field} 
+                      value={safeString(field.value)} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -188,7 +192,11 @@ export default function ProfileSettingsForm({ user }: ProfileSettingsFormProps) 
                 <FormItem>
                   <FormLabel>Last Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Doe" {...field} />
+                    <Input 
+                      placeholder="Doe" 
+                      {...field} 
+                      value={safeString(field.value)} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -203,7 +211,11 @@ export default function ProfileSettingsForm({ user }: ProfileSettingsFormProps) 
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input placeholder="john.doe@example.com" {...field} />
+                  <Input 
+                    placeholder="john.doe@example.com" 
+                    {...field} 
+                    value={safeString(field.value)} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

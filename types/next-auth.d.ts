@@ -8,6 +8,8 @@ declare module "next-auth" {
     name: string;
     phoneNumber: string;
     role: typeof userRoleEnum.enumValues[number];
+    phoneVerified: boolean;
+    profileImage?: string;
   }
 
   interface Session {

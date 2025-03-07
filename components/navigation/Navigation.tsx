@@ -82,7 +82,9 @@ const navigationData = {
     user: [
         { href: "/dashboard", label: "Dashboard" },
         { href: "/bookings", label: "My Bookings" },
-        { href: "/profile", label: "Profile" },
+        { href: "/inbox", label: "Inbox" },
+        { href: "/favorites", label: "Favorites" },
+        { href: "/settings", label: "Settings" },
     ]
 }
 
@@ -174,9 +176,9 @@ const Navigation = ({ session }: { session: Session | null }) => {
         "transition-all duration-300",
         isHomePage 
             ? scrolled 
-                ? "bg-white/95 backdrop-blur-sm shadow-sm py-3" 
+                ? "bg-white backdrop-blur-sm shadow-sm py-3" 
                 : "bg-transparent py-5"
-            : "bg-white/95 backdrop-blur-sm shadow-sm py-3"
+            : "bg-white backdrop-blur-sm shadow-sm py-3"
     )
 
     //MAIN TEXT STYLES
@@ -597,7 +599,7 @@ const Navigation = ({ session }: { session: Session | null }) => {
                                     <Button 
                                         variant="ghost" 
                                         className={cn(
-                                            "p-0.5 h-11 w-11 rounded-full",
+                                            "p-0.5 h-10 w-10 sm:h-11 sm:w-11 rounded-full",
                                             "focus-visible:ring-2 focus-visible:ring-offset-2",
                                             "focus:outline-none focus:ring-0 focus:ring-offset-0",
                                             isHomePage && !scrolled
@@ -611,17 +613,17 @@ const Navigation = ({ session }: { session: Session | null }) => {
                                     >
                                         <Avatar className={cn(
                                             "h-full w-full transition-all duration-300",
-                                            "ring-[2.5px]",
+                                            "ring-[2px] sm:ring-[2.5px]",
                                             isHomePage && !scrolled 
                                                 ? "ring-white/90 bg-white/10" 
                                                 : "ring-primary/90 bg-primary/5"
                                         )}>
                                             <AvatarImage 
-                                                src={user.image || ''} 
+                                                src={user?.profileImage || ''} 
                                                 className="object-cover"
                                             />
                                             <AvatarFallback className={cn(
-                                                "text-sm font-semibold",
+                                                "text-xs sm:text-sm font-semibold",
                                                 isHomePage && !scrolled
                                                     ? "bg-white/20 text-white"
                                                     : "bg-primary/10 text-primary"

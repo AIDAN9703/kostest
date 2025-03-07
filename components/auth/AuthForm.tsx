@@ -31,7 +31,7 @@ import { toast } from "@/hooks/use-toast";
 interface Props<T extends FieldValues> {
   schema: ZodType<T>;
   defaultValues: T;
-  onSubmit: (data: T) => Promise<{ success: boolean; error?: string }>;
+  onSubmit: (data: T) => Promise<{ success: boolean; error?: string; data?: { redirectUrl?: string; message: string } }>;
   type: "SIGN_IN" | "SIGN_UP";
 }
 
@@ -77,6 +77,7 @@ const AuthForm = <T extends FieldValues>({
   const router = useRouter();
   const isSignIn = type === "SIGN_IN";
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Rotate through tips every 4 seconds
   useEffect(() => {
@@ -94,136 +95,67 @@ const AuthForm = <T extends FieldValues>({
   });
 
   const handleSubmit: SubmitHandler<T> = async (data) => {
-    const result = await onSubmit(data);
+    setIsSubmitting(true);
+    try {
+      const result = await onSubmit(data);
 
-    if (result.success) {
-      toast({
-        title: "Success",
-        description: isSignIn
-          ? "You have successfully signed in."
-          : "You have successfully signed up.",
-      });
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: result.data?.message || (isSignIn
+            ? "You have successfully signed in."
+            : "You have successfully signed up."),
+        });
 
-      router.push("/");
-    } else {
+        // Check if there's a redirectUrl in the response
+        if (result.data?.redirectUrl) {
+          router.push(result.data.redirectUrl);
+        } else {
+          router.push("/");
+        }
+      } else {
+        // Check if there's a redirectUrl in the error response
+        if (result.data?.redirectUrl) {
+          toast({
+            title: "Action Required",
+            description: result.data.message || result.error || "Additional action required.",
+          });
+          router.push(result.data.redirectUrl);
+        } else {
+          toast({
+            title: `Error ${isSignIn ? "signing in" : "signing up"}`,
+            description: result.error ?? "An error occurred.",
+            variant: "destructive",
+          });
+        }
+      }
+    } catch (error) {
       toast({
-        title: `Error ${isSignIn ? "signing in" : "signing up"}`,
-        description: result.error ?? "An error occurred.",
+        title: "Something went wrong",
+        description: "Please try again later.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="auth-content">
-      {/* Left Side - Dynamic Content */}
-      <div className="auth-branding">
-        <div className="auth-branding-top">
-          <div className="auth-logo">
-            <Image src="/icons/logo.png" alt="logo" width={45} height={45} className="drop-shadow-lg" />
-            <h1 className="text-3xl font-bold text-white">KOSyachts</h1>
-          </div>
-          <p className="text-xl text-white/80 font-light">
-          Crafting one unforgettable experience at a time.          </p>
-        </div>
-
-        <div className="auth-branding-content">
-          {isSignIn ? (
-            <>
-              <h2 className="text-lg font-medium text-white/90">Discover KOSyachts</h2>
-              <div className="relative h-[120px]"> {/* Fixed height container for tips */}
-                {YachtTips.map((tip, index) => (
-                  <div 
-                    key={tip.title}
-                    className={`tip-card absolute w-full transition-opacity duration-500 ${
-                      index === currentTipIndex ? "opacity-100" : "opacity-0 pointer-events-none"
-                    }`}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0 text-xl">
-                        {tip.icon}
-                      </div>
-                      <div>
-                        <h3 className="text-white font-medium">{tip.title}</h3>
-                        <p className="text-white/70 text-sm">{tip.description}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="flex justify-center gap-1 mt-4">
-                {YachtTips.map((_, index) => (
-                  <button
-                    key={index}
-                    className={`w-1.5 h-1.5 rounded-full transition-all ${
-                      index === currentTipIndex ? "bg-primary w-3" : "bg-white/20"
-                    }`}
-                    onClick={() => setCurrentTipIndex(index)}
-                  />
-                ))}
-              </div>
-            </>
-          ) : (
-            <>
-              <h2 className="text-lg font-medium text-white/90">Why Our Customers Love Us</h2>
-              <div className="space-y-6">
-                <div className="testimonial-card">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                      <Image src="/icons/quote.svg" alt="quote" width={20} height={20} />
-                    </div>
-                    <div>
-                      <p className="text-white/80 text-sm italic">"The most luxurious experience of my life. The crew was exceptional and the yacht was stunning."</p>
-                      <div className="mt-3 flex items-center gap-2">
-                        <p className="text-white font-medium">James Wilson</p>
-                        <div className="text-primary text-sm">★★★★★</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="testimonial-card">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                      <Image src="/icons/quote.svg" alt="quote" width={20} height={20} />
-                    </div>
-                    <div>
-                      <p className="text-white/80 text-sm italic">"Impeccable service from start to finish. KOSyachts made our anniversary truly unforgettable."</p>
-                      <div className="mt-3 flex items-center gap-2">
-                        <p className="text-white font-medium">Sarah Chen</p>
-                        <div className="text-primary text-sm">★★★★★</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="testimonial-card">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                      <Image src="/icons/quote.svg" alt="quote" width={20} height={20} />
-                    </div>
-                    <div>
-                      <p className="text-white/80 text-sm italic">"From the moment we stepped aboard, everything was perfect. The attention to detail and personalized service exceeded all expectations."</p>
-                      <div className="mt-3 flex items-center gap-2">
-                        <p className="text-white font-medium">Michael Roberts</p>
-                        <div className="text-primary text-sm">★★★★★</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+    <div className="w-full pb-8">
+      {/* Mobile Logo - Only visible on small screens */}
+      <div className="flex items-center justify-center mb-8 lg:hidden">
+        <div className="flex items-center gap-3">
+          <Image src="/icons/logo.png" alt="logo" width={40} height={40} />
+          <h1 className="text-2xl font-bold text-primary font-serif">KOS Yachts</h1>
         </div>
       </div>
 
-      {/* Right Side - Form */}
-      <div className="auth-form-container">
-        <div className="space-y-3 mb-8">
-          <h2 className="auth-heading">
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-3xl font-bold text-primary font-serif">
             {isSignIn ? "Welcome Back" : "Create Account"}
           </h2>
-          <p className="text-white/60">
+          <p className="text-gray-600 mt-2">
             {isSignIn
               ? "Enter your credentials to continue your journey"
               : "Join us to start your luxury experience"}
@@ -233,7 +165,7 @@ const AuthForm = <T extends FieldValues>({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-5"
+            className="space-y-6"
           >
             <div className="space-y-4">
               {Object.keys(defaultValues).map((field) => (
@@ -243,73 +175,78 @@ const AuthForm = <T extends FieldValues>({
                   name={field as Path<T>}
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-white/80">
+                      <FormLabel className="text-sm font-medium text-dark-400">
                         {FIELD_NAMES[field.name as keyof typeof FIELD_NAMES]}
                       </FormLabel>
                       <FormControl>
-                        <div className="relative">
-                          <Input
-                            required
-                            type={
-                              FIELD_TYPES[field.name as keyof typeof FIELD_TYPES]
-                            }
-                            {...field}
-                            className="auth-input"
-                            placeholder={`Enter your ${((FIELD_NAMES[field.name as keyof typeof FIELD_NAMES] ?? field.name) || '').toLowerCase()}`}
-                          />
-                        </div>
+                        <Input
+                          required
+                          type={
+                            FIELD_TYPES[field.name as keyof typeof FIELD_TYPES]
+                          }
+                          {...field}
+                          className="h-12 bg-white border border-gray-200 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"
+                          placeholder={`Enter your ${((FIELD_NAMES[field.name as keyof typeof FIELD_NAMES] ?? field.name) || '').toLowerCase()}`}
+                        />
                       </FormControl>
-                      <FormMessage className="text-red-400 text-sm mt-1" />
+                      <FormMessage className="text-red-500 text-sm mt-1" />
                     </FormItem>
                   )}
                 />
               ))}
             </div>
 
-            <Button type="submit" className="auth-button">
-              {isSignIn ? "Sign In" : "Create Account"}
-              
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="bg-primary text-white h-12 rounded-lg w-full
+                       hover:bg-primary/90 transition-all duration-300
+                       disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                  <span>{isSignIn ? "Signing in..." : "Creating account..."}</span>
+                </div>
+              ) : (
+                isSignIn ? "Sign In" : "Create Account"
+              )}
             </Button>
           </form>
         </Form>
 
-        <div className="mt-8 space-y-6">
+        <div className="space-y-6 mt-8">
           <div className="relative flex items-center gap-3">
-            <div className="h-[1px] flex-1 bg-gradient-to-r from-white/5 via-white/10 to-white/5" />
-            <span className="text-sm text-white/40">or continue with</span>
-            <div className="h-[1px] flex-1 bg-gradient-to-l from-white/5 via-white/10 to-white/5" />
+            <div className="h-px flex-1 bg-gray-200" />
+            <span className="text-sm text-gray-500">or continue with</span>
+            <div className="h-px flex-1 bg-gray-200" />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <button className="auth-social-button group">
+            <button className="flex items-center justify-center gap-2 h-12 w-full border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-300">
               <div className="relative w-5 h-5">
-                <Image src="/icons/google.svg" alt="Google" fill className="object-contain group-hover:scale-110 transition-transform" />
+                <Image src="/icons/google.svg" alt="Google" fill className="object-contain" />
               </div>
-              <span>Google</span>
+              <span className="text-gray-700 text-sm font-medium">Google</span>
             </button>
-            <button className="auth-social-button group">
+            <button className="flex items-center justify-center gap-2 h-12 w-full border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-300">
               <div className="relative w-5 h-5">
-                <Image src="/icons/apple.svg" alt="Apple" fill className="object-contain group-hover:scale-110 transition-transform" />
+                <Image src="/icons/apple.svg" alt="Apple" fill className="object-contain" />
               </div>
-              <span>Apple</span>
+              <span className="text-gray-700 text-sm font-medium">Apple</span>
             </button>
           </div>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/5" />
-            </div>
-            <div className="relative flex justify-center">
-              <p className="text-center text-sm text-white/60 bg-transparent px-4">
-                {isSignIn ? "New to KOSyachts? " : "Already have an account? "}
-                <Link
-                  href={isSignIn ? "/sign-up" : "/sign-in"}
-                  className="font-medium text-primary hover:text-white transition-colors"
-                >
-                  {isSignIn ? "Create an account" : "Sign in"}
-                </Link>
-              </p>
-            </div>
+          <div className="text-center pb-4">
+            <p className="text-sm text-gray-600">
+              {isSignIn ? "New to KOS Yachts? " : "Already have an account? "}
+              <Link
+                href={isSignIn ? "/sign-up" : "/sign-in"}
+                className="font-medium text-primary hover:text-primary/80 transition-colors"
+              >
+                {isSignIn ? "Create an account" : "Sign in"}
+              </Link>
+            </p>
           </div>
         </div>
       </div>

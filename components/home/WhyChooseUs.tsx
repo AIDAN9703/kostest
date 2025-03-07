@@ -10,37 +10,31 @@ const features = [
     icon: FiAnchor,
     title: 'World-Class Fleet',
     description: 'Access to the finest luxury yachts, each maintained to perfection',
-    color: 'from-blue-500 to-blue-600'
   },
   {
     icon: FiCompass,
     title: 'Expert Navigation',
     description: 'Seasoned captains with extensive local knowledge',
-    color: 'from-emerald-500 to-emerald-600'
   },
   {
     icon: FiStar,
     title: 'Premium Service',
     description: 'Personalized attention and five-star amenities onboard',
-    color: 'from-purple-500 to-purple-600'
   },
   {
     icon: FiShield,
     title: 'Safe Journey',
     description: 'Comprehensive insurance and safety measures',
-    color: 'from-amber-500 to-amber-600'
   },
   {
     icon: FiSunrise,
     title: 'Unique Experiences',
     description: 'Curated adventures and exclusive destinations',
-    color: 'from-rose-500 to-rose-600'
   },
   {
     icon: FiMap,
     title: 'Global Destinations',
     description: 'Access to the world\'s most beautiful harbors',
-    color: 'from-cyan-500 to-cyan-600'
   }
 ];
 
@@ -89,7 +83,7 @@ export default function WhyChooseUs() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-xl text-gray-600 font-light leading-relaxed"
+            className="text-xl text-dark-400 font-light leading-relaxed"
           >
             Experience the perfect blend of luxury, adventure, and professional service
             that sets us apart in the world of yacht charters.
@@ -107,23 +101,22 @@ export default function WhyChooseUs() {
               transition={{ duration: 0.5, delay: index * 0.1 }}
               className="group"
             >
-              <div className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl 
-                            border border-gray-100 hover:border-blue-100 
+              <div className="bg-white rounded-2xl p-8 shadow-md hover:shadow-lg 
+                            border border-light-700 hover:border-gold/30
                             transition-all duration-300 h-full transform 
                             hover:scale-[1.02] hover:-translate-y-1">
-                <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-r ${feature.color} 
-                               transform group-hover:scale-110 transition-all duration-300 
-                               shadow-lg`}>
-                  <feature.icon className="w-6 h-6 text-white" />
+                <div className="inline-flex p-4 rounded-xl bg-primary/10
+                               transform group-hover:scale-110 transition-all duration-300">
+                  <feature.icon className="w-6 h-6 text-primary" />
                 </div>
                 
-                <h3 className="mt-6 text-xl font-medium text-[#1E293B] 
-                             group-hover:text-blue-500 transition-colors duration-300">
+                <h3 className="mt-6 text-xl font-medium text-dark-400
+                             group-hover:text-gold transition-colors duration-300">
                   {feature.title}
                 </h3>
                 
-                <p className="mt-4 text-gray-600 leading-relaxed 
-                             group-hover:text-gray-700 transition-colors duration-300">
+                <p className="mt-4 text-dark-400/80 leading-relaxed 
+                             group-hover:text-dark-400 transition-colors duration-300">
                   {feature.description}
                 </p>
               </div>
@@ -151,14 +144,14 @@ export default function WhyChooseUs() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1, duration: 0.5 }}
-              className="group bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl 
-                        border border-gray-100 hover:border-blue-100 
+              className="group bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-md hover:shadow-lg 
+                        border border-light-700 hover:border-gold/30
                         transition-all duration-300 text-center transform 
                         hover:scale-[1.02] hover:-translate-y-1"
             >
-              <div className="text-4xl font-light text-[#1E293B] group-hover:text-blue-500 
+              <div className="text-4xl font-serif text-primary group-hover:text-gold
                             transition-colors duration-300 mb-2">{stat.value}</div>
-              <div className="text-gray-600 font-light group-hover:text-gray-700 
+              <div className="text-dark-400/80 font-light group-hover:text-dark-400
                             transition-colors duration-300">{stat.label}</div>
             </motion.div>
           ))}
