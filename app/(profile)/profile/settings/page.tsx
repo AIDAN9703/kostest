@@ -2,12 +2,49 @@ import { auth } from "@/auth";
 import { db } from "@/database/db";
 import { users } from "@/database/schema";
 import { eq } from "drizzle-orm";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ProfileSettingsForm from "@/components/profile/ProfileSettingsForm";
-import NotificationSettings from "@/components/profile/NotificationSettings";
-import SecuritySettings from "@/components/profile/SecuritySettings";
 import { UserProfile } from "@/types/types";
+import { Settings } from "lucide-react";
+import { Suspense } from "react";
+
+// Settings header component
+const SettingsHeader = () => (
+  <div className="bg-gradient-to-r from-primary/90 to-primary rounded-lg p-4 md:p-6 text-white shadow-sm">
+    <h1 className="text-xl md:text-2xl font-bold">Account Settings</h1>
+    <p className="mt-1 text-white/90 text-sm md:text-base">Manage your account settings and preferences</p>
+  </div>
+);
+
+// Loading fallback component
+const SettingsSkeleton = () => (
+  <div className="p-4 pt-16 md:p-6 lg:pt-6 space-y-6">
+    <div className="h-24 bg-gray-100 animate-pulse rounded-lg"></div>
+    <div className="h-96 bg-gray-100 animate-pulse rounded-lg"></div>
+  </div>
+);
+
+// Settings content component
+const SettingsContent = ({ user }: { user: UserProfile }) => (
+  <div className="p-4 pt-16 md:p-6 lg:pt-6 space-y-6 animate-fadeIn">
+    <SettingsHeader />
+    
+    <Card className="border-gray-200 shadow-sm">
+      <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent p-4 md:p-6">
+        <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+          <Settings className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+          Profile Information
+        </CardTitle>
+        <CardDescription className="text-xs md:text-sm">
+          Update your personal information and profile details
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-4 md:p-6">
+        {user && <ProfileSettingsForm user={user} />}
+      </CardContent>
+    </Card>
+  </div>
+);
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -26,72 +63,8 @@ export default async function SettingsPage() {
   const user = userData[0] ? userData[0] as unknown as UserProfile : null;
 
   return (
-    <div className="flex flex-col gap-6 p-6 md:p-8">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
-        <p className="text-gray-500 mt-1">Manage your account settings and preferences</p>
-      </div>
-      
-      <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="preferences">Preferences</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="profile">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>Update your personal information and profile details</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {user && <ProfileSettingsForm user={user} />}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Preferences</CardTitle>
-              <CardDescription>Manage how you receive notifications</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {user && <NotificationSettings user={user} />}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>Manage your password and account security</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {user && <SecuritySettings user={user} />}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="preferences">
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Preferences</CardTitle>
-              <CardDescription>Customize your account experience</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-gray-500 text-center py-12">
-                  Account preferences settings will be displayed here
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+    <Suspense fallback={<SettingsSkeleton />}>
+      {user && <SettingsContent user={user} />}
+    </Suspense>
   );
 } 

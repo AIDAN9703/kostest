@@ -80,11 +80,11 @@ const navigationData = {
         { href: "/blog", label: "Blog" },
     ],
     user: [
-        { href: "/dashboard", label: "Dashboard" },
-        { href: "/bookings", label: "My Bookings" },
-        { href: "/inbox", label: "Inbox" },
-        { href: "/favorites", label: "Favorites" },
-        { href: "/settings", label: "Settings" },
+        { href: "/profile", label: "Dashboard" },
+        { href: "/profile/bookings", label: "My Bookings" },
+        { href: "/profile/inbox", label: "Inbox" },
+        { href: "/profile/favorites", label: "Favorites" },
+        { href: "/profile/settings", label: "Settings" },
     ]
 }
 

@@ -7,21 +7,14 @@ import { Session } from 'next-auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { 
-  User, 
   Settings, 
-  CreditCard, 
-  LifeBuoy, 
   LogOut, 
   ChevronLeft, 
-  ChevronRight,
   Home,
-  Ship,
   Calendar,
-  MessageSquare,
-  Bell,
   Heart,
-  FileText,
-  ShieldCheck
+  Ship,
+  Menu
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signOut } from 'next-auth/react';
@@ -30,156 +23,187 @@ interface ProfileSidebarProps {
   user: Session['user'];
 }
 
+// Navigation items - defined outside component to prevent recreation on each render
+const navigationItems = [
+  { name: 'Profile', href: '/profile', icon: Home },
+  { name: 'My Bookings', href: '/profile/bookings', icon: Calendar },
+  { name: 'Favorites', href: '/profile/favorites', icon: Heart },
+  { name: 'My Boats', href: '/profile/boats', icon: Ship },
+  { name: 'Account Settings', href: '/profile/settings', icon: Settings },
+];
+
+// User profile section component
+const UserProfileSection = ({ user }: { user: Session['user'] }) => (
+  <div className="flex items-center p-4 border-b border-gray-200">
+    <Avatar className="h-10 w-10">
+      <AvatarImage src={user?.profileImage || ""} alt={user?.name || "User"} />
+      <AvatarFallback className="bg-primary text-white">
+        {user?.name?.charAt(0) || "U"}
+      </AvatarFallback>
+    </Avatar>
+    
+    <div className="ml-3 overflow-hidden">
+      <p className="font-medium truncate">{user?.name}</p>
+      <p className="text-sm text-gray-500 truncate">{user?.email}</p>
+    </div>
+  </div>
+);
+
+// Navigation links component
+const NavigationLinks = ({ 
+  pathname, 
+  onItemClick,
+  className 
+}: { 
+  pathname: string; 
+  onItemClick?: () => void;
+  className?: string;
+}) => (
+  <ul className={cn("space-y-1 px-2", className)}>
+    {navigationItems.map((item) => {
+      // More specific route matching logic
+      const isActive = item.href === '/profile' 
+        ? pathname === '/profile' // Exact match for profile
+        : pathname.startsWith(`${item.href}/`) || pathname === item.href;
+      
+      const Icon = item.icon;
+      
+      return (
+        <li key={item.name}>
+          <Link 
+            href={item.href}
+            onClick={onItemClick}
+          >
+            <span className={cn(
+              "flex items-center px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+              isActive 
+                ? "bg-primary/10 text-primary border-l-2 border-gold" 
+                : "text-gray-700 hover:bg-gray-100",
+            )}>
+              <Icon size={20} className="mr-3" />
+              <span>{item.name}</span>
+            </span>
+          </Link>
+        </li>
+      );
+    })}
+  </ul>
+);
+
+// Sign out button component
+const SignOutButton = ({ onClick }: { onClick: () => Promise<void> }) => (
+  <Button 
+    variant="ghost" 
+    className="text-gray-700 hover:bg-gray-100 w-full px-3"
+    onClick={onClick}
+  >
+    <LogOut size={20} className="mr-3" />
+    <span>Sign out</span>
+  </Button>
+);
+
 const ProfileSidebar = ({ user }: ProfileSidebarProps) => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
-  // Check if mobile on mount and when window resizes
+  // Only run on client side
   useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 1024);
-      if (window.innerWidth < 1024) {
-        setCollapsed(true);
-      }
-    };
-
-    // Initial check
-    checkIfMobile();
-
-    // Add event listener
-    window.addEventListener('resize', checkIfMobile);
-
-    // Cleanup
-    return () => window.removeEventListener('resize', checkIfMobile);
+    setMounted(true);
   }, []);
 
-  const navigationItems = [
-    { name: 'Dashboard', href: '/profile', icon: Home },
-    { name: 'My Bookings', href: '/profile/bookings', icon: Calendar },
-    { name: 'Favorites', href: '/profile/favorites', icon: Heart },
-    { name: 'Messages', href: '/profile/messages', icon: MessageSquare },
-    { name: 'Notifications', href: '/profile/notifications', icon: Bell },
-    { name: 'My Boats', href: '/profile/boats', icon: Ship },
-    { name: 'Documents', href: '/profile/documents', icon: FileText },
-    { name: 'Verification', href: '/profile/verification', icon: ShieldCheck },
-    { name: 'Payment Methods', href: '/profile/payment', icon: CreditCard },
-    { name: 'Account Settings', href: '/profile/settings', icon: Settings },
-    { name: 'Help & Support', href: '/profile/support', icon: LifeBuoy },
-  ];
+  // Handle body scroll locking when sidebar is open
+  useEffect(() => {
+    if (!mounted) return;
+    
+    if (sidebarOpen) {
+      // Lock body scroll
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Unlock body scroll
+      document.body.style.overflow = '';
+    }
 
-  const toggleSidebar = () => {
-    setCollapsed(!collapsed);
-  };
+    return () => {
+      // Cleanup
+      document.body.style.overflow = '';
+    };
+  }, [sidebarOpen, mounted]);
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: '/' });
   };
 
+  // Don't render anything during SSR to prevent flash
+  if (!mounted) {
+    return null;
+  }
+
   return (
     <>
-      {/* Mobile overlay */}
-      {!collapsed && isMobile && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setCollapsed(true)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside 
-        className={cn(
-          "fixed lg:relative z-50 h-full bg-white border-r border-gray-200 transition-all duration-300 flex flex-col",
-          collapsed ? "w-[80px]" : "w-[280px]"
-        )}
-      >
-        {/* Toggle button */}
-        <button 
-          onClick={toggleSidebar}
-          className="absolute -right-3 top-20 bg-white border border-gray-200 rounded-full p-1 shadow-md hidden lg:flex"
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
-
-        {/* User profile section */}
-        <div className={cn(
-          "flex items-center p-4 border-b border-gray-200",
-          collapsed ? "justify-center" : "justify-start"
-        )}>
-          <Avatar className="h-10 w-10">
-            <AvatarImage src={user?.profileImage || ""} alt={user?.name || "User"} />
-            <AvatarFallback className="bg-primary text-white">
-              {user?.name?.charAt(0) || "U"}
-            </AvatarFallback>
-          </Avatar>
-          
-          {!collapsed && (
-            <div className="ml-3 overflow-hidden">
-              <p className="font-medium truncate">{user?.name}</p>
-              <p className="text-sm text-gray-500 truncate">{user?.email}</p>
-            </div>
-          )}
-        </div>
+      {/* Desktop sidebar - fixed position */}
+      <aside className="hidden lg:flex flex-col fixed top-0 left-0 h-full w-[250px] bg-white border-r border-gray-200 z-20">
+        <UserProfileSection user={user} />
 
         {/* Navigation links */}
         <nav className="flex-1 overflow-y-auto py-4">
-          <ul className="space-y-1 px-2">
-            {navigationItems.map((item) => {
-              const isActive = pathname === item.href;
-              const Icon = item.icon;
-              
-              return (
-                <li key={item.name}>
-                  <Link href={item.href}>
-                    <span className={cn(
-                      "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                      isActive 
-                        ? "bg-primary/10 text-primary" 
-                        : "text-gray-700 hover:bg-gray-100",
-                      collapsed ? "justify-center" : "justify-start"
-                    )}>
-                      <Icon size={20} className={cn(
-                        collapsed ? "mx-0" : "mr-3"
-                      )} />
-                      {!collapsed && <span>{item.name}</span>}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          <NavigationLinks pathname={pathname} />
         </nav>
 
         {/* Sign out button */}
-        <div className={cn(
-          "p-4 border-t border-gray-200",
-          collapsed ? "flex justify-center" : ""
-        )}>
-          <Button 
-            variant="ghost" 
-            className={cn(
-              "text-gray-700 hover:bg-gray-100 w-full",
-              collapsed ? "px-2" : "px-3"
-            )}
-            onClick={handleSignOut}
-          >
-            <LogOut size={20} className={cn(
-              collapsed ? "mx-0" : "mr-3"
-            )} />
-            {!collapsed && <span>Sign out</span>}
-          </Button>
+        <div className="p-4 border-t border-gray-200">
+          <SignOutButton onClick={handleSignOut} />
         </div>
       </aside>
 
-      {/* Mobile toggle button */}
-      {collapsed && isMobile && (
-        <button 
-          onClick={() => setCollapsed(false)}
-          className="fixed bottom-4 left-4 z-50 bg-primary text-white rounded-full p-3 shadow-lg lg:hidden"
-        >
-          <ChevronRight size={24} />
-        </button>
+      {/* Mobile menu button */}
+      <button 
+        onClick={() => setSidebarOpen(true)}
+        className="fixed top-4 left-4 z-50 bg-white rounded-full p-2 shadow-md lg:hidden"
+        aria-label="Open menu"
+      >
+        <Menu size={24} className="text-primary" />
+      </button>
+
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
+
+      {/* Mobile sidebar drawer */}
+      <aside 
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-[250px] bg-white shadow-xl transform transition-transform duration-200 ease-in-out lg:hidden h-[100dvh] overflow-hidden",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {/* Close button */}
+        <button 
+          onClick={() => setSidebarOpen(false)}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+          aria-label="Close menu"
+        >
+          <ChevronLeft size={24} />
+        </button>
+
+        <UserProfileSection user={user} />
+
+        {/* Navigation links - with overflow scrolling */}
+        <nav className="flex-1 overflow-y-auto py-4 h-[calc(100dvh-160px)]">
+          <NavigationLinks 
+            pathname={pathname} 
+            onItemClick={() => setSidebarOpen(false)} 
+          />
+        </nav>
+
+        {/* Sign out button */}
+        <div className="p-4 border-t border-gray-200 absolute bottom-0 left-0 w-full bg-white">
+          <SignOutButton onClick={handleSignOut} />
+        </div>
+      </aside>
     </>
   );
 };

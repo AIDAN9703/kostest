@@ -1,16 +1,212 @@
 import { auth } from "@/auth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db } from "@/database/db";
 import { users } from "@/database/schema";
 import { eq } from "drizzle-orm";
-import { CalendarDays, Ship, CreditCard, MessageSquare, Heart } from "lucide-react";
-import ProfileHeader from "@/components/profile/ProfileHeader";
-import ProfileStats from "@/components/profile/ProfileStats";
-import ProfileActivity from "@/components/profile/ProfileActivity";
-import { EmptyState } from "@/components/ui/empty-state";
-import { CalendarX2, Activity } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Ship, Heart, Calendar, Compass, ArrowRight, CalendarDays } from "lucide-react";
+import Link from "next/link";
+import ProfileHeader from "@/components/profile/ProfileHeader";
+import { Suspense } from "react";
+import { UserProfile } from "@/types/types";
+
+// Quick action card component
+const QuickActionCard = ({ 
+  title, 
+  description, 
+  icon, 
+  href 
+}: { 
+  title: string; 
+  description: string; 
+  icon: React.ReactNode; 
+  href: string;
+}) => (
+  <Link href={href}>
+    <Card className="h-full border hover:shadow-sm transition-all bg-primary/5 group">
+      <CardContent className="p-4 flex items-center gap-3">
+        <div className="p-2 rounded-full bg-white">
+          {icon}
+        </div>
+        <div className="flex-1">
+          <h3 className="font-medium text-primary">{title}</h3>
+          <p className="text-xs text-gray-600">{description}</p>
+        </div>
+        <ArrowRight className="h-4 w-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+      </CardContent>
+    </Card>
+  </Link>
+);
+
+// Featured boats section component
+const FeaturedBoatsSection = ({ featuredBoats = [] }: { featuredBoats?: any[] }) => (
+  <div>
+    <div className="flex items-center justify-between mb-3">
+      <h2 className="text-lg font-medium text-gray-900">Featured Boats</h2>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="text-primary text-sm p-0"
+        asChild
+      >
+        <Link href="/boats">
+          View All <ArrowRight className="ml-1 h-3 w-3" />
+        </Link>
+      </Button>
+    </div>
+    
+    {featuredBoats.length > 0 ? (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Boat cards would be rendered here */}
+      </div>
+    ) : (
+      <Card className="border-dashed border-gray-200 bg-white">
+        <CardContent className="py-8 flex flex-col items-center justify-center text-center">
+          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+            <Ship className="h-6 w-6 text-primary" />
+          </div>
+          <h3 className="text-base font-medium text-gray-900">Discover Amazing Boats</h3>
+          <p className="text-sm text-gray-500 max-w-md mt-1 mb-4">
+            Browse our selection of boats for your next adventure.
+          </p>
+          <Button className="bg-primary text-white" size="sm" asChild>
+            <Link href="/boats">
+              Browse Boats
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+    )}
+  </div>
+);
+
+// Upcoming booking section component
+const UpcomingBookingSection = () => (
+  <div>
+    <div className="flex items-center justify-between mb-3">
+      <h2 className="text-lg font-medium text-gray-900">Upcoming Booking</h2>
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        className="text-primary text-sm p-0"
+        asChild
+      >
+        <Link href="/profile/bookings">
+          View All <ArrowRight className="ml-1 h-3 w-3" />
+        </Link>
+      </Button>
+    </div>
+    
+    <Card className="border-gray-200">
+      <CardContent className="p-0">
+        <div className="flex flex-col sm:flex-row">
+          <div className="bg-primary/10 p-4 sm:p-6 sm:w-1/3 flex flex-col items-center text-center">
+            <CalendarDays className="h-8 w-8 text-primary mb-2" />
+            <h3 className="text-base font-medium text-gray-900">No Upcoming Bookings</h3>
+            <p className="text-xs text-gray-500 mt-1">Ready for your next adventure?</p>
+          </div>
+          <div className="p-4 sm:p-6 sm:w-2/3">
+            <p className="text-sm text-gray-600 mb-3">
+              You don't have any upcoming boat reservations. Browse our selection of boats for your next adventure.
+            </p>
+            <Button className="bg-primary text-white w-full sm:w-auto" size="sm" asChild>
+              <Link href="/boats">
+                Find a Boat
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
+// Welcome message component
+const WelcomeMessage = ({ firstName }: { firstName?: string | null }) => (
+  <div className="bg-gradient-to-r from-primary/90 to-primary rounded-lg p-4 md:p-6 text-white shadow-sm">
+    <h1 className="text-xl md:text-2xl font-bold">Welcome back, {firstName || 'there'}!</h1>
+    <p className="mt-1 text-white/90 text-sm md:text-base">What would you like to do today?</p>
+  </div>
+);
+
+// Quick actions grid component
+const QuickActionsGrid = ({ user }: { user: any }) => {
+  const quickActions = [
+    {
+      title: "Find a Boat",
+      description: "Browse available boats",
+      icon: <Compass className="h-5 w-5 text-primary" />,
+      href: "/boats",
+    },
+    {
+      title: "My Bookings",
+      description: "View your bookings",
+      icon: <Calendar className="h-5 w-5 text-primary" />,
+      href: "/profile/bookings",
+    },
+    {
+      title: "Favorites",
+      description: "Your saved boats",
+      icon: <Heart className="h-5 w-5 text-primary" />,
+      href: "/profile/favorites",
+    },
+    {
+      title: "My Boats",
+      description: "Manage your listings",
+      icon: <Ship className="h-5 w-5 text-primary" />,
+      href: "/profile/boats",
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {quickActions.map((action, index) => (
+        <QuickActionCard
+          key={index}
+          title={action.title}
+          description={action.description}
+          icon={action.icon}
+          href={action.href}
+        />
+      ))}
+    </div>
+  );
+};
+
+// Dashboard content component
+const DashboardContent = ({ user }: { user: any }) => (
+  <div className="p-4 pt-16 md:p-6 lg:pt-6 space-y-6 animate-fadeIn">
+    {/* Profile Header */}
+    <ProfileHeader user={user} />
+    
+    {/* Welcome Message */}
+    <WelcomeMessage firstName={user?.firstName} />
+    
+    {/* Quick Actions */}
+    <QuickActionsGrid user={user} />
+    
+    {/* Featured Section */}
+    <FeaturedBoatsSection />
+    
+    {/* Upcoming Booking */}
+    <UpcomingBookingSection />
+  </div>
+);
+
+// Loading fallback component
+const DashboardSkeleton = () => (
+  <div className="p-4 pt-16 md:p-6 lg:pt-6 space-y-6">
+    <div className="h-40 bg-gray-100 animate-pulse rounded-lg"></div>
+    <div className="h-24 bg-gray-100 animate-pulse rounded-lg"></div>
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="h-24 bg-gray-100 animate-pulse rounded-lg"></div>
+      ))}
+    </div>
+    <div className="h-64 bg-gray-100 animate-pulse rounded-lg"></div>
+    <div className="h-48 bg-gray-100 animate-pulse rounded-lg"></div>
+  </div>
+);
 
 export default async function ProfilePage() {
   const session = await auth();
@@ -28,172 +224,9 @@ export default async function ProfilePage() {
 
   const user = userData[0] || null;
 
-  // Define empty stats
-  const stats = [
-    {
-      title: "Total Bookings",
-      value: user?.totalBookings || 0,
-      icon: "calendar-days",
-      description: "Lifetime bookings",
-      change: "",
-      trend: "neutral" as const,
-    },
-    {
-      title: "Favorite Boats",
-      value: 0,
-      icon: "heart",
-      description: "Saved boats",
-      change: "",
-      trend: "neutral" as const,
-    },
-    {
-      title: "Unread Messages",
-      value: 0,
-      icon: "message-square",
-      description: "Pending responses",
-      change: "",
-      trend: "neutral" as const,
-    },
-    {
-      title: "Boats Listed",
-      value: user?.totalBoatsListed || 0,
-      icon: "ship",
-      description: "Active listings",
-      change: "",
-      trend: "neutral" as const,
-    },
-  ];
-
-  // Empty activity array
-  const recentActivity = [];
-
-  // Empty bookings array
-  const upcomingBookings = [];
-
   return (
-    <div className="flex flex-col gap-6 p-6 md:p-8 animate-fadeIn">
-      <ProfileHeader user={user} />
-      
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="overview" className="transition-all duration-200">Overview</TabsTrigger>
-          <TabsTrigger value="bookings" className="transition-all duration-200">Bookings</TabsTrigger>
-          <TabsTrigger value="activity" className="transition-all duration-200">Activity</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="overview" className="space-y-6 animate-fadeIn">
-          <ProfileStats stats={stats} />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="overflow-hidden border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
-              <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
-                <CardTitle className="flex items-center gap-2">
-                  <CalendarDays className="h-5 w-5 text-primary" />
-                  Upcoming Bookings
-                </CardTitle>
-                <CardDescription>Your next scheduled trips</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <EmptyState 
-                  icon={CalendarX2}
-                  title="No upcoming bookings"
-                  description="You don't have any upcoming boat reservations. Browse boats and book your next adventure!"
-                  actionLabel="Browse Boats"
-                  actionHref="/boats"
-                  iconClassName="bg-primary/10 text-primary"
-                />
-              </CardContent>
-            </Card>
-            
-            <Card className="overflow-hidden border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
-              <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
-                <CardTitle className="flex items-center gap-2">
-                  <Activity className="h-5 w-5 text-primary" />
-                  Recent Activity
-                </CardTitle>
-                <CardDescription>Your latest actions and notifications</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6">
-                <EmptyState 
-                  icon={Activity}
-                  title="No recent activity"
-                  description="You don't have any recent activity. As you use the platform, your actions will appear here."
-                  iconClassName="bg-primary/10 text-primary"
-                />
-              </CardContent>
-            </Card>
-          </div>
-          
-          <Card className="overflow-hidden border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Ship className="h-5 w-5 text-primary" />
-                    Recommended Boats
-                  </CardTitle>
-                  <CardDescription>Personalized recommendations based on your preferences</CardDescription>
-                </div>
-                <Button variant="outline" size="sm" className="border-amber-200 text-amber-800 hover:bg-amber-50">
-                  View All
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="p-6">
-              <EmptyState 
-                icon={Ship}
-                title="Recommendations coming soon"
-                description="We're personalizing boat recommendations for you. Check back soon or browse our available boats."
-                actionLabel="Browse Boats"
-                actionHref="/boats"
-                iconClassName="bg-primary/10 text-primary"
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="bookings" className="animate-fadeIn">
-          <Card className="overflow-hidden border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
-              <CardTitle className="flex items-center gap-2">
-                <CalendarDays className="h-5 w-5 text-primary" />
-                All Bookings
-              </CardTitle>
-              <CardDescription>View and manage all your bookings</CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-              <EmptyState 
-                icon={CalendarX2}
-                title="No bookings found"
-                description="You haven't made any boat reservations yet. Start exploring available boats!"
-                actionLabel="Browse Boats"
-                actionHref="/boats"
-                iconClassName="bg-primary/10 text-primary"
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="activity" className="animate-fadeIn">
-          <Card className="overflow-hidden border-gray-100 shadow-sm hover:shadow-md transition-all duration-300">
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent">
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5 text-primary" />
-                Activity History
-              </CardTitle>
-              <CardDescription>Your recent actions and notifications</CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-              <EmptyState 
-                icon={Activity}
-                title="No activity history"
-                description="Your activity history will appear here as you interact with the platform."
-                iconClassName="bg-primary/10 text-primary"
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardContent user={user} />
+    </Suspense>
   );
 } 
