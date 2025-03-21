@@ -27,7 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, User, Image as ImageIcon } from "lucide-react";
 import { UserProfile } from "@/types/types";
 import { ImageUpload } from "@/components/ui/image-upload";
-import { getOptimizedImageUrl } from '@/lib/imagekit';
+import { getOptimizedImageUrl } from '@/lib/services/imagekit';
 
 interface ProfileSettingsFormProps {
   user: UserProfile;

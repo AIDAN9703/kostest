@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { imagekit } from '@/lib/imagekit';
+import { imagekit } from '@/lib/services/imagekit';
 
 export async function POST(request: Request) {
   try {

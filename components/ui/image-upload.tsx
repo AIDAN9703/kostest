@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface ImageUploadProps {
   onUploadComplete: (imageUrl: string) => void;
-  type: "profile" | "cover";
+  type: "profile" | "cover" | "boat" | "misc";
   buttonText?: string;
   className?: string;
   variant?: "default" | "secondary" | "outline" | "ghost" | "link" | "destructive";

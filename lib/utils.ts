@@ -34,6 +34,53 @@ export async function cachedFetch<T>(
 }
 
 /**
+ * Throttle function that limits how often a function can be called
+ * @param func The function to throttle
+ * @param limit The time limit in milliseconds
+ * @returns A throttled version of the function
+ */
+export function throttle<T extends (...args: any[]) => any>(func: T, limit: number): T & { cancel: () => void } {
+  let inThrottle: boolean = false;
+  let lastFunc: ReturnType<typeof setTimeout> | null = null;
+  let lastRan: number = 0;
+
+  function throttled(this: any, ...args: Parameters<T>): ReturnType<T> | undefined {
+    if (!inThrottle) {
+      const result = func.apply(this, args);
+      lastRan = Date.now();
+      inThrottle = true;
+      
+      setTimeout(() => {
+        inThrottle = false;
+      }, limit);
+      
+      return result;
+    } else {
+      if (lastFunc) {
+        clearTimeout(lastFunc);
+      }
+      
+      lastFunc = setTimeout(() => {
+        if ((Date.now() - lastRan) >= limit) {
+          func.apply(this, args);
+          lastRan = Date.now();
+        }
+      }, limit - (Date.now() - lastRan));
+    }
+  }
+  
+  throttled.cancel = function() {
+    if (lastFunc) {
+      clearTimeout(lastFunc);
+      lastFunc = null;
+    }
+    inThrottle = false;
+  };
+  
+  return throttled as T & { cancel: () => void };
+}
+
+/**
  * Formats a phone number to E.164 format for Twilio
  * E.164 format: +[country code][phone number without leading 0]
  * Example: +12345678900
@@ -129,4 +176,29 @@ export async function clearUserVerificationToken(userId: string) {
     console.error("Error clearing user verification token:", error);
     return false;
   }
+}
+
+/**
+ * Debounce function to limit how often a function can be called
+ * Useful for map interactions to prevent excessive calls
+ * 
+ * @param func The function to debounce
+ * @param wait The time to wait in milliseconds
+ * @returns A debounced version of the function
+ */
+export function debounce<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  
+  return function(...args: Parameters<T>): void {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    
+    timeout = setTimeout(() => {
+      func(...args);
+    }, wait);
+  };
 }

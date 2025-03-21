@@ -1,5 +1,5 @@
 import React from 'react';
-import { HeroSection, TestimonialsSection, BrandsCarousel, BackToTop, FeaturedFleet, ExperienceSection, WhyChooseUs, PopularExperiences, RequestToBook } from "@/components/home";
+import { HeroSection, TestimonialsSection, BrandsCarousel, BackToTop, FeaturedFleet, WhyChooseUs, PopularExperiences, RequestToBook, ComparisonChart } from "@/components/home";
 import { getFeaturedBoats, getTestimonials } from "@/lib/actions/home-page";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -20,13 +20,13 @@ async function HomeContent() {
           {boatsResponse.success && boatsResponse.data && boatsResponse.data.length > 0 && (
             <FeaturedFleet boats={boatsResponse.data} />
           )}
+          <BrandsCarousel />
+          {/*<ComparisonChart />*/}
           <PopularExperiences />
-          <ExperienceSection />
           <RequestToBook />
           {reviewsResponse.success && reviewsResponse.data && reviewsResponse.data.length > 0 && (
             <TestimonialsSection reviews={reviewsResponse.data} />
           )}
-          {/* <BrandsCarousel /> */}
         </div>
       </>
     );

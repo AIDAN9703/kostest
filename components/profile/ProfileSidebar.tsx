@@ -32,6 +32,12 @@ const navigationItems = [
   { name: 'Account Settings', href: '/profile/settings', icon: Settings },
 ];
 
+// Main site navigation items
+const mainSiteItems = [
+  { name: 'Back to Home', href: '/', icon: ChevronLeft },
+  { name: 'Browse Boats', href: '/boats', icon: Ship },
+];
+
 // User profile section component
 const UserProfileSection = ({ user }: { user: Session['user'] }) => (
   <div className="flex items-center p-4 border-b border-gray-200">
@@ -59,35 +65,69 @@ const NavigationLinks = ({
   onItemClick?: () => void;
   className?: string;
 }) => (
-  <ul className={cn("space-y-1 px-2", className)}>
-    {navigationItems.map((item) => {
-      // More specific route matching logic
-      const isActive = item.href === '/profile' 
-        ? pathname === '/profile' // Exact match for profile
-        : pathname.startsWith(`${item.href}/`) || pathname === item.href;
-      
-      const Icon = item.icon;
-      
-      return (
-        <li key={item.name}>
-          <Link 
-            href={item.href}
-            onClick={onItemClick}
-          >
-            <span className={cn(
-              "flex items-center px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
-              isActive 
-                ? "bg-primary/10 text-primary border-l-2 border-gold" 
-                : "text-gray-700 hover:bg-gray-100",
-            )}>
-              <Icon size={20} className="mr-3" />
-              <span>{item.name}</span>
-            </span>
-          </Link>
-        </li>
-      );
-    })}
-  </ul>
+  <div className={cn("space-y-4", className)}>
+    {/* Profile navigation */}
+    <ul className="space-y-1 px-2">
+      {navigationItems.map((item) => {
+        // More specific route matching logic
+        const isActive = item.href === '/profile' 
+          ? pathname === '/profile' // Exact match for profile
+          : pathname.startsWith(`${item.href}/`) || pathname === item.href;
+        
+        const Icon = item.icon;
+        
+        return (
+          <li key={item.name}>
+            <Link 
+              href={item.href}
+              onClick={onItemClick}
+            >
+              <span className={cn(
+                "flex items-center px-3 py-2.5 rounded-md text-sm font-medium transition-colors",
+                isActive 
+                  ? "bg-primary/10 text-primary border-l-2 border-gold" 
+                  : "text-gray-700 hover:bg-gray-100",
+              )}>
+                <Icon size={20} className="mr-3" />
+                <span>{item.name}</span>
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+    
+    {/* Divider */}
+    <div className="px-4">
+      <div className="h-px bg-gray-200"></div>
+    </div>
+    
+    {/* Main site navigation */}
+    <div className="px-4">
+      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-2">
+        Main Site
+      </h3>
+      <ul className="mt-2 space-y-1">
+        {mainSiteItems.map((item) => {
+          const Icon = item.icon;
+          
+          return (
+            <li key={item.name}>
+              <Link 
+                href={item.href}
+                onClick={onItemClick}
+              >
+                <span className="flex items-center px-3 py-2.5 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                  <Icon size={20} className="mr-3" />
+                  <span>{item.name}</span>
+                </span>
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  </div>
 );
 
 // Sign out button component

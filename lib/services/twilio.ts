@@ -5,7 +5,7 @@
  * It provides a simple interface for sending and checking verification codes.
  */
 
-import { formatPhoneNumberE164 } from './utils';
+import { formatPhoneNumberE164 } from '../utils';
 
 /**
  * Sends a verification code to the provided phone number

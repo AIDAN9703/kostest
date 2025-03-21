@@ -4,7 +4,7 @@ import { db } from "@/database/db";
 import { verifications, users } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
 import { ActionResponse } from "@/types/types";
-import { sendVerification, checkVerification } from "@/lib/twilio";
+import { sendVerification, checkVerification } from "@/lib/services/twilio";
 import { formatPhoneNumberE164 } from '@/lib/utils';
 
 /**

@@ -1,13 +1,16 @@
 import { db } from './db';
-import { boats, users, boatCategoryEnum, boatStatusEnum } from './schema';
+import { boats, users, boatCategoryEnum } from './schema';
 import { eq } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 // First, we need to make sure we have at least one user to be the owner
 async function ensureOwnerExists() {
-  const existingUsers = await db.select().from(users).limit(1);
+  // Only select id to avoid issues with missing columns
+  const existingUsers = await db.select({ id: users.id }).from(users).limit(1);
   
   if (existingUsers.length === 0) {
     // Create a default owner if no users exist
+    // Only include fields that definitely exist in the database
     await db.insert(users).values({
       email: 'owner@example.com',
       username: 'boatowner',
@@ -25,8 +28,8 @@ async function ensureOwnerExists() {
       profileCompletionPercentage: 100
     });
     
-    // Get the newly created user
-    const newUser = await db.select().from(users).where(eq(users.email, 'owner@example.com')).limit(1);
+    // Get the newly created user, only select id
+    const newUser = await db.select({ id: users.id }).from(users).where(eq(users.email, 'owner@example.com')).limit(1);
     console.log('Created default owner with ID:', newUser[0].id);
     return newUser[0].id;
   }
@@ -91,6 +94,30 @@ const homePorts = [
   'Lake Powell', 'Lake Havasu', 'Chesapeake Bay', 'Long Beach Marina', 'Cape Cod Harbor'
 ];
 
+// Location data for major US coastal cities
+const locationData = [
+  { city: 'Miami Marina', lat: 25.7617, lng: -80.1918 },
+  { city: 'San Diego Harbor', lat: 32.7157, lng: -117.1611 },
+  { city: 'Newport Beach', lat: 33.6189, lng: -117.9298 },
+  { city: 'Seattle Waterfront', lat: 47.6062, lng: -122.3321 },
+  { city: 'Chicago Harbor', lat: 41.8781, lng: -87.6298 },
+  { city: 'Boston Harbor', lat: 42.3601, lng: -71.0589 },
+  { city: 'Tampa Bay Marina', lat: 27.9506, lng: -82.4572 },
+  { city: 'Fort Lauderdale Yacht Club', lat: 26.1224, lng: -80.1373 },
+  { city: 'San Francisco Bay', lat: 37.7749, lng: -122.4194 },
+  { city: 'Lake Tahoe Marina', lat: 39.0968, lng: -120.0324 },
+  { city: 'Annapolis Harbor', lat: 38.9784, lng: -76.4922 },
+  { city: 'Charleston Marina', lat: 32.7765, lng: -79.9311 },
+  { city: 'Hilton Head Island', lat: 32.2163, lng: -80.7526 },
+  { city: 'Galveston Bay', lat: 29.3013, lng: -94.7977 },
+  { city: 'Lake Michigan Harbor', lat: 43.0389, lng: -87.9065 },
+  { city: 'Lake Powell', lat: 37.0642, lng: -111.2501 },
+  { city: 'Lake Havasu', lat: 34.4839, lng: -114.3224 },
+  { city: 'Chesapeake Bay', lat: 37.8270, lng: -76.0640 },
+  { city: 'Long Beach Marina', lat: 33.7701, lng: -118.1937 },
+  { city: 'Cape Cod Harbor', lat: 41.6688, lng: -70.2962 }
+];
+
 // Helper function to get random items from an array
 function getRandomItems(array: string[], min: number, max: number): string[] {
   const count = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -118,6 +145,11 @@ function getRandomBoolean(probability = 0.5): boolean {
   return Math.random() < probability;
 }
 
+// Helper function to get a random location
+function getRandomLocation() {
+  return locationData[Math.floor(Math.random() * locationData.length)];
+}
+
 // Main function to seed boats
 async function seedBoats() {
   try {
@@ -134,12 +166,14 @@ async function seedBoats() {
       const cabins = getRandomNumber(0, 5);
       const bathrooms = getRandomNumber(0, 3);
       
+      // Get a random location
+      const location = getRandomLocation();
+      
       await db.insert(boats).values({
         name: boatNames[i],
         displayTitle: `${boatNames[i]} - ${lengthFt}ft ${getRandomItem(boatMakes)} ${getRandomItem(boatModels)}`,
         description: `Experience the ultimate boating adventure on the ${boatNames[i]}. This beautiful ${lengthFt}-foot ${getRandomItem(boatMakes)} is perfect for day trips, fishing excursions, or sunset cruises.`,
         category: getRandomItem(boatCategoryEnum.enumValues),
-        status: boatStatusEnum.enumValues[1], // ACTIVE
         active: true,
         featured: getRandomBoolean(0.3),
         
@@ -188,9 +222,10 @@ async function seedBoats() {
         taxRate: parseFloat((Math.random() * 0.1 + 0.05).toFixed(2)),
         
         // Location
-        homePort: getRandomItem(homePorts),
-        latitude: parseFloat((Math.random() * 10 + 25).toFixed(6)),
-        longitude: parseFloat((Math.random() * 50 - 120).toFixed(6)),
+        homePort: location.city,
+        currentLocation: location.city,
+        // Use PostGIS point for location
+        location: sql`ST_SetSRID(ST_MakePoint(${location.lng}, ${location.lat}), 4326)`,
         
         // Charter Options
         crewRequired: getRandomBoolean(0.6),

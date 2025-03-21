@@ -53,6 +53,16 @@ const brands: Brand[] = [
 // Create a reversed version of the brands array without modifying the original
 const reversedBrands = [...brands].reverse();
 
+// Reusable animation variants for DRY code
+const fadeInUpAnimation = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: (delay = 0) => ({ 
+    duration: 0.5, 
+    delay 
+  })
+};
+
 export default function BrandsCarousel() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -61,72 +71,74 @@ export default function BrandsCarousel() {
   });
 
   const opacity = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
+  const y = useTransform(scrollYProgress, [0, 1], [50, -50]);
 
   return (
-    <section ref={containerRef} className="relative py-16 sm:py-24 bg-white overflow-hidden">
+    <section ref={containerRef} className="relative py-8 sm:py-12 md:py-16 bg-white overflow-hidden w-full">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[url('/patterns/circuit-board.svg')] opacity-[0.03]" />
       
       <motion.div
-        style={{ opacity }}
-        className="relative"
+        style={{ opacity, y }}
+        className="relative z-10"
       >
         {/* Section Header */}
-        <div className="max-w-7xl mx-auto px-4 mb-12 sm:mb-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 sm:mb-12 md:mb-16">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            initial={fadeInUpAnimation.initial}
+            whileInView={fadeInUpAnimation.animate}
+            viewport={{ once: true }}
+            transition={fadeInUpAnimation.transition()}
             className="text-center"
           >
-            <span className="text-primary/90 text-sm font-semibold tracking-wider uppercase">
-              Our Partners
-            </span>
-            <h2 className="mt-4 text-3xl font-bold text-gray-900 sm:text-4xl lg:text-5xl">
-              Trusted By World-Class Brands
+            <div className="flex justify-center mb-3 sm:mb-4">
+              <div className="h-[2px] w-16 sm:w-20 bg-gold" />
+            </div>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#1E293B] mb-3 sm:mb-4 md:mb-6">
+             <span className="text-gold">Brands</span> Who Trust Us
             </h2>
-            <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto font-light leading-relaxed">
               Partnering with the finest names in luxury yachting to deliver exceptional experiences
             </p>
           </motion.div>
         </div>
 
-        {/* Brands Carousel - Full Width */}
-        <div className="relative w-full overflow-hidden">
-          {/* Gradient Overlays */}
-          <div className="absolute left-0 top-0 bottom-0 w-20 sm:w-40 bg-gradient-to-r from-white to-transparent z-10" />
-          <div className="absolute right-0 top-0 bottom-0 w-20 sm:w-40 bg-gradient-to-l from-white to-transparent z-10" />
+        {/* Brands Carousel - Full Width with no padding */}
+        <div className="relative w-full overflow-hidden" style={{ width: '100vw', marginLeft: 'calc(-50vw + 50%)' }}>
+          {/* Horizontal gradient overlays for sides */}
+          <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-16 md:w-32 lg:w-40 bg-gradient-to-r from-white to-transparent z-10" />
+          <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-16 md:w-32 lg:w-40 bg-gradient-to-l from-white to-transparent z-10" />
 
           {/* First Row */}
-          <div className="flex space-x-8 sm:space-x-16 lg:space-x-24 animate-marquee">
-            {[...brands, ...brands].map((brand, index) => (
+          <div className="flex space-x-4 sm:space-x-6 md:space-x-12 lg:space-x-16 animate-marquee py-3 sm:py-4 md:py-6 pl-4 sm:pl-8 md:pl-16">
+            {[...brands, ...brands, ...brands].map((brand, index) => (
               <motion.div
                 key={`${brand.name}-${index}`}
                 whileHover={{ scale: 1.05 }}
                 className="relative flex-shrink-0 group"
               >
-                <div className="relative w-20 h-14 sm:w-28 sm:h-20 lg:w-40 lg:h-24">
+                <div className="relative w-12 h-10 sm:w-16 sm:h-12 md:w-24 md:h-16 lg:w-32 lg:h-20 xl:w-40 xl:h-24 bg-white rounded-md sm:rounded-lg p-1 sm:p-2 flex items-center justify-center border border-gray-100 hover:border-gold/30 shadow-sm hover:shadow-md transition-all duration-300">
                   <Image
                     src={brand.logo}
                     alt={brand.name}
                     fill
                     className="object-contain filter grayscale hover:grayscale-0 
-                             transition-all duration-300"
+                             transition-all duration-300 p-2 sm:p-3"
                   />
                 </div>
                 
-                {/* Tooltip */}
+                {/* Tooltip - Hidden on mobile, visible on hover for larger screens */}
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   whileHover={{ opacity: 1, y: 0 }}
-                  className="absolute left-1/2 -translate-x-1/2 mt-4 bg-white/80 backdrop-blur-md 
-                           px-4 py-2 rounded-lg shadow-xl pointer-events-none text-center min-w-[140px]
-                           border border-gray-100"
+                  className="hidden sm:block absolute left-1/2 -translate-x-1/2 mt-2 sm:mt-4 bg-white/90 backdrop-blur-md 
+                           px-2 sm:px-4 py-1 sm:py-2 rounded-lg shadow-xl pointer-events-none text-center min-w-[120px] sm:min-w-[140px]
+                           border border-gray-100 z-20"
                 >
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900">
                     {brand.name}
                   </p>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-[10px] sm:text-xs text-gray-600 mt-0.5 sm:mt-1">
                     {brand.description}
                   </p>
                 </motion.div>
@@ -135,35 +147,35 @@ export default function BrandsCarousel() {
           </div>
 
           {/* Second Row */}
-          <div className="flex space-x-8 sm:space-x-16 lg:space-x-24 animate-marquee-reverse mt-8 sm:mt-16">
-            {[...reversedBrands, ...reversedBrands].map((brand, index) => (
+          <div className="flex space-x-4 sm:space-x-6 md:space-x-12 lg:space-x-16 animate-marquee-reverse mt-4 sm:mt-8 md:mt-12 py-3 sm:py-4 md:py-6 pl-4 sm:pl-8 md:pl-16">
+            {[...reversedBrands, ...reversedBrands, ...reversedBrands].map((brand, index) => (
               <motion.div
                 key={`${brand.name}-reverse-${index}`}
                 whileHover={{ scale: 1.05 }}
                 className="relative flex-shrink-0 group"
               >
-                <div className="relative w-20 h-14 sm:w-28 sm:h-20 lg:w-40 lg:h-24">
+                <div className="relative w-12 h-10 sm:w-16 sm:h-12 md:w-24 md:h-16 lg:w-32 lg:h-20 xl:w-40 xl:h-24 bg-white rounded-md sm:rounded-lg p-1 sm:p-2 flex items-center justify-center border border-gray-100 hover:border-gold/30 shadow-sm hover:shadow-md transition-all duration-300">
                   <Image
                     src={brand.logo}
                     alt={brand.name}
                     fill
                     className="object-contain filter grayscale hover:grayscale-0 
-                             transition-all duration-300"
+                             transition-all duration-300 p-2 sm:p-3"
                   />
                 </div>
                 
-                {/* Tooltip */}
+                {/* Tooltip - Hidden on mobile, visible on hover for larger screens */}
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   whileHover={{ opacity: 1, y: 0 }}
-                  className="absolute left-1/2 -translate-x-1/2 mt-4 bg-white/80 backdrop-blur-md 
-                           px-4 py-2 rounded-lg shadow-xl pointer-events-none text-center min-w-[140px]
-                           border border-gray-100"
+                  className="hidden sm:block absolute left-1/2 -translate-x-1/2 mt-2 sm:mt-4 bg-white/90 backdrop-blur-md 
+                           px-2 sm:px-4 py-1 sm:py-2 rounded-lg shadow-xl pointer-events-none text-center min-w-[120px] sm:min-w-[140px]
+                           border border-gray-100 z-20"
                 >
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900">
                     {brand.name}
                   </p>
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-[10px] sm:text-xs text-gray-600 mt-0.5 sm:mt-1">
                     {brand.description}
                   </p>
                 </motion.div>

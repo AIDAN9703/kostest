@@ -9,7 +9,7 @@ import Link from "next/link";
 import { updateUserProfile } from "@/lib/actions/profile-actions";
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/ui/image-upload";
-import { getOptimizedImageUrl } from '@/lib/imagekit';
+import { getOptimizedImageUrl } from '@/lib/services/imagekit';
 
 interface ProfileHeaderProps {
   user: any; // Using any temporarily to avoid type issues
@@ -204,15 +204,6 @@ const ProfileHeader = ({ user }: ProfileHeaderProps) => {
             className="w-full h-full object-cover"
           />
         )}
-        <div className="absolute bottom-3 right-3">
-          <ImageUpload
-            type="cover"
-            onUploadComplete={handleCoverImageUpdate}
-            buttonText={coverImage ? "Change Cover" : "Add Cover"}
-            variant="secondary"
-            className="bg-white shadow-sm"
-          />
-        </div>
       </div>
       
       <div className="p-4 md:p-6 -mt-10 relative">

@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Sunset, GlassWater, Cake, Users, Music, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const experiences = [
   {
@@ -56,64 +57,76 @@ const experiences = [
   }
 ];
 
+// Reusable animation variants for DRY code
+const fadeInUpAnimation = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: (delay = 0) => ({ 
+    duration: 0.5, 
+    delay 
+  })
+};
+
 export default function PopularExperiences() {
   return (
-    <section className="py-32 bg-white relative overflow-hidden">
-
-
+    <section className="py-8 sm:py-12 md:py-16 bg-white relative overflow-hidden">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Section Header */}
         <motion.div 
-          className="text-center mb-24"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          className="text-center mb-8 sm:mb-12"
+          initial={fadeInUpAnimation.initial}
+          whileInView={fadeInUpAnimation.animate}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          transition={fadeInUpAnimation.transition()}
         >
-          <h2 className="font-serif text-5xl md:text-6xl xl:text-7xl text-[#1E293B] mb-6">
-            Popular <span className="text-gold">Experiences</span>
+          <div className="flex justify-center mb-3 sm:mb-4">
+            <div className="h-[2px] w-16 sm:w-20 bg-gold" />
+          </div>
+          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#1E293B] mb-3 sm:mb-4">
+            <span className="text-gold">Popular</span> Experiences
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto font-light leading-relaxed">
+          <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto font-light leading-relaxed">
             Discover our most sought-after yacht experiences, each crafted to create unforgettable memories on the water.
           </p>
         </motion.div>
 
-        {/* Experiences Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Experiences Grid - Now showing 2 cards per row even on smallest screens */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
           {experiences.map((experience, idx) => (
             <motion.div
               key={experience.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1, duration: 0.6 }}
+              initial={fadeInUpAnimation.initial}
+              whileInView={fadeInUpAnimation.animate}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: Math.min(idx * 0.1, 0.3), duration: 0.5 }}
               className="group relative"
             >
               <Link href={experience.link} className="block">
-                <div className="relative h-[400px] rounded-3xl overflow-hidden">
+                <div className="relative h-[160px] sm:h-[200px] md:h-[250px] lg:h-[300px] rounded-lg sm:rounded-xl md:rounded-2xl overflow-hidden">
                   <Image
                     src={experience.image}
                     alt={experience.title}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                   />
                   
-                  {/* Gradient Overlay */}
+                  {/* Gradient Overlay - Always visible on mobile for better readability */}
                   <div className={`absolute inset-0 bg-gradient-to-t ${experience.color} 
-                                opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
+                                opacity-70 sm:opacity-50 md:opacity-30 sm:group-hover:opacity-100 transition-opacity duration-500`} />
                   
                   {/* Content */}
-                  <div className="absolute inset-0 p-8 flex flex-col justify-end">
-                    <div className="relative transform translate-y-8 group-hover:translate-y-0 transition-transform duration-500">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-2xl bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-lg">
-                          <experience.icon className="w-6 h-6 text-[#1E293B]" />
+                  <div className="absolute inset-0 p-3 sm:p-4 md:p-6 flex flex-col justify-end">
+                    <div className="relative transform translate-y-0 transition-transform duration-500">
+                      <div className="flex items-center gap-2 mb-1 sm:mb-2">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 rounded-md sm:rounded-lg bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                          <experience.icon className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 text-[#1E293B]" />
                         </div>
-                        <h3 className="text-2xl font-medium text-white">
+                        <h3 className="text-base sm:text-lg md:text-xl font-medium text-white">
                           {experience.title}
                         </h3>
                       </div>
-                      <p className="text-white/90 font-light tracking-wide opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
+                      <p className="text-white/90 text-xs sm:text-sm md:text-base font-light tracking-wide line-clamp-2 sm:line-clamp-3">
                         {experience.description}
                       </p>
                     </div>
@@ -126,20 +139,22 @@ export default function PopularExperiences() {
 
         {/* Bottom CTA */}
         <motion.div 
-          className="text-center mt-24"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
+          className="text-center mt-8 sm:mt-12 md:mt-16"
+          initial={fadeInUpAnimation.initial}
+          whileInView={fadeInUpAnimation.animate}
           viewport={{ once: true }}
-          transition={{ delay: 0.5 }}
+          transition={fadeInUpAnimation.transition(0.5)}
         >
-          <Link 
-            href="/experiences"
-            className="inline-flex px-12 py-6 bg-[#1E293B] text-white rounded-full text-xl font-serif
-                     tracking-wide shadow-lg hover:shadow-xl transition-all duration-300 
-                     transform hover:scale-[1.02] active:scale-[0.98] hover:bg-[#2C3E50]"
+          <Button
+            asChild
+            size="lg"
+            className="font-serif text-sm sm:text-base md:text-lg px-6 sm:px-8 md:px-12 py-2 sm:py-3 md:py-4 rounded-full border-2 border-[#1E293B] text-[#1E293B] 
+                     hover:bg-[#1E293B] hover:text-white transition-all duration-300 bg-transparent h-auto"
           >
-            View All Experiences
-          </Link>
+            <Link href="/experiences">
+              View All Experiences
+            </Link>
+          </Button>
         </motion.div>
       </div>
     </section>

@@ -7,6 +7,7 @@ import { users } from "@/database/schema";
 import { eq } from "drizzle-orm";
 import { after } from "next/server";
 import Footer from '@/components/navigation/Footer';
+
 const Layout = async ({ children }: { children: ReactNode }) => {
   const session = await auth();
 

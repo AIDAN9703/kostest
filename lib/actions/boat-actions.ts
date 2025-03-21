@@ -213,7 +213,7 @@ export const getBoats = cache(async ({
           name: boat.name,
           latitude: lat,
           longitude: lng,
-          category: boat.category,
+          category: boat.category || "OTHER", // Provide default value for null/undefined
           price: boat.hourlyRate,
           imageUrl: boat.mainImage || boat.primaryPhotoAbsPath || undefined
         };

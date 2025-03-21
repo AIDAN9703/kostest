@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Facebook, Instagram, Twitter, Send } from 'lucide-react';
+import { Instagram, Send } from 'lucide-react';
+import { FaYoutube, FaTiktok } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -27,25 +28,25 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-4">
               <a 
-                href="#" 
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-                aria-label="Facebook"
-              >
-                <Facebook className="w-5 h-5 text-gray-300" />
-              </a>
-              <a 
-                href="#" 
+                href="https://instagram.com" 
                 className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
                 aria-label="Instagram"
               >
                 <Instagram className="w-5 h-5 text-gray-300" />
               </a>
               <a 
-                href="#" 
+                href="https://tiktok.com" 
                 className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-                aria-label="Twitter"
+                aria-label="TikTok"
               >
-                <Twitter className="w-5 h-5 text-gray-300" />
+                <FaTiktok className="w-5 h-5 text-gray-300" />
+              </a>
+              <a 
+                href="https://youtube.com" 
+                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+                aria-label="YouTube"
+              >
+                <FaYoutube className="w-5 h-5 text-gray-300" />
               </a>
             </div>
           </div>

@@ -1,24 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Boat Rental Platform
+
+This is a modern boat rental platform built with Next.js, Drizzle ORM, and PostgreSQL.
+
+## Google Maps Integration
+
+This project uses Google Maps for location-based searching and boat position display. To use the Google Maps features:
+
+1. **Get API Key**: Obtain a Google Maps API key from the [Google Cloud Console](https://console.cloud.google.com/)
+   - Enable the following APIs:
+     - Maps JavaScript API
+     - Places API
+     - Geocoding API
+
+2. **Configure API Key**: Add your API key to the `.env` file:
+   ```
+   NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_api_key_here
+   ```
+
+3. **Features Implemented**:
+   - Location search with Google Places Autocomplete
+   - Map display of boat locations with custom markers and clustering
+   - Location-based filtering for boats
+   - Distance radius filtering
+   - Interactive map for selecting boat locations during listing creation
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file based on `.env.example`
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Database Setup
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. Set up a PostgreSQL database (local or cloud-based like Neon)
+2. Add the database URL to your `.env` file:
+   ```
+   DATABASE_URL=your_db_url_here
+   ```
+3. Run database migrations:
+   ```bash
+   npx drizzle-kit push:pg
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Technologies Used
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Frontend**: Next.js, React, TypeScript, Tailwind CSS, shadcn/ui
+- **Database**: PostgreSQL, Drizzle ORM
+- **Maps**: Google Maps API, Places API
+- **Authentication**: NextAuth
+- **Deployment**: Vercel
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Learn More
 

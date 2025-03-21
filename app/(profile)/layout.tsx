@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import ProfileSidebar from '@/components/profile/ProfileSidebar';
 import { Toaster } from '@/components/ui/toaster';
+import Navigation from '@/components/navigation/Navigation';
 
 // Simple error boundary component
 const ErrorFallback = () => (
@@ -36,15 +37,16 @@ export default async function ProfileLayout({
     }
 
     return (
-      <div className="min-h-screen bg-gray-50">
-        <ProfileSidebar user={session.user} />
-        
-        <main className="min-h-screen lg:ml-[250px]">
+      <>
+      <Navigation session={session} />
+      <div className="min-h-screen bg-gray-50 pt-16">
+        <main className="min-h-screen">
           {children}
         </main>
         
         <Toaster />
       </div>
+      </>
     );
   } catch (error) {
     console.error("Profile layout error:", error);

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
@@ -49,11 +49,23 @@ export const metadata: Metadata = {
   description: "KOSyachts is the leading yacht charter experience in the South Florida area.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 const RootLayout = async ({ children }: { children: ReactNode }) => {
   const session = await auth();
 
   return (
     <html lang="en">
+      <head>
+        <script
+          crossOrigin="anonymous"
+          src="//unpkg.com/react-scan/dist/auto.global.js"
+        /></head>
       <SessionProvider session={session}>
         <body className={`${ibmPlexSans.className} ${bebasNeue.variable} ${seasons.variable} ${openSans.className} antialiased`}>
           {children}

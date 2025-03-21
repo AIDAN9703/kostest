@@ -23,6 +23,18 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'ik.imagekit.io',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'source.unsplash.com'
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.pexels.com'
+      },
     ],
     domains: ['localhost'],
   },

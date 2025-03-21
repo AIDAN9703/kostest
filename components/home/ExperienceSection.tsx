@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { FiAnchor, FiStar, FiWind, FiMap } from 'react-icons/fi';
+import { Button } from '@/components/ui/button';
 
 const features = [
   {
@@ -29,7 +30,7 @@ const features = [
 
 export default function ExperienceSection() {
   return (
-    <section className="relative py-32 overflow-hidden bg-white">
+    <section className="relative py-16 sm:py-24 overflow-hidden bg-white">
       <div className="max-w-7xl mx-auto px-4 relative">
         <div className="grid lg:grid-cols-2 gap-20 items-center">
           {/* Image Side */}
@@ -80,11 +81,14 @@ export default function ExperienceSection() {
               transition={{ duration: 0.6 }}
               className="space-y-6"
             >
-              <h2 className="text-5xl font-serif text-[#1E293B]">
-                The <span className="text-gold">Ultimate</span>
+              <div className="flex mb-4">
+                <div className="h-[2px] w-20 bg-gold" />
+              </div>
+              <h2 className="text-5xl font-serif text-[#1E293B] mb-6">
+                <span className="text-gold">The Ultimate</span>
                 <span className="block mt-2">Yacht Experience</span>
               </h2>
-              <p className="text-xl text-gray-600 leading-relaxed">
+              <p className="text-xl text-gray-600 font-light leading-relaxed">
                 Embark on an extraordinary journey where luxury meets adventure. Our fleet of premium yachts and expert crew ensure every moment is crafted to perfection.
               </p>
             </motion.div>
@@ -118,11 +122,13 @@ export default function ExperienceSection() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6, duration: 0.6 }}
             >
-              <button className="px-8 py-4 bg-[#1E293B] text-white rounded-full text-lg 
-                               hover:bg-[#2C3E50] transition-all duration-300 transform 
-                               hover:scale-[1.02] active:scale-[0.98]">
+              <Button
+                className="font-serif text-lg px-12 py-4 rounded-full border-2 border-[#1E293B] text-[#1E293B] 
+                         hover:bg-[#1E293B] hover:text-white transition-all duration-300 bg-transparent"
+                onClick={() => { window.location.href = '/boats'; }}
+              >
                 Start Your Journey
-              </button>
+              </Button>
             </motion.div>
           </div>
         </div>

@@ -13,6 +13,7 @@ import {
   index,
   PgArray,
   uuid,
+  geometry,
 } from "drizzle-orm/pg-core";
 
 // Payment related enums
@@ -94,15 +95,6 @@ export const boatingLicenseTypeEnum = pgEnum("BoatingLicenseType", [
   "OTHER"
 ]);
 
-// Boat related enums
-export const boatStatusEnum = pgEnum("BoatStatus", [
-  "PENDING",
-  "ACTIVE",
-  "INACTIVE",
-  "MAINTENANCE",
-  "ARCHIVED",
-]);
-
 export const boatCategoryEnum = pgEnum("BoatCategory", [
   "PONTOON",
   "YACHT",
@@ -131,6 +123,15 @@ export const lineItemTypeEnum = pgEnum("LineItemType", [
   "CAPTAIN",
   "OWNER",
   "BOOKING_FEE",
+]);
+
+// Location related types
+export const locationTypeEnum = pgEnum("LocationType", [
+  "HOME_PORT",
+  "CURRENT_LOCATION",
+  "PICKUP_LOCATION",
+  "DROPOFF_LOCATION",
+  "DESTINATION",
 ]);
 
 // Tables
@@ -359,7 +360,6 @@ export const boats = pgTable(
     displayTitle: text("display_title"),
     description: text("description"),
     category: boatCategoryEnum("category").notNull(),
-    status: boatStatusEnum("status").default("PENDING").notNull(),
     active: boolean("active").default(false).notNull(),
     featured: boolean("featured").default(false),
     featuredOrder: integer("featured_order"),
@@ -413,8 +413,7 @@ export const boats = pgTable(
     // Location
     homePort: text("home_port"),
     currentLocation: text("current_location"),
-    latitude: doublePrecision("latitude"),    // Added latitude
-    longitude: doublePrecision("longitude"),  // Added longitude
+    location: geometry('location', { type: 'point', srid: 4326 }),
     availableDestinations: text("available_destinations").array(),
     dockInfo: text("dock_info"),
     parkingInfo: text("parking_info"),        // Renamed from parkingNotes
@@ -463,9 +462,9 @@ export const boats = pgTable(
   (table) => [
     index("boat_owner_idx").on(table.ownerId),
     index("boat_captain_idx").on(table.primaryCaptainId),
-    index("boat_status_idx").on(table.status),
     index("boat_category_idx").on(table.category),
-    index("boat_location_idx").on(table.homePort)
+    index("boat_location_idx").on(table.homePort),
+    index("boat_spatial_idx").using("gist", table.location),
   ]
 );
 
@@ -548,7 +547,9 @@ export const bookings = pgTable("booking", {
   
   // Location
   pickupLocation: text("pickup_location"),
+  pickupCoordinates: geometry('pickup_coordinates', { type: 'point', srid: 4326 }),
   dropoffLocation: text("dropoff_location"),
+  dropoffCoordinates: geometry('dropoff_coordinates', { type: 'point', srid: 4326 }),
   destinationDetails: text("destination_details"),
   
   // Pricing
@@ -592,7 +593,9 @@ export const bookings = pgTable("booking", {
   index("booking_status_idx").on(table.status),
   index("booking_renter_idx").on(table.renterId),
   index("booking_boat_idx").on(table.boatId),
-  index("booking_date_idx").on(table.startDate, table.endDate)
+  index("booking_date_idx").on(table.startDate, table.endDate),
+  index("booking_pickup_idx").using("gist", table.pickupCoordinates),
+  index("booking_dropoff_idx").using("gist", table.dropoffCoordinates),
 ]);
 
 export const reviews = pgTable("review", {

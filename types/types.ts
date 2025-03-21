@@ -1,6 +1,7 @@
 import { boatCategoryEnum } from "@/database/schema";
 import { z } from "zod";
 import { ProfileFormValues } from "@/lib/validations";
+import { LucideIcon } from 'lucide-react';
 
 // User profile types
 export type BoatingExperience = "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT" | null;
@@ -37,7 +38,7 @@ export interface Boat {
   ownerEmail?: string | null;
   name: string;
   displayTitle?: string | null;
-  category: typeof boatCategoryEnum.enumValues[number];
+  category?: typeof boatCategoryEnum.enumValues[number] | null;
   make?: string | null;
   model?: string | null;
   yearBuilt?: number | null;
@@ -79,7 +80,6 @@ export interface Boat {
   currentLocation?: string | null;
   availableDestinations?: string[] | null;
   seasonalLocations?: unknown;
-  status: string;
   active: boolean;
   featured?: boolean | null;
   featuredOrder?: number | null;
@@ -102,6 +102,7 @@ export interface Boat {
   lastMaintenanceDate?: Date | null;
   nextMaintenanceDate?: Date | null;
   maintenanceNotes?: string | null;
+  location?: any;
   latitude?: number | null;
   longitude?: number | null;
   listBoat?: boolean;
@@ -202,3 +203,30 @@ export type ActionResponse<T> = {
 
 // Re-export booking types for convenience
 export type { BookingRequest, ProfileFormValues } from "../lib/validations"; 
+
+// Navigation types
+export interface NavigationItem {
+  href: string;
+  label: string;
+  children?: Array<NavigationItem | HeaderItem>;
+}
+
+export interface HeaderItem {
+  type: 'header';
+  label: string;
+}
+
+export interface QuickLink {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  href: string;
+}
+
+export interface FeaturedItem {
+  icon: LucideIcon;
+  label: string;
+  title: string;
+  desc: string;
+  href: string;
+} 

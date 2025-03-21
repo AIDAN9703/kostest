@@ -1,4 +1,3 @@
-import { auth } from "@/auth";
 import { db } from "@/database/db";
 import { users } from "@/database/schema";
 import { eq } from "drizzle-orm";
@@ -9,7 +8,7 @@ import Link from "next/link";
 import ProfileHeader from "@/components/profile/ProfileHeader";
 import { Suspense } from "react";
 import { UserProfile } from "@/types/types";
-
+import { auth } from "@/auth";
 // Quick action card component
 const QuickActionCard = ({ 
   title, 
@@ -159,6 +158,7 @@ const QuickActionsGrid = ({ user }: { user: any }) => {
   ];
 
   return (
+    <>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       {quickActions.map((action, index) => (
         <QuickActionCard
@@ -170,6 +170,7 @@ const QuickActionsGrid = ({ user }: { user: any }) => {
         />
       ))}
     </div>
+    </>
   );
 };
 

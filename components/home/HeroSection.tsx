@@ -1,91 +1,154 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { FiChevronDown } from 'react-icons/fi';
+import { FiSearch } from 'react-icons/fi';
 
 export default function HeroSection() {
   const [isLoaded, setIsLoaded] = useState(false);
-
+  const [searchQuery, setSearchQuery] = useState('');
+  const [subtitleIndex, setSubtitleIndex] = useState(0);
+  const [displayText, setDisplayText] = useState('');
+  const [isTyping, setIsTyping] = useState(true);
+  
+  const subtitles = [
+    'Luxury Yachts in 50+ Destinations',
+    'Unforgettable Ocean Adventures',
+    'Premium Charter Experiences',
+    'Exclusive Yacht Getaways'
+  ];
+  
+  const typingSpeed = 80; // milliseconds per character
+  const deletingSpeed = 40; // milliseconds per character
+  const pauseTime = 2000; // time to pause after typing
+  
   useEffect(() => {
     setIsLoaded(true);
   }, []);
+  
+  useEffect(() => {
+    let timeout: NodeJS.Timeout;
+    
+    if (isTyping) {
+      if (displayText.length < subtitles[subtitleIndex].length) {
+        // Still typing the current subtitle
+        timeout = setTimeout(() => {
+          setDisplayText(subtitles[subtitleIndex].substring(0, displayText.length + 1));
+        }, typingSpeed);
+      } else {
+        // Finished typing, pause before deleting
+        timeout = setTimeout(() => {
+          setIsTyping(false);
+        }, pauseTime);
+      }
+    } else {
+      if (displayText.length > 0) {
+        // Deleting the current subtitle
+        timeout = setTimeout(() => {
+          setDisplayText(displayText.substring(0, displayText.length - 1));
+        }, deletingSpeed);
+      } else {
+        // Move to the next subtitle
+        setSubtitleIndex((subtitleIndex + 1) % subtitles.length);
+        setIsTyping(true);
+      }
+    }
+    
+    return () => clearTimeout(timeout);
+  }, [displayText, isTyping, subtitleIndex, subtitles]);
 
-  const scrollToContent = () => {
-    window.scrollTo({
-      top: window.innerHeight,
-      behavior: 'smooth'
-    });
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Implement search functionality
+    console.log('Searching for:', searchQuery);
+  };
+
+  // Animation variants for reusability
+  const fadeInAnimation = {
+    initial: { opacity: 0, y: 20 },
+    animate: (isLoaded: boolean) => ({
+      opacity: isLoaded ? 1 : 0,
+      y: isLoaded ? 0 : 20
+    }),
+    transition: (delay: number) => ({
+      duration: 0.8,
+      delay
+    })
   };
 
   return (
-    <section className="relative h-screen w-full overflow-hidden">
-      {/* Background Image with Overlay */}
+    <section className="relative h-screen w-full overflow-hidden" aria-label="Hero Section">
+      {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image 
-          src="/images/heroaerial4.jpeg" 
-          alt="Luxury yacht in crystal clear waters"
+          src="/images/heroaerial5.JPG" 
+          alt="Luxury yachts in crystal clear waters"
           fill
           className="object-cover object-center"
           priority
           sizes="100vw"
           quality={100}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/40" />
       </div>
 
       {/* Content Container */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="text-center max-w-5xl mx-auto"
-        >
-          {/* Elegant Divider */}
-          <motion.div 
-            initial={{ width: 0 }}
-            animate={{ width: isLoaded ? '80px' : 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="h-[2px] bg-gold mx-auto mb-8"
-          />
-          
-          {/* Main Heading */}
-          <h1 className="font-serif italic text-5xl md:text-7xl lg:text-8xl text-white leading-tight mb-6">
-            KOS Yacht Charters and Club
-          </h1>
-          
-          {/* Tagline */}
-          <p className="text-xl md:text-2xl text-white/90 font-light max-w-2xl mx-auto mb-10">
-            Experience unparalleled luxury on the world's most exclusive waters
-          </p>
-        </motion.div>
+        <div className="flex flex-col items-center justify-center h-full">
+          {/* Hero Content */}
+          <div className="flex flex-col items-center justify-center -mt-20 sm:-mt-28 md:-mt-36">
+            {/* Subtitle with Typing Animation */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: isLoaded ? 1 : 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="mb-2 sm:mb-4 h-5 sm:h-6" // Adjusted height for mobile
+            >
+              <span className="text-white/90 text-xs sm:text-sm uppercase tracking-widest font-medium">{displayText}</span>
+              <span className={`inline-block w-0.5 h-3 sm:h-4 ml-0.5 bg-gold ${isTyping ? 'animate-blink' : 'opacity-0'}`}></span>
+            </motion.div>
+            
+            {/* Main Heading */}
+            <motion.h1
+              initial={fadeInAnimation.initial}
+              animate={fadeInAnimation.animate(isLoaded)}
+              transition={fadeInAnimation.transition(0.3)}
+              className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-white leading-tight mb-6 sm:mb-8 md:mb-12 text-center"
+            >
+              Find Your 
+              <span className="bg-gradient-to-r from-gold to-gold text-transparent bg-clip-text"> Perfect </span>
+              <br className="md:block hidden" />
+              <span className="md:hidden"> </span>
+              Yacht Experience
+            </motion.h1>
+            
+            {/* Search Bar */}
+            <motion.div
+              initial={fadeInAnimation.initial}
+              animate={fadeInAnimation.animate(isLoaded)}
+              transition={fadeInAnimation.transition(0.5)}
+              className="w-full max-w-3xl mx-auto"
+            >
+              <form onSubmit={handleSearch} className="relative">
+                <input
+                  type="text"
+                  placeholder="Where would you like to set sail?"
+                  className="w-full py-3 sm:py-4 md:py-5 px-4 sm:px-6 pr-12 sm:pr-16 text-gray-700 bg-white rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-[#8B5A2B] text-sm sm:text-base md:text-lg"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <button
+                  type="submit"
+                  className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 bg-gold hover:bg-gold/80 text-white p-2 sm:p-3 rounded-lg transition duration-300"
+                  aria-label="Search"
+                >
+                  <FiSearch className="h-4 w-4 sm:h-5 sm:w-5" />
+                </button>
+              </form>
+            </motion.div>
+          </div>
+        </div>
       </div>
-
-      {/* Elegant Scroll Indicator */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: isLoaded ? 1 : 0 }}
-        transition={{ duration: 0.8, delay: 1.2 }}
-        className="absolute bottom-10 left-0 right-0 flex flex-col items-center"
-      >
-        <span className="text-white/80 text-sm tracking-widest uppercase mb-2">Discover</span>
-        <button 
-          onClick={scrollToContent}
-          className="text-white hover:text-gold transition-colors duration-300"
-          aria-label="Scroll down to explore"
-        >
-          <FiChevronDown className="h-8 w-8 animate-bounce" />
-        </button>
-      </motion.div>
-
-      {/* Decorative Elements */}
-      <div className="absolute top-0 left-0 w-full h-16 bg-gradient-to-b from-black/40 to-transparent" />
-      
-      {/* Bottom Gradient for Smooth Transition to White Background */}
-      <div className="absolute bottom-0 left-0 w-full h-64 bg-gradient-to-t from-white via-white/90 to-white/0 z-10" />
-      <div className="absolute bottom-0 left-0 w-full h-96 bg-gradient-to-t from-white/80 via-white/40 to-transparent z-5" />
     </section>
   );
 } 

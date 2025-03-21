@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1739231400615,
-      "tag": "0000_keen_mulholland_black",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1740548501255,
-      "tag": "0001_red_jack_flag",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1740949431903,
-      "tag": "0002_kind_weapon_omega",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1740949500000,
-      "tag": "0003_add_verification_tables",
+      "when": 1742024546952,
+      "tag": "0000_white_vulcan",
       "breakpoints": true
     }
   ]

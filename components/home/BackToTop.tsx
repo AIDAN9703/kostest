@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FiArrowUp } from 'react-icons/fi';
+import { Button } from '@/components/ui/button';
 
 export default function BackToTop() {
   const [show, setShow] = useState(false);
@@ -22,12 +23,14 @@ export default function BackToTop() {
   if (!show) return null;
 
   return (
-    <button
+    <Button
       onClick={scrollToTop}
-      className="fixed bottom-4 right-4 bg-[#21336a] text-white p-3 rounded-full 
-                shadow-lg hover:bg-[#2a4086] transition-colors duration-300 z-50"
+      className="fixed bottom-8 right-8 p-4 rounded-full border-2 border-[#1E293B] text-[#1E293B] 
+               hover:bg-[#1E293B] hover:text-white transition-all duration-300 bg-transparent z-50
+               font-serif"
+      aria-label="Scroll to top"
     >
-      <FiArrowUp className="w-6 h-6" />
-    </button>
+      <FiArrowUp className="w-5 h-5" />
+    </Button>
   );
 } 
