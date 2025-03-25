@@ -82,7 +82,7 @@ export default function HeroSection() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image 
-          src="/images/heroaerial5.JPG" 
+          src="/images/herooption6.png" 
           alt="Luxury yachts in crystal clear waters"
           fill
           className="object-cover object-center"
@@ -90,6 +90,7 @@ export default function HeroSection() {
           sizes="100vw"
           quality={100}
         />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-50"></div>
       </div>
 
       {/* Content Container */}
@@ -105,7 +106,7 @@ export default function HeroSection() {
               className="mb-2 sm:mb-4 h-5 sm:h-6" // Adjusted height for mobile
             >
               <span className="text-white/90 text-xs sm:text-sm uppercase tracking-widest font-medium">{displayText}</span>
-              <span className={`inline-block w-0.5 h-3 sm:h-4 ml-0.5 bg-gold ${isTyping ? 'animate-blink' : 'opacity-0'}`}></span>
+              <span className={`inline-block w-0.5 h-3 sm:h-4 ml-0.5 bg-primary ${isTyping ? 'animate-blink' : 'opacity-0'}`}></span>
             </motion.div>
             
             {/* Main Heading */}
@@ -115,11 +116,10 @@ export default function HeroSection() {
               transition={fadeInAnimation.transition(0.3)}
               className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-white leading-tight mb-6 sm:mb-8 md:mb-12 text-center"
             >
-              Find Your 
-              <span className="bg-gradient-to-r from-gold to-gold text-transparent bg-clip-text"> Perfect </span>
+              Find Your Perfect
               <br className="md:block hidden" />
               <span className="md:hidden"> </span>
-              Yacht Experience
+              <span className="text-primary"> Yacht Experience</span>
             </motion.h1>
             
             {/* Search Bar */}
@@ -133,13 +133,13 @@ export default function HeroSection() {
                 <input
                   type="text"
                   placeholder="Where would you like to set sail?"
-                  className="w-full py-3 sm:py-4 md:py-5 px-4 sm:px-6 pr-12 sm:pr-16 text-gray-700 bg-white rounded-lg shadow-lg focus:outline-none focus:ring-2 focus:ring-[#8B5A2B] text-sm sm:text-base md:text-lg"
+                  className="w-full py-3 sm:py-4 md:py-5 px-4 sm:px-6 pr-12 sm:pr-16 text-gray-700 bg-white rounded-lg shadow-lg text-sm sm:text-base md:text-lg"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <button
                   type="submit"
-                  className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 bg-gold hover:bg-gold/80 text-white p-2 sm:p-3 rounded-lg transition duration-300"
+                  className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 bg-primary hover:bg-primary/80 text-white p-2 sm:p-3 rounded-lg transition duration-300"
                   aria-label="Search"
                 >
                   <FiSearch className="h-4 w-4 sm:h-5 sm:w-5" />

@@ -5,27 +5,8 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn, throttle } from '@/lib/utils'
 import Image from 'next/image'
-import { Button } from '@/components/ui/button'
-import {
-    Sheet,
-    SheetContent,
-    SheetTrigger,
-    SheetTitle,
-    SheetClose,
-} from "@/components/ui/sheet"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { useSession, signOut } from "next-auth/react"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Session } from 'next-auth'
-import { ChevronDown, ChevronRight, Instagram, Phone, Mail, MapPin, Clock, Ship, Calendar, Users2 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Phone, Mail, MapPin, Clock, Ship, Calendar, Users2 } from 'lucide-react'
 
 // Import subcomponents
 import MobileNavigation from './sub-components/MobileNavigation'
@@ -34,7 +15,7 @@ import UserMenu from './sub-components/UserMenu'
 import SocialLinks from './sub-components/SocialLinks'
 
 // Import types
-import { NavigationItem, HeaderItem, QuickLink, FeaturedItem } from '@/types/types'
+import { NavigationItem, QuickLink, FeaturedItem } from '@/types/types'
 
 // Navigation data structure
 const navigationData: {
@@ -214,11 +195,14 @@ const Navigation = ({ session }: { session: Session | null }) => {
                             aria-label="Home"
                         >
                             <Image 
-                                src="/icons/logo.png" 
+                                src={scrolled ? "/icons/updatekoslogo-branded.png" : "/icons/kosupdatedlogo.webp"} 
                                 alt="Logo" 
                                 width={40} 
                                 height={40}
-                                className="rounded-full transition-transform hover:scale-105"
+                                className={cn(
+                                  "rounded-full transition-transform hover:scale-105",
+                                  scrolled ? "filter-blue" : ""
+                                )}
                                 priority
                             />
                         </Link>

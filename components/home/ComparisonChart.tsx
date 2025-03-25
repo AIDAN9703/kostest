@@ -169,10 +169,10 @@ export default function ComparisonChart() {
             className="text-center"
           >
             <div className="flex justify-center mb-4">
-              <div className="h-[2px] w-20 bg-gold" />
+              <div className="h-[2px] w-20 bg-primary" />
             </div>
             <h2 className="font-serif text-5xl md:text-6xl text-[#1E293B] mb-6">
-              The <span className="text-gold">KOS</span> Difference
+              The <span className="text-primary">KOS</span> Difference
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto font-light leading-relaxed">
               How we compare to other charter platforms
@@ -200,7 +200,7 @@ export default function ComparisonChart() {
                   key={company.name} 
                   className={cn(
                     "p-6 flex flex-col items-center justify-center text-center",
-                    index === 0 && "bg-gold/10"
+                    index === 0 && "bg-primary/10"
                   )}
                 >
                   <div className="relative w-12 h-12 mb-3 rounded-full bg-white shadow-sm overflow-hidden">
@@ -215,7 +215,7 @@ export default function ComparisonChart() {
                   </div>
                   <p className={cn(
                     "font-bold text-xl mb-1",
-                    index === 0 ? "text-gold" : "text-[#1E293B]"
+                    index === 0 ? "text-primary" : "text-[#1E293B]"
                   )}>
                     {company.name}
                   </p>
@@ -231,7 +231,7 @@ export default function ComparisonChart() {
                   key={`mobile-${company.name}`}
                   className={cn(
                     "p-4 border-b border-gray-100",
-                    companyIndex === 0 && "bg-gold/5"
+                    companyIndex === 0 && "bg-primary/5"
                   )}
                 >
                   <div className="flex items-center mb-4">
@@ -248,7 +248,7 @@ export default function ComparisonChart() {
                     <div>
                       <p className={cn(
                         "font-bold",
-                        companyIndex === 0 ? "text-gold" : "text-[#1E293B]"
+                        companyIndex === 0 ? "text-primary" : "text-[#1E293B]"
                       )}>
                         {company.name}
                       </p>
@@ -301,7 +301,7 @@ export default function ComparisonChart() {
                           key={`${company.name}-${feature}`} 
                           className={cn(
                             "p-4 flex items-center justify-center",
-                            companyIndex === 0 && "bg-gold/5"
+                            companyIndex === 0 && "bg-primary/5"
                           )}
                         >
                           <FeatureStatus status={company.features[feature]} />

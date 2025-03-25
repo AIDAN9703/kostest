@@ -318,7 +318,7 @@ const ProfileImagesSection = ({ form, user }: { form: any; user: any }) => {
           </div>
           
           {coverPreview ? (
-            <div className="mt-2 relative w-full h-32 rounded-md overflow-hidden border border-gray-200">
+            <div className="mt-2 relative w-full h-32 sm:h-64 rounded-md overflow-hidden border border-gray-200">
               <img 
                 src={optimizedCoverPreview} 
                 alt="Cover Preview" 
@@ -326,7 +326,7 @@ const ProfileImagesSection = ({ form, user }: { form: any; user: any }) => {
               />
             </div>
           ) : (
-            <div className="mt-2 w-full h-32 rounded-md bg-gray-100 flex items-center justify-center border border-gray-200">
+            <div className="mt-2 w-full rounded-md bg-gray-100 flex items-center justify-center border border-gray-200">
               <ImageIcon className="h-8 w-8 text-gray-400" />
             </div>
           )}

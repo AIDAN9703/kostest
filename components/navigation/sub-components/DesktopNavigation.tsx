@@ -15,7 +15,7 @@ const dropdownMenus = {
       {
         title: "Experiences",
         links: [
-          { href: "/boats", label: "All boats" },
+          { href: "/boats/search", label: "All boats" },
           { href: "/boats/yachts", label: "Yachts" },
           { href: "/boats/fishing", label: "Fishing boats" },
           { href: "/boats/party", label: "Party boats" },

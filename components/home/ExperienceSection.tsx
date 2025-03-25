@@ -82,10 +82,10 @@ export default function ExperienceSection() {
               className="space-y-6"
             >
               <div className="flex mb-4">
-                <div className="h-[2px] w-20 bg-gold" />
+                <div className="h-[2px] w-20 bg-primary" />
               </div>
               <h2 className="text-5xl font-serif text-[#1E293B] mb-6">
-                <span className="text-gold">The Ultimate</span>
+                <span className="text-primary">The Ultimate</span>
                 <span className="block mt-2">Yacht Experience</span>
               </h2>
               <p className="text-xl text-gray-600 font-light leading-relaxed">

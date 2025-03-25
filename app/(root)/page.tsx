@@ -3,6 +3,8 @@ import { HeroSection, TestimonialsSection, BrandsCarousel, BackToTop, FeaturedFl
 import { getFeaturedBoats, getTestimonials } from "@/lib/actions/home-page";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
+import HeroSection2 from '@/components/home/HeroSection2';
+import ClientsShowcase from '@/components/home/ClientsShowcase';
 // This component wraps all the content that needs data
 async function HomeContent() {
   try {
@@ -14,19 +16,20 @@ async function HomeContent() {
     
     return (
       <>
-        <HeroSection />
+        <HeroSection2 />
         <div className="w-full">
-          <WhyChooseUs />
           {boatsResponse.success && boatsResponse.data && boatsResponse.data.length > 0 && (
             <FeaturedFleet boats={boatsResponse.data} />
           )}
-          <BrandsCarousel />
+          <WhyChooseUs />
+          <ClientsShowcase />
           {/*<ComparisonChart />*/}
           <PopularExperiences />
-          <RequestToBook />
           {reviewsResponse.success && reviewsResponse.data && reviewsResponse.data.length > 0 && (
             <TestimonialsSection reviews={reviewsResponse.data} />
           )}
+          <BrandsCarousel />
+          <RequestToBook />
         </div>
       </>
     );

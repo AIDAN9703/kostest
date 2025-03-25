@@ -106,8 +106,6 @@ export interface Boat {
   latitude?: number | null;
   longitude?: number | null;
   listBoat?: boolean;
-  primaryPhoto?: string | null;
-  galleryPhotos?: string[] | null;
   youtubeLink?: string | null;
   numOfPassengers?: number;
   numOfCabins?: number | null;

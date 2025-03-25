@@ -8,14 +8,6 @@ import { UserProfile } from "@/types/types";
 import { Settings } from "lucide-react";
 import { Suspense } from "react";
 
-// Settings header component
-const SettingsHeader = () => (
-  <div className="bg-gradient-to-r from-primary/90 to-primary rounded-lg p-4 md:p-6 text-white shadow-sm">
-    <h1 className="text-xl md:text-2xl font-bold">Account Settings</h1>
-    <p className="mt-1 text-white/90 text-sm md:text-base">Manage your account settings and preferences</p>
-  </div>
-);
-
 // Loading fallback component
 const SettingsSkeleton = () => (
   <div className="p-4 pt-16 md:p-6 lg:pt-6 space-y-6">
@@ -26,9 +18,7 @@ const SettingsSkeleton = () => (
 
 // Settings content component
 const SettingsContent = ({ user }: { user: UserProfile }) => (
-  <div className="p-4 pt-16 md:p-6 lg:pt-6 space-y-6 animate-fadeIn">
-    <SettingsHeader />
-    
+  <div className="p-4 pt-16 md:p-6 lg:pt-6 space-y-6 animate-fadeIn">    
     <Card className="border-gray-200 shadow-sm">
       <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent p-4 md:p-6">
         <CardTitle className="flex items-center gap-2 text-base md:text-lg">

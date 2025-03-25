@@ -2,51 +2,54 @@
 
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { useRef } from 'react';
-import Image from 'next/image';
-import { FiAnchor, FiCompass, FiStar, FiShield, FiSunrise, FiMap } from 'react-icons/fi';
+import { FiAnchor, FiCompass, FiShield, FiClock, FiCheck, FiNavigation } from 'react-icons/fi';
 import { cn } from '@/lib/utils';
+import { Anchor, Headphones, Users, Calendar, Tag, Wind } from 'lucide-react';
 
 const features = [
   {
     icon: FiAnchor,
-    title: 'World-Class Fleet',
-    description: 'Access to the finest luxury yachts, each maintained to perfection',
+    title: 'Extensive Certified Fleet',
+    description: 'A wide range of luxury boats and yachts, professionally inspected and approved.',
+    accent: 'from-sky-300 to-sky-300'
+  },
+  {
+    icon: FiClock,
+    title: '24/7 Concierge Service',
+    description: 'Round-the-clock support to handle every detail of your trip.',
+    accent: 'from-sky-300 to-emerald-400'
   },
   {
     icon: FiCompass,
-    title: 'Expert Navigation',
-    description: 'Seasoned captains with extensive local knowledge',
+    title: 'Trusted Professional Crew',
+    description: 'Experienced, certified captains and crew delivering top-tier service.',
+    accent: 'from-emerald-400 to-emerald-400'
   },
   {
-    icon: FiStar,
-    title: 'Premium Service',
-    description: 'Personalized attention and five-star amenities onboard',
+    icon: FiCheck,
+    title: 'Stress-Free Booking',
+    description: 'Fast, easy, and effortless booking from start to finish.',
+    accent: 'from-sky-300 to-sky-300'
   },
   {
     icon: FiShield,
-    title: 'Safe Journey',
-    description: 'Comprehensive insurance and safety measures',
+    title: 'Best Price Guarantee',
+    description: 'Found a better rate? We\'ll match or beat it—guaranteed.',
+    accent: 'from-sky-300 to-emerald-400'
   },
   {
-    icon: FiSunrise,
-    title: 'Unique Experiences',
-    description: 'Curated adventures and exclusive destinations',
-  },
-  {
-    icon: FiMap,
-    title: 'Global Destinations',
-    description: 'Access to the world\'s most beautiful harbors',
+    icon: FiNavigation,
+    title: 'Smooth Sailing',
+    description: 'On-time departures and flawless scheduling for a worry-free experience.',
+    accent: 'from-emerald-400 to-emerald-400'
   }
 ];
 
-// Reusable animation variants for DRY code
-const fadeInUpAnimation = {
+// Animation variant
+const fadeInUp = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  transition: (delay = 0) => ({ 
-    duration: 0.5, 
-    delay 
-  })
+  transition: (delay = 0) => ({ duration: 0.5, delay })
 };
 
 export default function WhyChooseUs() {
@@ -59,27 +62,17 @@ export default function WhyChooseUs() {
   const y = useTransform(scrollYProgress, [0, 1], [100, -100]);
 
   return (
-    <div className="w-full bg-white">
+    <div className="w-full">
       <section 
         ref={containerRef} 
-        className="relative py-8 sm:py-12 md:py-20 overflow-hidden"
-        style={{ 
-          background: 'white',
-          boxShadow: 'none',
-          borderTop: 'none',
-          borderBottom: 'none'
-        }}
+        className="relative py-6 sm:py-10 overflow-hidden bg-primary rounded-[2rem] mx-4 sm:mx-8 lg:mx-12"
       >
-        {/* Background Image with Overlay */}
-        <div className="absolute inset-0" style={{ top: '-2px', bottom: '-2px' }}>
-          <Image
-            src="/images/heroaerial4.jpeg"
-            alt="Luxury Yacht Background"
-            fill
-            className="object-cover opacity-[0.45]"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-white via-white/25 to-white" />
+        {/* Add decorative anchors */}
+        <div className="absolute left-8 top-8 opacity-10">
+          <FiAnchor className="w-12 h-12 text-white" />
+        </div>
+        <div className="absolute right-8 top-8 opacity-10">
+          <FiAnchor className="w-12 h-12 text-white" />
         </div>
 
         <motion.div
@@ -87,61 +80,47 @@ export default function WhyChooseUs() {
           className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
         >
           {/* Section Header */}
-          <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12">
-            <div className="flex justify-center mb-3 sm:mb-4">
-              <div className="h-[2px] w-16 sm:w-20 bg-gold" />
-            </div>
+          <div className="text-center max-w-3xl mx-auto mb-10">
             <motion.h2
-              initial={fadeInUpAnimation.initial}
-              whileInView={fadeInUpAnimation.animate}
+              initial={fadeInUp.initial}
+              whileInView={fadeInUp.animate}
               viewport={{ once: true }}
-              transition={fadeInUpAnimation.transition()}
-              className="text-3xl sm:text-4xl md:text-5xl font-serif text-[#1E293B] mb-3 sm:mb-4"
+              transition={fadeInUp.transition()}
+              className="text-3xl md:text-5xl font-serif mb-4"
             >
-              <span className="text-gold">Why Choose</span> KOS Yachts?
+              <span className="text-white">Why KOS?</span>
             </motion.h2>
-            
-            <motion.p
-              initial={fadeInUpAnimation.initial}
-              whileInView={fadeInUpAnimation.animate}
-              viewport={{ once: true }}
-              transition={fadeInUpAnimation.transition(0.2)}
-              className="text-sm sm:text-base md:text-lg text-gray-600 font-light leading-relaxed max-w-2xl mx-auto"
-            >
-              Experience the perfect blend of luxury, adventure, and professional service
-              that sets us apart in the world of yacht charters.
-            </motion.p>
           </div>
 
-          {/* Features Grid - Now showing 2 cards per row even on smallest screens */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+          {/* Features Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
-                initial={fadeInUpAnimation.initial}
-                whileInView={fadeInUpAnimation.animate}
+                initial={fadeInUp.initial}
+                whileInView={fadeInUp.animate}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.5, delay: Math.min(index * 0.1, 0.3) }}
                 className="group"
               >
-                <div className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl p-3 sm:p-5 md:p-6 shadow-md hover:shadow-lg 
-                              border border-gray-100 hover:border-gold/30
+                <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 md:p-6 shadow-md 
+                              hover:shadow-lg border border-gray-100 hover:border-amber-300/30
                               transition-all duration-300 h-full transform 
                               hover:scale-[1.02] hover:-translate-y-1 flex flex-col">
-                  <div className="flex">
-                    <div className="inline-flex p-2 sm:p-3 rounded-md sm:rounded-lg bg-[#1E293B]/10
-                                  transform group-hover:scale-110 transition-all duration-300">
-                      <feature.icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-[#1E293B]" />
+                  <div className="flex mb-3">
+                    <div className={`inline-flex p-3 rounded-lg bg-gradient-to-r ${feature.accent} 
+                                  transform group-hover:scale-110 transition-all duration-300`}>
+                      <feature.icon className="w-5 h-5 text-white" />
                     </div>
                   </div>
                   
-                  <h3 className="mt-2 sm:mt-4 text-base sm:text-lg md:text-xl font-medium text-[#1E293B]
-                              group-hover:text-gold transition-colors duration-300">
+                  <h3 className="text-lg font-medium text-[#1E293B]
+                              group-hover:text-primary transition-colors duration-300">
                     {feature.title}
                   </h3>
                   
-                  <p className="mt-1 sm:mt-2 text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed 
-                              group-hover:text-gray-800 transition-colors duration-300 line-clamp-2 sm:line-clamp-3">
+                  <p className="mt-2 text-sm text-gray-600 leading-relaxed 
+                              group-hover:text-gray-800 transition-colors duration-300 line-clamp-3">
                     {feature.description}
                   </p>
                 </div>

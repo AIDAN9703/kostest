@@ -28,26 +28,6 @@ export default async function FavoritesPage() {
 
   return (
     <div className="p-4 pt-16 md:p-6 lg:pt-6 space-y-6 animate-fadeIn">
-      {/* Header with gradient background */}
-      <div className="bg-gradient-to-r from-primary/90 to-primary rounded-lg p-4 md:p-6 text-white shadow-sm">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold">My Favorites</h1>
-            <p className="mt-1 text-white/90 text-sm md:text-base">Your saved boats ({favorites.length})</p>
-          </div>
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            className="bg-white/20 hover:bg-white/30 text-white border-0"
-            asChild
-          >
-            <Link href="/boats">
-              Browse <span className="hidden sm:inline">Boats</span> <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-      
       {favorites.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Boat cards would be rendered here */}

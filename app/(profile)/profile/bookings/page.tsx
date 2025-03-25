@@ -31,27 +31,7 @@ export default async function BookingsPage() {
   const pastBookings: Booking[] = [];
 
   return (
-    <div className="p-4 pt-16 md:p-6 lg:pt-6 space-y-6 animate-fadeIn">
-      {/* Header with gradient background */}
-      <div className="bg-gradient-to-r from-primary/90 to-primary rounded-lg p-4 md:p-6 text-white shadow-sm">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold">My Bookings</h1>
-            <p className="mt-1 text-white/90 text-sm md:text-base">Manage your boat reservations</p>
-          </div>
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            className="bg-white/20 hover:bg-white/30 text-white border-0"
-            asChild
-          >
-            <Link href="/boats">
-              Find <span className="hidden sm:inline">a Boat</span> <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
-      </div>
-      
+    <div className="p-4 pt-16 md:p-6 lg:pt-6 space-y-6 animate-fadeIn">  
       <Tabs defaultValue="upcoming" className="w-full">
         <TabsList className="mb-4 w-full">
           <TabsTrigger value="upcoming" className="text-xs sm:text-sm">

@@ -59,7 +59,7 @@ export default function RequestToBook() {
   }
 
   return (
-    <section className="py-8 sm:py-12 md:py-16 bg-white">
+    <section className="py-4 sm:py-6 md:py-8 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div 
@@ -69,13 +69,10 @@ export default function RequestToBook() {
           viewport={{ once: true }}
           transition={fadeInUpAnimation.transition()}
         >
-          <div className="flex justify-center mb-3 sm:mb-4">
-            <div className="h-[2px] w-16 sm:w-20 bg-gold" />
-          </div>
-          <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-[#1E293B] mb-3 sm:mb-4">
-            Ready to set <span className="text-gold">Sail?</span>
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-primary mb-3 sm:mb-4">
+            Ready to set Sail?
           </h2>
-          <p className="text-sm sm:text-base md:text-lg text-gray-600 max-w-2xl mx-auto font-light leading-relaxed">
+          <p className="text-sm sm:text-base md:text-md text-gray-600 max-w-2xl mx-auto font-light leading-relaxed">
             Let us help you plan your perfect day on the water
           </p>
         </motion.div>

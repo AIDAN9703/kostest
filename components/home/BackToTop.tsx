@@ -25,8 +25,7 @@ export default function BackToTop() {
   return (
     <Button
       onClick={scrollToTop}
-      className="fixed bottom-8 right-8 p-4 rounded-full border-2 border-[#1E293B] text-[#1E293B] 
-               hover:bg-[#1E293B] hover:text-white transition-all duration-300 bg-transparent z-50
+      className="fixed bottom-8 right-8 p-4 rounded-full bg-primary text-white  transition-all duration-300 z-50
                font-serif"
       aria-label="Scroll to top"
     >

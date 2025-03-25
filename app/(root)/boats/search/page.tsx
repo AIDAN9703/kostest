@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { Metadata } from "next";
 import SearchResults from "@/components/boats/search/SearchResults";
 import SearchFilters from "@/components/boats/search/SearchFilters";
-import SearchMap from "@/components/boats/search/SearchMap";
+import VisGLSearchMap from "@/components/boats/search/VisGLSearchMap";
 import SearchSkeleton from "@/components/boats/search/SearchSkeleton";
 import { getBoats } from "@/lib/actions/boat-actions";
 import { SearchParamsType } from "@/types/types";
@@ -93,11 +93,11 @@ async function SearchMapWrapper({ searchParams }: { searchParams: SearchParamsTy
       ];
     }
     
-    return <SearchMap locations={locations} />;
+    return <VisGLSearchMap locations={locations} />;
   } catch (error) {
     console.error("Error loading map data:", error);
     // Return map with fallback location on error
-    return <SearchMap locations={[{
+    return <VisGLSearchMap locations={[{
       id: "error-fallback",
       name: "Default Location",
       latitude: 25.7617,

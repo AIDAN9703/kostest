@@ -166,8 +166,8 @@ export default function BookingRequestForm({ boat, user }: BookingRequestFormPro
   });
 
   return (
-    <Card className="p-6">
-      <div className="space-y-2 mb-6">
+    <Card className="p-4">
+      <div className=" mb-6">
         <h2 className="text-xl font-semibold">Request to Book</h2>
         <p className="text-sm text-gray-500">
           Fill out the form below to request a booking. We'll get back to you within 24 hours.
@@ -175,7 +175,7 @@ export default function BookingRequestForm({ boat, user }: BookingRequestFormPro
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="">
           {/* Booking Type Selection */}
           <FormField
             control={form.control}
