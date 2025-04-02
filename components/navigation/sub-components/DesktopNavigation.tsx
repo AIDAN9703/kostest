@@ -15,13 +15,14 @@ const dropdownMenus = {
       {
         title: "Experiences",
         links: [
-          { href: "/boats/search", label: "All boats" },
-          { href: "/boats/yachts", label: "Yachts" },
-          { href: "/boats/fishing", label: "Fishing boats" },
-          { href: "/boats/party", label: "Party boats" },
-          { href: "/boats/pontoon", label: "Pontoon boats" },
-          { href: "/boats/sailboats", label: "Sailboats" },
-          { href: "/boats/jetski", label: "Jet Skis" },
+          { href: "/boats/search", label: "All Boats" },
+          { href: "/boats/yachts", label: "All Yachts" },
+          { href: "/experiences/term-charters", label: "Term Charters" },
+          { href: "/experiences/fishing", label: "Fishing" },
+          { href: "/experiences/watersports", label: "Water Sports" },
+          { href: "/experiences/sand-bar", label: "Sand Bar" },
+          { href: "/experiences/celebrations", label: "Celebrations" },
+          { href: "/experiences", label: "All Experiences" }
         ]
       },
       {
@@ -33,8 +34,7 @@ const dropdownMenus = {
           { href: "/locations/west-palm-beach", label: "West Palm Beach" },
           { href: "/locations/connecticut", label: "Connecticut" },
           { href: "/locations/bahamas", label: "Bahamas" },
-          { href: "/locations/puerto-rico", label: "Puerto Rico" },
-          { href: "/locations/dominican-republic", label: "Dominican Republic" },
+          { href: "/locations/dominican-republic", label: "Dominican Republic" }
         ]
       },
       {
@@ -44,8 +44,7 @@ const dropdownMenus = {
           { href: "/services/yacht-management", label: "Yacht Management" },
           { href: "/services/sales", label: "Sales/Purchase" },
           { href: "/services/term-charters", label: "Term Charters" },
-          { href: "/services/dock-management", label: "Dock Management" },
-          { href: "/services/crew-management", label: "Crew Management" },
+          { href: "/services/dock-management", label: "Dock Management" }
         ]
       }
     ]

@@ -70,7 +70,7 @@ export default function RequestToBook() {
           transition={fadeInUpAnimation.transition()}
         >
           <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-primary mb-3 sm:mb-4">
-            Ready to set Sail?
+            Ready for your next adventure?
           </h2>
           <p className="text-sm sm:text-base md:text-md text-gray-600 max-w-2xl mx-auto font-light leading-relaxed">
             Let us help you plan your perfect day on the water

@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import localFont from "next/font/local";
 import { auth } from "@/auth";
 import { SessionProvider } from "next-auth/react";
+import NewsletterProvider from "@/components/newsletter/NewsletterProvider";
 
 const openSans = localFont({
   src: [
@@ -61,14 +62,11 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
 
   return (
     <html lang="en">
-      <head>
-        <script
-          crossOrigin="anonymous"
-          src="//unpkg.com/react-scan/dist/auto.global.js"
-        /></head>
       <SessionProvider session={session}>
         <body className={`${ibmPlexSans.className} ${bebasNeue.variable} ${seasons.variable} ${openSans.className} antialiased`}>
-          {children}
+          <NewsletterProvider>
+            {children}
+          </NewsletterProvider>
           <Toaster />
         </body>
       </SessionProvider>

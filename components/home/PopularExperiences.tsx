@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 const experiences = [
   {
     title: "Day Charters",
-    image: "/images/experiences/family.jpg",
+    image: "/images/experiences/daycharters4.png",
     color: "from-blue-500/80 to-cyan-500/80",
     link: "/experiences/day-charters"
   },
@@ -26,7 +26,7 @@ const experiences = [
   },
   {
     title: "Bachelor/Bachelorette",
-    image: "/images/experiences/bachelor.jpeg",
+    image: "/images/experiences/bachellorette2.png",
     color: "from-purple-500/80 to-pink-500/80",
     link: "/experiences/bachelor"
   },
@@ -38,7 +38,7 @@ const experiences = [
   },
   {
     title: "High Capacity",
-    image: "/images/experiences/highcapacity.jpg",
+    image: "/images/experiences/highcapacity.png",
     color: "from-red-500/80 to-orange-500/80",
     link: "/experiences/high-capacity"
   }
@@ -55,7 +55,7 @@ const fadeInUpAnimation = {
 
 export default function PopularExperiences() {
   return (
-    <section className="py-2 sm:py-4 md:py-6 bg-white relative overflow-hidden">
+    <section className=" pb-12 sm:pb-16 pt-4 sm:pt-6 bg-white relative overflow-hidden">
       <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Section Header */}
         <motion.div 
@@ -95,8 +95,8 @@ export default function PopularExperiences() {
                   <div className={`absolute inset-0 bg-gradient-to-t ${experience.color} opacity-60 group-hover:opacity-70 transition-opacity duration-500`} />
                   
                   {/* Title - Bottom Left */}
-                  <div className="absolute inset-0 flex items-end p-6">
-                    <h3 className="text-white text-2xl md:text-3xl font-serif">
+                  <div className="absolute inset-0 flex p-6">
+                    <h3 className="text-white text-xl md:text-2xl font-serif">
                       {experience.title}
                     </h3>
                   </div>
@@ -105,26 +105,6 @@ export default function PopularExperiences() {
             </motion.div>
           ))}
         </div>
-
-        {/* Bottom CTA */}
-        <motion.div 
-          className="text-center my-8 md:my-10"
-          initial={fadeInUpAnimation.initial}
-          whileInView={fadeInUpAnimation.animate}
-          viewport={{ once: true }}
-          transition={fadeInUpAnimation.transition(0.5)}
-        >
-          <Button
-            asChild
-            size="lg"
-            className="font-serif text-lg px-6 py-4 rounded-full border-2 border-primary text-primary 
-                     hover:bg-primary hover:text-white transition-all duration-300 bg-transparent h-auto"
-          >
-            <Link href="/experiences">
-              View All Experiences
-            </Link>
-          </Button>
-        </motion.div>
       </div>
     </section>
   );

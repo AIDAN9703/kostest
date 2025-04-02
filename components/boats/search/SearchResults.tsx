@@ -4,8 +4,6 @@ import { useState, useCallback, useTransition, useEffect, useMemo } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Boat, BoatLocation } from "@/types/types";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Pagination, 
@@ -16,11 +14,9 @@ import {
   PaginationPrevious 
 } from "@/components/ui/pagination";
 import { formatCurrency } from "@/lib/utils";
-import Image from "next/image";
-import Link from "next/link";
-import { MapPin, Users, ArrowUpDown, Loader2, Ruler, Anchor } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Anchor, ArrowUpDown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import BoatCard from "@/components/ui/boat-card";
 
 interface SearchResultsProps {
   initialResults: Boat[];
@@ -147,22 +143,13 @@ export default function SearchResults({
   }, [currentPage, totalPages]);
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col"
-        >
-          <h2 className="font-serif text-3xl md:text-4xl text-[#1E293B]">
-            {totalCount} {totalCount === 1 ? 'boat' : 'boats'} available
-          </h2>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between">
           {totalCount > 0 && (
             <p className="text-gray-500 text-sm mt-1">
               Showing page {currentPage} of {totalPages}
             </p>
           )}
-        </motion.div>
         
         {/* Sort Dropdown */}
         <div className="flex items-center gap-2">
@@ -201,7 +188,7 @@ export default function SearchResults({
 
       {/* Results Grid */}
       {boats.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <AnimatePresence mode="wait">
             {isPending ? (
               <motion.div 
@@ -216,7 +203,7 @@ export default function SearchResults({
             ) : (
               <motion.div
                 key="results"
-                className="col-span-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 w-full"
+                className="col-span-full grid grid-cols-1 lg:grid-cols-2 gap-6 w-full"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -227,94 +214,18 @@ export default function SearchResults({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
-                    className="group"
                   >
-                    <Card className="rounded-3xl overflow-hidden border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                      <AspectRatio ratio={4/3} className="bg-gray-100 relative">
-                        <Link href={`/boats/${boat.id}`} className="block w-full h-full">
-                          {(boat.mainImage || boat.primaryPhotoAbsPath) ? (
-                            <div className="relative w-full h-full">
-                              <Image
-                                src={boat.mainImage || boat.primaryPhotoAbsPath || ''}
-                                alt={boat.name}
-                                fill
-                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                className="object-cover transition-transform group-hover:scale-105 duration-300"
-                                style={{ position: 'absolute' }}
-                                priority={idx < 6} // Prioritize loading the first 6 images
-                                loading={idx < 6 ? "eager" : "lazy"}
-                                fetchPriority={idx < 6 ? "high" : "auto"}
-                              />
-                            </div>
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gray-200">
-                              <Anchor className="h-12 w-12 text-gray-400" />
-                            </div>
-                          )}
-                        </Link>
-                        
-                        {boat.featured && (
-                          <div className="absolute top-4 right-4 z-[5]">
-                            <Badge className="bg-gold hover:bg-gold/90 text-white">
-                              Featured
-                            </Badge>
-                          </div>
-                        )}
-                      </AspectRatio>
-
-                      <CardContent className="p-6">
-                        <div className="space-y-4">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <h3 className="text-lg font-medium text-[#1E293B] group-hover:text-[#2C3E50] transition-colors line-clamp-1">
-                                {boat.name}
-                              </h3>
-                              <p className="text-[#1E293B]/60 text-sm">
-                                {boat.make} {boat.model} {boat.yearBuilt && `(${boat.yearBuilt})`}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          {/* Specs */}
-                          <div className="flex flex-wrap gap-3">
-                            <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg">
-                              <Users className="w-3.5 h-3.5 text-[#1E293B]" />
-                              <span className="text-xs font-medium text-[#1E293B]">
-                                {boat.capacity || boat.numOfPassengers} {(boat.capacity || boat.numOfPassengers) === 1 ? 'Guest' : 'Guests'}
-                              </span>
-                            </div>
-                            
-                            <div className="flex items-center gap-1.5 bg-gray-50 px-2.5 py-1 rounded-lg">
-                              <Ruler className="w-3.5 h-3.5 text-[#1E293B]" />
-                              <span className="text-xs font-medium text-[#1E293B]">
-                                {boat.lengthFt} ft
-                              </span>
-                            </div>
-                          </div>
-
-                          <div>
-                            <p className="text-xl font-medium text-[#1E293B]">
-                              {formatCurrency(boat.hourlyRate)}<span className="text-[#1E293B]/60 text-base">/hour</span>
-                            </p>
-                            {boat.fullDayPrice && (
-                              <p className="text-sm text-[#1E293B]/60">
-                                Full day from {formatCurrency(boat.fullDayPrice)}
-                              </p>
-                            )}
-                          </div>
-
-                          <Button 
-                            asChild 
-                            className="w-full h-11 rounded-2xl bg-[#1E293B] hover:bg-[#2C3E50] text-white font-medium
-                                    shadow-lg hover:shadow-xl transition-all duration-300"
-                          >
-                            <Link href={`/boats/${boat.id}`}>
-                              View Details
-                            </Link>
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <BoatCard 
+                      boat={boat}
+                      index={idx}
+                      variant="search"
+                      showDetails={true}
+                      showPrice={true}
+                      showLocation={true}
+                      aspectRatio={16/9}
+                      highlightFeatured={true}
+                      showRating={true}
+                    />
                   </motion.div>
                 ))}
               </motion.div>

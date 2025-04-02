@@ -30,12 +30,12 @@ const mobileDropdownMenus = {
         title: "Experiences",
         links: [
           { href: "/boats/search", label: "All boats" },
-          { href: "/boats/yachts", label: "Yachts" },
-          { href: "/boats/fishing", label: "Fishing boats" },
-          { href: "/boats/party", label: "Party boats" },
-          { href: "/boats/pontoon", label: "Pontoon boats" },
-          { href: "/boats/sailboats", label: "Sailboats" },
-          { href: "/boats/jetski", label: "Jet Skis" },
+          { href: "/experiences/term-charters", label: "Term Charters" },
+          { href: "/experiences/fishing", label: "Fishing" },
+          { href: "/experiences/watersports", label: "Water Sports" },
+          { href: "/experiences/sand-bar", label: "Sand Bar" },
+          { href: "/experiences/celebrations", label: "Celebrations" },
+          { href: "/experiences", label: "All Experiences" },
         ]
       },
       {
@@ -47,7 +47,6 @@ const mobileDropdownMenus = {
           { href: "/locations/west-palm-beach", label: "West Palm Beach" },
           { href: "/locations/connecticut", label: "Connecticut" },
           { href: "/locations/bahamas", label: "Bahamas" },
-          { href: "/locations/puerto-rico", label: "Puerto Rico" },
           { href: "/locations/dominican-republic", label: "Dominican Republic" },
         ]
       },
@@ -59,7 +58,6 @@ const mobileDropdownMenus = {
           { href: "/services/sales", label: "Sales/Purchase" },
           { href: "/services/term-charters", label: "Term Charters" },
           { href: "/services/dock-management", label: "Dock Management" },
-          { href: "/services/crew-management", label: "Crew Management" },
         ]
       }
     ]
@@ -163,7 +161,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <div className="flex flex-col h-full">
                     {/* sidebar menu header */}
-                    <div className="p-4 border-b bg-primary/5">
+                    <div className="p-2 border-b bg-primary/5">
                         <div className="flex items-center gap-4">
                             <div className="relative">
                                 <Image 
@@ -183,7 +181,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                             ) : (
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-primary">Welcome to KOS</p>
-                                    <p className="text-xs text-gray-500">Luxury yacht services</p>
                                 </div>
                             )}
                         </div>
@@ -192,53 +189,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                     {/* sidebar menu content */}
                     <ScrollArea className="flex-1">
                         <div className="px-2 py-4">
-                            {/* Quick Contact Links */}
-                            <div className="px-2 mb-6">
-                                <h3 className="text-xs font-semibold text-gray-400 mb-3 px-1">QUICK LINKS</h3>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {quickLinks.map((item) => (
-                                        <a
-                                            key={item.label}
-                                            href={item.href}
-                                            className="flex flex-col gap-1 p-3 rounded-lg hover:bg-primary/5 transition-colors"
-                                        >
-                                            <div className="flex items-center gap-2 text-primary">
-                                                <item.icon className="w-4 h-4" />
-                                                <span className="text-xs font-medium">{item.label}</span>
-                                            </div>
-                                            <span className="text-sm text-gray-600 font-medium truncate">
-                                                {item.value}
-                                            </span>
-                                        </a>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Featured Items */}
-                            <div className="px-2 mb-6">
-                                <h3 className="text-xs font-semibold text-gray-400 mb-3 px-1">FEATURED</h3>
-                                <div className="space-y-2">
-                                    {featuredItems.map((item) => (
-                                        <Link
-                                            key={item.title}
-                                            href={item.href}
-                                            className="flex items-start gap-3 p-3 rounded-lg hover:bg-primary/5 transition-colors"
-                                        >
-                                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                                                <item.icon className="w-5 h-5" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs text-primary font-medium">{item.label}</span>
-                                                </div>
-                                                <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
-                                                <p className="text-xs text-gray-500 truncate">{item.desc}</p>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
-
                             {/* Main Navigation */}
                             <div className="px-2 mb-6">
                                 <h3 className="text-xs font-semibold text-gray-400 mb-3 px-1">NAVIGATION</h3>
@@ -345,7 +295,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                             </div>
 
                             {/* Secondary Navigation */}
-                            <div className="px-2">
+                            <div className="px-2 mb-6">
                                 <h3 className="text-xs font-semibold text-gray-400 mb-3 px-1">MORE</h3>
                                 <div className="grid grid-cols-2 gap-2">
                                     {navigationData.secondary.map((item) => (
@@ -357,6 +307,53 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                                                 {item.label}
                                             </Link>
                                         </SheetClose>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Quick Contact Links */}
+                            <div className="px-2 mb-6">
+                                <h3 className="text-xs font-semibold text-gray-400 mb-3 px-1">QUICK LINKS</h3>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {quickLinks.map((item) => (
+                                        <a
+                                            key={item.label}
+                                            href={item.href}
+                                            className="flex flex-col gap-1 p-3 rounded-lg hover:bg-primary/5 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-2 text-primary">
+                                                <item.icon className="w-4 h-4" />
+                                                <span className="text-xs font-medium">{item.label}</span>
+                                            </div>
+                                            <span className="text-sm text-gray-600 font-medium truncate">
+                                                {item.value}
+                                            </span>
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Featured Items */}
+                            <div className="px-2 mb-6">
+                                <h3 className="text-xs font-semibold text-gray-400 mb-3 px-1">FEATURED</h3>
+                                <div className="space-y-2">
+                                    {featuredItems.map((item) => (
+                                        <Link
+                                            key={item.title}
+                                            href={item.href}
+                                            className="flex items-start gap-3 p-3 rounded-lg hover:bg-primary/5 transition-colors"
+                                        >
+                                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                                <item.icon className="w-5 h-5" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-primary font-medium">{item.label}</span>
+                                                </div>
+                                                <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
+                                                <p className="text-xs text-gray-500 truncate">{item.desc}</p>
+                                            </div>
+                                        </Link>
                                     ))}
                                 </div>
                             </div>
@@ -387,7 +384,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                                 <SheetClose asChild>
                                     <Button 
                                         onClick={() => router.push('/sign-up')}
-                                        className="w-full focus:ring-2 focus:ring-primary/50"
+                                        className="w-full focus:ring-2 focus:ring-primary/50 text-white"
                                     >
                                         Sign up
                                     </Button>

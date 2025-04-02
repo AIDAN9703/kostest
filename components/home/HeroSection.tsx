@@ -1,154 +1,162 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
-import { FiSearch } from 'react-icons/fi';
+import { useSearchStore } from '@/store/useSearchStore';
+import SearchBar from '@/components/navigation/sub-components/SearchBar';
 
-export default function HeroSection() {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [subtitleIndex, setSubtitleIndex] = useState(0);
-  const [displayText, setDisplayText] = useState('');
-  const [isTyping, setIsTyping] = useState(true);
+// Move static data outside component
+const WORD_OPTIONS = ["Yacht", "Boat", "Luxury", "Family", "Corporate", "Birthday"] as const;
+
+export default function HeroSection2() {
+  const [displayWord, setDisplayWord] = useState('');
+  const [isVisible, setIsVisible] = useState(true);
+  const searchBarRef = useRef<HTMLDivElement>(null);
+  const { setIsExpanded } = useSearchStore();
   
-  const subtitles = [
-    'Luxury Yachts in 50+ Destinations',
-    'Unforgettable Ocean Adventures',
-    'Premium Charter Experiences',
-    'Exclusive Yacht Getaways'
-  ];
-  
-  const typingSpeed = 80; // milliseconds per character
-  const deletingSpeed = 40; // milliseconds per character
-  const pauseTime = 2000; // time to pause after typing
-  
+  // Use requestAnimationFrame with frame counter for controlled timing
   useEffect(() => {
-    setIsLoaded(true);
-  }, []);
-  
-  useEffect(() => {
-    let timeout: NodeJS.Timeout;
+    let wordIndex = 0;
+    let charIndex = 0;
+    let direction = 1;
+    let isPaused = false;
+    let animationFrameId: number;
+    let frameCount = 0;
+    let timeoutId: NodeJS.Timeout;
     
-    if (isTyping) {
-      if (displayText.length < subtitles[subtitleIndex].length) {
-        // Still typing the current subtitle
-        timeout = setTimeout(() => {
-          setDisplayText(subtitles[subtitleIndex].substring(0, displayText.length + 1));
-        }, typingSpeed);
-      } else {
-        // Finished typing, pause before deleting
-        timeout = setTimeout(() => {
-          setIsTyping(false);
-        }, pauseTime);
+    const animate = () => {
+      if (isPaused || !isVisible) {
+        animationFrameId = requestAnimationFrame(animate);
+        return;
       }
-    } else {
-      if (displayText.length > 0) {
-        // Deleting the current subtitle
-        timeout = setTimeout(() => {
-          setDisplayText(displayText.substring(0, displayText.length - 1));
-        }, deletingSpeed);
-      } else {
-        // Move to the next subtitle
-        setSubtitleIndex((subtitleIndex + 1) % subtitles.length);
-        setIsTyping(true);
+      
+      // Only update every 6 frames (approximately 100ms at 60fps)
+      if (frameCount % 3 === 0) {
+        const currentWord = WORD_OPTIONS[wordIndex];
+        
+        if (direction === 1) {
+          if (charIndex < currentWord.length) {
+            charIndex++;
+            setDisplayWord(currentWord.slice(0, charIndex));
+          } else {
+            isPaused = true;
+            timeoutId = setTimeout(() => {
+              direction = -1;
+              isPaused = false;
+            }, 3000);
+          }
+        } else {
+          if (charIndex > 0) {
+            charIndex--;
+            setDisplayWord(currentWord.slice(0, charIndex));
+          } else {
+            wordIndex = (wordIndex + 1) % WORD_OPTIONS.length;
+            direction = 1;
+            isPaused = true;
+            timeoutId = setTimeout(() => {
+              isPaused = false;
+            }, 500);
+          }
+        }
       }
+      
+      frameCount++;
+      animationFrameId = requestAnimationFrame(animate);
+    };
+    
+    animationFrameId = requestAnimationFrame(animate);
+    
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [isVisible]);
+
+  // Intersection Observer for search bar
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Only trigger when the search bar is fully out of view
+        setIsExpanded(!entry.isIntersecting);
+      },
+      { 
+        threshold: 1,
+        rootMargin: '0px'
+      }
+    );
+    
+    if (searchBarRef.current) {
+      observer.observe(searchBarRef.current);
     }
     
-    return () => clearTimeout(timeout);
-  }, [displayText, isTyping, subtitleIndex, subtitles]);
+    return () => observer.disconnect();
+  }, [setIsExpanded]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Implement search functionality
-    console.log('Searching for:', searchQuery);
-  };
-
-  // Animation variants for reusability
-  const fadeInAnimation = {
-    initial: { opacity: 0, y: 20 },
-    animate: (isLoaded: boolean) => ({
-      opacity: isLoaded ? 1 : 0,
-      y: isLoaded ? 0 : 20
-    }),
-    transition: (delay: number) => ({
-      duration: 0.8,
-      delay
-    })
-  };
+  // Visibility observer for the entire section
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsVisible(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+    
+    const section = document.querySelector('section');
+    if (section) {
+      observer.observe(section);
+    }
+    
+    return () => observer.disconnect();
+  }, []);
 
   return (
-    <section className="relative h-screen w-full overflow-hidden" aria-label="Hero Section">
+    <section 
+      className="relative w-full h-[70vh] sm:h-[75] overflow-hidden" 
+      aria-label="Hero Section"
+    >
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image 
-          src="/images/herooption6.png" 
+          src="/images/herooption11.png" 
           alt="Luxury yachts in crystal clear waters"
           fill
           className="object-cover object-center"
           priority
-          sizes="100vw"
-          quality={100}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
+          quality={75}
+          onError={(e) => {
+            console.error('Failed to load hero image');
+            // You might want to set a fallback image here
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-50"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80 opacity-50 transform-gpu"></div>
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-center h-full">
-          {/* Hero Content */}
-          <div className="flex flex-col items-center justify-center -mt-20 sm:-mt-28 md:-mt-36">
-            {/* Subtitle with Typing Animation */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: isLoaded ? 1 : 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="mb-2 sm:mb-4 h-5 sm:h-6" // Adjusted height for mobile
-            >
-              <span className="text-white/90 text-xs sm:text-sm uppercase tracking-widest font-medium">{displayText}</span>
-              <span className={`inline-block w-0.5 h-3 sm:h-4 ml-0.5 bg-primary ${isTyping ? 'animate-blink' : 'opacity-0'}`}></span>
-            </motion.div>
-            
-            {/* Main Heading */}
-            <motion.h1
-              initial={fadeInAnimation.initial}
-              animate={fadeInAnimation.animate(isLoaded)}
-              transition={fadeInAnimation.transition(0.3)}
-              className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-white leading-tight mb-6 sm:mb-8 md:mb-12 text-center"
-            >
-              Find Your Perfect
-              <br className="md:block hidden" />
-              <span className="md:hidden"> </span>
-              <span className="text-primary"> Yacht Experience</span>
-            </motion.h1>
-            
-            {/* Search Bar */}
-            <motion.div
-              initial={fadeInAnimation.initial}
-              animate={fadeInAnimation.animate(isLoaded)}
-              transition={fadeInAnimation.transition(0.5)}
-              className="w-full max-w-3xl mx-auto"
-            >
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  placeholder="Where would you like to set sail?"
-                  className="w-full py-3 sm:py-4 md:py-5 px-4 sm:px-6 pr-12 sm:pr-16 text-gray-700 bg-white rounded-lg shadow-lg text-sm sm:text-base md:text-lg"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <button
-                  type="submit"
-                  className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 bg-primary hover:bg-primary/80 text-white p-2 sm:p-3 rounded-lg transition duration-300"
-                  aria-label="Search"
-                >
-                  <FiSearch className="h-4 w-4 sm:h-5 sm:w-5" />
-                </button>
-              </form>
-            </motion.div>
+      <div className="relative z-10 h-full flex flex-col items-center py-8 sm:py-12 md:py-16">
+        {/* Content area */}
+        <div className="flex-1 flex flex-col items-center justify-center w-full">
+          <h1 className="mb-2 text-center text-4xl sm:text-5xl md:text-[4rem] lg:text-7xl xl:text-8xl font-bold leading-[1.1] text-white">
+            Find Your Perfect
+            <br />
+            <span className="bg-gradient-to-r from-sky-300 to-emerald-400 bg-clip-text text-transparent">
+              {displayWord} Experience
+            </span>
+          </h1>
+          
+          <p className="text-center text-sm sm:text-lg md:text-xl max-w-xs sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl text-white/90  sm:mt-2 mb-4">
+            Discover unforgettable boat and yacht charters with experienced crew worldwide
+          </p>
+          
+          {/* Search Bar */}
+          <div
+            ref={searchBarRef}
+            className="w-full"
+          >
+            <SearchBar variant="hero" />
           </div>
         </div>
       </div>
     </section>
   );
-} 
+}

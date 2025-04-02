@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition, useMemo } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useDebouncedCallback } from "use-debounce";
 import { Button } from "@/components/ui/button";
@@ -15,13 +15,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { 
   Sheet, SheetContent, SheetHeader, SheetTitle, 
-  SheetTrigger, SheetFooter, SheetClose
+  SheetTrigger, SheetFooter
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { 
-  Calendar as CalendarIcon, Users, MapPin, Search, 
-  SlidersHorizontal, X, Loader2, DollarSign, Anchor, Ruler
+  Calendar as CalendarIcon, MapPin, Search, 
+  SlidersHorizontal, X, Loader2
 } from "lucide-react";
 import { SearchParamsType } from "@/types/types";
 import { getBoatCategories } from "@/lib/actions/boat-actions";
@@ -145,9 +145,6 @@ export default function SearchFilters({ initialFilters }: SearchFiltersProps) {
   // Categories data
   const [categories, setCategories] = useState<{category: string; count: number}[]>([]);
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  
-  // Memoize libraries array to prevent reloading
-  const libraries = useMemo(() => ["places"], []);
   
   // Fetch categories on mount
   useEffect(() => {
@@ -282,15 +279,34 @@ export default function SearchFilters({ initialFilters }: SearchFiltersProps) {
     setYearBuilt([value[0], value[1]] as [number, number]);
   }, []);
   
+  // Set the search filter height as a CSS variable for layout calculations
+  useEffect(() => {
+    const updateFilterHeight = () => {
+      const filterElement = document.getElementById('search-filters');
+      if (filterElement) {
+        const height = filterElement.offsetHeight;
+        document.documentElement.style.setProperty('--search-filter-height', `${height}px`);
+      }
+    };
+    
+    // Update on mount and when window is resized
+    updateFilterHeight();
+    window.addEventListener('resize', updateFilterHeight);
+    
+    return () => {
+      window.removeEventListener('resize', updateFilterHeight);
+    };
+  }, []);
+  
   return (
-    <div className="flex items-center justify-center gap-3 overflow-x-auto pb-4 pt-1 px-1 hide-scrollbar">
+    <div id="search-filters" className="flex gap-3 overflow-x-auto py-3 px-6 border-b border-gray-100">
       {/* Search Input */}
-      <div className="relative w-64 sm:w-72 z-10">
+      <div className="relative w-64 sm:w-72">
         <Input
           placeholder="Search by location..."
           defaultValue={location}
           onChange={(e) => handleLocationSearch(e.target.value)}
-          className="h-10 pl-9 pr-3 rounded-full border border-gray-200 hover:border-gray-300 focus:border-[#2C3E50] focus:ring-[#2C3E50] focus:ring-offset-0 w-full text-gray-800 placeholder:text-gray-500 text-sm"
+          className="h-10 pl-9 rounded-full"
           onKeyDown={(e) => e.key === 'Enter' && applyFilters()}
         />
         <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -302,12 +318,11 @@ export default function SearchFilters({ initialFilters }: SearchFiltersProps) {
           <Button
             variant="outline"
             className={cn(
-              "h-10 px-3 rounded-full border-gray-200 hover:border-gray-300 hover:bg-white whitespace-nowrap z-10",
-              "focus:border-[#2C3E50] focus:ring-[#2C3E50] focus:ring-offset-0 focus-visible:ring-0 transition-all gap-1.5 text-sm min-w-[140px]",
+              "h-10 rounded-full",
               date && "text-[#2C3E50] font-medium"
             )}
           >
-            <CalendarIcon className="h-3.5 w-3.5" />
+            <CalendarIcon className="h-4 w-4 mr-2" />
             {date ? format(date, "MMM d, yyyy") : "Select date"}
           </Button>
         </PopoverTrigger>
@@ -322,46 +337,45 @@ export default function SearchFilters({ initialFilters }: SearchFiltersProps) {
         </PopoverContent>
       </Popover>
       
-      {/* Category Dropdown - Multi-select with dropdown styling */}
+      {/* Category Dropdown */}
       <Popover>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             className={cn(
-              "h-10 px-3 rounded-full border-gray-200 hover:border-gray-300 hover:bg-white z-10",
-              "focus:border-[#2C3E50] focus:ring-[#2C3E50] focus:ring-offset-0 focus-visible:ring-0 transition-all w-40 text-sm",
+              "h-10 rounded-full w-40",
               selectedCategories.length > 0 && "text-[#2C3E50] font-medium"
             )}
           >
             <span className="flex items-center justify-between w-full">
-              <span className="flex-1 text-left truncate">
+              <span className="truncate">
                 {selectedCategories.length === 0 
                   ? "Boat type" 
                   : selectedCategories.length === 1 
                     ? categories.find(c => c.category === selectedCategories[0])?.category.replace('_', ' ') || "Boat type"
                     : `${selectedCategories.length} types`}
               </span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 h-4 w-4 shrink-0 opacity-50">
+              <svg className="h-4 w-4 ml-1 opacity-50" viewBox="0 0 12 12" fill="none">
                 <path d="M2.25 4.5L6 8.25L9.75 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
               </svg>
             </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-56 p-2" align="center">
-          <div className="space-y-2 max-h-60 overflow-y-auto">
+          <div className="max-h-60 overflow-y-auto">
             {categories.map((cat) => (
-              <div key={cat.category} className="flex items-center space-x-2 py-1.5 px-2 hover:bg-gray-100 rounded-md cursor-pointer"
-                   onClick={() => toggleCategory(cat.category)}>
+              <div 
+                key={cat.category} 
+                className="flex items-center py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer"
+                onClick={() => toggleCategory(cat.category)}
+              >
                 <Checkbox 
                   id={`cat-${cat.category}`} 
                   checked={selectedCategories.includes(cat.category)}
                   onCheckedChange={() => toggleCategory(cat.category)}
-                  className="data-[state=checked]:bg-[#2C3E50] data-[state=checked]:border-[#2C3E50]"
+                  className="mr-2"
                 />
-                <label
-                  htmlFor={`cat-${cat.category}`}
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer w-full"
-                >
+                <label htmlFor={`cat-${cat.category}`} className="cursor-pointer w-full">
                   {cat.category.replace('_', ' ')} ({cat.count})
                 </label>
               </div>
@@ -370,7 +384,7 @@ export default function SearchFilters({ initialFilters }: SearchFiltersProps) {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="w-full mt-2 text-xs"
+                className="w-full mt-2"
                 onClick={() => setSelectedCategories([])}
               >
                 Clear selection
@@ -380,41 +394,36 @@ export default function SearchFilters({ initialFilters }: SearchFiltersProps) {
         </PopoverContent>
       </Popover>
       
-      {/* Guests Dropdown - Custom implementation to match other filters */}
+      {/* Guests Dropdown */}
       <Popover>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             className={cn(
-              "h-10 px-3 rounded-full border-gray-200 hover:border-gray-300 hover:bg-white z-10",
-              "focus:border-[#2C3E50] focus:ring-[#2C3E50] focus:ring-offset-0 focus-visible:ring-0 transition-all w-40 text-sm",
+              "h-10 rounded-full w-40",
               guests > DEFAULT_FILTERS.guests && "text-[#2C3E50] font-medium"
             )}
           >
             <span className="flex items-center justify-between w-full">
-              <span className="flex-1 text-left truncate">
-                {guests} {guests === 1 ? 'Guest' : 'Guests'}
-              </span>
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg" className="ml-1 h-4 w-4 shrink-0 opacity-50">
+              <span>{guests} {guests === 1 ? 'Guest' : 'Guests'}</span>
+              <svg className="h-4 w-4 ml-1 opacity-50" viewBox="0 0 12 12" fill="none">
                 <path d="M2.25 4.5L6 8.25L9.75 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"></path>
               </svg>
             </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-56 p-2" align="center">
-          <div className="space-y-2 max-h-60 overflow-y-auto">
+          <div className="max-h-60 overflow-y-auto">
             {[1, 2, 4, 6, 8, 10, 12, 15, 20, 25, 30].map((num) => (
               <div 
                 key={num} 
                 className={cn(
-                  "flex items-center py-1.5 px-2 hover:bg-gray-100 rounded-md cursor-pointer",
+                  "py-1.5 px-2 hover:bg-gray-100 rounded cursor-pointer",
                   guests === num && "bg-gray-50"
                 )}
                 onClick={() => setGuests(num)}
               >
-                <span className="text-sm font-medium">
-                  {num} {num === 1 ? 'Guest' : 'Guests'}
-                </span>
+                {num} {num === 1 ? 'Guest' : 'Guests'}
               </div>
             ))}
           </div>
@@ -427,92 +436,85 @@ export default function SearchFilters({ initialFilters }: SearchFiltersProps) {
           <Button
             variant="outline"
             className={cn(
-              "h-10 px-3 rounded-full border-gray-200 hover:border-gray-300 hover:bg-white whitespace-nowrap z-10",
-              "focus:border-[#2C3E50] focus:ring-[#2C3E50] focus:ring-offset-0 focus-visible:ring-0 transition-all gap-1.5 text-sm",
+              "h-10 rounded-full",
               activeFilterCount > 0 && "text-[#2C3E50] font-medium"
             )}
           >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
+            <SlidersHorizontal className="h-4 w-4 mr-2" />
             Filters
             {activeFilterCount > 0 && (
-              <Badge className="ml-1 h-4 w-4 p-0 flex items-center justify-center rounded-full bg-[#2C3E50] text-white text-xs">
+              <Badge className="ml-1 h-5 w-5 rounded-full bg-[#2C3E50] text-white">
                 {activeFilterCount}
               </Badge>
             )}
           </Button>
         </SheetTrigger>
-        <SheetContent className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader className="mb-6">
-            <SheetTitle className="text-2xl font-serif">Filters</SheetTitle>
+        <SheetContent className="overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Filters</SheetTitle>
           </SheetHeader>
           
-          <div className="space-y-8">
+          <div className="space-y-6 mt-4">
             {/* Price Range */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium text-[#1E293B]">Price Range (per hour)</h3>
+            <div>
+              <div className="flex justify-between mb-2">
+                <h3>Price Range (per hour)</h3>
                 <div className="text-sm text-gray-500">
                   ${priceRange[0]} - ${priceRange[1] === 1000 ? '1000+' : priceRange[1]}
                 </div>
               </div>
               <Slider
-                defaultValue={priceRange}
                 value={priceRange}
                 onValueChange={handlePriceRangeChange}
                 min={0}
                 max={1000}
                 step={50}
-                className="mt-2"
               />
             </div>
             
             {/* Length Range */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium text-[#1E293B]">Boat Length (ft)</h3>
+            <div>
+              <div className="flex justify-between mb-2">
+                <h3>Boat Length (ft)</h3>
                 <div className="text-sm text-gray-500">
                   {lengthRange[0]} - {lengthRange[1] === 100 ? '100+' : lengthRange[1]} ft
                 </div>
               </div>
               <Slider
-                defaultValue={lengthRange}
                 value={lengthRange}
                 onValueChange={handleLengthRangeChange}
                 min={0}
                 max={100}
                 step={5}
-                className="mt-2"
               />
             </div>
             
             {/* Year Built */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium text-[#1E293B]">Year Built</h3>
+            <div>
+              <div className="flex justify-between mb-2">
+                <h3>Year Built</h3>
                 <div className="text-sm text-gray-500">
                   {yearBuilt[0]} - {yearBuilt[1]}
                 </div>
               </div>
               <Slider
-                defaultValue={yearBuilt}
                 value={yearBuilt}
                 onValueChange={handleYearBuiltChange}
                 min={1980}
                 max={new Date().getFullYear()}
                 step={1}
-                className="mt-2"
               />
             </div>
             
             {/* Cabins & Bathrooms */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <h3 className="font-medium text-[#1E293B]">Cabins</h3>
+              <div>
+                <h3 className="mb-2">Cabins</h3>
                 <Select 
                   value={cabins.toString()} 
                   onValueChange={(value) => setCabins(parseInt(value))}
                 >
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger>
                     <SelectValue placeholder="Any" />
                   </SelectTrigger>
                   <SelectContent>
@@ -525,13 +527,13 @@ export default function SearchFilters({ initialFilters }: SearchFiltersProps) {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <h3 className="font-medium text-[#1E293B]">Bathrooms</h3>
+              <div>
+                <h3 className="mb-2">Bathrooms</h3>
                 <Select 
                   value={bathrooms.toString()} 
                   onValueChange={(value) => setBathrooms(parseInt(value))}
                 >
-                  <SelectTrigger className="h-10">
+                  <SelectTrigger>
                     <SelectValue placeholder="Any" />
                   </SelectTrigger>
                   <SelectContent>
@@ -547,20 +549,18 @@ export default function SearchFilters({ initialFilters }: SearchFiltersProps) {
             </div>
             
             {/* Features */}
-            <div className="space-y-4">
-              <h3 className="font-medium text-[#1E293B]">Features</h3>
-              <div className="grid grid-cols-2 gap-3">
+            <div>
+              <h3 className="mb-2">Features</h3>
+              <div className="grid grid-cols-2 gap-2">
                 {BOAT_FEATURES.map((feature) => (
-                  <div key={feature.id} className="flex items-center space-x-2">
+                  <div key={feature.id} className="flex items-center">
                     <Checkbox 
                       id={feature.id} 
                       checked={selectedFeatures.includes(feature.id)}
                       onCheckedChange={() => toggleFeature(feature.id)}
+                      className="mr-2"
                     />
-                    <label
-                      htmlFor={feature.id}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
+                    <label htmlFor={feature.id}>
                       {feature.label}
                     </label>
                   </div>
@@ -569,7 +569,7 @@ export default function SearchFilters({ initialFilters }: SearchFiltersProps) {
             </div>
           </div>
           
-          <SheetFooter className="mt-8 flex flex-row gap-4 sm:justify-between">
+          <SheetFooter className="mt-6 flex gap-3">
             <Button
               variant="outline"
               onClick={resetFilters}
@@ -582,14 +582,8 @@ export default function SearchFilters({ initialFilters }: SearchFiltersProps) {
               className="flex-1 bg-[#1E293B] hover:bg-[#2C3E50]"
               disabled={isPending}
             >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Applying...
-                </>
-              ) : (
-                'Apply Filters'
-              )}
+              {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Apply Filters
             </Button>
           </SheetFooter>
         </SheetContent>
@@ -598,31 +592,25 @@ export default function SearchFilters({ initialFilters }: SearchFiltersProps) {
       {/* Search Button */}
       <Button 
         onClick={applyFilters}
-        className={cn(
-          "h-10 px-4 rounded-full bg-[#1E293B] hover:bg-[#2C3E50] gap-1.5 text-white text-sm whitespace-nowrap z-10",
-          "focus:ring-[#2C3E50] focus:ring-offset-0 focus-visible:ring-0"
-        )}
+        className="h-10 rounded-full bg-primary hover:bg-primary/80 text-white"
         disabled={isPending}
       >
         {isPending ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-white" />
+          <Loader2 className="h-4 w-4 animate-spin mr-1" />
         ) : (
-          <Search className="h-3.5 w-3.5" />
+          <Search className="h-4 w-4 mr-1" />
         )}
         Search
       </Button>
       
-      {/* Active Filters */}
+      {/* Clear Filters Button */}
       {activeFilterCount > 0 && (
         <Button
           variant="ghost"
           onClick={resetFilters}
-          className={cn(
-            "h-10 px-3 text-gray-500 hover:text-gray-700 gap-1.5 text-sm whitespace-nowrap z-10",
-            "focus:ring-[#2C3E50] focus:ring-offset-0 focus-visible:ring-0"
-          )}
+          className="h-10 text-gray-500 hover:text-gray-700"
         >
-          <X className="h-3.5 w-3.5" />
+          <X className="h-4 w-4 mr-1" />
           Clear all
         </Button>
       )}

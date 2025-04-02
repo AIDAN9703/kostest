@@ -77,9 +77,9 @@ export default function Footer() {
 
           {/* Newsletter */}
           <div className="lg:col-span-4">
-            <h3 className="text-white font-serif text-xl mb-6">Newsletter</h3>
+            <h3 className="text-white font-serif text-xl mb-6">Join the KOS Yacht Club Newsletter!</h3>
             <p className="text-gray-300 font-light leading-relaxed mb-6">
-              Subscribe to receive updates about our latest offerings and exclusive yacht experiences.
+              Insider access to yachts, events, and the world of premeire charters.
             </p>
             <form className="space-y-4">
               <div className="relative">

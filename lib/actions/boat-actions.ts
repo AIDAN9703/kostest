@@ -192,33 +192,49 @@ export const getBoats = cache(async ({
     // Convert to Boat type with proper typing
     const typedResults = results as unknown as Boat[];
     
-    // Extract location data for map - using homePort for now as placeholder
-    const locations: BoatLocation[] = typedResults
-      .filter(boat => boat.homePort) // Filter boats with location info
-      .map(boat => {
-        // Generate mock coordinates based on boat ID for demo purposes
-        // Use a more deterministic approach to generate visible coordinates
-        const idNum = parseInt(boat.id.replace(/[^0-9]/g, '').slice(0, 8), 16);
-        
-        // Create a more spread out distribution of boats around Miami
-        // This ensures they're visible on the map and not all stacked on top of each other
-        const latOffset = ((idNum % 100) / 100) * 0.2 - 0.1; // Range: -0.1 to 0.1
-        const lngOffset = ((idNum % 50) / 50) * 0.3 - 0.15;  // Range: -0.15 to 0.15
-        
-        const lat = 25.7617 + latOffset; // Miami area with offset
-        const lng = -80.1918 + lngOffset;
-        
-        return {
-          id: boat.id,
-          name: boat.name,
-          latitude: lat,
-          longitude: lng,
-          category: boat.category || "OTHER", // Provide default value for null/undefined
-          price: boat.hourlyRate,
-          imageUrl: boat.mainImage || boat.primaryPhotoAbsPath || undefined
-        };
-      });
+    // Only fetch location data if we have boats
+    let locations: BoatLocation[] = [];
     
+    if (typedResults.length > 0) {
+      try {
+        // Format IDs for SQL query - this avoids parameter binding issues with PostgreSQL/PostGIS
+        const idList = typedResults.map(boat => `'${boat.id}'`).join(',');
+        
+        // Use raw SQL to extract PostGIS coordinates
+        // This is simpler and more reliable than using the ORM for spatial data
+        const query = `
+          SELECT 
+            id, 
+            name, 
+            category, 
+            hourly_rate as price,
+            main_image as image_url,
+            ST_Y(location::geometry) as latitude, 
+            ST_X(location::geometry) as longitude
+          FROM boat 
+          WHERE id IN (${idList})
+            AND location IS NOT NULL
+        `;
+        
+        const locationResults = await db.execute(query);
+        
+        // Convert the raw results to BoatLocation objects
+        locations = (locationResults.rows as any[]).map(row => ({
+          id: row.id,
+          name: row.name,
+          latitude: parseFloat(row.latitude),
+          longitude: parseFloat(row.longitude),
+          category: row.category || "OTHER",
+          price: parseFloat(row.price),
+          imageUrl: row.image_url
+        }));
+      } catch (error) {
+        // Log error but continue - we'll just return boats without locations
+        console.error("Error fetching boat locations:", error);
+      }
+    }
+    
+    // Return all the search results
     return {
       boats: typedResults,
       totalCount,

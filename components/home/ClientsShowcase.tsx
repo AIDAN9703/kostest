@@ -7,6 +7,26 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const clientImages = [
   {
+    url: '/clients/backflip.JPG',
+    title: 'Backflip',
+  },
+  {
+    url: '/clients/bunchofgirls.JPG',
+    title: 'Bunch of Girls',
+  },
+  {
+    url: '/clients/jetski.jpeg',
+    title: 'Jetski',
+  },
+  {
+    url: '/clients/beachday.jpeg',
+    title: 'Beach Day',
+  },
+  {
+    url: '/clients/bernie.JPG',
+    title: 'Deep Sea Adventure',
+  },
+  {
     url: '/clients/niceyacht.jpg',
     title: 'Luxury Yacht Experience',
     size: 'large',
@@ -17,8 +37,8 @@ const clientImages = [
     size: 'large',
   },
   {
-    url: '/clients/sean.JPG',
-    title: 'VIP Experience',
+    url: '/clients/king.JPG',
+    title: 'Ocean Royalty',
     size: 'medium',
   },
   {
@@ -27,22 +47,14 @@ const clientImages = [
     size: 'medium',
   },
   {
-    url: '/clients/king.JPG',
-    title: 'Ocean Royalty',
-    size: 'medium',
-  },
-  {
-    url: '/clients/bernie.JPG',
-    title: 'Deep Sea Adventure',
-  },
-  {
-    url: '/clients/mdmotivator.JPG',
-    title: 'Miami Vibes',
-  },
-  {
-    url: '/clients/randomgirl.jpeg',
+    url: '/clients/koshat.jpeg',
     title: 'Paradise Found',
   },
+  {
+    url: '/clients/fishing.jpeg',
+    title: 'Fishing',
+  },
+  
 ];
 
 export default function ClientsShowcase() {
@@ -103,7 +115,7 @@ export default function ClientsShowcase() {
                   src={clientImages[currentIndex].url}
                   alt={clientImages[currentIndex].title}
                   fill
-                  className="object-cover transition-transform duration-700 hover:scale-105"
+                  className="object-cover transition-transform duration-700 hover:scale-105" 
                   sizes="(max-width: 768px) 100vw, 50vw"
                   priority
                 />

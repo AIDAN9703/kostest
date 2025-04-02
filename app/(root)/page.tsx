@@ -3,7 +3,6 @@ import { HeroSection, TestimonialsSection, BrandsCarousel, BackToTop, FeaturedFl
 import { getFeaturedBoats, getTestimonials } from "@/lib/actions/home-page";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
-import HeroSection2 from '@/components/home/HeroSection2';
 import ClientsShowcase from '@/components/home/ClientsShowcase';
 // This component wraps all the content that needs data
 async function HomeContent() {
@@ -16,7 +15,7 @@ async function HomeContent() {
     
     return (
       <>
-        <HeroSection2 />
+        <HeroSection />
         <div className="w-full">
           {boatsResponse.success && boatsResponse.data && boatsResponse.data.length > 0 && (
             <FeaturedFleet boats={boatsResponse.data} />

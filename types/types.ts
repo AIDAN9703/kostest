@@ -116,6 +116,9 @@ export interface Boat {
   parkingNotes?: string | null;
   instructionsAndRules?: string | null;
   crewNum?: number | null;
+  // Rating and reviews data
+  averageRating?: number | null;
+  totalReviews?: number | null;
 }
 
 // Search params type for filtering boats

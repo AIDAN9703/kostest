@@ -143,19 +143,18 @@ const AuthForm = <T extends FieldValues>({
   return (
     <div className="w-full pb-8">
       {/* Mobile Logo - Only visible on small screens */}
-      <div className="flex items-center justify-center mb-8 lg:hidden">
-        <div className="flex items-center gap-3">
-          <Image src="/icons/logo.png" alt="logo" width={40} height={40} />
-          <h1 className="text-2xl font-bold text-primary font-serif">KOS Yachts</h1>
+      <div className="flex items-center justify-center mb-4 lg:hidden">
+        <div className="flex items-center">
+          <Image src="/icons/logo.png" alt="logo" width={60} height={60} />
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div>
-          <h2 className="text-3xl font-bold text-primary font-serif">
+          <h2 className="text-3xl text-center font-semibold text-primary font-serif">
             {isSignIn ? "Welcome Back" : "Create Account"}
           </h2>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 mt-2 text-center">
             {isSignIn
               ? "Enter your credentials to continue your journey"
               : "Join us to start your luxury experience"}

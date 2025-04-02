@@ -2,8 +2,9 @@ import { Suspense } from "react";
 import { Metadata } from "next";
 import SearchResults from "@/components/boats/search/SearchResults";
 import SearchFilters from "@/components/boats/search/SearchFilters";
-import VisGLSearchMap from "@/components/boats/search/VisGLSearchMap";
+import VisGLSearchMap from "@/components/boats/search/map/VisGLSearchMap";
 import SearchSkeleton from "@/components/boats/search/SearchSkeleton";
+import MapToggleClient from "@/components/boats/search/MapToggleClient";
 import { getBoats } from "@/lib/actions/boat-actions";
 import { SearchParamsType } from "@/types/types";
 
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
   description: "Search for luxury yachts and boats available for charter.",
 };
 
-export const dynamic = 'force-dynamic';
+export const dynamic = 'force-dynamic'; 
 export const revalidate = 0;
 
 // Helper function to normalize search params
@@ -64,33 +65,11 @@ async function SearchMapWrapper({ searchParams }: { searchParams: SearchParamsTy
       page: 1,
     });
     
-    // Log map data for debugging
-    console.log(`Map data fetched: ${mapData.locations.length} locations`);
-    
     // Ensure we have at least some data for testing
     let locations = [...mapData.locations];
     
     if (locations.length === 0) {
       console.log("No locations found, adding fallback locations");
-      // Add fallback locations for testing
-      locations = [
-        {
-          id: "fallback-1",
-          name: "Miami Yacht",
-          latitude: 25.7617,
-          longitude: -80.1918,
-          category: "YACHT",
-          price: 500
-        },
-        {
-          id: "fallback-2",
-          name: "Fort Lauderdale Boat",
-          latitude: 26.1224,
-          longitude: -80.1373,
-          category: "SPEEDBOAT",
-          price: 300
-        }
-      ];
     }
     
     return <VisGLSearchMap locations={locations} />;
@@ -108,43 +87,69 @@ async function SearchMapWrapper({ searchParams }: { searchParams: SearchParamsTy
   }
 }
 
-// Update the type definition to match Next.js 15's expected PageProps interface
-type Params = Promise<Record<string, string>>;
-type SearchParams = Promise<Record<string, string | string[]>>;
+// Server component wrapper for the map
+function ServerMapComponent({ searchParams }: { searchParams: SearchParamsType }) {
+  return (
+    <Suspense fallback={<div className="h-full w-full bg-gray-100 animate-pulse" />}>
+      <SearchMapWrapper searchParams={searchParams} />
+    </Suspense>
+  );
+}
 
-export default async function SearchPage(props: {
-  params: Params;
-  searchParams: SearchParams;
-}) {
+// Update type signature
+type Props = {
+  params: Promise<{ [key: string]: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
+
+export default async function SearchPage(props: Props) {
   try {
-    // Await the params and searchParams as they are now Promises in Next.js 15
+    // Await both params and searchParams
     const params = await props.params;
-    const searchParams = await props.searchParams;
     
-    // Convert searchParams to a plain object to avoid the symbol properties error
-    const normalizedParams = await normalizeSearchParams(searchParams);
+    // Create a safer copy of searchParams to avoid the Next.js warning
+    const filteredParams: Record<string, string | string[]> = {};
+    
+    // Await the searchParams before accessing its properties
+    const searchParamsObj = await props.searchParams;
+    
+    // Now we can safely access properties
+    for (const [key, value] of Object.entries(searchParamsObj)) {
+      if (value !== undefined) {
+        filteredParams[key] = value;
+      }
+    }
+    
+    // Normalize the filtered params
+    const normalizedParams = await normalizeSearchParams(filteredParams);
     const currentPage = Number(normalizedParams.page) || 1;
+    
+    // Check if map is toggled
+    const isMapToggled = normalizedParams.map_toggle === 'on';
     
     // Create a unique key for Suspense to ensure proper rerendering when search params change
     const searchParamsKey = Object.entries(normalizedParams)
-      .filter(([key]) => key !== 'page') // Exclude page from the key to avoid unnecessary rerenders
+      .filter(([key]) => key !== 'page' && key !== 'map_toggle') // Exclude page and map_toggle from the key
       .map(([key, value]) => `${key}=${value}`)
       .join('&');
     
     return (
-      <main className="min-h-screen bg-gradient-to-b from-white to-gray-50/50">
-        {/* Search Header */}
-        <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-lg border-b border-gray-100 shadow-sm w-full">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <main className="flex flex-col h-screen bg-gradient-to-b from-white to-gray-50/50">
+        {/* Search Header - Sticky at the top */}
+        <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-lg w-full border-b border-gray-100">
+          <div className="w-full">
             <SearchFilters initialFilters={normalizedParams} />
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Search Results */}
-            <div className="lg:col-span-8 xl:col-span-9">
+        {/* Map Toggle Client Component */}
+        <MapToggleClient searchParams={normalizedParams} />
+
+        {/* Main Content - Flexbox for the split layout */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Search Results - Full width on mobile, left side on desktop */}
+          <div className={`${isMapToggled ? 'hidden md:block' : 'block'} w-full md:w-2/3 overflow-y-auto`}>
+            <div className="p-4 sm:p-4 lg:p-6">
               <Suspense key={`${searchParamsKey}-page-${currentPage}`} fallback={<SearchSkeleton />}>
                 <SearchResultsWithData 
                   searchParams={normalizedParams}
@@ -152,14 +157,12 @@ export default async function SearchPage(props: {
                 />
               </Suspense>
             </div>
-            
-            {/* Map */}
-            <div className="lg:col-span-4 xl:col-span-3">
-              <div className="sticky top-[120px] rounded-[2rem] overflow-hidden border border-gray-100 shadow-xl bg-white h-[calc(100vh-200px)] min-h-[600px]">
-                <Suspense key={searchParamsKey} fallback={<div className="h-full w-full bg-gray-100 animate-pulse" />}>
-                  <SearchMapWrapper searchParams={normalizedParams} />
-                </Suspense>
-              </div>
+          </div>
+          
+          {/* Map - Right side (1/3 width on desktop), fixed - only visible on desktop by default */}
+          <div className="hidden md:block md:w-1/3">
+            <div className="sticky top-0 h-[calc(100vh-var(--search-filter-height))] w-full bg-white">
+              <ServerMapComponent searchParams={normalizedParams} />
             </div>
           </div>
         </div>

@@ -6,98 +6,18 @@ import { usePathname, useRouter } from 'next/navigation'
 import { cn, throttle } from '@/lib/utils'
 import Image from 'next/image'
 import { Session } from 'next-auth'
-import { Phone, Mail, MapPin, Clock, Ship, Calendar, Users2 } from 'lucide-react'
+import { useSearchStore } from '@/store/useSearchStore'
+import { AnimatePresence } from 'framer-motion'
 
 // Import subcomponents
 import MobileNavigation from './sub-components/MobileNavigation'
 import DesktopNavigation from './sub-components/DesktopNavigation'
 import UserMenu from './sub-components/UserMenu'
 import SocialLinks from './sub-components/SocialLinks'
+import SearchBar from '@/components/navigation/sub-components/SearchBar'
 
-// Import types
-import { NavigationItem, QuickLink, FeaturedItem } from '@/types/types'
-
-// Navigation data structure
-const navigationData: {
-    main: NavigationItem[];
-    secondary: NavigationItem[];
-    user: NavigationItem[];
-} = {
-    main: [
-        { 
-            href: "/explore", 
-            label: "Explore",
-            children: []
-        },
-        { href: "/contact", label: "Contact" },
-    ],
-    secondary: [
-        { href: "/about", label: "About Us" },
-        { href: "/faq", label: "FAQ" },
-        { href: "/yacht-club", label: "KOS Yacht Club" },
-        { href: "/careers", label: "Careers" },
-        { href: "/press", label: "Press" },
-        { href: "/blog", label: "Blog" },
-    ],
-    user: [
-        { href: "/profile", label: "View Profile" },
-        { href: "/profile/bookings", label: "My Bookings" },
-        { href: "/profile/boats", label: "My Boats" },
-        { href: "/profile/favorites", label: "Favorites" },
-    ]
-}
-
-// Add quick links data near your navigation data
-const quickLinks: QuickLink[] = [
-    {
-        icon: Phone,
-        label: "Contact Sales",
-        value: "+1 (888) 123-4567",
-        href: "tel:+18881234567"
-    },
-    {
-        icon: Mail,
-        label: "Email Us",
-        value: "charter@kos.com",
-        href: "mailto:charter@kos.com"
-    },
-    {
-        icon: MapPin,
-        label: "Main Location",
-        value: "Miami Beach Marina",
-        href: "https://maps.google.com"
-    },
-    {
-        icon: Clock,
-        label: "Business Hours",
-        value: "9:00 AM - 6:00 PM EST",
-        href: "/contact"
-    }
-]
-
-const featuredItems: FeaturedItem[] = [
-    {
-        icon: Ship,
-        label: "Featured Charter",
-        title: "Luxury Weekend Escape",
-        desc: "3-day charter in the Bahamas",
-        href: "/term-charter/weekly"
-    },
-    {
-        icon: Calendar,
-        label: "Upcoming Event",
-        title: "Summer Yacht Party",
-        desc: "Join us this July",
-        href: "/experiences/sandbar"
-    },
-    {
-        icon: Users2,
-        label: "Member Benefits",
-        title: "KOS Yacht Club",
-        desc: "Exclusive perks & privileges",
-        href: "/yacht-club"
-    }
-]
+// Move navigation data to a separate file
+import { navigationData, quickLinks, featuredItems } from '@/constants/navigation-data'
 
 const Navigation = ({ session }: { session: Session | null }) => {
     const pathname = usePathname()
@@ -106,6 +26,7 @@ const Navigation = ({ session }: { session: Session | null }) => {
     const [expandedItems, setExpandedItems] = useState<string[]>([])
     const user = session?.user
     const isHomePage = pathname === '/'
+    const { isExpanded } = useSearchStore()
 
     // Memoized scroll handler with throttling
     const handleScroll = useCallback(
@@ -117,14 +38,10 @@ const Navigation = ({ session }: { session: Session | null }) => {
 
     // Basic scroll effect with throttling
     useEffect(() => {
-        // Initial check
         handleScroll()
-        
         window.addEventListener('scroll', handleScroll, { passive: true })
-        
         return () => {
             window.removeEventListener('scroll', handleScroll)
-            // Clean up the throttled function to prevent memory leaks
             handleScroll.cancel && handleScroll.cancel()
         }
     }, [handleScroll])
@@ -138,15 +55,6 @@ const Navigation = ({ session }: { session: Session | null }) => {
                 : name[0].toUpperCase()
         }
         return email?.[0].toUpperCase() ?? '?'
-    }, [])
-
-    // Memoized toggle expanded function
-    const toggleExpanded = useCallback((href: string) => {
-        setExpandedItems(prev => 
-            prev.includes(href)
-                ? prev.filter(i => i !== href)
-                : [...prev, href]
-        )
     }, [])
 
     // Memoized header style
@@ -175,8 +83,8 @@ const Navigation = ({ session }: { session: Session | null }) => {
     return (
         <header className={headerStyle}>
             <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
-                <nav className="flex items-center justify-between h-10" role="navigation" aria-label="Main navigation">
-                    {/* Left section:Sidebar Menu + Logo */}
+                <nav className="grid grid-cols-[auto_1fr_auto] items-center h-10 gap-4" role="navigation" aria-label="Main navigation">
+                    {/* Left section: Logo + Main Navigation */}
                     <div className="flex items-center gap-3">
                         <MobileNavigation 
                             navigationData={navigationData}
@@ -191,26 +99,37 @@ const Navigation = ({ session }: { session: Session | null }) => {
 
                         <Link 
                             href="/" 
-                            className="flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-full"
+                            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-full"
                             aria-label="Home"
                         >
                             <Image 
-                                src={scrolled ? "/icons/updatekoslogo-branded.png" : "/icons/kosupdatedlogo.webp"} 
+                                src={isHomePage 
+                                    ? (scrolled ? "/icons/updatekoslogo-branded.png" : "/icons/kosupdatedlogo.webp")
+                                    : "/icons/updatekoslogo-branded.png"
+                                } 
                                 alt="Logo" 
                                 width={40} 
                                 height={40}
                                 className={cn(
                                   "rounded-full transition-transform hover:scale-105",
-                                  scrolled ? "filter-blue" : ""
+                                  (!isHomePage || scrolled) ? "filter-blue" : ""
                                 )}
                                 priority
                             />
                         </Link>
                     </div>
 
+                    {/* Center section: Search Bar */}
+                    <div className="flex justify-center">
+                        <AnimatePresence>
+                            {isExpanded && (
+                                <SearchBar variant="nav" />
+                            )}
+                        </AnimatePresence>
+                    </div>
+
                     {/* Right section: Navigation + Social + User menu */}
                     <div className="flex items-center gap-8">
-                        {/* Main Navigation */}
                         <DesktopNavigation 
                             navigationData={navigationData}
                             isHomePage={isHomePage}
@@ -219,13 +138,11 @@ const Navigation = ({ session }: { session: Session | null }) => {
                             getTextStyle={getTextStyle}
                         />
 
-                        {/* Social Icons */}
                         <SocialLinks 
                             isHomePage={isHomePage}
                             scrolled={scrolled}
                         />
 
-                        {/* User Menu */}
                         <UserMenu 
                             user={user}
                             navigationData={navigationData}
