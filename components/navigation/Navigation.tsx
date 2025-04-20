@@ -27,6 +27,9 @@ const Navigation = ({ session }: { session: Session | null }) => {
     const user = session?.user
     const isHomePage = pathname === '/'
     const { isExpanded } = useSearchStore()
+    
+    // Show search bar in nav on non-home pages
+    const showSearchInNav = !isHomePage || (isHomePage && isExpanded)
 
     // Memoized scroll handler with throttling
     const handleScroll = useCallback(
@@ -121,15 +124,11 @@ const Navigation = ({ session }: { session: Session | null }) => {
 
                     {/* Center section: Search Bar */}
                     <div className="flex justify-center">
-                        <AnimatePresence>
-                            {isExpanded && (
-                                <SearchBar variant="nav" />
-                            )}
-                        </AnimatePresence>
+                        {showSearchInNav && <SearchBar variant="nav" />}
                     </div>
 
                     {/* Right section: Navigation + Social + User menu */}
-                    <div className="flex items-center gap-8">
+                    <div className="flex items-center gap-4">
                         <DesktopNavigation 
                             navigationData={navigationData}
                             isHomePage={isHomePage}

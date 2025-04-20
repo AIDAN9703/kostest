@@ -36,7 +36,13 @@ export const getBoats = cache(async ({
     // Build query conditions based on search params
     const conditions = [eq(boats.active, true)];
     
-    // Category filter - updated to handle multiple categories
+    // Extract and process search parameters
+    const exclude = getSingleValue(searchParams.exclude);
+    if (exclude) {
+      conditions.push(sql`${boats.id} != ${exclude}`);
+    }
+    
+    // Handle categories - support multiple categories
     if (searchParams.category && searchParams.category !== 'all') {
       let categories: string[] = [];
       
@@ -48,80 +54,79 @@ export const getBoats = cache(async ({
         categories = [searchParams.category];
       }
       
-      // Filter out invalid categories and create a condition for valid ones
+      // Filter valid categories and add condition
       if (categories.length > 0) {
         const validCategories = categories.filter(cat => 
           boatCategoryEnum.enumValues.includes(cat as any)
         );
         
         if (validCategories.length === 1) {
-          // If only one category, use simple equality
           conditions.push(eq(boats.category, validCategories[0] as any));
         } else if (validCategories.length > 1) {
-          // If multiple categories, use inArray
           conditions.push(inArray(boats.category, validCategories as any[]));
         }
       }
     }
     
-    // Price range filter
-    const minPrice = safeParseFloat(getSingleValue(searchParams.minPrice));
-    if (minPrice !== null) {
-      conditions.push(gte(boats.hourlyRate, minPrice));
-    }
+    // Handle numeric filters - simplify the value extraction
+    const addNumericFilter = (param: string | string[] | undefined, field: any, operator: typeof gte | typeof lte) => {
+      const value = safeParseFloat(getSingleValue(param));
+      if (value !== null) {
+        conditions.push(operator(field, value));
+      }
+    };
     
-    const maxPrice = safeParseFloat(getSingleValue(searchParams.maxPrice));
-    if (maxPrice !== null) {
-      conditions.push(lte(boats.hourlyRate, maxPrice));
-    }
+    // Apply numeric filters
+    addNumericFilter(searchParams.minPrice, boats.hourlyRate, gte);
+    addNumericFilter(searchParams.maxPrice, boats.hourlyRate, lte);
+    addNumericFilter(searchParams.minLength, boats.lengthFt, gte);
+    addNumericFilter(searchParams.maxLength, boats.lengthFt, lte);
+    addNumericFilter(searchParams.minYear, boats.yearBuilt || 0, gte);
+    addNumericFilter(searchParams.maxYear, boats.yearBuilt || 3000, lte);
+    addNumericFilter(searchParams.cabins, boats.cabins || 0, gte);
+    addNumericFilter(searchParams.bathrooms, boats.bathrooms || 0, gte);
+    addNumericFilter(searchParams.passengers, boats.capacity, gte);
     
-    // Length range filter
-    const minLength = safeParseFloat(getSingleValue(searchParams.minLength));
-    if (minLength !== null) {
-      conditions.push(gte(boats.lengthFt, minLength));
-    }
-    
-    const maxLength = safeParseFloat(getSingleValue(searchParams.maxLength));
-    if (maxLength !== null) {
-      conditions.push(lte(boats.lengthFt, maxLength));
-    }
-    
-    // Year built range filter
-    const minYear = safeParseFloat(getSingleValue(searchParams.minYear));
-    if (minYear !== null) {
-      conditions.push(gte(boats.yearBuilt || 0, minYear));
-    }
-    
-    const maxYear = safeParseFloat(getSingleValue(searchParams.maxYear));
-    if (maxYear !== null) {
-      conditions.push(lte(boats.yearBuilt || 3000, maxYear));
-    }
-    
-    // Cabins filter
-    const cabins = safeParseFloat(getSingleValue(searchParams.cabins));
-    if (cabins !== null) {
-      conditions.push(gte(boats.cabins || 0, cabins));
-    }
-    
-    // Bathrooms filter
-    const bathrooms = safeParseFloat(getSingleValue(searchParams.bathrooms));
-    if (bathrooms !== null) {
-      conditions.push(gte(boats.bathrooms || 0, bathrooms));
-    }
-    
-    // Passengers filter
-    const passengers = safeParseFloat(getSingleValue(searchParams.passengers));
-    if (passengers !== null) {
-      conditions.push(gte(boats.capacity, passengers));
-    }
-    
-    // Location filter
+    // Handle location filter (point-based search)
     const location = getSingleValue(searchParams.location);
     if (location && location.trim()) {
-      conditions.push(ilike(boats.homePort || '', `%${location}%`));
+      try {
+        const [lat, lng] = location.split(',').map(Number);
+        if (!isNaN(lat) && !isNaN(lng)) {
+          const distanceInMeters = 50000; // 50km radius
+          conditions.push(
+            sql`ST_DWithin(
+              ${boats.location}::geography,
+              ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,
+              ${distanceInMeters}
+            )`
+          );
+        }
+      } catch (error) {
+        console.error("Error parsing location coordinates:", error);
+      }
     }
     
-    // Features filter
+    // Handle bounding box search (more efficient than the complex parsing in original)
+    const ne_lat = safeParseFloat(getSingleValue(searchParams.ne_lat));
+    const ne_lng = safeParseFloat(getSingleValue(searchParams.ne_lng));
+    const sw_lat = safeParseFloat(getSingleValue(searchParams.sw_lat));
+    const sw_lng = safeParseFloat(getSingleValue(searchParams.sw_lng));
+    
+    if (ne_lat !== null && ne_lng !== null && sw_lat !== null && sw_lng !== null) {
+      if (ne_lat > sw_lat && ne_lng > sw_lng) {
+        conditions.push(
+          sql`ST_Intersects(
+            ${boats.location},
+            ST_MakeEnvelope(${sw_lng}, ${sw_lat}, ${ne_lng}, ${ne_lat}, 4326)
+          )`
+        );
+      } else {
+        console.warn("Invalid bounding box coordinates", { ne_lat, ne_lng, sw_lat, sw_lng });
+      }
+    }
+    
+    // Handle features - simplified but preserving functionality
     let featuresList: string[] = [];
     if (searchParams.features) {
       if (Array.isArray(searchParams.features)) {
@@ -130,55 +135,39 @@ export const getBoats = cache(async ({
         featuresList = searchParams.features.split(',').filter(f => f.trim());
       }
       
-      // For each feature, add a condition that the boat's features array contains it
-      featuresList.forEach(feature => {
-        if (feature && feature.trim()) {
-          conditions.push(sql`${boats.features} @> ARRAY[${feature}]::text[]`);
-        }
-      });
+      if (featuresList.length > 0) {
+        // More efficient way to handle multiple features with a single condition
+        conditions.push(
+          sql`${boats.features} @> ARRAY[${sql.join(featuresList.map(f => sql`${f}`), sql`, `)}]::text[]`
+        );
+      }
     }
     
     // Calculate pagination
     const offset = (page - 1) * limit;
     
-    // Determine sort order
+    // Determine sort order - simplified but preserving all sort options
     let orderBy: any[] = [desc(boats.featured)];
     
     const sort = getSingleValue(searchParams.sort);
     if (sort) {
       switch (sort) {
-        case 'price_asc':
-          orderBy = [asc(boats.hourlyRate)];
-          break;
-        case 'price_desc':
-          orderBy = [desc(boats.hourlyRate)];
-          break;
-        case 'length_asc':
-          orderBy = [asc(boats.lengthFt)];
-          break;
-        case 'length_desc':
-          orderBy = [desc(boats.lengthFt)];
-          break;
-        case 'newest':
-          orderBy = [desc(boats.createdAt)];
-          break;
-        default:
-          // Default to featured boats first, then newest
-          orderBy = [desc(boats.featured), desc(boats.createdAt)];
+        case 'price_asc': orderBy = [asc(boats.hourlyRate)]; break;
+        case 'price_desc': orderBy = [desc(boats.hourlyRate)]; break;
+        case 'length_asc': orderBy = [asc(boats.lengthFt)]; break;
+        case 'length_desc': orderBy = [desc(boats.lengthFt)]; break;
+        case 'newest': orderBy = [desc(boats.createdAt)]; break;
+        default: orderBy = [desc(boats.featured), desc(boats.createdAt)]; break;
       }
     }
     
-    // Run both queries in parallel for better performance
+    // Run both queries in parallel - preserved for performance
     const [countResult, results] = await Promise.all([
-      // Execute count query for pagination
-      db
-        .select({ count: sql<number>`count(*)` })
+      db.select({ count: sql<number>`count(*)` })
         .from(boats)
         .where(and(...conditions)),
       
-      // Execute main query with pagination
-      db
-        .select()
+      db.select()
         .from(boats)
         .where(and(...conditions))
         .orderBy(...orderBy)
@@ -188,20 +177,15 @@ export const getBoats = cache(async ({
     
     const totalCount = countResult[0]?.count || 0;
     const totalPages = Math.ceil(totalCount / limit);
-    
-    // Convert to Boat type with proper typing
     const typedResults = results as unknown as Boat[];
     
-    // Only fetch location data if we have boats
+    // Get locations data - preserved for map display
     let locations: BoatLocation[] = [];
     
     if (typedResults.length > 0) {
       try {
-        // Format IDs for SQL query - this avoids parameter binding issues with PostgreSQL/PostGIS
         const idList = typedResults.map(boat => `'${boat.id}'`).join(',');
         
-        // Use raw SQL to extract PostGIS coordinates
-        // This is simpler and more reliable than using the ORM for spatial data
         const query = `
           SELECT 
             id, 
@@ -218,7 +202,6 @@ export const getBoats = cache(async ({
         
         const locationResults = await db.execute(query);
         
-        // Convert the raw results to BoatLocation objects
         locations = (locationResults.rows as any[]).map(row => ({
           id: row.id,
           name: row.name,
@@ -229,12 +212,10 @@ export const getBoats = cache(async ({
           imageUrl: row.image_url
         }));
       } catch (error) {
-        // Log error but continue - we'll just return boats without locations
         console.error("Error fetching boat locations:", error);
       }
     }
     
-    // Return all the search results
     return {
       boats: typedResults,
       totalCount,

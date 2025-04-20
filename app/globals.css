@@ -8,7 +8,7 @@
   }
 
   /* Prevent horizontal scrolling */
-  html, body {
+body {
     overflow-x: hidden;
     position: relative;
     width: 100%;

@@ -1,4 +1,4 @@
-import { Phone, Mail, MapPin, Clock, Ship, Calendar, Users2 } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, Ship, Calendar, Users2, User, Bookmark, ShoppingBag, LogOut } from 'lucide-react';
 import { NavigationItem, QuickLink, FeaturedItem } from '@/types/types';
 
 export const navigationData: {
@@ -22,10 +22,10 @@ export const navigationData: {
         { href: "/news", label: "News" },
     ],
     user: [
-        { href: "/profile", label: "View Profile" },
-        { href: "/profile/bookings", label: "My Bookings" },
-        { href: "/profile/boats", label: "My Boats" },
-        { href: "/profile/favorites", label: "Favorites" },
+        { href: "/profile/bookings", label: "My Bookings", icon: Calendar },
+        { href: "/profile/boats", label: "My Boats", icon: Ship },
+        { href: "/profile/favorites", label: "Favorites", icon: Bookmark },
+        { href: "/profile/settings", label: "Account Settings", icon: User },
     ]
 };
 

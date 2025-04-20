@@ -38,9 +38,9 @@ export default async function ProfileLayout({
     return (
       <>
         <Navigation session={session} />
-        <div className="min-h-screen pt-20 pb-6 max-w-5xl mx-auto">
-        <BackToDashboard />
-          <main className="min-h-screen">
+        <div className="min-h-screen pt-20 pb-8 max-w-6xl mx-auto px-4 sm:px-6">
+          <BackToDashboard />
+          <main className="min-h-screen mt-4">
             {children}
           </main>
           

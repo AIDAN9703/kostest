@@ -29,7 +29,7 @@ const fadeInUpAnimation = {
 const FeaturedFleet = ({ boats }: { boats: Boat[] }) => {
   return (
     <section className="py-2 sm:py-4 bg-white relative overflow-hidden">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-full sm:max-w-[80%] mx-auto px-4">
         <motion.div 
           className="text-center mb-4 sm:mb-6 md:mb-8"
           initial={fadeInUpAnimation.initial}

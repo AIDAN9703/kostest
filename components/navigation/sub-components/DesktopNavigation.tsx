@@ -119,7 +119,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
     ), [isHomePage, scrolled]);
 
     return (
-        <div className="hidden lg:flex items-center gap-8">
+        <div className="hidden lg:flex items-center gap-4">
             {navigationData.main.map((item) => (
                 <div key={item.href} className="relative group">
                     {item.href === "/explore" ? (

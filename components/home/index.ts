@@ -7,4 +7,5 @@ export { default as ExperienceSection } from './ExperienceSection';
 export { default as WhyChooseUs } from './WhyChooseUs';
 export { default as PopularExperiences } from './PopularExperiences';
 export { default as RequestToBook } from './RequestToBook';
-export { default as ComparisonChart } from './ComparisonChart';
+export { default as ClientsShowcase } from './ClientsShowcase';
+export { default as LocationsSection } from './LocationsSection';

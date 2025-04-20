@@ -29,9 +29,9 @@ const fadeInUpAnimation = {
 
 // Common style objects to reduce repetition
 const styles = {
-  section: "relative bg-primary text-white overflow-hidden",
+  section: "relative bg-primary text-white overflow-hidden my-10",
   container: "max-w-7xl mx-auto px-4 py-6 md:py-10",
-  heading: "font-serif text-4xl md:text-5xl mb-2 text-white",
+  heading: "font-poppins text-4xl md:text-5xl mb-2 text-white",
   headingWrapper: "text-center max-w-3xl mx-auto mb-10",
   grid: "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6",
   navButton: "absolute top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/40 transition",

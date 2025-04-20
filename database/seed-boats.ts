@@ -207,10 +207,18 @@ async function seedBoats() {
         safetyEquipment: getRandomItems(allSafetyEquipment, 5, 10),
         
         // Media
-        mainImage: `https://source.unsplash.com/random/800x600/?boat,yacht&sig=${i}`,
-        galleryImages: Array.from({ length: getRandomNumber(3, 8) }, (_, j) => 
-          `https://source.unsplash.com/random/800x600/?boat,yacht&sig=${i}-${j}`
-        ),
+        mainImage: `/images/boats/yacht3.jpg`,
+        galleryImages: Array.from({ length: getRandomNumber(3, 8) }, (_, j) => {
+          const images = [
+            `/images/boats/yacht3.jpg`,
+            `/images/boats/yacht1.jpg`,
+            `/images/boats/yacht2.jpg`,
+            `/images/boats/catamaran1.jpg`,
+            `/images/boats/catamaran2.jpg`,
+            `/images/boats/motor-yacht1.jpg`
+          ];
+          return images[Math.floor(Math.random() * images.length)];
+        }),
         
         // Pricing
         hourlyRate: getRandomPrice(100, 500),
@@ -234,6 +242,9 @@ async function seedBoats() {
         dayCharter: true,
         termCharter: getRandomBoolean(0.3),
         minimumCharterDays: getRandomNumber(1, 7),
+        
+        // Booking Options
+        instantBook: getRandomBoolean(0.4),
         
         // Fuel Details
         fuelIncluded: getRandomBoolean(0.3),

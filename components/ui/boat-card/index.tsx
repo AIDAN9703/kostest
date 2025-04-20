@@ -19,6 +19,7 @@ interface BoatCardProps {
   showDetails?: boolean;
   showPrice?: boolean;
   showLocation?: boolean;
+  showInstantBook?: boolean;
   imagePriority?: boolean;
   aspectRatio?: number;
   highlightFeatured?: boolean;
@@ -33,6 +34,7 @@ const BoatCard = ({
   showDetails = true,
   showPrice = true,
   showLocation = true,
+  showInstantBook = true,
   imagePriority,
   aspectRatio = 16/9,
   highlightFeatured = true,
@@ -84,7 +86,7 @@ const BoatCard = ({
       card: "rounded-md sm:rounded-lg md:rounded-xl hover:scale-[1.02]",
       content: "p-2 sm:p-2 md:p-3",
       title: "text-md sm:text-lg md:text-xl font-medium mb-1",
-      location: "flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2",
+      location: "flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2 w-full overflow-hidden",
       guests: "flex items-center gap-1 sm:gap-2",
       rating: "flex items-center",
       priceTag: "bottom-3 right-3 sm:bottom-4 sm:right-4",
@@ -98,7 +100,7 @@ const BoatCard = ({
           card: "rounded-xl hover:scale-[1.01]",
           content: "p-2 sm:p-3", // Reduced padding for search variant
           title: "text-md sm:text-lg font-medium mb-1",
-          location: "flex items-center gap-1 mb-1",
+          location: "flex items-center gap-1 mb-1 w-full overflow-hidden",
           guests: "flex items-center gap-1",
           rating: "flex items-center",
           priceTag: "bottom-2 right-2 sm:bottom-3 sm:right-3",
@@ -109,7 +111,7 @@ const BoatCard = ({
           card: "rounded-2xl hover:scale-[1.03] shadow-md",
           content: "p-3 sm:p-4 md:p-5", // More padding for featured variant
           title: "text-lg sm:text-xl md:text-2xl font-semibold mb-2 sm:mb-3",
-          location: "flex items-center gap-2 mb-2",
+          location: "flex items-center gap-2 mb-2 w-full overflow-hidden",
           guests: "flex items-center gap-2",
           rating: "flex items-center",
           priceTag: "bottom-4 right-4",
@@ -120,7 +122,7 @@ const BoatCard = ({
           card: "rounded-lg hover:scale-[1.01]",
           content: "p-1 sm:p-2", // Minimal padding for compact variant
           title: "text-sm sm:text-md font-medium mb-0.5",
-          location: "flex items-center gap-1 mb-0.5 text-xs",
+          location: "flex items-center gap-1 mb-0.5 text-xs w-full overflow-hidden",
           guests: "flex items-center gap-1 text-xs",
           rating: "flex items-center",
           priceTag: "bottom-1 right-1 sm:bottom-2 sm:right-2 text-xs",
@@ -135,7 +137,7 @@ const BoatCard = ({
     <Link href={`/boats/${boat.id}`} className="block">
       <Card 
         className={cn(
-          "group relative overflow-hidden bg-white flex flex-col h-full transition-all duration-500 cursor-pointer",
+          "group relative overflow-hidden font-poppins bg-white flex flex-col h-full transition-all duration-500 cursor-pointer",
           variantStyles.card,
           className
         )}
@@ -217,10 +219,10 @@ const BoatCard = ({
             {/* Featured tag */}
             {boat.featured && highlightFeatured && (
               <div className={cn(
-                "absolute bg-emerald-400 px-1 rounded-lg shadow-md",
+                "absolute bg-emerald-400 px-1.5 py-0.5 rounded-lg shadow-md flex items-center justify-center",
                 variantStyles.featuredTag
               )}>
-                <span className="text-xs sm:text-sm font-medium text-white">
+                <span className="text-xs sm:text-sm font-medium text-white leading-tight">
                   Featured
                 </span>
               </div>
@@ -235,14 +237,26 @@ const BoatCard = ({
             variantStyles.content
           )}>
             <div className="flex items-start justify-between gap-3 sm:gap-6">
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 overflow-hidden">
                 {/* Boat title */}
-                <h3 className={cn(
-                  "text-[#1E293B] group-hover:text-primary transition-colors truncate",
-                  variantStyles.title
-                )}>
-                  {boat.displayTitle || boat.name}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className={cn(
+                    "text-[#1E293B] group-hover:text-primary transition-colors truncate",
+                    variantStyles.title
+                  )}>
+                    {boat.displayTitle || boat.name}
+                  </h3>
+                  {/* Display InstantBook icon if available */}
+                  {showInstantBook && boat.instantBook && (
+                    <Image 
+                      src="/icons/instant-book-small.svg" 
+                      width={12} 
+                      height={12} 
+                      alt="Instant Book" 
+                      className="h-3 w-3" 
+                    />
+                  )}
+                </div>
                 
                 {/* Location */}
                 {showLocation && boat.homePort && boat.homePort !== 'N/A' && (
@@ -250,8 +264,8 @@ const BoatCard = ({
                     "text-gray-600",
                     variantStyles.location
                   )}>
-                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
-                    <span className="text-xs sm:text-sm font-light tracking-wide">{boat.homePort}</span>
+                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm font-light tracking-wide truncate overflow-hidden">{boat.homePort}</span>
                   </div>
                 )}
                 
@@ -271,7 +285,7 @@ const BoatCard = ({
                   "text-[#1E293B] flex items-center",
                   variantStyles.rating
                 )}>
-                  <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-yellow-300 text-yellow-300 inline-block mr-1" />
+                  <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-emerald-500 text-emerald-500 inline-block mr-1" />
                   <span className="text-xs sm:text-sm font-medium">
                     {boat.averageRating ? Number(boat.averageRating).toFixed(1) : '4.9'} 
                     <span className="text-gray-500 font-normal ml-0.5">

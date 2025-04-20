@@ -27,6 +27,7 @@ import { FIELD_NAMES, FIELD_TYPES } from "@/constants";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "@/hooks/use-toast";
+import { googleSignIn } from "@/lib/actions/auth/google-auth";
 
 interface Props<T extends FieldValues> {
   schema: ZodType<T>;
@@ -35,38 +36,6 @@ interface Props<T extends FieldValues> {
   type: "SIGN_IN" | "SIGN_UP";
 }
 
-const YachtTips = [
-  {
-    icon: "⚓",
-    title: "Premium Fleet",
-    description: "Browse our collection of luxury yachts, from sleek speedboats to mega yachts"
-  },
-  {
-    icon: "👨‍✈️",
-    title: "Expert Crew",
-    description: "Every yacht comes with a professional crew trained to provide 5-star service"
-  },
-  {
-    icon: "🗺️",
-    title: "Global Destinations",
-    description: "Set sail to exotic locations worldwide with our international fleet"
-  },
-  {
-    icon: "🛎️",
-    title: "Concierge Service",
-    description: "24/7 personal concierge to handle all your requests and itineraries"
-  },
-  {
-    icon: "✨",
-    title: "Luxury Amenities",
-    description: "From gourmet dining to water toys, enjoy premium onboard experiences"
-  },
-  {
-    icon: "📱",
-    title: "Easy Booking",
-    description: "Secure your dream yacht with our simple booking process"
-  }
-];
 
 const AuthForm = <T extends FieldValues>({
   type,
@@ -76,18 +45,7 @@ const AuthForm = <T extends FieldValues>({
 }: Props<T>) => {
   const router = useRouter();
   const isSignIn = type === "SIGN_IN";
-  const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Rotate through tips every 4 seconds
-  useEffect(() => {
-    if (isSignIn) {
-      const interval = setInterval(() => {
-        setCurrentTipIndex((prev) => (prev + 1) % YachtTips.length);
-      }, 4000);
-      return () => clearInterval(interval);
-    }
-  }, [isSignIn]);
 
   const form: UseFormReturn<T> = useForm({
     resolver: zodResolver(schema),
@@ -221,20 +179,17 @@ const AuthForm = <T extends FieldValues>({
             <div className="h-px flex-1 bg-gray-200" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <button className="flex items-center justify-center gap-2 h-12 w-full border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-300">
+          <form action={googleSignIn}>
+            <button
+              type="submit"
+              className="flex items-center justify-center gap-2 h-12 w-full border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-300"
+            >
               <div className="relative w-5 h-5">
                 <Image src="/icons/google.svg" alt="Google" fill className="object-contain" />
               </div>
-              <span className="text-gray-700 text-sm font-medium">Google</span>
+              <span className="text-gray-700 text-sm font-medium">Continue with Google</span>
             </button>
-            <button className="flex items-center justify-center gap-2 h-12 w-full border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-300">
-              <div className="relative w-5 h-5">
-                <Image src="/icons/apple.svg" alt="Apple" fill className="object-contain" />
-              </div>
-              <span className="text-gray-700 text-sm font-medium">Apple</span>
-            </button>
-          </div>
+          </form>
 
           <div className="text-center pb-4">
             <p className="text-sm text-gray-600">

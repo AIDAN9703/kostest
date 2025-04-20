@@ -25,7 +25,15 @@ export default {
   			],
   			'inter': [
   				'var(--font-inter)'
-  			]
+  			],
+            'open-sans': [
+                'var(--font-open-sans)',
+                'sans-serif'
+            ],
+            'poppins': [
+                'var(--font-poppins)',
+                'sans-serif'
+            ]
   		},
   		colors: {
   			background: 'hsl(var(--background))',

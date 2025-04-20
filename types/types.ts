@@ -6,6 +6,29 @@ import { LucideIcon } from 'lucide-react';
 // User profile types
 export type BoatingExperience = "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT" | null;
 
+// Location data for map and search
+export interface LocationData {
+  formatted_address: string;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  viewport?: {
+    ne: { lat: number; lng: number };
+    sw: { lat: number; lng: number };
+  };
+  bounds?: {
+    ne_lat: number;
+    ne_lng: number;
+    sw_lat: number;
+    sw_lng: number;
+  };
+  place_id: string;
+  name: string;
+  raw: google.maps.places.PlaceResult;
+  isValid: boolean;
+}
+
 export interface UserProfile {
   id: string;
   firstName: string | null;
@@ -119,6 +142,8 @@ export interface Boat {
   // Rating and reviews data
   averageRating?: number | null;
   totalReviews?: number | null;
+  // Booking options
+  instantBook: boolean;
 }
 
 // Search params type for filtering boats
@@ -210,6 +235,7 @@ export interface NavigationItem {
   href: string;
   label: string;
   children?: Array<NavigationItem | HeaderItem>;
+  icon?: any; // Will use Lucide icons
 }
 
 export interface HeaderItem {

@@ -39,30 +39,26 @@ export default function BrandsCarousel() {
   const y = useTransform(scrollYProgress, [0, 1], [50, -50]);
 
   return (
-    <section ref={containerRef} className="py-16 bg-white overflow-hidden">
+    <section ref={containerRef} className="py-16 bg-white overflow-hidden max-w-[80%] mx-auto">
       <motion.div style={{ opacity, y }}>
         {/* Section Header */}
-        <div className="max-w-7xl mx-auto px-4 mb-8">
+        <div className="max-w-7xl mx-auto px-4 mb-4">
           <motion.div
             {...fadeInUpAnimation}
             viewport={{ once: true }}
             className="text-center"
           >
-            <h2 className="font-serif text-3xl md:text-5xl text-primary mb-4">
-              Brands Who Trust Us
+            <h2 className="font-poppins font-medium text-3xl sm:text-4xl md:text-5xl text-primary mb-4">
+              Brands We Work With
             </h2>
             <p className="text-gray-600 md:text-lg max-w-2xl mx-auto">
-              Partnering with the finest names in luxury yachting to deliver exceptional experiences
+              Partnering with the finest names across all industries.
             </p>
           </motion.div>
         </div>
 
         {/* Brands Carousel */}
-        <div className="relative w-screen -mx-[50vw] left-1/2">
-          {/* Gradient Overlays */}
-          <div className="absolute inset-y-0 left-0 w-16 md:w-32 bg-gradient-to-r from-white to-transparent z-10" />
-          <div className="absolute inset-y-0 right-0 w-16 md:w-32 bg-gradient-to-l from-white to-transparent z-10" />
-
+        <div className="max-w-full mx-auto px-4">
           {/* First Row */}
           <div className="flex space-x-8 animate-marquee py-4">
             {[...brands, ...brands, ...brands].map((brand, index) => (

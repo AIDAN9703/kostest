@@ -27,6 +27,7 @@ import {
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Loader2, Ship } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Define the form schema
 const boatFormSchema = z.object({
@@ -44,6 +45,7 @@ const boatFormSchema = z.object({
   }),
   mainImage: z.string().url("Please upload a main image").optional(),
   galleryImages: z.array(z.string().url()).optional(),
+  instantBook: z.boolean().default(false),
 });
 
 // Define the form values type
@@ -85,6 +87,7 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
       capacity: typeof boat.capacity === 'string' ? parseInt(boat.capacity) : boat.capacity,
       year: typeof boat.year === 'string' ? parseInt(boat.year) : boat.year,
       pricePerDay: typeof boat.pricePerDay === 'string' ? parseFloat(boat.pricePerDay) : boat.pricePerDay,
+      instantBook: boat.instantBook ?? false,
     } : {
       name: "",
       description: "",
@@ -100,6 +103,7 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
       },
       mainImage: "",
       galleryImages: [],
+      instantBook: false,
     },
   });
 
@@ -457,17 +461,45 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
           </div>
         </div>
         
-        {/* Submit Button */}
-        <div className="flex justify-end">
-          <Button 
-            type="submit" 
-            className="bg-primary text-white" 
-            disabled={isSubmitting}
-          >
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {boat ? 'Update Boat' : 'List Boat'}
-          </Button>
+        {/* Booking Options */}
+        <div className="space-y-6">
+          <h2 className="text-lg font-medium border-b pb-2">Booking Options</h2>
+          
+          <FormField
+            control={form.control}
+            name="instantBook"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>Enable Instant Booking</FormLabel>
+                  <FormDescription>
+                    Allow users to book your boat instantly without requiring your approval for each request.
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
         </div>
+        
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {boat ? "Updating..." : "Creating..."}
+            </>
+          ) : (
+            <>
+              <Ship className="mr-2 h-4 w-4" />
+              {boat ? "Update Boat" : "List My Boat"}
+            </>
+          )}
+        </Button>
       </form>
     </Form>
   );

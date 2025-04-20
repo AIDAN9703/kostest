@@ -15,15 +15,6 @@ import {
   uuid,
   geometry,
 } from "drizzle-orm/pg-core";
-
-// Payment related enums
-export const paymentStatusEnum = pgEnum("PaymentStatus", [
-  "PENDING",
-  "COMPLETED",
-  "FAILED",
-  "REFUNDED",
-]);
-
 // Verification related enums
 export const verificationTypeEnum = pgEnum("VerificationType", [
   "PHONE",
@@ -103,26 +94,40 @@ export const boatCategoryEnum = pgEnum("BoatCategory", [
   "SPEEDBOAT",
   "HOUSEBOAT",
   "JET_SKI",
-  "OTHER",
+  "OTHER"
 ]);
 
-// Booking related enums
-export const bookingRequestStatusEnum = pgEnum("BookingRequestStatus", [
-  "PENDING",           // Just submitted, waiting for KOS team review
-  "APPROVED",         // KOS team approved, waiting for customer payment
-  "AWAITING",        // Payment link sent, waiting for payment
+// New consolidated booking type enum
+export const bookingTypeEnum = pgEnum("BookingType", [
+  "DAY_REQUEST",         // Standard booking request that needs approval
+  "INSTANT_BOOK",    // Instant booking (no approval needed)
+  "TERM_CHARTER",
+  "MULTI_DAY",
+  "EXTERNAL_BOOKING"
+]);
+
+// New consolidated booking status enum
+export const bookingStatusEnum = pgEnum("BookingStatus", [
+  "PENDING",         // Initial state for booking requests
+  "APPROVED",        // Request approved, waiting for payment
+  "AWAITING_PAYMENT", // Payment link sent, waiting for payment
   "CONFIRMED",       // Payment received, booking confirmed
-  "DENIED",          // KOS team denied the request
-  "EXPIRED",         // Payment wasn't made within 24 hours
-  "CANCELLED"        // Cancelled by customer or KOS team
+  "DENIED",          // Request was denied
+  "EXPIRED",         // Payment wasn't made within timeframe
+  "CANCELLED",       // Cancelled by customer or owner
+  "COMPLETED",       // Trip completed
+  "REFUNDED"         // Booking was refunded
 ]);
 
 // Optional: Keep if you need to itemize charges
 export const lineItemTypeEnum = pgEnum("LineItemType", [
   "CLEANING",
   "CAPTAIN",
-  "OWNER",
+  "VESSEL_FEE",
   "BOOKING_FEE",
+  "TAX",
+  "TRANSACTION_FEE",
+  "OTHER"
 ]);
 
 // Location related types
@@ -132,6 +137,14 @@ export const locationTypeEnum = pgEnum("LocationType", [
   "PICKUP_LOCATION",
   "DROPOFF_LOCATION",
   "DESTINATION",
+]);
+
+export const paymentStatusEnum = pgEnum("PaymentStatus", [
+  "PENDING",
+  "PAID",
+  "FAILED",
+  "REFUNDED",
+  "CHARGEBACK",
 ]);
 
 // Tables
@@ -351,9 +364,7 @@ export const captains = pgTable("captain", {
   index("captain_license_idx").on(table.licenseType)
 ]);
 
-export const boats = pgTable(
-  "boat",
-  {
+export const boats = pgTable("boat",{
     // Core Information
     id: uuid("id").defaultRandom().notNull().primaryKey(),
     name: text("name").notNull(),
@@ -427,6 +438,9 @@ export const boats = pgTable(
     termCharter: boolean("term_charter").default(false).notNull(),
     minimumCharterDays: integer("minimum_charter_days"),
     
+    // Booking Options
+    instantBook: boolean("instant_book").default(false).notNull(),
+    
     // Fuel Details
     fuelIncluded: boolean("fuel_included").default(false).notNull(),
     fuelCapacity: integer("fuel_capacity"),
@@ -468,18 +482,26 @@ export const boats = pgTable(
   ]
 );
 
-export const bookingRequests = pgTable("booking_requests", {
+// Consolidated bookings table that replaces both bookingRequests and bookings
+export const bookings = pgTable("booking", {
+  // Core Information
   id: uuid("id").defaultRandom().notNull().primaryKey(),
+  bookingType: bookingTypeEnum("booking_type").default("EXTERNAL_BOOKING").notNull(),
+  bookingStatus: bookingStatusEnum("booking_status").default("PENDING").notNull(),
   
-  // Boat and User Info
+  // User Information
+  userId: uuid("user_id").references(() => users.id), // Renamed from renterId, optional for non-logged in requests
   boatId: uuid("boat_id").notNull().references(() => boats.id),
-  userId: uuid("user_id").references(() => users.id), // Optional, in case user is not logged in
+  captainId: uuid("captain_id").references(() => captains.id),
+  
+  // Customer Information (needed even when userId exists)
   customerName: text("customer_name").notNull(),
   customerEmail: text("customer_email").notNull(),
   customerPhone: text("customer_phone").notNull(),
   
-  // Booking Type
+  // Booking Configuration
   isMultiDay: boolean("is_multi_day").notNull(),
+  needsCaptain: boolean("needs_captain").default(false),
   
   // Dates and Times
   startDate: timestamp("start_date", { mode: "date" }).notNull(),
@@ -487,65 +509,9 @@ export const bookingRequests = pgTable("booking_requests", {
   startTime: text("start_time").notNull(), // Store as HH:mm in 24h format
   endTime: text("end_time").notNull(), // Store as HH:mm in 24h format
   numberOfHours: integer("number_of_hours"), // Only for single-day bookings
-  
-  // Other Details
   numberOfPassengers: integer("number_of_passengers").notNull(),
-  specialRequests: text("special_requests"),
-  occasionType: text("occasion_type"),
-  needsCaptain: boolean("needs_captain").default(false),
   
-  // Pricing
-  totalAmount: doublePrecision("total_amount").notNull(),
-  depositAmount: doublePrecision("deposit_amount"),
-  currency: text("currency").default("USD").notNull(),
-  paymentDueDate: timestamp("payment_due_date", { mode: "date" }),
-  
-  // Status Management
-  status: bookingRequestStatusEnum("status").default("PENDING").notNull(),
-  reviewedBy: uuid("reviewed_by").references(() => users.id),
-  reviewedAt: timestamp("reviewed_at", { mode: "date" }),
-  reviewNotes: text("review_notes"),
-  
-  // Stripe Integration
-  stripePaymentLinkId: text("stripe_payment_link_id"),
-  stripePaymentLinkUrl: text("stripe_payment_link_url"),
-  stripePaymentLinkExpiresAt: timestamp("stripe_payment_link_expires_at", { mode: "date" }),
-  stripePaymentIntentId: text("stripe_payment_intent_id"),
-  
-  // Timestamps
-  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
-  expiresAt: timestamp("expires_at", { mode: "date" }), // 24 hours after approval
-  
-  // Soft delete
-  isDeleted: boolean("is_deleted").default(false).notNull(),
-  deletedAt: timestamp("deleted_at", { mode: "date", withTimezone: true }),
-}, (table) => [
-  // Indexes for common queries
-  index("booking_requests_boat_id_idx").on(table.boatId),
-  index("booking_requests_user_id_idx").on(table.userId),
-  index("booking_requests_status_idx").on(table.status),
-  index("booking_requests_date_range_idx").on(table.startDate, table.endDate)
-]);
-
-export const bookings = pgTable("booking", {
-  // Core Information
-  id: uuid("id").defaultRandom().notNull().primaryKey(),
-  status: text("status").default("PENDING").notNull(),
-  type: text("type").notNull(),
-  
-  // Relationships
-  renterId: uuid("renter_id").notNull().references(() => users.id),
-  boatId: uuid("boat_id").notNull().references(() => boats.id),
-  captainId: uuid("captain_id").references(() => captains.id),
-  
-  // Booking Details
-  startDate: timestamp("start_date", { mode: "date", withTimezone: true }).notNull(),
-  endDate: timestamp("end_date", { mode: "date", withTimezone: true }).notNull(),
-  duration: integer("duration").notNull(),
-  passengers: integer("passengers").notNull(),
-  
-  // Location
+  // Location Details
   pickupLocation: text("pickup_location"),
   pickupCoordinates: geometry('pickup_coordinates', { type: 'point', srid: 4326 }),
   dropoffLocation: text("dropoff_location"),
@@ -556,27 +522,41 @@ export const bookings = pgTable("booking", {
   basePrice: doublePrecision("base_price").notNull(),
   captainFee: doublePrecision("captain_fee"),
   cleaningFee: doublePrecision("cleaning_fee"),
-  serviceFee: doublePrecision("service_fee").notNull(),
+  serviceFee: doublePrecision("service_fee"),
   taxAmount: doublePrecision("tax_amount"),
-  totalPrice: doublePrecision("total_price").notNull(),
-  
-  // Payment
-  paymentStatus: text("payment_status").default("PENDING"),
-  paymentMethod: text("payment_method"),
-  paymentIntentId: text("payment_intent_id"),
+  totalAmount: doublePrecision("total_amount").notNull(), // Renamed from totalPrice
   depositAmount: doublePrecision("deposit_amount"),
+  currency: text("currency").default("USD").notNull(),
+  
+  // Payment Information
+  paymentStatus: paymentStatusEnum("payment_status").default("PENDING"),
+  paymentMethod: text("payment_method"),
+  paymentDueDate: timestamp("payment_due_date", { mode: "date" }),
   depositPaid: boolean("deposit_paid").default(false),
   refundAmount: doublePrecision("refund_amount"),
+  refundStatus: text("refund_status"),
   
-  // Special Requests
+  // Stripe Integration
+  stripeCustomerId: text("stripe_customer_id"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  stripePaymentLinkId: text("stripe_payment_link_id"),
+  stripePaymentLinkUrl: text("stripe_payment_link_url"),
+  stripePaymentLinkExpiresAt: timestamp("stripe_payment_link_expires_at", { mode: "date" }),
+  
+  // Special Requests & Add-ons
   specialRequests: text("special_requests"),
+  occasionType: text("occasion_type"),
   addOns: json("add_ons"),
+  
+  // Status Management
+  reviewedBy: uuid("reviewed_by").references(() => users.id),
+  reviewedAt: timestamp("reviewed_at", { mode: "date" }),
+  reviewNotes: text("review_notes"),
   
   // Cancellation
   cancelledAt: timestamp("cancelled_at", { mode: "date", withTimezone: true }),
   cancellationReason: text("cancellation_reason"),
   cancelledBy: uuid("cancelled_by").references(() => users.id),
-  refundStatus: text("refund_status"),
   
   // Communication
   messageThreadId: uuid("message_thread_id"),
@@ -589,10 +569,18 @@ export const bookings = pgTable("booking", {
   // Timestamps
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+  expiresAt: timestamp("expires_at", { mode: "date" }), // When a request or payment link expires
+  
+  // Soft delete
+  isDeleted: boolean("is_deleted").default(false).notNull(),
+  deletedAt: timestamp("deleted_at", { mode: "date", withTimezone: true }),
 }, (table) => [
-  index("booking_status_idx").on(table.status),
-  index("booking_renter_idx").on(table.renterId),
+  // Indexes for common queries
+  index("booking_type_idx").on(table.bookingType),
+  index("booking_status_idx").on(table.bookingStatus),
+  index("booking_user_idx").on(table.userId),
   index("booking_boat_idx").on(table.boatId),
+  index("booking_captain_idx").on(table.captainId),
   index("booking_date_idx").on(table.startDate, table.endDate),
   index("booking_pickup_idx").using("gist", table.pickupCoordinates),
   index("booking_dropoff_idx").using("gist", table.dropoffCoordinates),

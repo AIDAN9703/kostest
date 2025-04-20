@@ -13,8 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Session } from 'next-auth'
-import { signOut } from "next-auth/react"
 import { NavigationItem } from '@/types/types'
+import { signOut } from 'next-auth/react'
 
 interface UserMenuProps {
     user: Session['user'] | undefined | null;
@@ -40,20 +40,9 @@ const UserMenu: React.FC<UserMenuProps> = ({
     const navigateToSignUp = useCallback(() => router.push('/sign-up'), [router]);
     
     // Memoized button styles
-    const signInButtonStyle = useMemo(() => cn(
+    const logOnButtonStyle = useMemo(() => cn(
         "text-[15px] font-medium tracking-wide",
-        "transition-all duration-200",
-        "focus:outline-none focus-visible:ring-2",
-        "focus-visible:ring-primary/50 rounded-sm",
-        "hover:scale-105 active:scale-95",
-        isHomePage && !scrolled
-            ? "text-white hover:text-white/80"
-            : "text-gray-700 hover:text-primary"
-    ), [isHomePage, scrolled]);
-    
-    const signUpButtonStyle = useMemo(() => cn(
-        "text-[15px] font-medium tracking-wide",
-        "border-2 rounded-md px-4 py-1.5",
+        "border-2 rounded-md px-2 py-1",
         "transition-all duration-300",
         "focus:outline-none focus-visible:ring-2",
         "focus-visible:ring-primary/50",
@@ -69,7 +58,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
         "focus:outline-none focus:ring-0 focus:ring-offset-0",
         isHomePage && !scrolled
             ? "focus-visible:ring-white/80 focus-visible:ring-offset-transparent"
-            : "focus-visible:ring-primary/50 focus-visible:ring-offset-white",
+            : "focus-visible:ring-white/50 focus-visible:ring-offset-white",
         "transition-all duration-300 hover:scale-105",
         "data-[state=open]:bg-transparent",
         "[&:not(:focus-visible)]:ring-0 [&:not(:focus-visible)]:ring-offset-0",
@@ -81,7 +70,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
         "ring-[2px] sm:ring-[2.5px]",
         isHomePage && !scrolled 
             ? "ring-white/90 bg-white/10" 
-            : "ring-primary/90 bg-primary/5"
+            : "ring-gray-300/90 bg-white/5"
     ), [isHomePage, scrolled]);
     
     const avatarFallbackStyle = useMemo(() => cn(
@@ -120,51 +109,46 @@ const UserMenu: React.FC<UserMenuProps> = ({
                     collisionPadding={20}
                 >
                     <div className="pb-2 border-b border-gray-100/50">
-                        <p className="font-medium text-gray-900 truncate px-2 py-1">
+                        <p className="font-medium text-gray-900 truncate px-2">
                             {user.name}
                         </p>
-                        <p className="text-sm text-gray-500 truncate px-2">
-                            {user.email}
-                        </p>
+                        <Link 
+                            href="/profile" 
+                            className="text-xs text-gray-500 truncate px-2 block hover:text-primary"
+                        >
+                            View profile
+                        </Link>
                     </div>
                     <div className="py-2">
                         {navigationData.user.map((item) => (
                             <DropdownMenuItem key={item.href} asChild>
-                                <Link 
-                                    href={item.href}
-                                    className="w-full px-2 py-1.5 text-[15px] text-gray-700 rounded-md hover:bg-primary/5 hover:text-primary"
-                                >
-                                    {item.label}
-                                </Link>
+
+                                    <Link 
+                                        href={item.href}
+                                        className="w-full px-2 py-1.5 text-[15px] text-gray-700 rounded-md hover:bg-primary/5 hover:text-primary flex items-center gap-2"
+                                    >
+                                        {item.icon && (
+                                            <span className="text-gray-500">
+                                                <item.icon className="h-4 w-4" />
+                                            </span>
+                                        )}
+                                        <span>{item.label}</span>
+                                    </Link>
                             </DropdownMenuItem>
                         ))}
                     </div>
-                    <DropdownMenuItem 
-                        onClick={() => signOut()}
-                        className="w-full px-2 py-1.5 mt-2 text-[15px] text-red-600 rounded-md hover:bg-red-50"
-                    >
-                        Sign out
-                    </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
         )
     }
 
     return (
-        <div className="flex items-center gap-3">
-            <button
-                onClick={navigateToSignIn}
-                className={signInButtonStyle}
-            >
-                Sign in
-            </button>
-            <button
-                onClick={navigateToSignUp}
-                className={signUpButtonStyle}
-            >
-                Sign up
-            </button>
-        </div>
+        <button
+            onClick={navigateToSignIn}
+            className={logOnButtonStyle}
+        >
+           Sign On
+        </button>
     )
 }
 

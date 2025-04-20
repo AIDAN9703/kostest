@@ -6,15 +6,13 @@ import { Map, X } from "lucide-react";
 import VisGLSearchMap from "@/components/boats/search/map/VisGLSearchMap";
 import { getBoats } from "@/lib/actions/boat-actions";
 import { SearchParamsType } from "@/types/types";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useSearchURL } from "@/hooks/useSearchURL";
 
 export default function MapToggleClient({ searchParams }: { searchParams: SearchParamsType }) {
   const [showMap, setShowMap] = useState(false);
   const [mapData, setMapData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParamsObj = useSearchParams();
+  const { searchParams: searchParamsObj, updateSearchParams } = useSearchURL();
 
   // Check if map_toggle is in the URL
   useEffect(() => {
@@ -26,13 +24,9 @@ export default function MapToggleClient({ searchParams }: { searchParams: Search
 
   // Update URL when map toggle changes
   const updateMapToggleInUrl = (show: boolean) => {
-    const params = new URLSearchParams(searchParamsObj.toString());
-    if (show) {
-      params.set('map_toggle', 'on');
-    } else {
-      params.delete('map_toggle');
-    }
-    router.push(`${pathname}?${params.toString()}`);
+    updateSearchParams({
+      map_toggle: show
+    });
   };
 
   // Load map data when the map is shown

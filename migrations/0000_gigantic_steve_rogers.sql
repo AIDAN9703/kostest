@@ -1,17 +1,4 @@
-CREATE TYPE "public"."AuthProvider" AS ENUM('EMAIL', 'GOOGLE', 'FACEBOOK', 'APPLE');--> statement-breakpoint
-CREATE TYPE "public"."BoatCategory" AS ENUM('PONTOON', 'YACHT', 'SAILBOAT', 'FISHING', 'SPEEDBOAT', 'HOUSEBOAT', 'JET_SKI', 'OTHER');--> statement-breakpoint
-CREATE TYPE "public"."BoatingExperienceLevel" AS ENUM('NONE', 'BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT', 'PROFESSIONAL');--> statement-breakpoint
-CREATE TYPE "public"."BoatingLicenseType" AS ENUM('NONE', 'STATE_BOATING_LICENSE', 'USCG_LICENSE', 'INTERNATIONAL_LICENSE', 'OTHER');--> statement-breakpoint
-CREATE TYPE "public"."BookingRequestStatus" AS ENUM('PENDING', 'APPROVED', 'AWAITING', 'CONFIRMED', 'DENIED', 'EXPIRED', 'CANCELLED');--> statement-breakpoint
-CREATE TYPE "public"."LineItemType" AS ENUM('CLEANING', 'CAPTAIN', 'OWNER', 'BOOKING_FEE');--> statement-breakpoint
-CREATE TYPE "public"."LocationType" AS ENUM('HOME_PORT', 'CURRENT_LOCATION', 'PICKUP_LOCATION', 'DROPOFF_LOCATION', 'DESTINATION');--> statement-breakpoint
-CREATE TYPE "public"."NotificationPreference" AS ENUM('ALL', 'IMPORTANT_ONLY', 'NONE');--> statement-breakpoint
-CREATE TYPE "public"."PaymentStatus" AS ENUM('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED');--> statement-breakpoint
-CREATE TYPE "public"."UserRole" AS ENUM('USER', 'ADMIN', 'CAPTAIN', 'BROKER', 'OWNER');--> statement-breakpoint
-CREATE TYPE "public"."UserStatus" AS ENUM('ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION', 'BANNED');--> statement-breakpoint
-CREATE TYPE "public"."VerificationChannel" AS ENUM('SMS', 'CALL', 'EMAIL', 'WHATSAPP');--> statement-breakpoint
-CREATE TYPE "public"."VerificationStatus" AS ENUM('PENDING', 'PASSED', 'FAILED', 'EXPIRED');--> statement-breakpoint
-CREATE TYPE "public"."VerificationType" AS ENUM('PHONE', 'EMAIL', 'IDENTITY', 'AGE', 'PAYMENT_METHOD');--> statement-breakpoint
+
 CREATE TABLE "boat" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
@@ -70,6 +57,7 @@ CREATE TABLE "boat" (
 	"day_charter" boolean DEFAULT true NOT NULL,
 	"term_charter" boolean DEFAULT false NOT NULL,
 	"minimum_charter_days" integer,
+	"instant_book" boolean DEFAULT false NOT NULL,
 	"fuel_included" boolean DEFAULT false NOT NULL,
 	"fuel_capacity" integer,
 	"water_capacity" integer,
@@ -92,53 +80,24 @@ CREATE TABLE "boat" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "booking_requests" (
+CREATE TABLE "booking" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"boat_id" uuid NOT NULL,
+	"booking_type" "BookingType" DEFAULT 'EXTERNAL_BOOKING' NOT NULL,
+	"booking_status" "BookingStatus" DEFAULT 'PENDING' NOT NULL,
 	"user_id" uuid,
+	"boat_id" uuid NOT NULL,
+	"captain_id" uuid,
 	"customer_name" text NOT NULL,
 	"customer_email" text NOT NULL,
 	"customer_phone" text NOT NULL,
 	"is_multi_day" boolean NOT NULL,
+	"needs_captain" boolean DEFAULT false,
 	"start_date" timestamp NOT NULL,
 	"end_date" timestamp,
 	"start_time" text NOT NULL,
 	"end_time" text NOT NULL,
 	"number_of_hours" integer,
 	"number_of_passengers" integer NOT NULL,
-	"special_requests" text,
-	"occasion_type" text,
-	"needs_captain" boolean DEFAULT false,
-	"total_amount" double precision NOT NULL,
-	"deposit_amount" double precision,
-	"currency" text DEFAULT 'USD' NOT NULL,
-	"payment_due_date" timestamp,
-	"status" "BookingRequestStatus" DEFAULT 'PENDING' NOT NULL,
-	"reviewed_by" uuid,
-	"reviewed_at" timestamp,
-	"review_notes" text,
-	"stripe_payment_link_id" text,
-	"stripe_payment_link_url" text,
-	"stripe_payment_link_expires_at" timestamp,
-	"stripe_payment_intent_id" text,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"expires_at" timestamp,
-	"is_deleted" boolean DEFAULT false NOT NULL,
-	"deleted_at" timestamp with time zone
-);
---> statement-breakpoint
-CREATE TABLE "booking" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"status" text DEFAULT 'PENDING' NOT NULL,
-	"type" text NOT NULL,
-	"renter_id" uuid NOT NULL,
-	"boat_id" uuid NOT NULL,
-	"captain_id" uuid,
-	"start_date" timestamp with time zone NOT NULL,
-	"end_date" timestamp with time zone NOT NULL,
-	"duration" integer NOT NULL,
-	"passengers" integer NOT NULL,
 	"pickup_location" text,
 	"pickup_coordinates" geometry(point),
 	"dropoff_location" text,
@@ -147,27 +106,40 @@ CREATE TABLE "booking" (
 	"base_price" double precision NOT NULL,
 	"captain_fee" double precision,
 	"cleaning_fee" double precision,
-	"service_fee" double precision NOT NULL,
+	"service_fee" double precision,
 	"tax_amount" double precision,
-	"total_price" double precision NOT NULL,
-	"payment_status" text DEFAULT 'PENDING',
-	"payment_method" text,
-	"payment_intent_id" text,
+	"total_amount" double precision NOT NULL,
 	"deposit_amount" double precision,
+	"currency" text DEFAULT 'USD' NOT NULL,
+	"payment_status" "PaymentStatus" DEFAULT 'PENDING',
+	"payment_method" text,
+	"payment_due_date" timestamp,
 	"deposit_paid" boolean DEFAULT false,
 	"refund_amount" double precision,
+	"refund_status" text,
+	"stripe_customer_id" text,
+	"stripe_payment_intent_id" text,
+	"stripe_payment_link_id" text,
+	"stripe_payment_link_url" text,
+	"stripe_payment_link_expires_at" timestamp,
 	"special_requests" text,
+	"occasion_type" text,
 	"add_ons" json,
+	"reviewed_by" uuid,
+	"reviewed_at" timestamp,
+	"review_notes" text,
 	"cancelled_at" timestamp with time zone,
 	"cancellation_reason" text,
 	"cancelled_by" uuid,
-	"refund_status" text,
 	"message_thread_id" uuid,
 	"last_message_at" timestamp with time zone,
 	"renter_review_id" uuid,
 	"owner_review_id" uuid,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"expires_at" timestamp,
+	"is_deleted" boolean DEFAULT false NOT NULL,
+	"deleted_at" timestamp with time zone
 );
 --> statement-breakpoint
 CREATE TABLE "captain" (
@@ -383,12 +355,10 @@ CREATE TABLE "verification" (
 --> statement-breakpoint
 ALTER TABLE "boat" ADD CONSTRAINT "boat_owner_id_user_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "boat" ADD CONSTRAINT "boat_primary_captain_id_captain_id_fk" FOREIGN KEY ("primary_captain_id") REFERENCES "public"."captain"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "booking_requests" ADD CONSTRAINT "booking_requests_boat_id_boat_id_fk" FOREIGN KEY ("boat_id") REFERENCES "public"."boat"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "booking_requests" ADD CONSTRAINT "booking_requests_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "booking_requests" ADD CONSTRAINT "booking_requests_reviewed_by_user_id_fk" FOREIGN KEY ("reviewed_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "booking" ADD CONSTRAINT "booking_renter_id_user_id_fk" FOREIGN KEY ("renter_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "booking" ADD CONSTRAINT "booking_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "booking" ADD CONSTRAINT "booking_boat_id_boat_id_fk" FOREIGN KEY ("boat_id") REFERENCES "public"."boat"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "booking" ADD CONSTRAINT "booking_captain_id_captain_id_fk" FOREIGN KEY ("captain_id") REFERENCES "public"."captain"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "booking" ADD CONSTRAINT "booking_reviewed_by_user_id_fk" FOREIGN KEY ("reviewed_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "booking" ADD CONSTRAINT "booking_cancelled_by_user_id_fk" FOREIGN KEY ("cancelled_by") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "captain" ADD CONSTRAINT "captain_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "notification" ADD CONSTRAINT "notification_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -403,13 +373,11 @@ CREATE INDEX "boat_captain_idx" ON "boat" USING btree ("primary_captain_id");-->
 CREATE INDEX "boat_category_idx" ON "boat" USING btree ("category");--> statement-breakpoint
 CREATE INDEX "boat_location_idx" ON "boat" USING btree ("home_port");--> statement-breakpoint
 CREATE INDEX "boat_spatial_idx" ON "boat" USING gist ("location");--> statement-breakpoint
-CREATE INDEX "booking_requests_boat_id_idx" ON "booking_requests" USING btree ("boat_id");--> statement-breakpoint
-CREATE INDEX "booking_requests_user_id_idx" ON "booking_requests" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "booking_requests_status_idx" ON "booking_requests" USING btree ("status");--> statement-breakpoint
-CREATE INDEX "booking_requests_date_range_idx" ON "booking_requests" USING btree ("start_date","end_date");--> statement-breakpoint
-CREATE INDEX "booking_status_idx" ON "booking" USING btree ("status");--> statement-breakpoint
-CREATE INDEX "booking_renter_idx" ON "booking" USING btree ("renter_id");--> statement-breakpoint
+CREATE INDEX "booking_type_idx" ON "booking" USING btree ("booking_type");--> statement-breakpoint
+CREATE INDEX "booking_status_idx" ON "booking" USING btree ("booking_status");--> statement-breakpoint
+CREATE INDEX "booking_user_idx" ON "booking" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "booking_boat_idx" ON "booking" USING btree ("boat_id");--> statement-breakpoint
+CREATE INDEX "booking_captain_idx" ON "booking" USING btree ("captain_id");--> statement-breakpoint
 CREATE INDEX "booking_date_idx" ON "booking" USING btree ("start_date","end_date");--> statement-breakpoint
 CREATE INDEX "booking_pickup_idx" ON "booking" USING gist ("pickup_coordinates");--> statement-breakpoint
 CREATE INDEX "booking_dropoff_idx" ON "booking" USING gist ("dropoff_coordinates");--> statement-breakpoint

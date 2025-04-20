@@ -13,7 +13,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8">
           {/* Company Info */}
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-2">
             <Link href="/" className="block mb-6">
               <Image 
                 src="/icons/logo.png" 
@@ -23,9 +23,6 @@ export default function Footer() {
                 className="rounded-full"
               />
             </Link>
-            <p className="text-gray-300 text-base font-light leading-relaxed mb-8">
-              Experience luxury yachting at its finest. Your journey to extraordinary destinations begins with KOS Yachts.
-            </p>
             <div className="flex items-center gap-4">
               <a 
                 href="https://instagram.com" 
@@ -57,9 +54,23 @@ export default function Footer() {
             <ul className="space-y-4">
               <li><Link href="/about" className="text-gray-300 hover:text-gold transition-colors font-light">About Us</Link></li>
               <li><Link href="/boats" className="text-gray-300 hover:text-gold transition-colors font-light">Our Fleet</Link></li>
-              <li><Link href="/destinations" className="text-gray-300 hover:text-gold transition-colors font-light">Destinations</Link></li>
-              <li><Link href="/guide" className="text-gray-300 hover:text-gold transition-colors font-light">Charter Guide</Link></li>
-              <li><Link href="/contact" className="text-gray-300 hover:text-gold transition-colors font-light">Contact</Link></li>
+              <li><Link href="/destinations" className="text-gray-300 hover:text-gold transition-colors font-light">KOS Yacht Club</Link></li>
+              <li><Link href="/guide" className="text-gray-300 hover:text-gold transition-colors font-light">FAQ</Link></li>
+              <li><Link href="/contact" className="text-gray-300 hover:text-gold transition-colors font-light">Store</Link></li>
+              <li><Link href="/contact" className="text-gray-300 hover:text-gold transition-colors font-light">News</Link></li>
+            </ul>
+          </div>
+
+          {/* Locations */}
+          <div className="lg:col-span-2">
+            <h3 className="text-white font-serif text-xl mb-6">Locations</h3>
+            <ul className="space-y-4">
+              <li><Link href="/locations" className="text-gray-300 hover:text-gold transition-colors font-light">Miami, FL</Link></li>
+              <li><Link href="/locations" className="text-gray-300 hover:text-gold transition-colors font-light">Fort Lauderdale, FL</Link></li>
+              <li><Link href="/locations" className="text-gray-300 hover:text-gold transition-colors font-light">Bahamas</Link></li>
+              <li><Link href="/locations" className="text-gray-300 hover:text-gold transition-colors font-light">Standord, CT</Link></li>
+              <li><Link href="/locations" className="text-gray-300 hover:text-gold transition-colors font-light">Naples, FL</Link></li>
+              <li><Link href="/locations" className="text-gray-300 hover:text-gold transition-colors font-light">Palm Beach, FL</Link></li>
             </ul>
           </div>
 

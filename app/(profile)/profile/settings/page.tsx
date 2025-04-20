@@ -5,8 +5,10 @@ import { eq } from "drizzle-orm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ProfileSettingsForm from "@/components/profile/ProfileSettingsForm";
 import { UserProfile } from "@/types/types";
-import { Settings } from "lucide-react";
+import { Settings, LogOut } from "lucide-react";
 import { Suspense } from "react";
+import { Button } from "@/components/ui/button";
+import { signOutAction } from "@/lib/actions/auth/sign-out";
 
 // Loading fallback component
 const SettingsSkeleton = () => (
@@ -15,6 +17,32 @@ const SettingsSkeleton = () => (
     <div className="h-96 bg-gray-100 animate-pulse rounded-lg"></div>
   </div>
 );
+
+// Sign Out Button Component (client-side)
+const SignOutButtonSection = () => {
+  return (
+    <Card className="border-gray-200 shadow-sm">
+      <CardContent className="p-4 md:p-6">
+        <div className="flex flex-col space-y-3">
+          <h3 className="text-lg font-medium text-destructive">Sign Out</h3>
+          <p className="text-sm text-gray-500">
+            Sign out of your account. You will need to sign in again to access your profile.
+          </p>
+          <form action={signOutAction}>
+            <Button
+              type="submit"
+              variant="outline"
+              className="w-full md:w-auto border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive flex items-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </Button>
+          </form>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
 
 // Settings content component
 const SettingsContent = ({ user }: { user: UserProfile }) => (
@@ -33,6 +61,9 @@ const SettingsContent = ({ user }: { user: UserProfile }) => (
         {user && <ProfileSettingsForm user={user} />}
       </CardContent>
     </Card>
+    
+    {/* Sign Out Button */}
+    <SignOutButtonSection />
   </div>
 );
 

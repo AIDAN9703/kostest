@@ -371,25 +371,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                                 Sign out
                             </Button>
                         ) : (
-                            <div className="space-y-2">
-                                <SheetClose asChild>
-                                    <Button 
-                                        onClick={() => router.push('/sign-in')}
-                                        variant="outline"
-                                        className="w-full focus:ring-2 focus:ring-primary/50"
-                                    >
-                                        Sign in
-                                    </Button>
-                                </SheetClose>
-                                <SheetClose asChild>
-                                    <Button 
-                                        onClick={() => router.push('/sign-up')}
-                                        className="w-full focus:ring-2 focus:ring-primary/50 text-white"
-                                    >
-                                        Sign up
-                                    </Button>
-                                </SheetClose>
-                            </div>
+                            <SheetClose asChild>
+                                <Button 
+                                    onClick={() => router.push('/sign-in')}
+                                    className="w-full focus:ring-2 focus:ring-primary/50 text-white"
+                                >
+                                    Sign On
+                                </Button>
+                            </SheetClose>
                         )}
                     </div>
                 </div>

@@ -20,8 +20,10 @@ export const getOptimizedImageUrl = (
 ) => {
   if (!url) return '';
   
-  // If not an ImageKit URL, return as is
-  if (!url.includes(process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || '')) {
+  const imageKitEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
+  
+  // If not an ImageKit URL or endpoint is not set, return original URL
+  if (!imageKitEndpoint || !url.includes(imageKitEndpoint)) {
     return url;
   }
   

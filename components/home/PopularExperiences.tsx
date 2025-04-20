@@ -55,8 +55,8 @@ const fadeInUpAnimation = {
 
 export default function PopularExperiences() {
   return (
-    <section className=" pb-12 sm:pb-16 pt-4 sm:pt-6 bg-white relative overflow-hidden">
-      <div className="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 relative">
+    <section className="py-6 sm:py-10 bg-white relative overflow-hidden">
+      <div className="max-w-full sm:max-w-[80%] mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Section Header */}
         <motion.div 
           className="mb-6 text-center"
@@ -65,8 +65,8 @@ export default function PopularExperiences() {
           viewport={{ once: true }}
           transition={fadeInUpAnimation.transition()}
         >
-          <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-primary leading-tight mb-4">
-            Live Like Royalty
+          <h2 className="font-poppins font-medium text-3xl sm:text-4xl md:text-5xl text-primary leading-tight mb-2">
+            All occasions, all the time
           </h2>
           <p className="text-gray-600 text-md">
             More than just a boat and yacht rental - We craft your dream experiences
@@ -74,7 +74,7 @@ export default function PopularExperiences() {
         </motion.div>
 
         {/* Experiences Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4">
           {experiences.map((experience, idx) => (
             <motion.div
               key={experience.title}
@@ -92,11 +92,11 @@ export default function PopularExperiences() {
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
-                  <div className={`absolute inset-0 bg-gradient-to-t ${experience.color} opacity-60 group-hover:opacity-70 transition-opacity duration-500`} />
+                  <div className={`absolute inset-0 bg-gradient-to-t ${experience.color} opacity-30 group-hover:opacity-70 transition-opacity duration-500`} />
                   
                   {/* Title - Bottom Left */}
-                  <div className="absolute inset-0 flex p-6">
-                    <h3 className="text-white text-xl md:text-2xl font-serif">
+                  <div className="absolute inset-0 flex p-2 sm:p-4 md:p-6">
+                    <h3 className="text-white text-sm md:text-xl font-poppins">
                       {experience.title}
                     </h3>
                   </div>

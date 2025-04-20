@@ -16,7 +16,7 @@ export const navigationLinks = [
   export const FIELD_NAMES = {
     firstName: "First Name",
     lastName: "Last Name",
-    username: "Username",
+    //username: "Username",
     email: "Email",
     phoneNumber: "Phone Number",
     birthday: "Birthday",
@@ -26,7 +26,7 @@ export const navigationLinks = [
   export const FIELD_TYPES = {
     firstName: "text",
     lastName: "text",
-    username: "text",
+    //username: "text",
     email: "email",
     phoneNumber: "number",
     birthday: "date",
@@ -67,4 +67,43 @@ export const navigationLinks = [
       textColor: "text-[#027A48]",
     },
   ];
+  
+// Booking Form Configuration
+export const BOOKING_FIELD_NAMES = {
+  startDate: "Date",
+  startTime: "Start Time",
+  endTime: "End Time",
+  numberOfHours: "Duration",
+  numberOfPassengers: "Passengers",
+  specialRequests: "Special Requests",
+  needsCaptain: "Captain",
+};
+
+export const BOOKING_FIELD_TYPES = {
+  startDate: "date",
+  startTime: "time",
+  endTime: "time",
+  numberOfHours: "select",
+  numberOfPassengers: "select",
+  specialRequests: "textarea",
+  needsCaptain: "toggle",
+};
+
+export const BOOKING_FIELD_VISIBILITY = {
+  startDate: "always",
+  startTime: "always",
+  endTime: "hidden", // Calculated automatically
+  numberOfHours: "always",
+  numberOfPassengers: "always",
+  specialRequests: "always",
+  needsCaptain: "conditional", // Only if not required by boat
+};
+
+export const BOOKING_FIELD_PLACEHOLDERS = {
+  startDate: "Select date",
+  startTime: "Select time",
+  numberOfHours: "Select hours",
+  numberOfPassengers: "Number of passengers",
+  specialRequests: "Any special requests for the captain?",
+};
   
