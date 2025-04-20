@@ -305,7 +305,7 @@ export default function RequestToBook() {
                           </div>
                         </FormControl>
                         {captchaError && (
-                          <p className="text-red-500 text-sm mt-1">{captchaError}</p>
+                          <p className="text-red-700 text-sm mt-1">{captchaError}</p>
                         )}
                         <FormMessage className="text-xs sm:text-sm" />
                       </FormItem>
