@@ -39,7 +39,7 @@ export default function BrandsCarousel() {
   const y = useTransform(scrollYProgress, [0, 1], [50, -50]);
 
   return (
-    <section ref={containerRef} className="py-16 bg-white overflow-hidden max-w-[80%] mx-auto">
+    <section ref={containerRef} className="py-16 bg-white overflow-hidden max-w-[100%] mx-auto">
       <motion.div style={{ opacity, y }}>
         {/* Section Header */}
         <div className="max-w-7xl mx-auto px-4 mb-4">

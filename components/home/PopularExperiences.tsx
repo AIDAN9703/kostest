@@ -69,7 +69,7 @@ export default function PopularExperiences() {
             All occasions, all the time
           </h2>
           <p className="text-gray-600 text-md">
-            More than just a boat and yacht rental - We craft your dream experiences
+            More than just a boat and yacht rental - We craft your dream experiences.
           </p>
         </motion.div>
 
