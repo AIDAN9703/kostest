@@ -86,10 +86,6 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
     <html lang="en">
       <head>
         <GoogleMapsScript />
-        <script
-          crossOrigin="anonymous"
-          src="//unpkg.com/react-scan/dist/auto.global.js"
-        />
       </head>
       <SessionProvider session={session}>
         <body className={`${ibmPlexSans.className} ${bebasNeue.variable} ${seasons.variable} ${openSans.variable} ${poppins.variable} antialiased`}>
