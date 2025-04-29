@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useMemo, useCallback, useRef } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { useState, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Link from 'next/link';
-import { CalendarDays, Users2, Send, ArrowRight, DollarSign, Timer } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { CalendarDays, Users, DollarSign, Timer, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ReCAPTCHA from 'react-google-recaptcha';
 import {
@@ -19,9 +19,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { cn } from '@/lib/utils';
 
-// Move schema outside component to prevent recreation on each render
+// Form schema with validation rules
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
   email: z.string().email('Invalid email address'),
@@ -34,26 +33,22 @@ const formSchema = z.object({
   captcha: z.string().min(1, 'Please complete the CAPTCHA verification')
 });
 
-// Use a custom hook to create animation variants
-function useAnimationVariants(prefersReducedMotion: boolean | null) {
-  return useMemo(() => ({
-    initial: prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    transition: (delay = 0) => ({ 
-      duration: prefersReducedMotion ? 0 : 0.5, 
-      delay: prefersReducedMotion ? 0 : delay 
-    })
-  }), [prefersReducedMotion]);
-}
+// Reusable animation variants for consistency with other components
+const fadeInUpAnimation = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: (delay = 0) => ({ 
+    duration: 0.5, 
+    delay 
+  })
+};
 
 export default function RequestToBook() {
   const prefersReducedMotion = useReducedMotion();
-  const fadeInUpAnimation = useAnimationVariants(prefersReducedMotion);
   const recaptchaRef = useRef<ReCAPTCHA>(null);
-  
-  const [submitted, setSubmitted] = useState(false);
   const [captchaError, setCaptchaError] = useState("");
 
+  // Initialize form with validation
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -69,38 +64,14 @@ export default function RequestToBook() {
     },
   });
 
+  // Form submission handler
   const onSubmit = useCallback(async (values: z.infer<typeof formSchema>) => {
     try {
-      // First verify the captcha token
-      const verifyResponse = await fetch('/api/verify-captcha', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: values.captcha }),
-      });
-      
-      const verifyResult = await verifyResponse.json();
-      
-      if (!verifyResult.success) {
-        setCaptchaError("CAPTCHA verification failed. Please try again.");
-        return;
-      }
-      
-      // If verification passes, submit the rest of the form data
       console.log("Form data:", values);
-      
-      // Here you would typically send the form data to your backend
-      // const submitResponse = await fetch('/api/submit-booking', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(values),
-      // });
-      
       alert('Form submitted successfully!');
       form.reset();
-      setSubmitted(true);
       setCaptchaError("");
       
-      // Reset the captcha
       if (recaptchaRef.current) {
         recaptchaRef.current.reset();
       }
@@ -110,7 +81,8 @@ export default function RequestToBook() {
     }
   }, [form]);
 
-  const handleCaptchaChange = (token: string | null) => {
+  // Handle CAPTCHA change
+  const handleCaptchaChange = useCallback((token: string | null) => {
     if (token) {
       form.setValue('captcha', token);
       setCaptchaError("");
@@ -118,247 +90,274 @@ export default function RequestToBook() {
       form.setValue('captcha', '');
       setCaptchaError("CAPTCHA verification failed. Please try again.");
     }
-  };
+  }, [form]);
 
   return (
-    <section className="py-4 sm:py-6 md:py-8 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header - use will-change to hint browser about upcoming animations */}
+    <section className="py-6 sm:py-10 relative overflow-hidden">
+      <div className="max-w-full sm:max-w-[80%] mx-auto px-4">
+        {/* Section Header */}
         <motion.div 
-          className="text-center mb-8 sm:mb-12 md:mb-16 will-change-transform"
+          className="text-center mb-6"
           initial={fadeInUpAnimation.initial}
           whileInView={fadeInUpAnimation.animate}
           viewport={{ once: true }}
           transition={fadeInUpAnimation.transition()}
         >
-          <h2 className="font-poppins text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-primary mb-3 sm:mb-4">
+          <h2 className="font-poppins font-medium text-3xl sm:text-4xl md:text-5xl text-primary leading-tight mb-2">
             Ready for your next adventure?
           </h2>
-          <p className="text-sm sm:text-base md:text-md text-primary max-w-2xl mx-auto font-light leading-relaxed">
+          <p className="text-gray-600 text-lg font-poppins font-light">
             Let us help you plan your perfect day on the water
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 md:gap-16 lg:gap-20 items-center">
-          {/* Form Section - optimize animation with will-change and transform */}
-          <motion.div
-            className="will-change-transform"
+        {/* Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 lg:gap-12 items-start">
+          {/* Form Section */}
+          <motion.div 
+            className="lg:col-span-7"
             initial={fadeInUpAnimation.initial}
             whileInView={fadeInUpAnimation.animate}
             viewport={{ once: true }}
-            transition={fadeInUpAnimation.transition(0.1)}
+            transition={{ delay: 0.1, duration: 0.5 }}
           >
-            <div className="bg-white rounded-xl sm:rounded-2xl md:rounded-3xl p-5 sm:p-8 md:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
-              <h3 className="text-xl sm:text-2xl font-medium text-primary mb-5 sm:mb-8">
-                Request to Book
-              </h3>
-
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6 text-primary">
-                  <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
-                    <FormField
-                      control={form.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm sm:text-base">Full Name *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="John Smith" {...field} className="text-sm sm:text-base h-9 sm:h-10" />
-                          </FormControl>
-                          <FormMessage className="text-xs sm:text-sm" />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm sm:text-base">Email *</FormLabel>
-                          <FormControl>
-                            <Input placeholder="john@example.com" {...field} className="text-sm sm:text-base h-9 sm:h-10" />
-                          </FormControl>
-                          <FormMessage className="text-xs sm:text-sm" />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
-                    name="phone"
+                    name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-sm sm:text-base">Phone Number *</FormLabel>
+                        <FormLabel className="text-sm font-medium text-gray-700">Full Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="+1 (555) 000-0000" {...field} className="text-sm sm:text-base h-9 sm:h-10" />
-                        </FormControl>
-                        <FormMessage className="text-xs sm:text-sm" />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid grid-cols-2 gap-4 sm:gap-6">
-                    <FormField
-                      control={form.control}
-                      name="date"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm sm:text-base">Preferred Date</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <CalendarDays className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                              <Input type="date" className="pl-8 sm:pl-10 text-sm sm:text-base h-9 sm:h-10" {...field} />
-                            </div>
-                          </FormControl>
-                          <FormMessage className="text-xs sm:text-sm" />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="time"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm sm:text-base">Time</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Timer className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                              <Input type="time" className="pl-8 sm:pl-10 text-sm sm:text-base h-9 sm:h-10" {...field} />
-                            </div>
-                          </FormControl>
-                          <FormMessage className="text-xs sm:text-sm" />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 sm:gap-6">
-                    <FormField
-                      control={form.control}
-                      name="budget"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm sm:text-base">Budget</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <DollarSign className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                              <Input className="pl-8 sm:pl-10 text-sm sm:text-base h-9 sm:h-10" placeholder="5000" {...field} />
-                            </div>
-                          </FormControl>
-                          <FormMessage className="text-xs sm:text-sm" />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="guests"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm sm:text-base">Guests</FormLabel>
-                          <FormControl>
-                            <div className="relative">
-                              <Users2 className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                              <Input type="number" className="pl-8 sm:pl-10 text-sm sm:text-base h-9 sm:h-10" placeholder="4" {...field} />
-                            </div>
-                          </FormControl>
-                          <FormMessage className="text-xs sm:text-sm" />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name="message"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-sm sm:text-base">Additional Details</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            placeholder="Tell us more about your plans..."
-                            className="resize-none text-sm sm:text-base min-h-[80px] sm:min-h-[100px]"
+                          <Input
+                            className="rounded-xl border-gray-200 focus:border-primary focus:ring-primary/20"
+                            placeholder="John Smith"
                             {...field}
                           />
                         </FormControl>
-                        <FormMessage className="text-xs sm:text-sm" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
-                  
-                  {/* Add CAPTCHA field */}
                   <FormField
                     control={form.control}
-                    name="captcha"
+                    name="email"
                     render={({ field }) => (
-                      <FormItem className="flex flex-col items-center">
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Email</FormLabel>
                         <FormControl>
-                          <div className="flex justify-center my-2">
-                            <ReCAPTCHA
-                              ref={recaptchaRef}
-                              sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" // This is a test key - replace with your actual key in production
-                              onChange={(token) => {
-                                handleCaptchaChange(token);
-                                field.onChange(token || '');
-                              }}
-                            />
-                          </div>
+                          <Input
+                            className="rounded-xl border-gray-200 focus:border-primary focus:ring-primary/20" 
+                            placeholder="you@example.com"
+                            {...field} 
+                          />
                         </FormControl>
-                        {captchaError && (
-                          <p className="text-red-700 text-sm mt-1">{captchaError}</p>
-                        )}
-                        <FormMessage className="text-xs sm:text-sm" />
+                        <FormMessage className="text-xs" />
                       </FormItem>
                     )}
                   />
+                </div>
 
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">Phone Number</FormLabel>
+                      <FormControl>
+                        <Input
+                          className="rounded-xl border-gray-200 focus:border-primary focus:ring-primary/20"
+                          placeholder="+1 (555) 000-0000"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Date</FormLabel>
+                        <div className="relative">
+                          <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                          <FormControl>
+                            <Input
+                              type="date"
+                              className="rounded-xl border-gray-200 pl-10 focus:border-primary focus:ring-primary/20"
+                              {...field}
+                            />
+                          </FormControl>
+                        </div>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Time</FormLabel>
+                        <div className="relative">
+                          <Timer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                          <FormControl>
+                            <Input
+                              type="time"
+                              className="rounded-xl border-gray-200 pl-10 focus:border-primary focus:ring-primary/20"
+                              {...field}
+                            />
+                          </FormControl>
+                        </div>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="budget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Budget</FormLabel>
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                          <FormControl>
+                            <Input
+                              className="rounded-xl border-gray-200 pl-10 focus:border-primary focus:ring-primary/20"
+                              placeholder="5000"
+                              {...field}
+                            />
+                          </FormControl>
+                        </div>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="guests"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-sm font-medium text-gray-700">Guests</FormLabel>
+                        <div className="relative">
+                          <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
+                          <FormControl>
+                            <Input
+                              type="number"
+                              className="rounded-xl border-gray-200 pl-10 focus:border-primary focus:ring-primary/20"
+                              placeholder="4"
+                              {...field}
+                            />
+                          </FormControl>
+                        </div>
+                        <FormMessage className="text-xs" />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-gray-700">Message</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Tell us more about your plans..."
+                          className="resize-none min-h-[80px] rounded-xl border-gray-200 focus:border-primary focus:ring-primary/20"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* CAPTCHA */}
+                <FormField
+                  control={form.control}
+                  name="captcha"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col items-start">
+                      <FormControl>
+                        <ReCAPTCHA
+                          ref={recaptchaRef}
+                          sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" // Replace with real key in production
+                          onChange={(token) => {
+                            handleCaptchaChange(token);
+                            field.onChange(token || '');
+                          }}
+                        />
+                      </FormControl>
+                      {captchaError && (
+                        <p className="text-red-500 text-xs mt-1">{captchaError}</p>
+                      )}
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                <motion.div
+                  whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
+                  whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
+                >
                   <Button 
                     type="submit"
-                    size="lg"
-                    className="w-full rounded-full border-2 border-[#1E293B] text-primary 
-                             hover:bg-[#1E293B] hover:text-white transition-all duration-300 bg-transparent 
-                             font-poppins text-sm sm:text-base md:text-lg py-2 sm:py-3 md:py-4 h-auto
-                             flex items-center justify-center"
+                    className="w-full rounded-xl bg-transparent text-primary border-2 border-primary hover:bg-primary hover:text-white transition-all"
                   >
-                    <Send className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                     Send Request
                   </Button>
-                </form>
-              </Form>
-            </div>
+                </motion.div>
+              </form>
+            </Form>
           </motion.div>
 
-          {/* Direct Booking Section - optimize animation */}
-          <motion.div
-            className="flex items-center justify-center h-full will-change-transform"
+          {/* Direct Booking Info */}
+          <motion.div 
+            className="lg:col-span-5 flex items-center h-full"
             initial={fadeInUpAnimation.initial}
             whileInView={fadeInUpAnimation.animate}
             viewport={{ once: true }}
-            transition={fadeInUpAnimation.transition(0.3)}
+            transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <div className="max-w-md">
-              <h3 className="text-xl sm:text-2xl md:text-3xl font-poppins text-primary mb-4 sm:mb-6">
-                Or Book Instantly Online
-              </h3>
-              <p className="text-sm sm:text-base md:text-lg text-primary font-light leading-relaxed mb-6 sm:mb-8 md:mb-12">
-                Browse our fleet and book your perfect yacht directly through our website. 
-                Real-time availability, instant confirmation.
-              </p>
-              <Link href="/boats/search">
-                <Button
-                  size="lg"
-                  className="font-poppins text-sm sm:text-base md:text-lg px-6 sm:px-8 md:px-12 py-2 sm:py-3 md:py-4 rounded-full border-2 border-[#1E293B] text-primary 
-                           hover:bg-[#1E293B] hover:text-white transition-all duration-300 bg-transparent h-auto
-                           flex items-center"
+            <div className="h-full flex flex-col justify-center">
+              <div className="rounded-2xl">
+                <h3 className="font-poppins text-2xl sm:text-3xl text-primary mb-4">
+                 Or Book Directly Online
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Browse our fleet and book your perfect yacht directly through our website. 
+                  Real-time availability, instant confirmation.
+                </p>
+                
+                <motion.div
+                  whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
+                  whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
                 >
-                  Explore Available Yachts
-                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 transform group-hover:translate-x-1 transition-transform" />
-                </Button>
-              </Link>
+                  <Link href="/boats/search">
+                    <Button
+                      className="group rounded-xl bg-transparent text-primary border-2 border-primary hover:bg-primary hover:text-white transition-all"
+                    >
+                      <span>Explore Available Yachts</span>
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  </Link>
+                </motion.div>
+              </div>
             </div>
           </motion.div>
         </div>
       </div>
     </section>
   );
-} 
+}

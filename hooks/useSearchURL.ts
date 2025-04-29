@@ -2,6 +2,13 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useTransition } from "react";
+import { 
+  parseStringParam, 
+  parseNumberParam, 
+  parseBooleanParam, 
+  parseArrayParam,
+  createSearchQueryString
+} from "@/lib/utils/search-params-utils";
 
 type ParamValue = string | number | boolean | null | undefined;
 
@@ -16,44 +23,16 @@ export function useSearchURL() {
   const [isPending, startTransition] = useTransition();
 
   /**
-   * Creates a query string from parameters
-   */
-  const createQueryString = useCallback(
-    (params: Record<string, ParamValue>) => {
-      const newSearchParams = new URLSearchParams(searchParams.toString());
-      
-      // Update or remove each parameter
-      Object.entries(params).forEach(([key, value]) => {
-        if (value === null || value === undefined) {
-          newSearchParams.delete(key);
-        } else if (typeof value === 'boolean') {
-          // Convert boolean values to 'on'/'off' or just delete if false
-          if (value) {
-            newSearchParams.set(key, 'on');
-          } else {
-            newSearchParams.delete(key);
-          }
-        } else {
-          newSearchParams.set(key, String(value));
-        }
-      });
-      
-      return newSearchParams.toString();
-    },
-    [searchParams]
-  );
-
-  /**
    * Updates the URL with new search parameters
    */
   const updateSearchParams = useCallback(
     (params: Record<string, ParamValue>) => {
       startTransition(() => {
-        const queryString = createQueryString(params);
-        router.push(`${pathname}?${queryString}`);
+        const queryString = createSearchQueryString(params);
+        router.push(`${pathname}${queryString ? `?${queryString}` : ''}`);
       });
     },
-    [router, pathname, createQueryString]
+    [router, pathname]
   );
 
   /**
@@ -68,8 +47,12 @@ export function useSearchURL() {
   return {
     searchParams,
     isPending,
-    createQueryString,
     updateSearchParams,
-    clearSearchParams
+    clearSearchParams,
+    // Expose our standard parameter parsing utilities
+    parseStringParam,
+    parseNumberParam,
+    parseBooleanParam,
+    parseArrayParam
   };
 } 

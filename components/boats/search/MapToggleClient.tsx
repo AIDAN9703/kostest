@@ -3,68 +3,34 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Map, X } from "lucide-react";
-import VisGLSearchMap from "@/components/boats/search/map/VisGLSearchMap";
-import { getBoats } from "@/lib/actions/boat-actions";
-import { SearchParamsType } from "@/types/types";
+import VisGLSearchMap, { DEFAULT_US_BOUNDS } from "@/components/boats/search/map/VisGLSearchMap";
+import { BoatLocation } from "@/types/types";
 import { useSearchURL } from "@/hooks/useSearchURL";
+import { parseBooleanParam } from "@/lib/utils/search-params-utils";
 
-export default function MapToggleClient({ searchParams }: { searchParams: SearchParamsType }) {
-  const [showMap, setShowMap] = useState(false);
-  const [mapData, setMapData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const { searchParams: searchParamsObj, updateSearchParams } = useSearchURL();
-
-  // Check if map_toggle is in the URL
-  useEffect(() => {
-    const mapToggleParam = searchParamsObj.get('map_toggle');
-    if (mapToggleParam === 'on') {
-      setShowMap(true);
-    }
-  }, [searchParamsObj]);
-
-  // Update URL when map toggle changes
-  const updateMapToggleInUrl = (show: boolean) => {
-    updateSearchParams({
-      map_toggle: show
-    });
+interface MapToggleClientProps {
+  locations: BoatLocation[];
+  boundingBox?: {
+    ne: { lat: number; lng: number };
+    sw: { lat: number; lng: number };
   };
+}
 
-  // Load map data when the map is shown
+export default function MapToggleClient({ locations, boundingBox }: MapToggleClientProps) {
+  const { searchParams, updateSearchParams } = useSearchURL();
+  const [showMap, setShowMap] = useState(() => parseBooleanParam(searchParams.get('map_toggle')));
+
+  // Sync state with URL changes (e.g., back/forward navigation)
   useEffect(() => {
-    if (showMap) {
-      setIsLoading(true);
-      const loadMapData = async () => {
-        try {
-          const data = await getBoats({
-            searchParams,
-            limit: 100,
-            page: 1,
-          });
-          setMapData(data.locations || []);
-        } catch (error) {
-          console.error("Error loading map data:", error);
-          // Fallback location
-          setMapData([{
-            id: "error-fallback",
-            name: "Default Location",
-            latitude: 25.7617,
-            longitude: -80.1918,
-            category: "YACHT",
-            price: 500
-          }]);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      
-      loadMapData();
-    }
-  }, [showMap, searchParams]);
+    const mapToggleParam = searchParams.get('map_toggle');
+    setShowMap(parseBooleanParam(mapToggleParam));
+  }, [searchParams]);
 
+  // Toggle map visibility and persist in URL
   const toggleMap = () => {
     const newState = !showMap;
     setShowMap(newState);
-    updateMapToggleInUrl(newState);
+    updateSearchParams({ map_toggle: newState });
   };
 
   return (
@@ -105,13 +71,10 @@ export default function MapToggleClient({ searchParams }: { searchParams: Search
             </Button>
           </div>
           <div className="h-full w-full">
-            {isLoading ? (
-              <div className="h-full w-full flex items-center justify-center bg-gray-100">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#1E293B]"></div>
-              </div>
-            ) : (
-              <VisGLSearchMap locations={mapData} />
-            )}
+            <VisGLSearchMap 
+              locations={locations} 
+              boundingBox={boundingBox || DEFAULT_US_BOUNDS}
+            />
           </div>
         </div>
       )}

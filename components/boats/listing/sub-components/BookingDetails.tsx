@@ -2,7 +2,7 @@
 
 import { Boat } from "@/types/types";
 import { Clock, Calendar, Shield, Info, CheckCircle2, CreditCard, AlertTriangle } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils/general-utils";
 
 interface BookingDetailsProps {
   boat: Boat;

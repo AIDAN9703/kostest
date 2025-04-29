@@ -73,11 +73,11 @@ export default {
   				'5': 'hsl(var(--chart-5))'
   			},
   			primary: {
-  				DEFAULT: '#2a3656',
+  				DEFAULT: '#27445C',
   				admin: '#25388C'
   			},
   			gold: {
-  				'100': '#9a8b68',
+  				'100': '#917153',
   				'400': '#4C7B62',
   				'500': '#2CC171',
   				'800': '#027A48',

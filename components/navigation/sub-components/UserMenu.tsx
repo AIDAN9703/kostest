@@ -3,7 +3,7 @@
 import React, { useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/general-utils'
 import { Button } from '@/components/ui/button'
 import {
     DropdownMenu,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findUserByEmailAndToken, clearUserVerificationToken } from "@/lib/utils";
+import { findUserByEmailAndToken, clearUserVerificationToken } from "@/lib/utils/general-utils";
 import { signIn } from "@/auth";
 
 export async function POST(request: NextRequest) {

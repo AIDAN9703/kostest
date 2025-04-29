@@ -1,17 +1,23 @@
 'use client';
 
-import React, { useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, useReducedMotion } from 'framer-motion';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselApi,
+} from "@/components/ui/carousel";
 
 // Move locations outside component to prevent recreation on each render
 const locations = [
   {
     name: 'Miami',
     image: '/images/locations/miami.jpg',
-    href: '/locations/miami',
+    href: '/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=25.85578602396197&ne_lng=-80.13217904641093&sw_lat=25.7090419531335&sw_lng=-80.31860792381018&zoom_level=13&map_toggle=on',
   },
   {
     name: 'Fort Lauderdale',
@@ -46,21 +52,37 @@ const locations = [
 ];
 
 export default function LocationsSection() {
-  const scrollRef = React.useRef<HTMLDivElement>(null);
   const prefersReducedMotion = useReducedMotion();
+  const [api, setApi] = useState<CarouselApi>();
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Memoize scroll handlers to prevent recreation on each render
-  const scrollLeft = useCallback(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -340, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
+  // Update current index when carousel changes
+  const onSelect = useCallback(() => {
+    if (api) {
+      setCurrentIndex(api.selectedScrollSnap());
     }
-  }, [prefersReducedMotion]);
+  }, [api]);
 
-  const scrollRight = useCallback(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 340, behavior: prefersReducedMotion ? 'auto' : 'smooth' });
-    }
-  }, [prefersReducedMotion]);
+  // Set up API event listeners
+  useEffect(() => {
+    if (!api) return;
+    
+    onSelect();
+    api.on("select", onSelect);
+    
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api, onSelect]);
+
+  // Navigation handlers
+  const prevSlide = useCallback(() => {
+    if (api) api.scrollPrev();
+  }, [api]);
+
+  const nextSlide = useCallback(() => {
+    if (api) api.scrollNext();
+  }, [api]);
 
   // Optimize button animations for performance
   const buttonVariants = {
@@ -69,7 +91,7 @@ export default function LocationsSection() {
   };
 
   return (
-    <section className="relative py-6 sm:py-10 bg-white font-poppins">
+    <section className="relative py-6 sm:py-10 font-poppins">
       <div className="max-w-full sm:max-w-[80%] mx-auto px-6">
         <div className="flex flex-col">
           {/* Mobile & Desktop Header */}
@@ -82,7 +104,7 @@ export default function LocationsSection() {
                   variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"
-                  onClick={scrollLeft}
+                  onClick={prevSlide}
                   className="p-2 rounded-full bg-white shadow-sm hover:shadow transition-all duration-300 border border-slate-200"
                   aria-label="Previous locations"
                 >
@@ -92,7 +114,7 @@ export default function LocationsSection() {
                   variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"
-                  onClick={scrollRight}
+                  onClick={nextSlide}
                   className="p-2 rounded-full bg-white shadow-sm hover:shadow transition-all duration-300 border border-slate-200"
                   aria-label="Next locations"
                 >
@@ -105,8 +127,8 @@ export default function LocationsSection() {
                 <h2 className="text-3xl font-medium text-primary leading-tight text-right">
                   Explore our destinations
                 </h2>
-                <p className="text-slate-600 mt-2 text-sm font-light text-right">
-                  Book a private boat rental in one of our main locations.
+                <p className="text-slate-600 mt-2 text-sm font-light text-right pl-6">
+                  Book a private charter in one of our main locations.
                 </p>
               </div>
             </div>
@@ -119,7 +141,7 @@ export default function LocationsSection() {
                   variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"
-                  onClick={scrollLeft}
+                  onClick={prevSlide}
                   className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm hover:shadow transition-all duration-300 border border-slate-200"
                   aria-label="Previous locations"
                 >
@@ -129,7 +151,7 @@ export default function LocationsSection() {
                   variants={buttonVariants}
                   whileHover="hover"
                   whileTap="tap"
-                  onClick={scrollRight}
+                  onClick={nextSlide}
                   className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm hover:shadow transition-all duration-300 border border-slate-200"
                   aria-label="Next locations"
                 >
@@ -143,7 +165,7 @@ export default function LocationsSection() {
                   Explore destinations
                 </h2>
                 <p className="text-slate-600 mt-2 text-lg font-light">
-                  Book a private boat rental in one of our main locations.
+                  Book a private charter in one of our main locations.
                 </p>
               </div>
             </div>
@@ -151,44 +173,47 @@ export default function LocationsSection() {
 
           {/* Location cards */}
           <div className="mt-0">
-            {/* Scrollable locations container - use transform instead of layout changes for better performance */}
-            <div 
-              ref={scrollRef} 
-              className="flex gap-4 overflow-x-auto pb-8 scrollbar-hide snap-x snap-mandatory will-change-transform"
-              style={{ 
-                scrollbarWidth: 'none', 
-                msOverflowStyle: 'none'
+            {/* Carousel replacing the scrollable container */}
+            <Carousel 
+              setApi={setApi}
+              opts={{
+                align: "start" as const,
+                loop: true,
               }}
+              className="w-full pb-8"
+              aria-label="Available locations"
             >
-              {locations.map((location, index) => (
-                <Link 
-                  href={location.href} 
-                  key={index}
-                  className="flex-none w-[200px] sm:w-[240px] rounded-lg overflow-hidden snap-start group hover:shadow-md transition-shadow duration-300"
-                  style={{ 
-                    aspectRatio: '1/1',
-                    contain: 'layout paint'
-                  }}
-                >
-                  <div className="relative w-full h-full">
-                    <Image
-                      src={location.image}
-                      alt={location.name}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 640px) 200px, 240px"
-                      priority={index < 3}
-                      loading={index >= 3 ? "lazy" : undefined}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none"></div>
-                    
-                    <div className="absolute bottom-0 left-0 w-full p-4">
-                      <h3 className="text-xl font-normal text-white">{location.name}</h3>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+              <CarouselContent>
+                {locations.map((location, index) => (
+                  <CarouselItem 
+                    key={index} 
+                    className="pl-4 basis-[200px] sm:basis-[240px] max-w-[200px] sm:max-w-[240px]"
+                  >
+                    <Link 
+                      href={location.href}
+                      className="block rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-300"
+                    >
+                      <div className="relative aspect-square">
+                        <Image
+                          src={location.image}
+                          alt={location.name}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 640px) 200px, 240px"
+                          priority={index < 3}
+                          loading={index >= 3 ? "lazy" : undefined}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none"></div>
+                        
+                        <div className="absolute bottom-0 left-0 w-full p-4">
+                          <h3 className="text-xl font-normal text-white">{location.name}</h3>
+                        </div>
+                      </div>
+                    </Link>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
           </div>
         </div>
       </div>

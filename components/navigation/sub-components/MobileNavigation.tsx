@@ -4,7 +4,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRouter, usePathname } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/general-utils'
 import { Button } from '@/components/ui/button'
 import {
     Sheet,

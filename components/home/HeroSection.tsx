@@ -1,110 +1,81 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useSearchStore } from '@/store/useSearchStore';
 import SearchBar from '@/components/navigation/sub-components/SearchBar';
+import { TypeAnimation } from 'react-type-animation';
 
 // Move static data outside component
 const WORD_OPTIONS = ["Yacht", "Boat", "Luxury", "Family", "Corporate", "Birthday"] as const;
 
 export default function HeroSection2() {
-  const [displayWord, setDisplayWord] = useState('');
   const [isVisible, setIsVisible] = useState(true);
   const searchBarRef = useRef<HTMLDivElement>(null);
-  const { setIsExpanded } = useSearchStore();
+  const sectionRef = useRef<HTMLElement>(null);
+  const { setIsExpanded, resetSearchExpansion } = useSearchStore();
   
-  // Use requestAnimationFrame with frame counter for controlled timing
+  // Reset expansion state when mounting the hero section
   useEffect(() => {
-    let wordIndex = 0;
-    let charIndex = 0;
-    let direction = 1;
-    let isPaused = false;
-    let animationFrameId: number;
-    let frameCount = 0;
-    let timeoutId: NodeJS.Timeout;
-    
-    const animate = () => {
-      if (isPaused || !isVisible) {
-        animationFrameId = requestAnimationFrame(animate);
-        return;
-      }
-      
-      // Only update every 6 frames (approximately 100ms at 60fps)
-      if (frameCount % 6 === 0) { // Increased from 3 to 6 for smoother animation
-        const currentWord = WORD_OPTIONS[wordIndex];
-        
-        if (direction === 1) {
-          if (charIndex < currentWord.length) {
-            charIndex++;
-            setDisplayWord(currentWord.slice(0, charIndex));
-          } else {
-            isPaused = true;
-            timeoutId = setTimeout(() => {
-              direction = -1;
-              isPaused = false;
-            }, 3000);
-          }
-        } else {
-          if (charIndex > 0) {
-            charIndex--;
-            setDisplayWord(currentWord.slice(0, charIndex));
-          } else {
-            wordIndex = (wordIndex + 1) % WORD_OPTIONS.length;
-            direction = 1;
-            isPaused = true;
-            timeoutId = setTimeout(() => {
-              isPaused = false;
-            }, 500);
-          }
-        }
-      }
-      
-      frameCount++;
-      animationFrameId = requestAnimationFrame(animate);
-    };
-    
-    if (isVisible) { // Only start animation if visible
-      animationFrameId = requestAnimationFrame(animate);
-    }
-    
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [isVisible]);
+    resetSearchExpansion();
+  }, [resetSearchExpansion]);
 
-  // Consolidated observer for both visibility and search bar
+  // Split into two separate observers for better control
   useEffect(() => {
-    const observer = new IntersectionObserver(
+    // Section visibility observer for animation control - using fewer thresholds
+    const sectionObserver = new IntersectionObserver(
       ([entry]) => {
         setIsVisible(entry.isIntersecting);
-        // Only trigger search bar expansion when the search bar itself is out of view
-        if (entry.target === searchBarRef.current) {
-          setIsExpanded(!entry.isIntersecting);
-        }
       },
       { 
-        threshold: [0.1, 1], // Multiple thresholds for different elements
+        threshold: [0.3], // Single threshold is sufficient for general visibility
         rootMargin: '0px'
       }
     );
     
-    const section = document.querySelector('section');
-    if (section) {
-      observer.observe(section);
+    // Search bar visibility observer - more strategic thresholds
+    const searchBarObserver = new IntersectionObserver(
+      ([entry]) => {
+        // Add a small delay to avoid flashing during quick scrolls
+        const timer = setTimeout(() => {
+          setIsExpanded(!entry.isIntersecting);
+        }, 50);
+        
+        return () => clearTimeout(timer);
+      },
+      { 
+        // Strategic threshold values to catch fast scrolling
+        // 0 to detect when completely out of view
+        // 0.5 to detect when half visible
+        threshold: [0, 0.5], 
+        rootMargin: '-10px 0px' // Small margin to improve detection
+      }
+    );
+    
+    if (sectionRef.current) {
+      sectionObserver.observe(sectionRef.current);
     }
     
     if (searchBarRef.current) {
-      observer.observe(searchBarRef.current);
+      searchBarObserver.observe(searchBarRef.current);
     }
     
-    return () => observer.disconnect();
+    // Cleanup observers on unmount
+    return () => {
+      sectionObserver.disconnect();
+      searchBarObserver.disconnect();
+    };
   }, [setIsExpanded]);
+
+  // Create sequence for TypeAnimation from word options
+  const typeSequence = WORD_OPTIONS.reduce((sequence, word) => {
+    return [...sequence, word, 3000, ''];
+  }, [] as (string | number)[]);
 
   return (
     <section 
-      className="relative w-full h-[70vh] sm:h-[80vh] overflow-hidden" 
+      ref={sectionRef}
+      className="relative w-full h-[75vh] sm:h-[80vh] overflow-hidden" 
       aria-label="Hero Section"
     >
       {/* Background Image */}
@@ -115,11 +86,11 @@ export default function HeroSection2() {
           fill
           className="object-cover object-center"
           priority
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
-          quality={90}
+          loading="eager"
+          sizes="100vw"
+          quality={80}
           onError={(e) => {
             console.error('Failed to load hero image');
-            // You might want to set a fallback image here
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80 opacity-50 transform-gpu"></div>
@@ -132,8 +103,18 @@ export default function HeroSection2() {
           <h1 className="leading-[1.1] text-4xl sm:text-5xl md:text-[4rem] lg:text-7xl xl:text-8xl font-semibold mb-2">
             Find Your Perfect
             <br />
-            <span className="bg-gradient-to-r from-sky-300 to-emerald-400 bg-clip-text text-transparent">
-              {displayWord} Experience
+            <span className="bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent min-h-[1.2em] inline-block">
+              <TypeAnimation
+                sequence={typeSequence}
+                wrapper="span"
+                speed={5}
+                deletionSpeed={5}
+                repeat={Infinity}
+                cursor={false}
+                className="inline-block"
+                preRenderFirstString={true}
+              />
+              {' Experience'}
             </span>
           </h1>
           
@@ -141,8 +122,8 @@ export default function HeroSection2() {
             Discover unforgettable boat and yacht charters with experienced crew worldwide
           </p>
           
-          {/* Search Bar */}
-          <div ref={searchBarRef} className="w-full pt-[10%]">
+          {/* Search Bar - with fixed sizing instead of percentage-based margins */}
+          <div ref={searchBarRef} className="w-full mt-8 sm:mt-12 md:mt-16 lg:mt-20">
             <SearchBar variant="hero" />
           </div>
         </div>

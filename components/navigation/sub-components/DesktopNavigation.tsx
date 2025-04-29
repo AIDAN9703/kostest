@@ -3,7 +3,7 @@
 import React, { useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/general-utils'
 import { ChevronDown } from 'lucide-react'
 import { Session } from 'next-auth'
 import { NavigationItem, HeaderItem } from '@/types/types'

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { findUserByEmailAndToken } from "@/lib/utils";
+import { findUserByEmailAndToken } from "@/lib/utils/general-utils";
 
 export async function GET(request: NextRequest) {
   try {

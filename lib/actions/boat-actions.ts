@@ -5,19 +5,7 @@ import { boats, boatCategoryEnum } from "@/database/schema";
 import { Boat, BoatLocation, SearchParamsType, SearchResults } from "@/types/types";
 import { and, asc, desc, eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
 import { cache } from "react";
-
-// Helper function to safely parse a string to number
-const safeParseFloat = (value: string | undefined | null): number | null => {
-  if (!value) return null;
-  const parsed = parseFloat(value);
-  return isNaN(parsed) ? null : parsed;
-};
-
-// Helper function to safely get a single value from a string or string array
-const getSingleValue = <T>(value: T | T[] | undefined): T | undefined => {
-  if (Array.isArray(value)) return value[0];
-  return value;
-};
+import { parseArrayParam, parseNumberParam } from "@/lib/utils/search-params-utils";
 
 /**
  * Get boats with filtering, sorting, and pagination
@@ -37,22 +25,18 @@ export const getBoats = cache(async ({
     const conditions = [eq(boats.active, true)];
     
     // Extract and process search parameters
-    const exclude = getSingleValue(searchParams.exclude);
+    const exclude = Array.isArray(searchParams.exclude) 
+      ? searchParams.exclude[0] 
+      : searchParams.exclude;
+      
     if (exclude) {
       conditions.push(sql`${boats.id} != ${exclude}`);
     }
     
     // Handle categories - support multiple categories
     if (searchParams.category && searchParams.category !== 'all') {
-      let categories: string[] = [];
-      
-      if (Array.isArray(searchParams.category)) {
-        categories = searchParams.category;
-      } else if (typeof searchParams.category === 'string' && searchParams.category.includes(',')) {
-        categories = searchParams.category.split(',').filter(Boolean);
-      } else if (typeof searchParams.category === 'string') {
-        categories = [searchParams.category];
-      }
+      // Use our standardized array parsing
+      const categories = parseArrayParam(searchParams.category);
       
       // Filter valid categories and add condition
       if (categories.length > 0) {
@@ -68,9 +52,9 @@ export const getBoats = cache(async ({
       }
     }
     
-    // Handle numeric filters - simplify the value extraction
+    // Handle numeric filters using standardized number parsing
     const addNumericFilter = (param: string | string[] | undefined, field: any, operator: typeof gte | typeof lte) => {
-      const value = safeParseFloat(getSingleValue(param));
+      const value = parseNumberParam(param);
       if (value !== null) {
         conditions.push(operator(field, value));
       }
@@ -88,7 +72,10 @@ export const getBoats = cache(async ({
     addNumericFilter(searchParams.passengers, boats.capacity, gte);
     
     // Handle location filter (point-based search)
-    const location = getSingleValue(searchParams.location);
+    const location = Array.isArray(searchParams.location) 
+      ? searchParams.location[0] 
+      : searchParams.location;
+      
     if (location && location.trim()) {
       try {
         const [lat, lng] = location.split(',').map(Number);
@@ -107,11 +94,11 @@ export const getBoats = cache(async ({
       }
     }
     
-    // Handle bounding box search (more efficient than the complex parsing in original)
-    const ne_lat = safeParseFloat(getSingleValue(searchParams.ne_lat));
-    const ne_lng = safeParseFloat(getSingleValue(searchParams.ne_lng));
-    const sw_lat = safeParseFloat(getSingleValue(searchParams.sw_lat));
-    const sw_lng = safeParseFloat(getSingleValue(searchParams.sw_lng));
+    // Handle bounding box search with standardized number parsing
+    const ne_lat = parseNumberParam(searchParams.ne_lat);
+    const ne_lng = parseNumberParam(searchParams.ne_lng);
+    const sw_lat = parseNumberParam(searchParams.sw_lat);
+    const sw_lng = parseNumberParam(searchParams.sw_lng);
     
     if (ne_lat !== null && ne_lng !== null && sw_lat !== null && sw_lng !== null) {
       if (ne_lat > sw_lat && ne_lng > sw_lng) {
@@ -126,30 +113,23 @@ export const getBoats = cache(async ({
       }
     }
     
-    // Handle features - simplified but preserving functionality
-    let featuresList: string[] = [];
-    if (searchParams.features) {
-      if (Array.isArray(searchParams.features)) {
-        featuresList = searchParams.features;
-      } else if (typeof searchParams.features === 'string') {
-        featuresList = searchParams.features.split(',').filter(f => f.trim());
-      }
-      
-      if (featuresList.length > 0) {
-        // More efficient way to handle multiple features with a single condition
-        conditions.push(
-          sql`${boats.features} @> ARRAY[${sql.join(featuresList.map(f => sql`${f}`), sql`, `)}]::text[]`
-        );
-      }
+    // Handle features with standardized array parsing
+    const featuresList = parseArrayParam(searchParams.features);
+    
+    if (featuresList.length > 0) {
+      // More efficient way to handle multiple features with a single condition
+      conditions.push(
+        sql`${boats.features} @> ARRAY[${sql.join(featuresList.map(f => sql`${f}`), sql`, `)}]::text[]`
+      );
     }
     
     // Calculate pagination
     const offset = (page - 1) * limit;
     
-    // Determine sort order - simplified but preserving all sort options
+    // Determine sort order with standardized handling
     let orderBy: any[] = [desc(boats.featured)];
     
-    const sort = getSingleValue(searchParams.sort);
+    const sort = Array.isArray(searchParams.sort) ? searchParams.sort[0] : searchParams.sort;
     if (sort) {
       switch (sort) {
         case 'price_asc': orderBy = [asc(boats.hourlyRate)]; break;
@@ -161,7 +141,7 @@ export const getBoats = cache(async ({
       }
     }
     
-    // Run both queries in parallel - preserved for performance
+    // Run both queries in parallel for performance
     const [countResult, results] = await Promise.all([
       db.select({ count: sql<number>`count(*)` })
         .from(boats)
@@ -179,7 +159,7 @@ export const getBoats = cache(async ({
     const totalPages = Math.ceil(totalCount / limit);
     const typedResults = results as unknown as Boat[];
     
-    // Get locations data - preserved for map display
+    // Get locations data for map display
     let locations: BoatLocation[] = [];
     
     if (typedResults.length > 0) {
@@ -233,27 +213,6 @@ export const getBoats = cache(async ({
   }
 });
 
-/**
- * Get featured boats for homepage or other sections
- */
-export const getFeaturedBoats = cache(async (limit: number = 6): Promise<Boat[]> => {
-  try {
-    const results = await db
-      .select()
-      .from(boats)
-      .where(and(
-        eq(boats.active, true),
-        eq(boats.featured, true)
-      ))
-      .orderBy(desc(boats.featuredOrder || 0))
-      .limit(limit);
-    
-    return results as unknown as Boat[];
-  } catch (error) {
-    console.error("Error fetching featured boats:", error);
-    return [];
-  }
-});
 
 /**
  * Get boat categories with counts
@@ -295,36 +254,4 @@ export const getBoatById = cache(async (id: string): Promise<Boat | null> => {
   }
 });
 
-/**
- * Get similar boats based on category and price range
- */
-export const getSimilarBoats = cache(async (
-  boatId: string, 
-  category: typeof boatCategoryEnum.enumValues[number], 
-  price: number, 
-  limit: number = 4
-): Promise<Boat[]> => {
-  try {
-    // Price range: 25% below to 25% above the current boat's price
-    const minPrice = price * 0.75;
-    const maxPrice = price * 1.25;
-    
-    const results = await db
-      .select()
-      .from(boats)
-      .where(and(
-        eq(boats.active, true),
-        eq(boats.category, category),
-        gte(boats.hourlyRate, minPrice),
-        lte(boats.hourlyRate, maxPrice),
-        sql`${boats.id} != ${boatId}`
-      ))
-      .orderBy(desc(boats.featured))
-      .limit(limit);
-    
-    return results as unknown as Boat[];
-  } catch (error) {
-    console.error("Error fetching similar boats:", error);
-    return [];
-  }
-}); 
+ 

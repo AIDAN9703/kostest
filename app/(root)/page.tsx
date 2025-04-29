@@ -22,8 +22,8 @@ async function HomeContent() {
           )}
           <ClientsShowcase />
           <LocationsSection />
-          <PopularExperiences />
           <BrandsCarousel />
+          <PopularExperiences />
           {reviewsResponse.success && reviewsResponse.data && reviewsResponse.data.length > 0 && (
             <TestimonialsSection reviews={reviewsResponse.data} />
           )}

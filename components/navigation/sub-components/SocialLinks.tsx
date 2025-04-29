@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useMemo } from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils/general-utils'
 import { FaYoutube, FaTiktok, FaInstagram } from 'react-icons/fa'
 
 interface SocialLinksProps {

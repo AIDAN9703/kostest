@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { getOptimizedImageUrl } from '@/lib/services/imagekit';
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/general-utils";
 
 interface ProfileHeaderProps {
   user: any; // Using any temporarily to avoid type issues

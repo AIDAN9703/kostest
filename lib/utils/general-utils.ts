@@ -5,6 +5,10 @@ import { unstable_cache } from 'next/cache'
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+export const DEFAULT_US_BOUNDS = {
+  ne: { lat: 50.423, lng: -69.750 }, // Northeast corner (Maine)
+  sw: { lat: 24.396, lng: -127.406 }  // Southwest corner (Southern California)
+};
 
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -180,25 +184,29 @@ export async function clearUserVerificationToken(userId: string) {
 
 /**
  * Debounce function to limit how often a function can be called
- * Useful for map interactions to prevent excessive calls
+ * Includes a cancel method for cleanup
  * 
  * @param func The function to debounce
- * @param wait The time to wait in milliseconds
- * @returns A debounced version of the function
+ * @param waitFor The time to wait in milliseconds
+ * @returns A debounced version of the function with a cancel method
  */
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
+export function debounce<F extends (...args: any[]) => any>(
+  func: F,
+  waitFor: number
+): F & { cancel: () => void } {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
   
-  return function(...args: Parameters<T>): void {
-    if (timeout) {
-      clearTimeout(timeout);
-    }
-    
-    timeout = setTimeout(() => {
-      func(...args);
-    }, wait);
+  const debounced = (...args: Parameters<F>): void => {
+    if (timeout !== null) clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), waitFor);
   };
+  
+  (debounced as any).cancel = () => {
+    if (timeout !== null) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+  };
+  
+  return debounced as F & { cancel: () => void };
 }

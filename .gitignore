@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/database/schema-calendar-test.ts
 
 # next.js
 /.next/

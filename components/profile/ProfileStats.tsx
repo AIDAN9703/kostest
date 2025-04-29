@@ -12,7 +12,7 @@ import {
   AlertCircle,
   // Add any other icons you might need
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/general-utils";
 
 // Map of icon names to their components
 const iconMap: Record<string, LucideIcon> = {

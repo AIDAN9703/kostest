@@ -3,7 +3,7 @@
 import { Boat } from "@/types/types";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils/general-utils";
 import { useState } from "react";
 import BookingFormToggle from "./BookingFormToggle";
 import { User } from "next-auth";

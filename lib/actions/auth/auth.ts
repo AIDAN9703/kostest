@@ -8,7 +8,7 @@ import { signIn } from "@/auth";
 import { ActionResponse } from "@/types/types";
 import { sendVerificationCode } from "./verification";
 import { redirect } from "next/navigation";
-import { formatPhoneNumberE164 } from '@/lib/utils';
+import { formatPhoneNumberE164 } from '@/lib/utils/general-utils';
 
 export const signInAction = async (
   params: Pick<AuthCredentials, "email" | "password">

@@ -9,7 +9,7 @@ import { MapPin } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { getOptimizedImageUrl } from "@/lib/services/imagekit";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils/general-utils";
 
 interface NearbyBoatsProps {
   boat: Boat;

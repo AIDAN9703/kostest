@@ -5,7 +5,7 @@ import { verifications, users } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
 import { ActionResponse } from "@/types/types";
 import { sendVerification, checkVerification } from "@/lib/services/twilio";
-import { formatPhoneNumberE164 } from '@/lib/utils';
+import { formatPhoneNumberE164 } from '@/lib/utils/general-utils';
 
 /**
  * Sends a verification code to the user's phone number using Twilio Verify API

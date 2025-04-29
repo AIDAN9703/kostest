@@ -112,69 +112,7 @@ body {
     @apply focus:bg-dark-600 focus:text-light-100 !important;
   }
 
-  /* Hero Section Styles */
-  .hero-container {
-    @apply relative min-h-screen w-full overflow-hidden;
-  }
 
-  .hero-background {
-    @apply absolute inset-0;
-  }
-
-  .hero-background-image {
-    @apply object-cover object-center brightness-105;
-  }
-
-  .hero-overlay-gradient {
-    @apply absolute inset-0 bg-gradient-to-br from-blue-400/30 via-purple-400/20 to-pink-400/30 mix-blend-overlay;
-  }
-
-  .hero-overlay-gradient-2 {
-    @apply absolute inset-0 bg-gradient-to-t from-[#ff6b6b]/10 via-transparent to-[#4ecdc4]/10;
-  }
-
-  .hero-content {
-    @apply relative min-h-screen flex flex-col items-center justify-center px-4 py-20 sm:py-32;
-  }
-
-  .hero-content-wrapper {
-    @apply max-w-[1200px] mx-auto w-full;
-  }
-
-  .hero-text-container {
-    @apply text-center mb-8 sm:mb-12;
-  }
-
-  .hero-title {
-    @apply text-4xl sm:text-5xl md:text-7xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight;
-  }
-
-  .hero-title-gradient {
-    @apply block bg-gradient-to-r from-primary via-primary to-primary text-transparent bg-clip-text relative;
-    text-shadow: 0 0 40px rgba(255,255,255,0.2);
-    animation: shimmerText 3s ease-in-out infinite;
-  }
-
-  .hero-title-gradient span {
-    @apply block min-h-[1.2em] relative;
-  }
-
-  .hero-title-gradient::after {
-    content: '';
-    @apply absolute inset-0 bg-gradient-to-r from-primary/30 via-primary/20 to-primary/10 blur-xl;
-    mask-image: linear-gradient(to right, transparent, white, transparent);
-    animation: shimmerGlow 3s ease-in-out infinite;
-  }
-
-  @keyframes shimmerText {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.9; }
-  }
-
-  @keyframes shimmerGlow {
-    0%, 100% { transform: translateX(-10px); opacity: 0.5; }
-    50% { transform: translateX(10px); opacity: 1; }
-  }
 
   .hero-description {
     @apply text-lg sm:text-xl text-gray-700 max-w-2xl mx-auto font-medium;
@@ -211,36 +149,6 @@ body {
     background: linear-gradient(180deg, #232839 0%, #12141d 100%);
   }
 
-  /* Auth */
-  .auth-container {
-    @apply relative flex flex-col-reverse text-light-100 sm:flex-row;
-  }
-
-  .auth-form {
-    @apply my-auto flex h-full min-h-screen flex-1 items-center px-5 py-10;
-  }
-
-  .auth-box {
-    @apply gradient-vertical mx-auto flex max-w-xl flex-col gap-6 rounded-lg p-10;
-  }
-
-  .auth-illustration {
-    @apply sticky h-40 w-full sm:top-0 sm:h-screen sm:flex-1;
-  }
-
-  /* Root */
-  .root-container {
-    @apply flex min-h-screen flex-1 flex-col bg-cover bg-top px-5 xs:px-10  md:px-16;
-  }
-
-  /* Boat Details */
-  .boat-details {
-    @apply lg:mt-36 mt-16 mb-20 flex flex-col gap-16 lg:flex-row;
-  }
-
-  .boat-details h3 {
-    @apply text-xl font-semibold text-primary;
-  }
 }
 
 @layer base {
@@ -269,8 +177,8 @@ body {
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
   }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -299,159 +207,7 @@ body {
   }
 }
 
-/* Auth Pages */
-.auth-page {
-  @apply min-h-screen bg-white overflow-hidden;
-}
 
-/* Make sure the image container stays fixed during scroll */
-.auth-page .h-screen {
-  height: 100vh;
-  position: sticky;
-  top: 0;
-}
-
-.auth-background {
-  @apply absolute inset-0 bg-[url('/images/boats/aerial3.jpg')] opacity-20;
-}
-
-.auth-container {
-  @apply relative min-h-screen flex items-center justify-center p-4;
-}
-
-.auth-card {
-  @apply bg-black/40 backdrop-blur-xl rounded-3xl border border-white/10 p-8 lg:p-12 w-full max-w-3xl mx-auto shadow-2xl relative;
-  animation: cardAppear 0.6s ease-out;
-}
-
-@keyframes cardAppear {
-  0% { 
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% { 
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.auth-content {
-  @apply flex flex-col lg:flex-row items-center gap-8 lg:gap-12;
-}
-
-.auth-branding {
-  @apply flex-1 flex flex-col h-full;
-}
-
-.auth-branding-top {
-  @apply text-center lg:text-left space-y-6;
-}
-
-.auth-branding-content {
-  @apply flex-1 space-y-8 mt-12;
-}
-
-.auth-logo {
-  @apply flex items-center justify-center lg:justify-start gap-3;
-}
-
-.auth-heading {
-  @apply text-2xl font-bold bg-gradient-to-r from-white via-white to-primary/80 bg-clip-text text-transparent;
-  background-size: 200% auto;
- 
-}
-
-@keyframes shine {
-  to {
-    background-position: 200% center;
-  }
-}
-
-.auth-form-container {
-  @apply flex-1 w-full;
-}
-
-.auth-input {
-  @apply h-12 bg-white/5 border-2 border-white/10 rounded-xl text-white placeholder:text-white/30 
-  focus:border-primary focus:ring-1 focus:ring-primary focus:ring-offset-2 focus:ring-offset-black/40
-  transition-all duration-300 px-4;
-  background-image: linear-gradient(to right, transparent, transparent);
-  background-position: 0 0;
-  background-size: 200% 100%;
-}
-
-.auth-input:focus {
-  background-image: linear-gradient(to right, rgba(255,255,255,0.03), transparent);
-  background-position: 100% 0;
-}
-
-/* Hide spinner on number input */
-.auth-input[type="number"]::-webkit-inner-spin-button,
-.auth-input[type="number"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.auth-input[type="number"] {
-  -moz-appearance: textfield;
-}
-
-/* Style date input */
-.auth-input[type="date"] {
-  @apply text-white appearance-none;
-}
-
-.auth-input[type="date"]::-webkit-calendar-picker-indicator {
-  @apply opacity-50 hover:opacity-100 transition-opacity cursor-pointer filter invert;
-  position: absolute;
-  right: 1rem;
-  width: 1.25rem;
-  height: 1.25rem;
-  background-size: contain;
-}
-
-.auth-input[type="date"]::-webkit-inner-spin-button,
-.auth-input[type="date"]::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.auth-button {
-  @apply w-full h-12 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70
-  text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]
-  shadow-lg shadow-primary/25 relative overflow-hidden;
-}
-
-.auth-button::after {
-  content: '';
-  @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full;
-  transition: transform 0.6s ease;
-}
-
-.auth-button:hover::after {
-  transform: translateX(100%);
-}
-
-.auth-social-button {
-  @apply flex items-center justify-center gap-2 h-12 w-full border-2 border-white/10 rounded-xl
-  hover:bg-white/5 transition-all duration-300 relative overflow-hidden;
-  background-image: linear-gradient(to right, transparent, transparent);
-  background-position: 0 0;
-  background-size: 200% 100%;
-}
-
-.auth-social-button:hover {
-  background-image: linear-gradient(to right, rgba(255,255,255,0.03), transparent);
-  background-position: 100% 0;
-}
-
-.auth-social-button span {
-  @apply text-white/80 text-sm font-medium transition-colors;
-}
-
-.auth-social-button:hover span {
-  @apply text-white;
-}
 
 /* Animation Delays */
 .animation-delay-2000 {
@@ -462,30 +218,8 @@ body {
   animation-delay: 4s;
 }
 
-@keyframes blob {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
-}
 
-.animate-blob {
-  animation: blob 7s infinite;
-}
 
-.testimonial-card {
-  @apply bg-white/5 rounded-2xl p-6 backdrop-blur-sm border border-white/10 
-  transform transition-all duration-500 hover:scale-[1.02];
-  animation: float 6s ease-in-out infinite;
-}
-
-.testimonial-card:nth-child(2) {
-  animation-delay: 2s;
-}
-
-.testimonial-card:nth-child(3) {
-  animation-delay: 4s;
-}
 
 @keyframes float {
   0% { transform: translateY(0px); }
@@ -493,31 +227,7 @@ body {
   100% { transform: translateY(0px); }
 }
 
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
 
-.tip-card {
-  @apply bg-white/5 rounded-xl p-4 backdrop-blur-sm border border-white/10;
-  transition: opacity 0.5s ease-in-out;
-}
-
-.tip-card.fade-enter {
-  opacity: 0;
-}
-
-.tip-card.fade-enter-active {
-  opacity: 1;
-}
-
-.tip-card.fade-exit {
-  opacity: 1;
-}
-
-.tip-card.fade-exit-active {
-  opacity: 0;
-}
 
 @keyframes marquee {
   from {
@@ -580,3 +290,44 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Navigation animations */
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.pac-container {
+  z-index: 10000 !important;
+  display: block !important;
+}
+
+/* Ensure dropdowns can overflow their containers */
+.overflow-visible-container {
+  overflow: visible !important;
+}
+
+/* Make sure our dropdown can break out of any container */
+.hero-search-dropdown {
+  position: absolute;
+  z-index: 10000;
+  /* Properties for portal-like rendering with performance optimizations */
+  isolation: isolate;
+  contain: content;
+  transform: translateZ(0); /* Hardware acceleration */
+  backface-visibility: hidden;
+  will-change: transform, opacity; /* Signal to browser to optimize these properties */
+  transition: opacity 0.2s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+

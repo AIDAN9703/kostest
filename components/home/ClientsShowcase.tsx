@@ -1,9 +1,15 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
-import { motion, useReducedMotion, AnimatePresence } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselApi,
+} from "@/components/ui/carousel";
 
 // Keep client images outside component to prevent recreation
 const clientImages = [
@@ -53,199 +59,169 @@ const clientImages = [
   },
 ];
 
+// Group images into sets of 4 for the grid
+type ImageGroup = typeof clientImages[0][];
+const imageGroups: ImageGroup[] = [];
+for (let i = 0; i < clientImages.length; i += 4) {
+  const group = clientImages.slice(i, i + 4);
+  // Make sure we have exactly 4 images in each group
+  while (group.length < 4) {
+    // If we don't have enough, repeat from the beginning
+    group.push(clientImages[group.length % clientImages.length]);
+  }
+  imageGroups.push(group);
+}
+
 export default function ClientsShowcase() {
-  const [currentIndex, setCurrentIndex] = useState(0);
   const prefersReducedMotion = useReducedMotion();
+  const [api, setApi] = useState<CarouselApi>();
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Memoize handlers to prevent recreation on each render
-  const nextSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 4) % clientImages.length);
-  }, []);
+  // Update current index when carousel changes
+  const onSelect = useCallback(() => {
+    if (api) {
+      setCurrentIndex(api.selectedScrollSnap());
+    }
+  }, [api]);
 
+  // Set up API event listeners
+  useEffect(() => {
+    if (!api) return;
+    
+    onSelect();
+    api.on("select", onSelect);
+    
+    return () => {
+      api.off("select", onSelect);
+    };
+  }, [api, onSelect]);
+
+  // Navigation handlers
   const prevSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 4 + clientImages.length) % clientImages.length);
-  }, []);
+    if (api) api.scrollPrev();
+  }, [api]);
 
-  // Memoize current images to prevent recreation on each render
-  const currentImages = useMemo(() => [
-    clientImages[currentIndex],
-    clientImages[(currentIndex + 1) % clientImages.length],
-    clientImages[(currentIndex + 2) % clientImages.length],
-    clientImages[(currentIndex + 3) % clientImages.length],
-  ], [currentIndex]);
+  const nextSlide = useCallback(() => {
+    if (api) api.scrollNext();
+  }, [api]);
 
-  // Memoize button animations for performance
-  const buttonVariants = useMemo(() => ({
-    hover: prefersReducedMotion ? {} : { scale: 1.05 },
-    tap: prefersReducedMotion ? {} : { scale: 0.95 }
-  }), [prefersReducedMotion]);
+  // Create an image grid component for each group of 4 images
+  const ImageGrid = ({ images }: { images: ImageGroup }) => (
+    <div className="grid grid-cols-12 gap-3">
+      {/* Top Row */}
+      <div className="col-span-7 relative aspect-[16/10] rounded-2xl overflow-hidden">
+        <Image
+          src={images[0].url}
+          alt={images[0].title}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 90vw, 58vw"
+          quality={80}
+        />
+      </div>
+      <div className="col-span-5 relative aspect-[4/3] rounded-2xl overflow-hidden mt-[13%]">
+        <Image
+          src={images[1].url}
+          alt={images[1].title}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 40vw, 30vw"
+          quality={80}
+        />
+      </div>
 
-  // Optimize animations based on user preference
-  const fadeTransition = useMemo(() => ({ 
-    duration: prefersReducedMotion ? 0.2 : 0.5 
-  }), [prefersReducedMotion]);
-
-  const slideInTransition = useMemo(() => ({ 
-    duration: prefersReducedMotion ? 0.2 : 0.6 
-  }), [prefersReducedMotion]);
-
-  // Image grid with optimized animations
-  const ImageGrid = useCallback(() => (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={currentIndex}
-        initial={{ opacity: prefersReducedMotion ? 1 : 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: prefersReducedMotion ? 1 : 0 }}
-        transition={fadeTransition}
-        className="grid grid-cols-12 gap-3 will-change-transform"
-      >
-        {/* Top Row */}
-        <motion.div 
-          layout={!prefersReducedMotion}
-          className="col-span-7 relative aspect-[16/10] rounded-2xl overflow-hidden"
-          style={{ contain: 'layout paint' }}
-        >
-          <Image
-            src={currentImages[0].url}
-            alt={currentImages[0].title}
-            fill
-            className="object-cover"
-            sizes="58vw"
-            priority
-            quality={prefersReducedMotion ? 75 : 85}
-          />
-        </motion.div>
-        <motion.div 
-          layout={!prefersReducedMotion}
-          className="col-span-5 relative aspect-[4/3] rounded-2xl overflow-hidden mt-[13%]"
-          style={{ contain: 'layout paint' }}
-        >
-          <Image
-            src={currentImages[1].url}
-            alt={currentImages[1].title}
-            fill
-            className="object-cover"
-            sizes="42vw"
-            quality={prefersReducedMotion ? 75 : 85}
-          />
-        </motion.div>
-
-        {/* Bottom Row */}
-        <motion.div 
-          layout={!prefersReducedMotion}
-          className="col-span-5 relative aspect-[4/3] rounded-2xl overflow-hidden"
-          style={{ contain: 'layout paint' }}
-        >
-          <Image
-            src={currentImages[2].url}
-            alt={currentImages[2].title}
-            fill
-            className="object-cover"
-            sizes="42vw"
-            quality={prefersReducedMotion ? 75 : 85}
-          />
-        </motion.div>
-        <motion.div 
-          layout={!prefersReducedMotion}
-          className="col-span-7 relative aspect-[16/10] rounded-2xl overflow-hidden"
-          style={{ contain: 'layout paint' }}
-        >
-          <Image
-            src={currentImages[3].url}
-            alt={currentImages[3].title}
-            sizes="58vw"
-            fill
-            className="object-cover"
-            quality={prefersReducedMotion ? 75 : 85}
-          />
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
-  ), [currentIndex, fadeTransition, prefersReducedMotion, currentImages]);
+      {/* Bottom Row */}
+      <div className="col-span-5 relative aspect-[4/3] rounded-2xl overflow-hidden">
+        <Image
+          src={images[2].url}
+          alt={images[2].title}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 40vw, 30vw"
+          quality={80}
+        />
+      </div>
+      <div className="col-span-7 relative aspect-[16/10] rounded-2xl overflow-hidden">
+        <Image
+          src={images[3].url}
+          alt={images[3].title}
+          sizes="(max-width: 768px) 90vw, 58vw"
+          fill
+          className="object-cover"
+          quality={80}
+        />
+      </div>
+    </div>
+  );
 
   return (
-    <section className="py-6 sm:py-10 relative bg-white overflow-hidden">
+    <section className="py-6 sm:py-10 relative overflow-hidden">
       <div className="max-w-full sm:max-w-[80%] mx-auto px-4">
-        {/* Mobile Layout (default) */}
-        <div className="flex flex-col gap-6 md:hidden">
-          <div className="flex items-center justify-between">
-            <motion.h2
-              initial={prefersReducedMotion ? {} : { opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={slideInTransition}
-              className="font-poppins font-medium text-3xl sm:text-4xl md:text-5xl text-primary leading-tight max-w-md will-change-transform"
-            >
-              Discover your next on-the-water adventure
-            </motion.h2>
-            
-            {/* Navigation buttons */}
-            <div className="flex items-center gap-2">
-              <motion.button
-                variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
-                onClick={prevSlide}
-                className="p-2 rounded-full bg-white shadow hover:shadow-md transition-all duration-300 border border-gray-200"
-                aria-label="Previous slide"
-              >
-                <ChevronLeft className="w-5 h-5 text-primary" />
-              </motion.button>
-              <motion.button
-                variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
-                onClick={nextSlide}
-                className="p-2 rounded-full bg-white shadow hover:shadow-md transition-all duration-300 border border-gray-200"
-                aria-label="Next slide"
-              >
-                <ChevronRight className="w-5 h-5 text-primary" />
-              </motion.button>
-            </div>
-          </div>
-          <div className="w-full">
-            <ImageGrid />
-          </div>
-        </div>
-
-        {/* Desktop Layout */}
-        <div className="hidden md:grid grid-cols-12 gap-8 lg:gap-12 items-center">
-          <div className="col-span-3 z-10">
-            <motion.div
-              initial={prefersReducedMotion ? {} : { opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={slideInTransition}
-              className="will-change-transform"
-            >
-              <h2 className="font-poppins font-medium text-3xl sm:text-4xl md:text-5xl text-primary leading-tight">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12">
+          {/* Title and Navigation */}
+          <div className="md:col-span-3 z-10">
+            <div className="flex md:block items-center justify-between">
+              <h2 className="sm:mt-20 font-poppins font-medium text-3xl sm:text-4xl md:text-5xl text-primary leading-tight max-w-md">
                 Discover your next on-the-water adventure
               </h2>
-              <div className="flex items-center gap-2 mt-8">
+              
+              <div className="flex items-center gap-2 md:mt-8">
                 <motion.button
-                  variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
+                  whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
+                  whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
                   onClick={prevSlide}
                   className="p-2 rounded-full bg-white shadow hover:shadow-md transition-all duration-300 border border-gray-200"
-                  aria-label="Previous slide"
+                  aria-label="Previous experience images"
                 >
                   <ChevronLeft className="w-5 h-5 text-primary" />
                 </motion.button>
                 <motion.button
-                  variants={buttonVariants}
-                  whileHover="hover"
-                  whileTap="tap"
+                  whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
+                  whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
                   onClick={nextSlide}
                   className="p-2 rounded-full bg-white shadow hover:shadow-md transition-all duration-300 border border-gray-200"
-                  aria-label="Next slide"
+                  aria-label="Next experience images"
                 >
                   <ChevronRight className="w-5 h-5 text-primary" />
                 </motion.button>
               </div>
-            </motion.div>
+            </div>
+            
+            {/* Pagination indicators */}
+            <div className="hidden md:flex mt-6 justify-start gap-1.5">
+              {imageGroups.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => api?.scrollTo(i)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    currentIndex === i ? 'bg-primary w-4' : 'bg-gray-300'
+                  }`}
+                  aria-label={`Go to slide ${i + 1}`}
+                  aria-current={currentIndex === i ? 'true' : 'false'}
+                />
+              ))}
+            </div>
           </div>
-          <div className="col-span-9 relative">
-            <ImageGrid />
+          
+          {/* Carousel */}
+          <div className="md:col-span-9">
+            <Carousel 
+              setApi={setApi}
+              opts={{
+                align: "center" as const,
+                loop: true,
+              }}
+              className="w-full"
+              aria-label="Client experience showcases"
+            >
+              <CarouselContent>
+                {imageGroups.map((group, index) => (
+                  <CarouselItem key={index}>
+                    <ImageGrid images={group} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
           </div>
         </div>
       </div>

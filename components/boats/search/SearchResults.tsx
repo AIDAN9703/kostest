@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Boat, BoatLocation, SearchParamsType } from "@/types/types";
+import { Boat, BoatLocation } from "@/types/types";
 import { Button } from "@/components/ui/button";
 import { 
   Pagination, 
@@ -12,12 +12,14 @@ import {
   PaginationNext, 
   PaginationPrevious 
 } from "@/components/ui/pagination";
-import { Anchor, ArrowUpDown, Loader2, SlidersHorizontal } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ArrowUpDown, Loader2, SlidersHorizontal } from "lucide-react";
+import { cn } from "@/lib/utils/general-utils";
 import BoatCard from "@/components/ui/boat-card";
 import { useSearchURL } from "@/hooks/useSearchURL";
 import { usePagination } from "@/hooks/usePagination";
 import FilterModal from "./FilterModal";
+import SearchResultsFallback from "./SearchResultsFallback";
+import { parseStringParam } from "@/lib/utils/search-params-utils";
 
 interface SearchResultsProps {
   initialResults: Boat[];
@@ -25,7 +27,6 @@ interface SearchResultsProps {
   currentPage: number;
   totalPages: number;
   locations?: BoatLocation[];
-  initialFilters: SearchParamsType;
 }
 
 // Sort options
@@ -67,20 +68,17 @@ export default function SearchResults({
   totalCount, 
   currentPage, 
   totalPages,
-  locations = [],
-  initialFilters
+  locations = []
 }: SearchResultsProps) {
-  const { searchParams, isPending, updateSearchParams } = useSearchURL();
-  const [boats, setBoats] = useState<Boat[]>(initialResults);
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  
-  // Update boats when initialResults change
-  useEffect(() => {
-    setBoats(initialResults);
-  }, [initialResults]);
+  const { 
+    searchParams, 
+    isPending, 
+    updateSearchParams
+  } = useSearchURL();
   
   // Get current sort from URL or default to featured
-  const currentSort = searchParams.get('sort') || 'featured';
+  const currentSort = useMemo(() => 
+    parseStringParam(searchParams.get('sort')) || 'featured', [searchParams]);
   
   // Handle sort change
   const handleSort = useCallback((sort: string) => {
@@ -100,12 +98,33 @@ export default function SearchResults({
     const option = SORT_OPTIONS.find(option => option.value === sort);
     return option?.label || 'Featured';
   }, []);
+
+  // Use a state variable for FilterModal visibility
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   
   // Use custom pagination hook
   const paginationRange = usePagination({
     currentPage,
     totalPages
   });
+
+  // Calculate active filter count
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    
+    // Check for various filter parameters
+    if (searchParams.has('date')) count++;
+    if (searchParams.has('minPrice') || searchParams.has('maxPrice')) count++;
+    if (searchParams.has('minLength') || searchParams.has('maxLength')) count++;
+    if (searchParams.has('minYear') || searchParams.has('maxYear')) count++;
+    if (searchParams.has('passengers') && searchParams.get('passengers') !== '1') count++;
+    if (searchParams.has('cabins') && searchParams.get('cabins') !== '0') count++;
+    if (searchParams.has('bathrooms') && searchParams.get('bathrooms') !== '0') count++;
+    if (searchParams.has('category')) count++;
+    if (searchParams.has('features')) count++;
+    
+    return count;
+  }, [searchParams]);
 
   return (
     <div className="space-y-4">
@@ -117,14 +136,19 @@ export default function SearchResults({
           )}
         
         <div className="flex items-center gap-3">
-          {/* Filter Button */}
+          {/* Filter Button with Badge */}
           <Button
             variant="outline"
             className="h-11 px-4 rounded-2xl border-gray-200 hover:border-gray-300 hover:bg-white
-                     focus:border-[#2C3E50] focus:ring-[#2C3E50] transition-all"
+                     focus:border-[#2C3E50] focus:ring-[#2C3E50] transition-all relative"
             onClick={() => setIsFilterModalOpen(true)}
           >
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
+            <SlidersHorizontal className="h-4 w-4" />
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-[#2C3E50] text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                {activeFilterCount}
+              </span>
+            )}
           </Button>
           
           {/* Sort Dropdown */}
@@ -167,11 +191,10 @@ export default function SearchResults({
       <FilterModal 
         isOpen={isFilterModalOpen} 
         onClose={() => setIsFilterModalOpen(false)}
-        initialFilters={initialFilters}
       />
 
       {/* Results Grid */}
-      {boats.length > 0 ? (
+      {initialResults.length > 0 ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <AnimatePresence mode="wait">
             {isPending ? (
@@ -193,7 +216,7 @@ export default function SearchResults({
                 animate="visible"
                 exit={{ opacity: 0 }}
               >
-                {boats.map((boat) => (
+                {initialResults.map((boat) => (
                   <motion.div
                     key={boat.id}
                     variants={itemVariants}
@@ -217,21 +240,7 @@ export default function SearchResults({
           </AnimatePresence>
         </div>
       ) : (
-        <div className="py-16 text-center">
-          <div className="mx-auto w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mb-6">
-            <Anchor className="h-12 w-12 text-gray-400" />
-          </div>
-          <h3 className="text-xl font-medium text-gray-900 mb-2">No boats found</h3>
-          <p className="text-gray-500 max-w-md mx-auto">
-            Try adjusting your search filters or explore our featured boats.
-          </p>
-          <Button 
-            onClick={() => updateSearchParams({})}
-            className="mt-6 bg-[#1E293B] hover:bg-[#2C3E50]"
-          >
-            Reset Filters
-          </Button>
-        </div>
+       <SearchResultsFallback />
       )}
       
       {/* Pagination */}

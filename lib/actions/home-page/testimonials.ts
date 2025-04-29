@@ -1,4 +1,4 @@
-import { cachedFetch } from '@/lib/utils';
+import { cachedFetch } from '@/lib/utils/general-utils';
 import { ActionResponse } from '@/types/types';
 
 interface Review {

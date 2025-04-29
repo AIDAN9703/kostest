@@ -5,11 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Boat } from "@/types/types";
 import { Users, MapPin, Star, ChevronLeft, ChevronRight, Heart } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils/general-utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { getOptimizedImageUrl } from "@/lib/services/imagekit";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/general-utils";
 
 interface BoatCardProps {
   boat: Boat;
@@ -90,7 +90,7 @@ const BoatCard = ({
       guests: "flex items-center gap-1 sm:gap-2",
       rating: "flex items-center",
       priceTag: "bottom-3 right-3 sm:bottom-4 sm:right-4",
-      featuredTag: "top-3 left-3 sm:top-4 sm:left-4"
+      featuredTag: "top-2 sm:top-4"
     };
 
     // Variant-specific style overrides
@@ -104,7 +104,7 @@ const BoatCard = ({
           guests: "flex items-center gap-1",
           rating: "flex items-center",
           priceTag: "bottom-2 right-2 sm:bottom-3 sm:right-3",
-          featuredTag: "top-2 left-2 sm:top-3 sm:left-3"
+          featuredTag: "top-2 sm:top-4"
         };
       case 'featured':
         return {
@@ -115,7 +115,7 @@ const BoatCard = ({
           guests: "flex items-center gap-2",
           rating: "flex items-center",
           priceTag: "bottom-4 right-4",
-          featuredTag: "top-4 left-4"
+          featuredTag: "top-2 sm:top-4"
         };
       case 'compact':
         return {
@@ -126,7 +126,7 @@ const BoatCard = ({
           guests: "flex items-center gap-1 text-xs",
           rating: "flex items-center",
           priceTag: "bottom-1 right-1 sm:bottom-2 sm:right-2 text-xs",
-          featuredTag: "top-1 left-1 sm:top-2 sm:left-2 text-xs"
+          featuredTag: "top-1 sm:top-2 text-xs"
         };
       default:
         return defaultStyles;
@@ -219,10 +219,10 @@ const BoatCard = ({
             {/* Featured tag */}
             {boat.featured && highlightFeatured && (
               <div className={cn(
-                "absolute bg-emerald-400 px-1.5 py-0.5 rounded-lg shadow-md flex items-center justify-center",
+                "absolute bg-emerald-400 px-1.5 py-0.5 shadow-md flex items-center justify-center",
                 variantStyles.featuredTag
               )}>
-                <span className="text-xs sm:text-sm font-medium text-white leading-tight">
+                <span className="text-xs sm:text-sm font-poppins text-white leading-tight">
                   Featured
                 </span>
               </div>

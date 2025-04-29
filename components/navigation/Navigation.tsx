@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { cn, throttle } from '@/lib/utils'
+import { cn, throttle } from '@/lib/utils/general-utils'
 import Image from 'next/image'
 import { Session } from 'next-auth'
 import { useSearchStore } from '@/store/useSearchStore'
@@ -17,7 +17,7 @@ import SocialLinks from './sub-components/SocialLinks'
 import SearchBar from '@/components/navigation/sub-components/SearchBar'
 
 // Move navigation data to a separate file
-import { navigationData, quickLinks, featuredItems } from '@/constants/navigation-data'
+import { navigationData, quickLinks, featuredItems } from '@/lib/constants/navigation-data'
 
 const Navigation = ({ session }: { session: Session | null }) => {
     const pathname = usePathname()
@@ -26,26 +26,50 @@ const Navigation = ({ session }: { session: Session | null }) => {
     const [expandedItems, setExpandedItems] = useState<string[]>([])
     const user = session?.user
     const isHomePage = pathname === '/'
-    const { isExpanded } = useSearchStore()
+    const { isExpanded, resetSearchExpansion, clearSearchValue, clearPlaceDetails } = useSearchStore()
     
-    // Show search bar in nav on non-home pages
+    // Reset the isExpanded state when navigating to the home page
+    useEffect(() => {
+        if (isHomePage) {
+            resetSearchExpansion()
+        }
+        
+        // Clear search values when not on search page
+        if (!pathname.includes('/boats/search')) {
+            clearSearchValue()
+            clearPlaceDetails()
+        }
+    }, [isHomePage, resetSearchExpansion, pathname, clearSearchValue, clearPlaceDetails])
+    
+    // Show search bar in nav on non-home pages or when scrolled past the hero section searchbar
     const showSearchInNav = !isHomePage || (isHomePage && isExpanded)
 
-    // Memoized scroll handler with throttling
+    // More responsive throttled scroll handler (50ms instead of 100ms)
     const handleScroll = useCallback(
         throttle(() => {
-            setScrolled(window.scrollY > 50)
-        }, 100),
+            // Use requestAnimationFrame to optimize visual updates
+            requestAnimationFrame(() => {
+                const scrollPosition = window.scrollY
+                setScrolled(scrollPosition > 50)
+            })
+        }, 50),
         []
     )
 
-    // Basic scroll effect with throttling
+    // Improved scroll effect with passive event listener
     useEffect(() => {
+        // Execute once on mount
         handleScroll()
+        
+        // Add event listener with passive option for performance
         window.addEventListener('scroll', handleScroll, { passive: true })
+        
+        // Cleanup function
         return () => {
             window.removeEventListener('scroll', handleScroll)
-            handleScroll.cancel && handleScroll.cancel()
+            if (handleScroll.cancel) {
+                handleScroll.cancel()
+            }
         }
     }, [handleScroll])
 
@@ -124,7 +148,13 @@ const Navigation = ({ session }: { session: Session | null }) => {
 
                     {/* Center section: Search Bar */}
                     <div className="flex justify-center">
-                        {showSearchInNav && <SearchBar variant="nav" />}
+                        <AnimatePresence>
+                            {showSearchInNav && (
+                                <div className="animate-fadeIn w-full max-w-[400px]">
+                                    <SearchBar variant="nav" />
+                                </div>
+                            )}
+                        </AnimatePresence>
                     </div>
 
                     {/* Right section: Navigation + Social + User menu */}

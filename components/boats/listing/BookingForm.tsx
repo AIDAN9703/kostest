@@ -11,7 +11,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/general-utils";
 import { format } from "date-fns";
 import { CalendarIcon, MessageCircle, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";

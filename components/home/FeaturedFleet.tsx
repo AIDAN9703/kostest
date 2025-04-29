@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Boat } from "@/types/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils/general-utils";
 import { Button } from "@/components/ui/button";
 import BoatCard from "@/components/ui/boat-card";
 import {
@@ -14,7 +14,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-
 // Reusable animation variants for DRY code
 const fadeInUpAnimation = {
   initial: { opacity: 0, y: 20 },
@@ -28,7 +27,7 @@ const fadeInUpAnimation = {
 // Server component for the overall section
 const FeaturedFleet = ({ boats }: { boats: Boat[] }) => {
   return (
-    <section className="py-2 sm:py-4 bg-white relative overflow-hidden">
+    <section className="py-2 sm:py-4 relative overflow-hidden">
       <div className="max-w-full sm:max-w-[80%] mx-auto px-4">
         <motion.div 
           className="text-center mb-4 sm:mb-6 md:mb-8"

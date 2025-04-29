@@ -1,14 +1,13 @@
 'use client'
 
-import { useRef, useEffect, useState } from 'react'
-import { Search } from 'lucide-react'
+import { useRef, useState } from 'react'
+import { Search, MapPin } from 'lucide-react'
 import { useSearchStore } from '@/store/useSearchStore'
 import { Button } from "@/components/ui/button"
-import { PlacesAutocomplete } from "@/components/ui/places-autocomplete"
+import { CustomPlacesAutocomplete } from "@/components/ui/custom-places-autocomplete"
 import { LocationData } from "@/types/types"
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
-import { useSearchURL } from '@/hooks/useSearchURL'
 
 interface SearchBarProps {
   variant?: 'hero' | 'nav'
@@ -17,46 +16,44 @@ interface SearchBarProps {
 export default function SearchBar({ variant = 'hero' }: SearchBarProps) {
   const styles = {
     container: variant === 'hero' 
-      ? "w-full max-w-[90%] md:max-w-[75%] lg:max-w-[50%] mx-auto"
-      : "w-full max-w-[300px] md:max-w-[400px]",
+      ? "w-full max-w-[90%] md:max-w-[75%] lg:max-w-[50%] mx-auto text-black relative"
+      : "w-full max-w-[300px] md:max-w-[400px] text-black relative",
+    wrapper: "group relative transition-all duration-300 rounded-full",
     input: variant === 'hero'
-      ? "h-12 text-black text-base md:text-lg bg-white rounded-l-lg rounded-r-none border-r-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-      : "h-8 text-black text-sm bg-white rounded-l-lg rounded-r-none border-r-0 focus-visible:ring-0 focus-visible:ring-offset-0",
+      ? "h-12 sm:h-14 text-black font-poppins font-thin text-base md:text-lg bg-white rounded-full pl-10 pr-12 border-2 border-slate-300 shadow-md outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-0 focus:ring-offset-0"
+      : "h-10 text-black font-poppins font-thin text-sm bg-white rounded-full pl-9 pr-10 border-2 border-slate-300 shadow-md outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-0 focus:ring-offset-0",
     button: variant === 'hero'
-      ? "h-12 w-12 rounded-l-none focus-visible:ring-0 focus-visible:ring-offset-0"
-      : "h-8 w-8 rounded-l-none focus-visible:ring-0 focus-visible:ring-offset-0"
+      ? "absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8"
+      : "absolute right-2.5 top-1/2 -translate-y-1/2 h-6 w-6",
+    locationIcon: variant === 'hero'
+      ? "absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+      : "absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
   }
+  
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
+  
+  // Get UI state from Zustand store
   const { 
     searchValue, 
-    setSearchValue, 
-    setAutocompleteRef,
+    setSearchValue,
     setSelectedPlace,
-    setPlaceDetails
+    setPlaceDetails,
+    placeDetails,
+    clearPlaceDetails,
+    clearSearchValue
   } = useSearchStore()
   
   const router = useRouter()
   const { toast } = useToast()
-  const { updateSearchParams } = useSearchURL()
-  const inputRef = useRef<HTMLInputElement>(null)
-  const [hasSelectedPlace, setHasSelectedPlace] = useState(false)
-  const [selectedLocationData, setSelectedLocationData] = useState<LocationData | null>(null)
-
-  useEffect(() => {
-    if (inputRef.current) {
-      setAutocompleteRef(inputRef as React.RefObject<HTMLInputElement>)
-    }
-  }, [setAutocompleteRef])
 
   const handlePlaceSelected = (locationData: LocationData) => {
-    // Store place selection data without triggering search
-    setHasSelectedPlace(true)
-    setSearchValue(locationData.formatted_address)
-    setSelectedPlace(locationData.raw)
-    setSelectedLocationData(locationData)
+    setSearchValue(locationData.formatted_address);
+    setSelectedPlace(locationData.raw);
     
     // Store processed location data
     if (locationData.raw) {
-      setPlaceDetails(locationData.raw)
+      setPlaceDetails(locationData.raw);
     }
   }
 
@@ -72,7 +69,7 @@ export default function SearchBar({ variant = 'hero' }: SearchBarProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!hasSelectedPlace || !selectedLocationData) {
+    if (!placeDetails) {
       toast({
         title: "Invalid Location",
         description: "Please select a valid location from the suggestions",
@@ -81,44 +78,53 @@ export default function SearchBar({ variant = 'hero' }: SearchBarProps) {
       return
     }
     
-    // Now perform the search using the previously selected location
-    const bounds = selectedLocationData.bounds
-    if (!bounds) return
+    // Get bounding box from selected location
+    const viewport = placeDetails.viewport
+    if (!viewport) return
+    
+    // Generate search URL parameters directly
+    const searchParams = new URLSearchParams({
+      near: placeDetails.formattedAddress,
+      ne_lat: viewport.ne.lat.toString(),
+      ne_lng: viewport.ne.lng.toString(),
+      sw_lat: viewport.sw.lat.toString(),
+      sw_lng: viewport.sw.lng.toString(),
+      zoom_level: '13',
+      map_toggle: 'on'
+    })
     
     // Navigate to search page with selected location parameters
-    router.push(
-      '/boats/search?' + 
-      new URLSearchParams({
-        near: selectedLocationData.formatted_address,
-        ne_lat: bounds.ne_lat.toString(),
-        ne_lng: bounds.ne_lng.toString(),
-        sw_lat: bounds.sw_lat.toString(),
-        sw_lng: bounds.sw_lng.toString(),
-        zoom_level: '13',
-        map_toggle: 'on'
-      }).toString()
-    )
+    router.push(`/boats/search?${searchParams.toString()}`)
   }
 
   return (
-    <div className={styles.container}>
-      <form className="flex items-center w-full" onSubmit={handleSubmit}>
-        <PlacesAutocomplete
+    <div className={styles.container} ref={containerRef}>
+      <form className={styles.wrapper} onSubmit={handleSubmit}>
+        <div className={styles.locationIcon}>
+          <MapPin size={variant === 'hero' ? 18 : 16} />
+        </div>
+        <CustomPlacesAutocomplete
           onPlaceSelected={handlePlaceSelected}
           onError={handleLocationError}
           placeholder="Where can we take you?"
           className={styles.input}
-          containerClassName="flex-1"
+          containerClassName="w-full"
           defaultValue={searchValue}
+          variant={variant}
+          isOpen={isFocused}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setTimeout(() => setIsFocused(false), 200)}
         />
-        <Button
+        <button 
           type="submit"
-          variant="default"
-          size={variant === 'hero' ? 'lg' : 'default'}
-          className={`${styles.button} bg-gradient-to-r from-sky-300 to-emerald-400 hover:from-sky-400 hover:to-emerald-500`}
+          className={`${styles.button}`}
+          aria-label="Search"
         >
-          <Search size={variant === 'hero' ? 24 : 16} />
-        </Button>
+          <Search 
+            size={variant === 'hero' ? 24 : 18} 
+            className="text-sky-400" 
+          />
+        </button>
       </form>
     </div>
   )

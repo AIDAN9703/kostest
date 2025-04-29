@@ -2,7 +2,7 @@ import { db } from "@/database/db";
 import { boats } from "@/database/schema";
 import { eq } from "drizzle-orm";
 import { Boat, ActionResponse } from "@/types/types";
-import { cachedFetch } from '@/lib/utils';
+import { cachedFetch } from '@/lib/utils/general-utils';
 
 export async function getFeaturedBoats(): Promise<ActionResponse<Boat[]>> {
   "use server";

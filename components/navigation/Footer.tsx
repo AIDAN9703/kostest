@@ -7,13 +7,159 @@ import { FaYoutube, FaTiktok } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
+// Setup footer sections for better organization
+const quickLinks = [
+  { label: "About Us", href: "/about" },
+  { label: "Our Fleet", href: "/boats" },
+  { label: "KOS Yacht Club", href: "/destinations" },
+  { label: "FAQ", href: "/guide" },
+  { label: "Store", href: "/contact" },
+  { label: "News", href: "/contact" }
+];
+
+const locations = [
+  { label: "Miami, FL", href: "/locations" },
+  { label: "Fort Lauderdale, FL", href: "/locations" },
+  { label: "Bahamas", href: "/locations" },
+  { label: "Standord, CT", href: "/locations" },
+  { label: "Naples, FL", href: "/locations" },
+  { label: "Palm Beach, FL", href: "/locations" }
+];
+
+const services = [
+  { label: "Luxury Charters", href: "/services/luxury" },
+  { label: "Crew Services", href: "/services/crew" },
+  { label: "Event Planning", href: "/services/events" },
+  { label: "Concierge", href: "/services/concierge" },
+  { label: "Yacht Management", href: "/services/management" }
+];
+
 export default function Footer() {
   return (
     <footer className="bg-primary">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 lg:pt-20 pb-8">
+        {/* Mobile Optimized Layout */}
+        <div className="flex flex-col gap-8 md:hidden">
+          {/* Top Row - Logo and Social */}
+          <div className="flex items-center justify-between mb-2">
+            <Link href="/" className="block">
+              <Image 
+                src="/icons/logo.png" 
+                alt="KOS Yachts" 
+                width={48} 
+                height={48}
+                className="rounded-full"
+              />
+            </Link>
+            <div className="flex items-center gap-3">
+              <a 
+                href="https://instagram.com" 
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+                aria-label="Instagram"
+              >
+                <Instagram className="w-4 h-4 text-gray-300" />
+              </a>
+              <a 
+                href="https://tiktok.com" 
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+                aria-label="TikTok"
+              >
+                <FaTiktok className="w-4 h-4 text-gray-300" />
+              </a>
+              <a 
+                href="https://youtube.com" 
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+                aria-label="YouTube"
+              >
+                <FaYoutube className="w-4 h-4 text-gray-300" />
+              </a>
+            </div>
+          </div>
+          
+          {/* Section Grid - More spacing between sections */}
+          <div className="grid grid-cols-2 gap-x-6 gap-y-8">
+            {/* Quick Links */}
+            <div>
+              <h3 className="text-white font-serif text-lg mb-3">Quick Links</h3>
+              <ul className="space-y-2">
+                {quickLinks.slice(0, 3).map(link => (
+                  <li key={link.label}>
+                    <Link href={link.href} className="text-gray-300 text-sm hover:text-gold transition-colors font-light">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            {/* Locations */}
+            <div>
+              <h3 className="text-white font-serif text-lg mb-3">Locations</h3>
+              <ul className="space-y-2">
+                {locations.slice(0, 3).map(location => (
+                  <li key={location.label}>
+                    <Link href={location.href} className="text-gray-300 text-sm hover:text-gold transition-colors font-light">
+                      {location.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            {/* Services */}
+            <div>
+              <h3 className="text-white font-serif text-lg mb-3">Services</h3>
+              <ul className="space-y-2">
+                {services.slice(0, 3).map(service => (
+                  <li key={service.label}>
+                    <Link href={service.href} className="text-gray-300 text-sm hover:text-gold transition-colors font-light">
+                      {service.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            
+            {/* Additional Links - Fill the 4th grid slot */}
+            <div>
+              <h3 className="text-white font-serif text-lg mb-3">More</h3>
+              <ul className="space-y-2">
+                {quickLinks.slice(3, 6).map(link => (
+                  <li key={link.label}>
+                    <Link href={link.href} className="text-gray-300 text-sm hover:text-gold transition-colors font-light">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          
+          {/* Newsletter - Mobile */}
+          <div className="mt-2">
+            <h3 className="text-white font-serif text-lg mb-3">Newsletter</h3>
+            <form className="flex items-center">
+              <div className="relative flex-1">
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  className="w-full bg-white/5 border-white/10 text-white placeholder:text-gray-400 rounded-full py-2 pl-4 pr-12 text-sm focus:border-gold focus:ring-gold"
+                />
+                <Button
+                  type="submit"
+                  className="absolute right-1 top-1/2 -translate-y-1/2 bg-gold hover:bg-gold/90 text-[#1E293B] rounded-full w-8 h-8 flex items-center justify-center p-0"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden md:grid md:grid-cols-12 gap-8 lg:gap-12">
           {/* Company Info */}
-          <div className="lg:col-span-2">
+          <div className="md:col-span-2">
             <Link href="/" className="block mb-6">
               <Image 
                 src="/icons/logo.png" 
@@ -49,45 +195,49 @@ export default function Footer() {
           </div>
 
           {/* Quick Links */}
-          <div className="lg:col-span-2">
+          <div className="md:col-span-2">
             <h3 className="text-white font-serif text-xl mb-6">Quick Links</h3>
             <ul className="space-y-4">
-              <li><Link href="/about" className="text-gray-300 hover:text-gold transition-colors font-light">About Us</Link></li>
-              <li><Link href="/boats" className="text-gray-300 hover:text-gold transition-colors font-light">Our Fleet</Link></li>
-              <li><Link href="/destinations" className="text-gray-300 hover:text-gold transition-colors font-light">KOS Yacht Club</Link></li>
-              <li><Link href="/guide" className="text-gray-300 hover:text-gold transition-colors font-light">FAQ</Link></li>
-              <li><Link href="/contact" className="text-gray-300 hover:text-gold transition-colors font-light">Store</Link></li>
-              <li><Link href="/contact" className="text-gray-300 hover:text-gold transition-colors font-light">News</Link></li>
+              {quickLinks.map(link => (
+                <li key={link.label}>
+                  <Link href={link.href} className="text-gray-300 hover:text-gold transition-colors font-light">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Locations */}
-          <div className="lg:col-span-2">
+          <div className="md:col-span-2">
             <h3 className="text-white font-serif text-xl mb-6">Locations</h3>
             <ul className="space-y-4">
-              <li><Link href="/locations" className="text-gray-300 hover:text-gold transition-colors font-light">Miami, FL</Link></li>
-              <li><Link href="/locations" className="text-gray-300 hover:text-gold transition-colors font-light">Fort Lauderdale, FL</Link></li>
-              <li><Link href="/locations" className="text-gray-300 hover:text-gold transition-colors font-light">Bahamas</Link></li>
-              <li><Link href="/locations" className="text-gray-300 hover:text-gold transition-colors font-light">Standord, CT</Link></li>
-              <li><Link href="/locations" className="text-gray-300 hover:text-gold transition-colors font-light">Naples, FL</Link></li>
-              <li><Link href="/locations" className="text-gray-300 hover:text-gold transition-colors font-light">Palm Beach, FL</Link></li>
+              {locations.map(location => (
+                <li key={location.label}>
+                  <Link href={location.href} className="text-gray-300 hover:text-gold transition-colors font-light">
+                    {location.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Services */}
-          <div className="lg:col-span-2">
+          <div className="md:col-span-2">
             <h3 className="text-white font-serif text-xl mb-6">Services</h3>
             <ul className="space-y-4">
-              <li><Link href="/services/luxury" className="text-gray-300 hover:text-gold transition-colors font-light">Luxury Charters</Link></li>
-              <li><Link href="/services/crew" className="text-gray-300 hover:text-gold transition-colors font-light">Crew Services</Link></li>
-              <li><Link href="/services/events" className="text-gray-300 hover:text-gold transition-colors font-light">Event Planning</Link></li>
-              <li><Link href="/services/concierge" className="text-gray-300 hover:text-gold transition-colors font-light">Concierge</Link></li>
-              <li><Link href="/services/management" className="text-gray-300 hover:text-gold transition-colors font-light">Yacht Management</Link></li>
+              {services.map(service => (
+                <li key={service.label}>
+                  <Link href={service.href} className="text-gray-300 hover:text-gold transition-colors font-light">
+                    {service.label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           {/* Newsletter */}
-          <div className="lg:col-span-4">
+          <div className="md:col-span-4">
             <h3 className="text-white font-serif text-xl mb-6">Join the KOS Yacht Club Newsletter!</h3>
             <p className="text-gray-300 font-light leading-relaxed mb-6">
               Insider access to yachts, events, and the world of premeire charters.
@@ -111,19 +261,19 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-20 pt-8 border-t border-white/10">
+        <div className="mt-10 md:mt-16 pt-6 border-t border-white/10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-400 font-light text-sm">
+            <p className="text-gray-400 font-light text-xs sm:text-sm">
               © 2024 KOS Yachts. All rights reserved.
             </p>
-            <div className="flex items-center gap-8">
-              <Link href="/privacy" className="text-gray-400 hover:text-gold transition-colors text-sm font-light">
+            <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
+              <Link href="/privacy" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-gray-400 hover:text-gold transition-colors text-sm font-light">
+              <Link href="/terms" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">
                 Terms of Service
               </Link>
-              <Link href="/cookies" className="text-gray-400 hover:text-gold transition-colors text-sm font-light">
+              <Link href="/cookies" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">
                 Cookie Policy
               </Link>
             </div>

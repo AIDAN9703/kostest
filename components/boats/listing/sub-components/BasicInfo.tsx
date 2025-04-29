@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Users } from "lucide-react";
 import { Boat } from "@/types/types";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils/general-utils";
 import { GiCaptainHatProfile } from "react-icons/gi";
 import { TbRulerMeasure } from "react-icons/tb";
 
