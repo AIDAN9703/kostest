@@ -6,9 +6,12 @@ import { eq } from "drizzle-orm";
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Resolve the params promise
+    const resolvedParams = await params;
+    
     // Check authentication and authorization
     const session = await auth();
     
@@ -44,7 +47,7 @@ export async function PATCH(
         active: body.active,
         updatedAt: new Date()
       })
-      .where(eq(boats.id, params.id))
+      .where(eq(boats.id, resolvedParams.id))
       .returning({ id: boats.id, active: boats.active });
     
     if (!result.length) {

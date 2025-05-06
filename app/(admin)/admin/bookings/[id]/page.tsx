@@ -95,10 +95,10 @@ const booking = {
 export default async function BookingDetailsPage({ 
   params 
 }: { 
-  params: Promise<{ id: string }> | { id: string } 
+  params: Promise<{ id: string }> 
 }) {
-  // Await the params to resolve if they're a Promise
-  const resolvedParams = await (params instanceof Promise ? params : Promise.resolve(params));
+  // Await the params promise
+  const resolvedParams = await params;
   
   return (
     <div className="space-y-6">

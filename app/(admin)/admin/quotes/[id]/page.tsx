@@ -67,10 +67,10 @@ const quote = {
 export default async function QuoteDetailsPage({ 
   params 
 }: { 
-  params: Promise<{ id: string }> | { id: string } 
+  params: Promise<{ id: string }> 
 }) {
-  // Await the params to resolve if they're a Promise
-  const resolvedParams = await (params instanceof Promise ? params : Promise.resolve(params));
+  // Await the params promise
+  const resolvedParams = await params;
 
   const isExpired = new Date(quote.dates.expiresAt) < new Date();
   const daysUntilExpiry = Math.ceil((new Date(quote.dates.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
