@@ -176,6 +176,7 @@ const VerifyPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ email, token }),
+        cache: 'no-store'
       });
       
       const signInData = await signInResponse.json();

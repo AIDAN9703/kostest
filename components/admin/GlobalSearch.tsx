@@ -49,7 +49,9 @@ export function GlobalSearch() {
     const fetchResults = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/admin/search?q=${encodeURIComponent(debouncedQuery)}`);
+        const response = await fetch(`/api/admin/search?q=${encodeURIComponent(debouncedQuery)}`, {
+          cache: 'no-store' // Ensure fresh data in Next.js 15
+        });
         if (!response.ok) throw new Error('Search failed');
         const data = await response.json();
         setResults(data.results);

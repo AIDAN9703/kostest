@@ -30,7 +30,9 @@ export function NearbyBoats({ boat, limit = 3 }: NearbyBoatsProps) {
           params.append("location", boat.homePort);
         }
         
-        const response = await fetch(`/api/boats/search?${params.toString()}&limit=${limit}&exclude=${boat.id}`);
+        const response = await fetch(`/api/boats/search?${params.toString()}&limit=${limit}&exclude=${boat.id}`, {
+          cache: 'no-store' // Ensure fresh data in Next.js 15
+        });
         if (!response.ok) {
           throw new Error("Failed to fetch nearby boats");
         }

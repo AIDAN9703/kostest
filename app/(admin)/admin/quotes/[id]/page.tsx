@@ -64,7 +64,14 @@ const quote = {
   notes: "Offer 10% discount for booking within the next 48 hours.",
 };
 
-export default function QuoteDetailsPage({ params }: { params: { id: string } }) {
+export default async function QuoteDetailsPage({ 
+  params 
+}: { 
+  params: Promise<{ id: string }> | { id: string } 
+}) {
+  // Await the params to resolve if they're a Promise
+  const resolvedParams = await (params instanceof Promise ? params : Promise.resolve(params));
+
   const isExpired = new Date(quote.dates.expiresAt) < new Date();
   const daysUntilExpiry = Math.ceil((new Date(quote.dates.expiresAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
   
@@ -72,7 +79,7 @@ export default function QuoteDetailsPage({ params }: { params: { id: string } })
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quote #{params.id}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Quote #{resolvedParams.id}</h1>
           <p className="text-gray-500 mt-1">
             Created on {new Date(quote.dates.createdAt).toLocaleDateString()} at {new Date(quote.dates.createdAt).toLocaleTimeString()}
           </p>

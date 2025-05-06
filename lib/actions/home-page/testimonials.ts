@@ -10,8 +10,8 @@ interface Review {
 }
 
 interface PlacesResponse {
-  result: {
-    reviews: Review[];
+  result?: {
+    reviews?: Review[];
   };
 }
 
@@ -34,7 +34,10 @@ export async function getTestimonials(): Promise<ActionResponse<Review[]>> {
       try {
         const response = await fetch(
           `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=reviews&key=${apiKey}`,
-          { next: { revalidate: 3600 } }
+          { 
+            cache: 'force-cache',
+            next: { revalidate: 3600 } 
+          }
         );
         
         if (!response.ok) {

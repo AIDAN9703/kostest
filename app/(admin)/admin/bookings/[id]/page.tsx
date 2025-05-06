@@ -92,12 +92,19 @@ const booking = {
   ],
 };
 
-export default function BookingDetailsPage({ params }: { params: { id: string } }) {
+export default async function BookingDetailsPage({ 
+  params 
+}: { 
+  params: Promise<{ id: string }> | { id: string } 
+}) {
+  // Await the params to resolve if they're a Promise
+  const resolvedParams = await (params instanceof Promise ? params : Promise.resolve(params));
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Booking #{params.id}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Booking #{resolvedParams.id}</h1>
           <p className="text-gray-500 mt-1">
             Created on {new Date(booking.booking.createdAt).toLocaleDateString()} at {new Date(booking.booking.createdAt).toLocaleTimeString()}
           </p>
