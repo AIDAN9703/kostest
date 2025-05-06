@@ -299,7 +299,10 @@ export const users = pgTable(
     index("role_idx").on(table.role),
     index("boating_exp_idx").on(table.boatingExperience),
     index("referral_code_idx").on(table.referralCode),
-    index("referred_by_idx").on(table.referredById)
+    index("referred_by_idx").on(table.referredById),
+    // Search-specific indexes
+    index("user_search_name_idx").on(table.firstName, table.lastName),
+    index("user_search_username_idx").on(table.username),
   ]
 );
 
@@ -479,6 +482,9 @@ export const boats = pgTable("boat",{
     index("boat_category_idx").on(table.category),
     index("boat_location_idx").on(table.homePort),
     index("boat_spatial_idx").using("gist", table.location),
+    // Search-specific indexes
+    index("boat_search_name_idx").on(table.name),
+    index("boat_search_make_model_idx").on(table.make, table.model),
   ]
 );
 
@@ -584,6 +590,8 @@ export const bookings = pgTable("booking", {
   index("booking_date_idx").on(table.startDate, table.endDate),
   index("booking_pickup_idx").using("gist", table.pickupCoordinates),
   index("booking_dropoff_idx").using("gist", table.dropoffCoordinates),
+  // Search-specific indexes
+  index("booking_search_customer_idx").on(table.customerName, table.customerEmail),
 ]);
 
 export const reviews = pgTable("review", {

@@ -4,6 +4,9 @@ import { db } from "@/database/db";
 import { bookings, bookingStatusEnum, paymentStatusEnum } from "@/database/schema";
 import { eq } from "drizzle-orm";
 
+// Add dynamic configuration for Next.js 15
+export const dynamic = 'force-dynamic';
+
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2025-03-31.basil",

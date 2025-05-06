@@ -3,6 +3,9 @@ import { db } from "@/database/db";
 import { users } from "@/database/schema";
 import { eq } from "drizzle-orm";
 
+// Add dynamic configuration for Next.js 15
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const email = req.nextUrl.searchParams.get("email");

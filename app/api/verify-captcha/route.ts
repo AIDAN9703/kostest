@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// Add dynamic configuration for Next.js 15
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: Request) {
   const data = await request.json();
   const { token } = data;
@@ -11,7 +14,10 @@ export async function POST(request: Request) {
     // Verify the captcha token with Google's API
     const response = await fetch(
       `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${token}`,
-      { method: 'POST' }
+      { 
+        method: 'POST',
+        cache: 'no-store' // Ensure fresh data in Next.js 15
+      }
     );
     
     const result = await response.json();

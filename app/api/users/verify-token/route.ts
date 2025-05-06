@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { findUserByEmailAndToken } from "@/lib/utils/general-utils";
 
+// Add dynamic configuration for Next.js 15
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     // Get email and token from URL search params

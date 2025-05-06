@@ -85,9 +85,7 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
       </head>
       <SessionProvider session={session}>
         <body className={`${ibmPlexSans.className} ${bebasNeue.variable} ${seasons.variable} ${openSans.variable} ${poppins.variable} antialiased`}>
-          <NewsletterProvider>
-            {children}
-          </NewsletterProvider>
+          {children}
           <Toaster />
         </body>
       </SessionProvider>

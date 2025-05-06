@@ -5,6 +5,9 @@ import { boats, boatCategoryEnum } from '@/database/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
+// Add this export at the top of the file to configure the route
+export const dynamic = 'force-dynamic'; // This route depends on authentication state
+
 // Validation schema for boat creation
 const boatSchema = z.object({
   name: z.string().min(3, "Boat name must be at least 3 characters"),

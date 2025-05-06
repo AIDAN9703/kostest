@@ -1,7 +1,9 @@
 import { Metadata } from "next";
 import Image from "next/image";
-import { CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, Calendar, Users, Navigation, Globe } from "lucide-react";
 import ExperienceLayout from "@/components/experiences/ExperienceLayout";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Water Sports Adventures | KOSyachts",
@@ -47,6 +49,30 @@ const faqs = [
   {
     question: "Can we customize our water sports package?",
     answer: "Absolutely! We can create a custom package based on your group's interests, experience levels, and preferences. Just let us know what activities you're most interested in."
+  }
+];
+
+// Benefits of watersports
+const benefits = [
+  {
+    icon: <Calendar className="h-6 w-6" />,
+    title: "Variety of Activities",
+    description: "Multiple thrilling watersports in a single charter"
+  },
+  {
+    icon: <Users className="h-6 w-6" />,
+    title: "Professional Instruction",
+    description: "Expert guidance for beginners and advanced riders"
+  },
+  {
+    icon: <Navigation className="h-6 w-6" />,
+    title: "Premium Equipment",
+    description: "Top-quality gear for optimal performance and safety"
+  },
+  {
+    icon: <Globe className="h-6 w-6" />,
+    title: "Ideal Locations",
+    description: "Access to the best spots for each activity"
   }
 ];
 
@@ -99,29 +125,50 @@ export default function WatersportsPage() {
       imageOverlayColor="from-[#0F172A]/70 to-[#0F172A]/40"
       faqs={faqs}
       relatedExperiences={relatedExperiences}
+      buttonText="Book Now"
+      buttonLink="/contact"
     >
-      <div className="space-y-16">
-        <div className="grid md:grid-cols-2 gap-x-12 gap-y-8">
-          <div>
-            <h2 className="text-3xl font-bold mb-6">Thrilling Water Sports Experiences</h2>
-            <p className="text-gray-600 mb-4">
-              Whether you're seeking an adrenaline rush or a fun family activity, our water sports 
-              charters offer something for everyone. With professional instructors and premium equipment, 
-              you'll enjoy safe and exciting adventures on the water.
-            </p>
-            <p className="text-gray-600 mb-4">
-              Our experienced captains know the best locations for each activity, ensuring optimal 
-              conditions and scenery for your chosen water sports. From protected bays for beginners 
-              to open water for thrill-seekers, we'll find the perfect spot.
-            </p>
-            <p className="text-gray-600 mb-6">
-              No experience? No problem! Our patient instructors specialize in teaching newcomers 
-              and helping them gain confidence on the water. Most guests are up and enjoying water 
-              sports within minutes!
-            </p>
+      <div className="max-w-7xl mx-auto space-y-10 px-6 font-poppins">
+        {/* Modern Intro Section */}
+        <section className="pt-4">
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden p-8 md:p-12">
+            <div className="flex flex-col max-w-3xl mx-auto">
+              <h2 className="text-3xl font-bold mb-6 text-primary font-poppins">Thrilling Water Sports Experiences</h2>
+              <p className="text-gray-600 mb-8 leading-relaxed font-poppins">
+                Whether you're seeking an adrenaline rush or a fun family activity, our water sports 
+                charters offer something for everyone. With professional instructors and premium equipment, 
+                you'll enjoy safe and exciting adventures on the water. Our experienced captains know the best 
+                locations for each activity, ensuring optimal conditions and scenery for your chosen water sports.
+              </p>
+              
+              <div className="grid sm:grid-cols-2 gap-6 mt-2">
+                {benefits.map((benefit, index) => (
+                  <div key={index} className="flex items-start">
+                    <div className="p-2 mr-3 text-primary">
+                      {benefit.icon}
+                    </div>
+                    <div>
+                      <h3 className="font-medium text-primary font-poppins">{benefit.title}</h3>
+                      <p className="text-sm text-gray-500 font-poppins">{benefit.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* What's Included Section */}
+        <section className="pb-12">
+          <div className="rounded-xl p-8 md:p-10">
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-bold mb-3 text-primary font-poppins">What's Included</h2>
+              <p className="text-gray-600 max-w-2xl mx-auto font-poppins">
+                Our water sports charters come with everything you need for an exciting day on the water.
+              </p>
+            </div>
             
-            <h3 className="text-xl font-semibold mb-4">What's Included:</h3>
-            <ul className="space-y-3">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[
                 "Professional water sports instructors",
                 "Premium water sports equipment",
@@ -132,27 +179,25 @@ export default function WatersportsPage() {
                 "Fresh towels and basic amenities",
                 "GoPro camera rental (additional fee)"
               ].map((item, index) => (
-                <li key={index} className="flex items-start">
-                  <CheckCircle2 className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                  <span>{item}</span>
-                </li>
+                <div key={index} className="p-4 flex items-start">
+                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5 mr-3" />
+                  <span className="text-gray-700 font-poppins">{item}</span>
+                </div>
               ))}
-            </ul>
+            </div>
+          </div>
+        </section>
+        
+        {/* Popular Activities Section */}
+        <section>
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold mb-3 text-primary font-poppins">Popular Activities</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto font-poppins">
+              Choose from our wide range of exciting water sports activities for all skill levels.
+            </p>
           </div>
           
-          <div className="relative h-[400px] md:h-auto rounded-2xl overflow-hidden">
-            <Image
-              src="/images/experiences/watersports-content.jpg"
-              alt="Exciting water sports activities"
-              fill
-              className="object-cover"
-            />
-          </div>
-        </div>
-        
-        <div>
-          <h2 className="text-3xl font-bold mb-8 text-center">Popular Activities</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {activities.map((activity, index) => (
               <div key={index} className="border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                 <div className="relative h-48">
@@ -164,68 +209,82 @@ export default function WatersportsPage() {
                     className="object-cover"
                   />
                   <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-                    <h3 className="text-xl font-bold text-white">{activity.name}</h3>
+                    <h3 className="text-xl font-bold text-white font-poppins">{activity.name}</h3>
                     {activity.beginnerFriendly && (
-                      <span className="inline-block text-xs bg-primary/90 text-white px-2 py-1 rounded-full mt-1">
+                      <span className="inline-block text-xs bg-primary/90 text-white px-2 py-1 rounded-full mt-1 font-poppins">
                         Beginner Friendly
                       </span>
                     )}
                   </div>
                 </div>
                 <div className="p-4">
-                  <p className="text-gray-600">{activity.description}</p>
+                  <p className="text-gray-600 font-poppins">{activity.description}</p>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </section>
         
-        <div>
-          <h2 className="text-3xl font-bold mb-8 text-center">Charter Options</h2>
-          <div className="grid md:grid-cols-3 gap-6">
+        {/* Charter Options Section */}
+        <section>
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold mb-3 text-primary font-poppins">Charter Options</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto font-poppins">
+              Select the perfect package for your water sports adventure.
+            </p>
+          </div>
+          
+          <div className="grid sm:grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="p-6 border rounded-xl">
-              <h3 className="text-xl font-semibold mb-3">Half-Day Adventure (4 Hours)</h3>
-              <p className="text-gray-600 mb-4">
+              <h3 className="text-xl font-semibold mb-3 font-poppins">Half-Day Adventure (4 Hours)</h3>
+              <p className="text-gray-600 mb-4 font-poppins">
                 Perfect for trying 2-3 different water sports activities. Includes all equipment and instruction.
               </p>
-              <ul className="space-y-2 mb-4 text-sm text-gray-600">
+              <ul className="space-y-2 mb-4 text-sm text-gray-600 font-poppins">
                 <li>• Choose from any activities</li>
                 <li>• Great for families</li>
                 <li>• Includes basic refreshments</li>
               </ul>
-              <p className="font-medium">Starting from $850</p>
+              <p className="font-medium font-poppins">Starting from $850</p>
             </div>
             
             <div className="p-6 border rounded-xl bg-primary/5 relative">
-              <div className="absolute top-0 right-0 bg-primary text-white text-xs px-3 py-1 rounded-bl-lg rounded-tr-lg font-medium">
+              <div className="absolute top-0 right-0 bg-primary text-white text-xs px-3 py-1 rounded-bl-lg rounded-tr-lg font-medium font-poppins">
                 MOST POPULAR
               </div>
-              <h3 className="text-xl font-semibold mb-3">Full-Day Package (8 Hours)</h3>
-              <p className="text-gray-600 mb-4">
+              <h3 className="text-xl font-semibold mb-3 font-poppins">Full-Day Package (8 Hours)</h3>
+              <p className="text-gray-600 mb-4 font-poppins">
                 Our comprehensive water sports experience with time to enjoy multiple activities at a relaxed pace.
               </p>
-              <ul className="space-y-2 mb-4 text-sm text-gray-600">
+              <ul className="space-y-2 mb-4 text-sm text-gray-600 font-poppins">
                 <li>• Try all available activities</li>
                 <li>• Includes gourmet lunch</li>
                 <li>• Visit multiple locations</li>
               </ul>
-              <p className="font-medium">Starting from $1,400</p>
+              <p className="font-medium font-poppins">Starting from $1,400</p>
             </div>
             
             <div className="p-6 border rounded-xl">
-              <h3 className="text-xl font-semibold mb-3">Private Lessons</h3>
-              <p className="text-gray-600 mb-4">
+              <h3 className="text-xl font-semibold mb-3 font-poppins">Private Lessons</h3>
+              <p className="text-gray-600 mb-4 font-poppins">
                 One-on-one instruction focused on a specific water sport of your choice.
               </p>
-              <ul className="space-y-2 mb-4 text-sm text-gray-600">
+              <ul className="space-y-2 mb-4 text-sm text-gray-600 font-poppins">
                 <li>• Personalized coaching</li>
                 <li>• All skill levels</li>
                 <li>• Flexible duration</li>
               </ul>
-              <p className="font-medium">Starting from $200/hour</p>
+              <p className="font-medium font-poppins">Starting from $200/hour</p>
+              <div className="mt-4">
+                <Link href="/contact">
+                  <Button className="bg-primary hover:bg-primary/90 text-white font-poppins">
+                    Book Your Adventure
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </ExperienceLayout>
   );
