@@ -7,6 +7,8 @@ import { auth } from "@/auth";
 import { SessionProvider } from "next-auth/react";
 import NewsletterProvider from "@/components/newsletter/NewsletterProvider";
 import GoogleMapsScript from "@/components/providers/GoogleMapsScript";
+import Navigation from "@/components/navigation/Navigation";
+import { ImageKitProvider } from "@imagekit/next";
 
 const openSans = localFont({
   src: [
@@ -85,8 +87,10 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
       </head>
       <SessionProvider session={session}>
         <body className={`${ibmPlexSans.className} ${bebasNeue.variable} ${seasons.variable} ${openSans.variable} ${poppins.variable} antialiased`}>
-          {children}
-          <Toaster />
+          <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || ''}>
+            {children}
+            <Toaster />
+          </ImageKitProvider>
         </body>
       </SessionProvider>
     </html>

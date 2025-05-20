@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Boat } from "@/types/types";
+import { Boat } from "@/lib/types/types";
 import { 
   Ship, 
   Anchor, 

@@ -4,7 +4,7 @@ import { users } from "@/database/schema";
 import { eq } from "drizzle-orm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ProfileSettingsForm from "@/components/profile/ProfileSettingsForm";
-import { UserProfile } from "@/types/types";
+import { UserProfile } from "@/lib/types/types";
 import { Settings, LogOut } from "lucide-react";
 import { Suspense } from "react";
 import { Button } from "@/components/ui/button";

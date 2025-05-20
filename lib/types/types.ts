@@ -1,6 +1,6 @@
 import { boatCategoryEnum } from "@/database/schema";
 import { z } from "zod";
-import { ProfileFormValues } from "@/lib/validations";
+import { ProfileFormValues } from "@/lib/validation/validations";
 import { LucideIcon } from 'lucide-react';
 
 // User profile types
@@ -42,7 +42,6 @@ export interface UserProfile {
   boatingExperience?: BoatingExperience;
   profileImage?: string | null;
   coverImage?: string | null;
-  profileCompletionPercentage?: number;
   emailVerified?: boolean;
   phoneVerified?: boolean;
   createdAt: Date;
@@ -53,6 +52,20 @@ export interface ProfileUpdateResponse {
   success?: boolean;
   error?: string;
   fieldErrors?: Record<string, string[]>;
+}
+
+// Define the Pricing Tier type separately for clarity
+export interface PricingTier {
+  id: string;
+  boatId: string;
+  hours: number;
+  price: number;
+  name?: string | null;
+  description?: string | null;
+  isActive: boolean;
+  isDefault?: boolean | null;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Boat {
@@ -90,7 +103,15 @@ export interface Boat {
   galleryImages?: string[] | null;
   virtualTourUrl?: string | null;
   videoUrl?: string | null;
-  hourlyRate: number;
+  
+  // Pricing tiers - comes from a join/separate query (not in the boats table)
+  pricingTiers?: PricingTier[];
+  
+  // Deprecated fields that may still appear in some data
+  hourlyRate?: number;
+  homePort?: string;
+  currentLocation?: string;
+  
   halfDayPrice?: number | null;
   fullDayPrice?: number | null;
   weeklyRate?: number | null;
@@ -99,8 +120,7 @@ export interface Boat {
   cleaningFee?: number | null;
   taxRate?: number | null;
   depositAmount?: number | null;
-  homePort?: string | null;
-  currentLocation?: string | null;
+  locationLabel?: string | null;
   availableDestinations?: string[] | null;
   seasonalLocations?: unknown;
   active: boolean;
@@ -144,6 +164,12 @@ export interface Boat {
   totalReviews?: number | null;
   // Booking options
   instantBook: boolean;
+  
+  // Location coordinates for map display - runtime property from SQL query
+  locationCoordinates?: {
+    lat: number;
+    lng: number;
+  } | null;
 }
 
 // Search params type for filtering boats
@@ -228,7 +254,13 @@ export type ActionResponse<T> = {
 };
 
 // Re-export booking types for convenience
-export type { BookingRequest, ProfileFormValues } from "../lib/validations"; 
+export type { 
+  BookingRequest, 
+  ProfileFormValues,
+  InitialBookingDetails,
+  PhoneNumberInput,
+  OtpInput
+} from "../validation/validations"; 
 
 // Navigation types
 export interface NavigationItem {

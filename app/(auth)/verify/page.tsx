@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { phoneVerificationSchema } from "@/lib/validations";
+import { phoneVerificationSchema } from "@/lib/validation/validations";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,22 +10,17 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { verifyPhoneCode, sendVerificationCode } from "@/lib/actions/auth/verification";
+import { verifyOtpAndSignIn, resendVerificationCode } from "@/lib/actions/auth/verification";
 import { useSession } from "next-auth/react";
 
 const VerifyPage = () => {
   const searchParams = useSearchParams();
   const phoneParam = searchParams.get("phone") || "";
   const email = searchParams.get("email") || "";
-  const token = searchParams.get("token") || "";
   const router = useRouter();
   const { data: session, status } = useSession();
   const [isResending, setIsResending] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [initialCodeSent, setInitialCodeSent] = useState(false);
-  const codeSentRef = useRef(false);
-  const initialLoadTimeRef = useRef(Date.now());
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
   
   // Use the phone number from the URL or from the session
   const phoneNumber = phoneParam || session?.user?.phoneNumber || "";
@@ -52,77 +47,33 @@ const VerifyPage = () => {
     }
   }, [session, router, status]);
 
-  // Helper function to get user ID from session or token
-  const getUserId = async () => {
-    // If we have a session, use the user ID from it
-    if (session?.user?.id) {
-      return { userId: session.user.id, success: true };
+  const handleResendCode = async () => {
+    if (!email) {
+      toast({
+        title: "Error",
+        description: "Missing email information. Please try signing in again.",
+        variant: "destructive",
+      });
+      return;
     }
     
-    // If not signed in but have email and token, find the user
-    if (email && token) {
-      try {
-        const response = await fetch(`/api/users/verify-token?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`);
-        const data = await response.json();
-        
-        if (data.success && data.user?.id) {
-          return { userId: data.user.id, success: true };
-        } else {
-          toast({
-            title: "Error",
-            description: "Invalid or expired verification link. Please try signing in again.",
-            variant: "destructive",
-          });
-          router.push("/sign-in");
-          return { success: false };
-        }
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "An unexpected error occurred. Please try signing in again.",
-          variant: "destructive",
-        });
-        router.push("/sign-in");
-        return { success: false };
-      }
-    }
-    
-    // If we don't have a user ID, show an error
-    toast({
-      title: "Error",
-      description: "Unable to identify user. Please try signing in again.",
-      variant: "destructive",
-    });
-    router.push("/sign-in");
-    return { success: false };
-  };
-
-  // Helper function to send verification code
-  const sendCode = async (phone: string) => {
     setIsResending(true);
     
     try {
-      const { userId, success } = await getUserId();
-      if (!success) {
-        setIsResending(false);
-        return false;
-      }
-      
-      const result = await sendVerificationCode(userId, phone);
+      // Use the updated resendVerificationCode action without token
+      const result = await resendVerificationCode(email);
       
       if (result.success) {
         toast({
-          title: "Verification code sent",
+          title: "Success",
           description: "A verification code has been sent to your phone.",
         });
-        return true;
       } else {
         toast({
           title: "Error",
           description: result.error || "Failed to send verification code.",
           variant: "destructive",
         });
-        return false;
       }
     } catch (error) {
       toast({
@@ -130,118 +81,49 @@ const VerifyPage = () => {
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-      return false;
     } finally {
       setIsResending(false);
     }
   };
 
-  // Send verification code only if this is the first time after signup
-  useEffect(() => {
-    // Only send a code automatically if:
-    // 1. We have a phone number
-    // 2. This is the first load of the page
-    // 3. We haven't sent a code yet
-    // 4. We have a "fresh" URL parameter (indicating we just came from signup)
-    if (phoneNumber && isFirstLoad && !codeSentRef.current && phoneParam) {
-      setIsFirstLoad(false);
-      codeSentRef.current = true;
-      setInitialCodeSent(true);
-      sendCode(phoneNumber);
-    }
-  }, [phoneNumber, phoneParam, isFirstLoad]);
-
-  const handleResendCode = async () => {
-    const phone = form.getValues("phoneNumber");
-    if (!phone) {
+  const onSubmit = async (data: { phoneNumber: string, verificationCode: string }) => {
+    if (!email) {
       toast({
         title: "Error",
-        description: "Please enter a valid phone number.",
+        description: "Missing email information. Please try signing in again.",
         variant: "destructive",
       });
       return;
     }
-
-    await sendCode(phone);
-  };
-
-  // Helper function to sign in with token
-  const signInWithToken = async () => {
-    if (!email || !token) return false;
     
-    try {
-      const signInResponse = await fetch(`/api/users/sign-in-with-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, token }),
-        cache: 'no-store'
-      });
-      
-      const signInData = await signInResponse.json();
-      
-      if (signInData.success) {
-        return true;
-      } else {
-        toast({
-          title: "Error signing in",
-          description: "Your phone was verified but we couldn't sign you in automatically. Please sign in manually.",
-          variant: "destructive",
-        });
-        router.push("/sign-in");
-        return false;
-      }
-    } catch (error) {
-      toast({
-        title: "Error signing in",
-        description: "An unexpected error occurred. Please try signing in manually.",
-        variant: "destructive",
-      });
-      router.push("/sign-in");
-      return false;
-    }
-  };
-
-  const onSubmit = async (data: { phoneNumber: string, verificationCode: string }) => {
     setIsVerifying(true);
     
     try {
-      const { userId, success } = await getUserId();
-      if (!success) {
-        setIsVerifying(false);
-        return;
-      }
-      
-      const result = await verifyPhoneCode(
-        userId,
-        data.phoneNumber,
+      // Use our updated consolidated server action without token
+      const result = await verifyOtpAndSignIn(
+        email,
         data.verificationCode
       );
       
       if (result.success) {
         toast({
           title: "Success",
-          description: "Your phone number has been verified successfully.",
+          description: result.data?.message || "Your phone number has been verified successfully.",
         });
         
-        // Now sign in the user if we have a token
-        if (email && token) {
-          const signedIn = await signInWithToken();
-          if (signedIn) {
-            // Refresh the session
-            router.push("/");
-          }
-        } else {
-          // Redirect to home page if already signed in
-          router.push("/");
-        }
+        // Redirect to the provided URL or home page
+        router.push(result.data?.redirectUrl || "/");
       } else {
         toast({
           title: "Verification failed",
           description: result.error || "Please check your verification code and try again.",
           variant: "destructive",
         });
+        
+        // If there's a redirect URL in the error response, go there
+        if (result.data?.redirectUrl) {
+          router.push(result.data.redirectUrl);
+        }
       }
     } catch (error) {
       toast({
@@ -265,7 +147,6 @@ const VerifyPage = () => {
         </div>
 
         <div className="space-y-3 mb-8">
-          <h2 className="text-2xl font-bold text-gray-800 font-serif text-center">Verify Your Phone</h2>
           <p className="text-gray-600 text-center">
             We've sent a verification code to your phone. Please enter it below to verify your account.
           </p>

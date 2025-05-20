@@ -1,6 +1,6 @@
 "use client";
 
-import { Boat } from "@/types/types";
+import { Boat } from "@/lib/types/types";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Info } from "lucide-react";

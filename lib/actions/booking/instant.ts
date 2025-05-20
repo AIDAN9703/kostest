@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from "@/database/db";
-import { boats, bookings, bookingTypeEnum, bookingStatusEnum } from "@/database/schema";
+import { boats, bookings, bookingTypeEnum, bookingStatusEnum, boatPricingTiers } from "@/database/schema";
 import { auth } from "@/auth";
-import { bookingRequestSchema } from "@/lib/validations";
+import { bookingRequestSchema } from "@/lib/validation/validations";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { calculateBookingFees } from "../booking";
@@ -39,13 +39,11 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
       .select({
         id: boats.id,
         name: boats.name,
-        hourlyRate: boats.hourlyRate,
         cleaningFee: boats.cleaningFee, 
         depositAmount: boats.depositAmount,
-        taxRate: boats.taxRate,
         ownerId: boats.ownerId,
         instantBook: boats.instantBook,
-        mainImage: boats.mainImage
+        mainImage: boats.mainImage,
       })
       .from(boats)
       .where(eq(boats.id, data.boatId));
@@ -57,7 +55,19 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
       };
     }
     
-    const boat = boatResults[0];
+    // Get pricing tiers in separate query - professional pattern for relational data
+    const pricingTiers = await db
+      .select()
+      .from(boatPricingTiers)
+      .where(eq(boatPricingTiers.boatId, data.boatId));
+    
+    // Create a combined boat object with pricing tiers - this is how we handle relations
+    const boat = {
+      ...boatResults[0],
+      pricingTiers: pricingTiers,
+      // Add default tax rate since it's not in the schema
+      taxRate: 0.08 // 8% default tax rate
+    };
     
     // Verify boat allows instant booking
     if (!boat.instantBook) {
@@ -67,13 +77,14 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
       };
     }
     
+    // Calculate base price using pricing tiers
+    const basePrice = calculatePriceFromTiers(boat, data.numberOfHours);
+    
     // Calculate fees
-    const basePrice = data.numberOfHours * (boat.hourlyRate || 0);
     const fees = calculateBookingFees({
       basePrice,
       needsCaptain: data.needsCaptain,
       cleaningFee: boat.cleaningFee || 0,
-      taxRate: boat.taxRate || 0.08
     });
     
     // Create a Stripe Checkout Session
@@ -232,4 +243,25 @@ export async function createInstantBookingAction(formData: FormData) {
 
   // Let the component handle the redirect based on the returned data
   return await createInstantBooking(data);
+}
+
+// Helper function to calculate price from tiers
+function calculatePriceFromTiers(boat: any, hours: number) {
+  if (!boat.pricingTiers || boat.pricingTiers.length === 0) return 0;
+  
+  // Find an exact match for the number of hours
+  const exactTier = boat.pricingTiers.find((tier: any) => tier.hours === hours && tier.isActive);
+  if (exactTier) return exactTier.price;
+  
+  // If no exact match, find the closest tier (prefer higher tier)
+  const sortedTiers = [...boat.pricingTiers]
+    .filter((tier: any) => tier.isActive)
+    .sort((a: any, b: any) => a.hours - b.hours);
+  
+  // Find the closest tier that covers the requested hours
+  const closestTier = sortedTiers.find((tier: any) => tier.hours >= hours);
+  if (closestTier) return closestTier.price;
+  
+  // If no higher tier is found, use the highest available tier
+  return sortedTiers.length > 0 ? sortedTiers[sortedTiers.length - 1].price : 0;
 } 

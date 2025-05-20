@@ -6,7 +6,6 @@ import { z } from "zod";
 export const signUpSchema = z.object({
   firstName: z.string().min(3),
   lastName: z.string().min(3, "Last name must be at least 3 characters"),
-  username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
   phoneNumber: z.string().min(10, "Phone number must be at least 10 characters"),
   birthday: z.string().min(10, "Please enter a valid date"),
@@ -30,6 +29,27 @@ export const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   rememberMe: z.boolean().optional(),
+});
+
+/**
+ * Booking Schemas for Multi-Step Flow
+ */
+// Step 1: Initial booking details
+export const initialBookingDetailsSchema = z.object({
+  startDate: z.date({ required_error: "Date is required" }),
+  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
+  numberOfHours: z.number().min(1, "Number of hours is required"),
+  numberOfPassengers: z.number().min(1, "At least one passenger is required"),
+});
+
+// Step 2: Phone number input
+export const phoneNumberSchema = z.object({
+  phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
+});
+
+// Step 3: OTP verification
+export const otpSchema = z.object({
+  otp: z.string().length(6, "Verification code must be 6 digits"),
 });
 
 /**
@@ -92,3 +112,12 @@ export const bookingRequestSchema = z.object({
 // Export type for use in components
 export type BookingRequest = z.infer<typeof bookingRequestSchema>;
 export type ProfileFormValues = z.infer<typeof profileUpdateSchema>;
+
+export type SignUpData = z.infer<typeof signUpSchema>;
+export type SignInData = z.infer<typeof signInSchema>;
+export type PhoneVerificationData = z.infer<typeof phoneVerificationSchema>;
+
+// Export types for the new schemas
+export type InitialBookingDetails = z.infer<typeof initialBookingDetailsSchema>;
+export type PhoneNumberInput = z.infer<typeof phoneNumberSchema>;
+export type OtpInput = z.infer<typeof otpSchema>;

@@ -9,7 +9,7 @@ import { updateUserProfile } from "@/lib/actions/profile-actions";
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { getOptimizedImageUrl } from '@/lib/services/imagekit';
-import Image from "next/image";
+import { Image as IKImage } from "@imagekit/next";
 import { cn } from "@/lib/utils/general-utils";
 
 interface ProfileHeaderProps {
@@ -28,7 +28,7 @@ const UserAvatar = ({
   lastName?: string | null;
   onUpdateImage: (imageUrl: string) => void;
 }) => {
-  // Get optimized profile image URL
+  // Get optimized profile image URL for the AvatarImage component
   const optimizedProfileImage = getOptimizedImageUrl(profileImage, {
     width: 200,
     height: 200,
@@ -143,21 +143,6 @@ const ProfileHeader = ({ user }: ProfileHeaderProps) => {
     }
   };
   
-  // Get optimized cover image URL
-  const optimizedCoverImage = getOptimizedImageUrl(coverImage, {
-    width: 1200,
-    height: 400,
-    format: 'webp',
-    quality: 85
-  });
-  
-  // Log environment variables for debugging (only in development)
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('ImageKit URL Endpoint available:', !!process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT);
-    }
-  }, []);
-  
   return (
     <div className="bg-white rounded-xl shadow-lg border border-primary/10 overflow-hidden">
       {/* Cover image */}
@@ -166,12 +151,14 @@ const ProfileHeader = ({ user }: ProfileHeaderProps) => {
         <div className="absolute inset-0 opacity-20 mix-blend-overlay bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
         
         {coverImage ? (
-          <Image 
-            src={optimizedCoverImage} 
+          <IKImage 
+            src={coverImage}
             alt="Cover" 
             className="w-full h-full object-cover"
             width={1200}
             height={400}
+            style={{position: "absolute", inset: 0}}
+            transformation={[{ width: 1200, height: 400, quality: 85, format: "webp" }]}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
@@ -250,14 +237,14 @@ const ProfileHeader = ({ user }: ProfileHeaderProps) => {
         <div className="block sm:hidden mt-6">
           <LoyaltyRewardsTracker points={loyaltyPoints} />
         </div>
-      </div>
-      
-      {/* Loyalty rewards - desktop */}
-      <div className="hidden sm:block px-6 pb-6">
-        <LoyaltyRewardsTracker points={loyaltyPoints} />
+        
+        {/* Loyalty rewards - desktop */}
+        <div className="hidden sm:block mt-6 sm:mt-8 sm:max-w-md">
+          <LoyaltyRewardsTracker points={loyaltyPoints} />
+        </div>
       </div>
     </div>
   );
-};
+}
 
 export default ProfileHeader; 

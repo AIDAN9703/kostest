@@ -1,13 +1,17 @@
 import { db } from "@/database/db";
 import { boats } from "@/database/schema";
 import { eq } from "drizzle-orm";
-import { Boat, ActionResponse } from "@/types/types";
+import { ActionResponse } from "@/lib/types/types";
 import { cachedFetch } from '@/lib/utils/general-utils';
+import type { InferSelectModel } from "drizzle-orm";
 
-export async function getFeaturedBoats(): Promise<ActionResponse<Boat[]>> {
+// Use Drizzle's inferred type instead of a custom Boat type
+type DrizzleBoat = InferSelectModel<typeof boats>;
+
+export async function getFeaturedBoats(): Promise<ActionResponse<DrizzleBoat[]>> {
   "use server";
   
-  return cachedFetch<ActionResponse<Boat[]>>(
+  return cachedFetch<ActionResponse<DrizzleBoat[]>>(
     'featured-boats',
     async () => {
       try {
@@ -15,8 +19,7 @@ export async function getFeaturedBoats(): Promise<ActionResponse<Boat[]>> {
         const featuredBoats = await db
           .select()
           .from(boats)
-          .where(eq(boats.featured, true))
-          .orderBy(boats.featuredOrder);
+          .where(eq(boats.featured, true));
         
         console.log(`Successfully fetched ${featuredBoats.length} featured boats`);
         return {

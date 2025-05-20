@@ -5,7 +5,7 @@ import VisGLSearchMap from "@/components/boats/search/map/VisGLSearchMap";
 import SearchSkeleton from "@/components/boats/search/SearchSkeleton";
 import MapToggleClient from "@/components/boats/search/MapToggleClient";
 import { getBoats } from "@/lib/actions/boat-actions";
-import { SearchResults as SearchResultsType } from "@/types/types";
+import { SearchResults as SearchResultsType } from "@/lib/types/types";
 import { 
   normalizeSearchParams, 
   parseNumberParam, 

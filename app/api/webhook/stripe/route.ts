@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { db } from "@/database/db";
 import { bookings, bookingTypeEnum, bookingStatusEnum } from "@/database/schema";
 import { eq, or } from "drizzle-orm";
-import config from "@/lib/config";
+import config from "@/lib/config/config";
 
 // Use config for Stripe configuration
 const stripe = new Stripe(config.stripeSecretKey, {

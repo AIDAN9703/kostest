@@ -66,6 +66,10 @@ export function UserProfileHeader({ user, isCompact = false }: UserProfileHeader
             </div>
             
             <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+              <div className="flex items-center gap-1">
+                <span className="font-mono">ID: {user.id}</span>
+              </div>
+              
               {user.email && (
                 <div className="flex items-center gap-1">
                   <Mail className="h-4 w-4" />

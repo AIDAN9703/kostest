@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
-import { userRoleEnum } from "@/database/schema";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   // Check authentication and authorization
@@ -20,19 +19,18 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="flex h-screen overflow-hidden">
-        {/* Sidebar */}
-        <AdminSidebar />
+      {/* Sidebar - fixed position */}
+      <AdminSidebar />
+      
+      {/* Main Content - with left margin for sidebar */}
+      <div className="ml-64 flex flex-col min-h-screen">
+        {/* Header */}
+        <AdminHeader user={session.user} />
         
-        <div className="flex flex-col flex-1 overflow-hidden">
-          {/* Header */}
-          <AdminHeader user={session.user} />
-          
-          {/* Main Content */}
-          <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
-            {children}
-          </main>
-        </div>
+        {/* Main content area - scrollable */}
+        <main className="flex-1 p-6">
+          {children}
+        </main>
       </div>
     </div>
   );

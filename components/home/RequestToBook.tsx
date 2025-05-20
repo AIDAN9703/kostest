@@ -16,9 +16,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import { createGeneralInquiry, GeneralInquiryInput } from '@/lib/actions/booking/inquiry';
+import { toast } from '@/hooks/use-toast';
 
 // Form schema with validation rules
 const formSchema = z.object({
@@ -30,6 +34,9 @@ const formSchema = z.object({
   budget: z.string().optional(),
   guests: z.string().optional(),
   message: z.string().optional(),
+  termsAgreed: z.boolean().refine(val => val === true, {
+    message: 'You must agree to the terms and conditions',
+  }),
   captcha: z.string().min(1, 'Please complete the CAPTCHA verification')
 });
 
@@ -47,6 +54,7 @@ export default function RequestToBook() {
   const prefersReducedMotion = useReducedMotion();
   const recaptchaRef = useRef<ReCAPTCHA>(null);
   const [captchaError, setCaptchaError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize form with validation
   const form = useForm<z.infer<typeof formSchema>>({
@@ -60,6 +68,7 @@ export default function RequestToBook() {
       budget: '',
       guests: '',
       message: '',
+      termsAgreed: false,
       captcha: '',
     },
   });
@@ -67,17 +76,64 @@ export default function RequestToBook() {
   // Form submission handler
   const onSubmit = useCallback(async (values: z.infer<typeof formSchema>) => {
     try {
-      console.log("Form data:", values);
-      alert('Form submitted successfully!');
-      form.reset();
-      setCaptchaError("");
+      setIsSubmitting(true);
       
-      if (recaptchaRef.current) {
-        recaptchaRef.current.reset();
+      // Verify the captcha token server-side 
+      const captchaResponse = await fetch('/api/verify-captcha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: values.captcha })
+      });
+      
+      const captchaResult = await captchaResponse.json();
+      
+      if (!captchaResult.success) {
+        setCaptchaError("CAPTCHA verification failed. Please try again.");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Call the server action with our form data
+      const result = await createGeneralInquiry({
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        date: values.date,
+        time: values.time,
+        budget: values.budget,
+        guests: values.guests,
+        message: values.message,
+        termsAccepted: values.termsAgreed
+      });
+      
+      if (result.success) {
+        toast({
+          title: "Request Submitted",
+          description: result.message || "Your inquiry has been submitted. We'll contact you soon!",
+        });
+        
+        form.reset();
+        setCaptchaError("");
+        
+        if (recaptchaRef.current) {
+          recaptchaRef.current.reset();
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || "There was a problem with your submission. Please try again.",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error("Form submission error:", error);
-      setCaptchaError("Verification failed. Please try again.");
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   }, [form]);
 
@@ -283,6 +339,35 @@ export default function RequestToBook() {
                   )}
                 />
                 
+                {/* Terms and Services Checkbox */}
+                <FormField
+                  control={form.control}
+                  name="termsAgreed"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-1">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-normal text-gray-700">
+                          I agree to the{' '}
+                          <Link href="/terms" className="text-primary hover:underline">
+                            Terms of Service
+                          </Link>
+                          {' '}and{' '}
+                          <Link href="/privacy" className="text-primary hover:underline">
+                            Privacy Policy
+                          </Link>
+                        </FormLabel>
+                        <FormMessage className="text-xs" />
+                      </div>
+                    </FormItem>
+                  )}
+                />
+                
                 {/* CAPTCHA */}
                 <FormField
                   control={form.control}
@@ -314,8 +399,9 @@ export default function RequestToBook() {
                   <Button 
                     type="submit"
                     className="w-full rounded-xl bg-transparent text-primary border-2 border-primary hover:bg-primary hover:text-white transition-all"
+                    disabled={isSubmitting}
                   >
-                    Send Request
+                    {isSubmitting ? 'Sending...' : 'Send Request'}
                   </Button>
                 </motion.div>
               </form>
@@ -324,14 +410,14 @@ export default function RequestToBook() {
 
           {/* Direct Booking Info */}
           <motion.div 
-            className="lg:col-span-5 flex items-center h-full"
+            className="lg:col-span-5 flex items-center justify-center h-full"
             initial={fadeInUpAnimation.initial}
             whileInView={fadeInUpAnimation.animate}
             viewport={{ once: true }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <div className="h-full flex flex-col justify-center">
-              <div className="rounded-2xl">
+            <div className="h-full flex flex-col justify-center items-center text-center">
+              <div className="rounded-2xl max-w-md mx-auto">
                 <h3 className="font-poppins text-2xl sm:text-3xl text-primary mb-4">
                  Or Book Directly Online
                 </h3>
@@ -343,6 +429,7 @@ export default function RequestToBook() {
                 <motion.div
                   whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}
                   whileTap={prefersReducedMotion ? {} : { scale: 0.98 }}
+                  className="flex justify-center"
                 >
                   <Link href="/boats/search">
                     <Button

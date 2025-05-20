@@ -1,6 +1,6 @@
 "use client";
 
-import { Boat } from "@/types/types";
+import { Boat } from "@/lib/types/types";
 import { ImageGallery } from "./sub-components/ImageGallery";
 import { BasicInfo } from "./sub-components/BasicInfo";
 import { Description } from "./sub-components/Description";

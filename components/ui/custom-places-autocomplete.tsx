@@ -3,7 +3,7 @@
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { Input } from './input'
 import { Loader2 } from 'lucide-react'
-import { LocationData } from '@/types/types'
+import { LocationData } from '@/lib/types/types'
 import { useSearchStore } from '@/store/useSearchStore'
 import { debounce } from '@/lib/utils/general-utils'
 
@@ -14,7 +14,7 @@ interface CustomPlacesAutocompleteProps {
   className?: string;
   containerClassName?: string;
   defaultValue?: string;
-  countryRestriction?: string;
+  countryRestriction?: string | string[];
   types?: string[];
   variant?: 'hero' | 'nav';
   isOpen?: boolean;
@@ -29,8 +29,8 @@ export function CustomPlacesAutocomplete({
   className = '',
   containerClassName = '',
   defaultValue = '',
-  countryRestriction = 'us',
-  types = ['(cities)'],
+  countryRestriction = ['us', 'bs', 'pr'],
+  types = ['geocode', 'establishment'],
   variant = 'hero',
   isOpen = false,
   onFocus,

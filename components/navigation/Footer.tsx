@@ -27,11 +27,11 @@ const locations = [
 ];
 
 const services = [
-  { label: "Luxury Charters", href: "/services/luxury" },
-  { label: "Crew Services", href: "/services/crew" },
-  { label: "Event Planning", href: "/services/events" },
-  { label: "Concierge", href: "/services/concierge" },
-  { label: "Yacht Management", href: "/services/management" }
+  { label: "Charter Management", href: "/services/charter-management" },
+  { label: "Yacht Management", href: "/services/yacht-management" },
+  { label: "Sales/Purchase", href: "/services/sales-purchase" },
+  { label: "Term Charters", href: "/services/term-charters" },
+  { label: "Dock Management", href: "/services/dock-management" }
 ];
 
 export default function Footer() {

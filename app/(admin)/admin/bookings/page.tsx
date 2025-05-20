@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import { CalendarCheck, Check, Clock3, CreditCard, Filter, MoreHorizontal, Search, SlidersHorizontal, X } from "lucide-react";
+import { CalendarCheck, Check, Clock3, CreditCard, Filter, Mail, MessageCircle, MoreHorizontal, Phone, Search, SlidersHorizontal, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,13 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils/general-utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getInquiries, updateInquiryStatus } from "@/lib/actions/admin/inquiries";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Bookings | Admin Dashboard",
-  description: "Manage all bookings on the platform",
+  title: "Bookings & Inquiries | Admin Dashboard",
+  description: "Manage bookings and customer inquiries on the platform",
 };
 
 // Mock data
@@ -121,142 +124,422 @@ const bookings = [
   },
 ];
 
-export default function BookingsPage() {
+// Helper function to format date
+function formatDate(date: Date | string | null | undefined): string {
+  if (!date) return "Not available";
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
+export default async function BookingsPage({ 
+  searchParams 
+}: { 
+  searchParams: Promise<{ 
+    tab?: string;
+    inquiryPage?: string;
+    inquiryStatus?: string;
+    inquirySearch?: string;
+    updateInquiry?: string;
+    status?: string;
+  }> 
+}) {
+  // Await the searchParams promise
+  const resolvedParams = await searchParams;
+  
+  // Handle inquiry status update if parameters are present
+  if (resolvedParams.updateInquiry && resolvedParams.status) {
+    const inquiryId = resolvedParams.updateInquiry;
+    const newStatus = resolvedParams.status;
+    
+    try {
+      await updateInquiryStatus(inquiryId, {
+        status: newStatus,
+        notes: `Status updated to ${newStatus} via admin dashboard`
+      });
+      
+      // Redirect back to the inquiries tab without the update parameters
+      const searchQuery = new URLSearchParams();
+      searchQuery.set('tab', 'inquiries');
+      if (resolvedParams.inquiryStatus) searchQuery.set('inquiryStatus', resolvedParams.inquiryStatus);
+      if (resolvedParams.inquirySearch) searchQuery.set('inquirySearch', resolvedParams.inquirySearch);
+      if (resolvedParams.inquiryPage) searchQuery.set('inquiryPage', resolvedParams.inquiryPage);
+      
+      redirect(`/admin/bookings?${searchQuery.toString()}`);
+    } catch (error) {
+      console.error("Error updating inquiry status:", error);
+      // Continue rendering the page with the error
+    }
+  }
+  
+  // Get the active tab from search params or default to "bookings"
+  const activeTab = resolvedParams.tab || "bookings";
+  
+  // Fetch inquiries data if on inquiries tab
+  const inquiryPage = resolvedParams.inquiryPage ? parseInt(resolvedParams.inquiryPage) : 1;
+  const inquiryStatus = resolvedParams.inquiryStatus || undefined;
+  const inquirySearch = resolvedParams.inquirySearch || undefined;
+  
+  const inquiriesData = await getInquiries({
+    page: inquiryPage,
+    limit: 10,
+    status: inquiryStatus,
+    search: inquirySearch,
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Bookings</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Bookings & Inquiries</h1>
         <Button className="hidden sm:flex">
           Export Report
         </Button>
       </div>
       
-      <Card className="overflow-hidden">
-        <CardHeader className="px-6 py-4 bg-gray-50 border-b">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="text-lg">All Bookings</CardTitle>
-            <div className="flex items-center gap-2">
-              <div className="relative w-full sm:w-auto">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
-                <Input 
-                  placeholder="Search bookings..." 
-                  className="w-full sm:w-[200px] pl-9"
-                />
-              </div>
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
-                <span className="sr-only">Filter</span>
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+      <Tabs defaultValue={activeTab} className="space-y-4">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="bookings" asChild>
+            <a href="?tab=bookings">Bookings</a>
+          </TabsTrigger>
+          <TabsTrigger value="inquiries" asChild>
+            <a href="?tab=inquiries">General Inquiries</a>
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="bookings" className="space-y-4">
+          <Card className="overflow-hidden">
+            <CardHeader className="px-6 py-4 bg-gray-50 border-b">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="text-lg">All Bookings</CardTitle>
+                <div className="flex items-center gap-2">
+                  <div className="relative w-full sm:w-auto">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                    <Input 
+                      placeholder="Search bookings..." 
+                      className="w-full sm:w-[200px] pl-9"
+                    />
+                  </div>
                   <Button variant="outline" size="icon">
-                    <SlidersHorizontal className="h-4 w-4" />
-                    <span className="sr-only">View options</span>
+                    <Filter className="h-4 w-4" />
+                    <span className="sr-only">Filter</span>
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>View Options</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>Confirmed Bookings</DropdownMenuItem>
-                  <DropdownMenuItem>Pending Bookings</DropdownMenuItem>
-                  <DropdownMenuItem>Cancelled Bookings</DropdownMenuItem>
-                  <DropdownMenuItem>Completed Bookings</DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>This Month</DropdownMenuItem>
-                  <DropdownMenuItem>Last Month</DropdownMenuItem>
-                  <DropdownMenuItem>Custom Range...</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Boat</TableHead>
-                <TableHead>Dates</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Payment</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {bookings.map((booking) => (
-                <TableRow key={booking.id}>
-                  <TableCell className="font-medium">
-                    {booking.id}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gray-200"></div>
-                      <div>
-                        <div className="font-medium">{booking.customer.name}</div>
-                        <div className="text-xs text-gray-500">{booking.customer.email}</div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{booking.boat.name}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <CalendarCheck className="h-3 w-3 text-gray-500" />
-                      <span className="text-sm">
-                        {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={booking.status} />
-                  </TableCell>
-                  <TableCell>
-                    {formatCurrency(booking.totalAmount)}
-                  </TableCell>
-                  <TableCell>
-                    <PaymentStatusBadge status={booking.paymentStatus} />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Actions</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>View Details</DropdownMenuItem>
-                        <DropdownMenuItem>Contact Customer</DropdownMenuItem>
-                        <DropdownMenuItem>Update Status</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">Cancel Booking</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <div className="flex items-center justify-between px-4 py-4 border-t">
-            <div className="text-sm text-gray-500">
-              Showing <strong>5</strong> of <strong>42</strong> bookings
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" disabled>
-                Previous
-              </Button>
-              <Button variant="outline" size="sm">
-                Next
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon">
+                        <SlidersHorizontal className="h-4 w-4" />
+                        <span className="sr-only">View options</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>View Options</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>Confirmed Bookings</DropdownMenuItem>
+                      <DropdownMenuItem>Pending Bookings</DropdownMenuItem>
+                      <DropdownMenuItem>Cancelled Bookings</DropdownMenuItem>
+                      <DropdownMenuItem>Completed Bookings</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>This Month</DropdownMenuItem>
+                      <DropdownMenuItem>Last Month</DropdownMenuItem>
+                      <DropdownMenuItem>Custom Range...</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Boat</TableHead>
+                    <TableHead>Dates</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Payment</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bookings.map((booking) => (
+                    <TableRow key={booking.id}>
+                      <TableCell className="font-medium">
+                        {booking.id}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-full bg-gray-200"></div>
+                          <div>
+                            <div className="font-medium">{booking.customer.name}</div>
+                            <div className="text-xs text-gray-500">{booking.customer.email}</div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">{booking.boat.name}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <CalendarCheck className="h-3 w-3 text-gray-500" />
+                          <span className="text-sm">
+                            {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={booking.status} />
+                      </TableCell>
+                      <TableCell>
+                        {formatCurrency(booking.totalAmount)}
+                      </TableCell>
+                      <TableCell>
+                        <PaymentStatusBadge status={booking.paymentStatus} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Actions</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>View Details</DropdownMenuItem>
+                            <DropdownMenuItem>Contact Customer</DropdownMenuItem>
+                            <DropdownMenuItem>Update Status</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-red-600">Cancel Booking</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="flex items-center justify-between px-4 py-4 border-t">
+                <div className="text-sm text-gray-500">
+                  Showing <strong>5</strong> of <strong>42</strong> bookings
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" disabled>
+                    Previous
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="inquiries" className="space-y-4">
+          <Card className="overflow-hidden">
+            <CardHeader className="px-6 py-4 bg-gray-50 border-b">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="text-lg">General Inquiries</CardTitle>
+                <div className="flex items-center gap-2">
+                  <form className="relative w-full sm:w-auto">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
+                    <Input 
+                      name="inquirySearch"
+                      placeholder="Search name or email..." 
+                      className="w-full sm:w-[200px] pl-9"
+                      defaultValue={inquirySearch}
+                    />
+                  </form>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon">
+                        <Filter className="h-4 w-4" />
+                        <span className="sr-only">Filter by status</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <a href="?tab=inquiries">All Inquiries</a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a href="?tab=inquiries&inquiryStatus=PENDING">Pending</a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a href="?tab=inquiries&inquiryStatus=CONTACTED">Contacted</a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a href="?tab=inquiries&inquiryStatus=RESOLVED">Resolved</a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a href="?tab=inquiries&inquiryStatus=ARCHIVED">Archived</a>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[80px]">ID</TableHead>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Contact Info</TableHead>
+                    <TableHead>Details</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {inquiriesData.inquiries.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="h-24 text-center">
+                        No inquiries found.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    inquiriesData.inquiries.map((inquiry) => (
+                      <TableRow key={inquiry.id}>
+                        <TableCell className="font-medium">
+                          {inquiry.id.slice(0, 8)}...
+                        </TableCell>
+                        <TableCell>
+                          <div className="font-medium">{inquiry.name}</div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col text-sm">
+                            <div className="flex items-center gap-1">
+                              <Mail className="h-3 w-3 text-gray-500" />
+                              <span>{inquiry.email}</span>
+                            </div>
+                            <div className="flex items-center gap-1 mt-1">
+                              <Phone className="h-3 w-3 text-gray-500" />
+                              <span>{inquiry.phone}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {inquiry.guests && (
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium">Guests:</span> {inquiry.guests}
+                              </div>
+                            )}
+                            {inquiry.budget && (
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium">Budget:</span> {inquiry.budget}
+                              </div>
+                            )}
+                            {inquiry.date && (
+                              <div className="flex items-center gap-1">
+                                <CalendarCheck className="h-3 w-3 text-gray-500" />
+                                <span>{formatDate(inquiry.date)}</span>
+                                {inquiry.time && <span> at {inquiry.time}</span>}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <InquiryStatusBadge status={inquiry.status} />
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Clock3 className="h-3 w-3 text-gray-500" />
+                            <span className="text-sm">
+                              {formatDate(inquiry.createdAt)}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Actions</span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem asChild>
+                                <a href={`mailto:${inquiry.email}`}>
+                                  Email Customer
+                                </a>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <a href={`tel:${inquiry.phone}`}>
+                                  Call Customer
+                                </a>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem asChild>
+                                <a href={`?tab=inquiries&updateInquiry=${inquiry.id}&status=CONTACTED${inquiryStatus ? `&inquiryStatus=${inquiryStatus}` : ''}${inquirySearch ? `&inquirySearch=${inquirySearch}` : ''}${inquiryPage ? `&inquiryPage=${inquiryPage}` : ''}`}>
+                                  Mark as Contacted
+                                </a>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <a href={`?tab=inquiries&updateInquiry=${inquiry.id}&status=RESOLVED${inquiryStatus ? `&inquiryStatus=${inquiryStatus}` : ''}${inquirySearch ? `&inquirySearch=${inquirySearch}` : ''}${inquiryPage ? `&inquiryPage=${inquiryPage}` : ''}`}>
+                                  Mark as Resolved
+                                </a>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <a href={`?tab=inquiries&updateInquiry=${inquiry.id}&status=ARCHIVED${inquiryStatus ? `&inquiryStatus=${inquiryStatus}` : ''}${inquirySearch ? `&inquirySearch=${inquirySearch}` : ''}${inquiryPage ? `&inquiryPage=${inquiryPage}` : ''}`}>
+                                  Archive Inquiry
+                                </a>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              <div className="flex items-center justify-between px-4 py-4 border-t">
+                <div className="text-sm text-gray-500">
+                  Showing <strong>{inquiriesData.inquiries.length}</strong> of <strong>{inquiriesData.totalCount}</strong> inquiries
+                </div>
+                {inquiriesData.totalPages > 1 && (
+                  <div className="flex items-center gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      disabled={inquiryPage <= 1}
+                      asChild
+                    >
+                      <a 
+                        href={`?tab=inquiries&inquiryPage=${inquiryPage - 1}${inquiryStatus ? `&inquiryStatus=${inquiryStatus}` : ''}${inquirySearch ? `&inquirySearch=${inquirySearch}` : ''}`}
+                        aria-disabled={inquiryPage <= 1}
+                      >
+                        Previous
+                      </a>
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      disabled={inquiryPage >= inquiriesData.totalPages}
+                      asChild
+                    >
+                      <a 
+                        href={`?tab=inquiries&inquiryPage=${inquiryPage + 1}${inquiryStatus ? `&inquiryStatus=${inquiryStatus}` : ''}${inquirySearch ? `&inquirySearch=${inquirySearch}` : ''}`}
+                        aria-disabled={inquiryPage >= inquiriesData.totalPages}
+                      >
+                        Next
+                      </a>
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -317,6 +600,40 @@ function PaymentStatusBadge({ status }: { status: string }) {
         <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
           <CreditCard className="h-3 w-3 mr-1" />
           Refunded
+        </Badge>
+      );
+    default:
+      return <Badge>{status}</Badge>;
+  }
+}
+
+function InquiryStatusBadge({ status }: { status: string }) {
+  switch (status) {
+    case "PENDING":
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+          <Clock3 className="h-3 w-3 mr-1" />
+          Pending
+        </Badge>
+      );
+    case "CONTACTED":
+      return (
+        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">
+          <Phone className="h-3 w-3 mr-1" />
+          Contacted
+        </Badge>
+      );
+    case "RESOLVED":
+      return (
+        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+          <Check className="h-3 w-3 mr-1" />
+          Resolved
+        </Badge>
+      );
+    case "ARCHIVED":
+      return (
+        <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">
+          Archived
         </Badge>
       );
     default:

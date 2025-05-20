@@ -6,7 +6,7 @@ import ExperienceLayout from "@/components/experiences/ExperienceLayout";
 import { db } from "@/database/db";
 import { boats } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
-import { Boat } from "@/types/types";
+import { Boat } from "@/lib/types/types";
 import BoatCard from "@/components/ui/boat-card";
 import { Button } from "@/components/ui/button";
 

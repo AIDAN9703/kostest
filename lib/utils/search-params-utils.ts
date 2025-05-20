@@ -3,7 +3,7 @@
  * A unified module for handling search parameters in both client and server contexts
  */
 
-import { SearchParamsType } from "@/types/types";
+import { SearchParamsType } from "@/lib/types/types";
 
 /**
  * Parse string or string[] params to a typed value

@@ -3,10 +3,11 @@
 import { db } from "@/database/db";
 import { verifications, users } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
-import { ActionResponse } from "@/types/types";
+import { ActionResponse } from "@/lib/types/types";
 import { sendVerification, checkVerification } from "@/lib/services/twilio";
 import { formatPhoneNumberE164 } from '@/lib/utils/general-utils';
-
+import { signIn } from "@/auth";
+import { randomUUID } from 'crypto';
 /**
  * Sends a verification code to the user's phone number using Twilio Verify API
  */
@@ -190,6 +191,169 @@ export const verifyPhoneCode = async (
     return { 
       success: false, 
       error: "Failed to verify phone number" 
+    };
+  }
+};
+
+/**
+ * Comprehensive server action that handles OTP verification and sign-in in one step
+ * This consolidates multiple API routes and verification steps into a single action
+ */
+export const verifyOtpAndSignIn = async (
+  email: string,
+  verificationCode: string // The OTP code entered by user
+): Promise<ActionResponse<{ message: string; redirectUrl?: string }>> => {
+  try {
+    // Find the user by email
+    const user = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        phoneNumber: users.phoneNumber,
+      })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    
+    if (user.length === 0) {
+      return { 
+        success: false, 
+        error: "User not found. Please try signing in again.",
+        data: { 
+          message: "Invalid user", 
+          redirectUrl: "/sign-in" 
+        }
+      };
+    }
+    
+    // Step 2: Verify the OTP code
+    const result = await verifyPhoneCode(
+      user[0].id,
+      user[0].phoneNumber || "",
+      verificationCode
+    );
+    
+    if (!result.success) {
+      return { 
+        success: false, 
+        error: result.error || "Failed to verify code",
+      };
+    }
+    
+    // Step 3: Sign in the user
+    try {
+      await signIn("credentials-token", {
+        userId: user[0].id,
+        email: user[0].email,
+        redirect: false,
+      });
+      
+      return { 
+        success: true, 
+        data: { 
+          message: "Phone verified and signed in successfully",
+          redirectUrl: "/"
+        } 
+      };
+    } catch (signInError) {
+      console.error("Error signing in after verification:", signInError);
+      return { 
+        success: true, 
+        data: { 
+          message: "Phone verified successfully, but automatic sign-in failed. Please sign in manually.",
+          redirectUrl: "/sign-in" 
+        } 
+      };
+    }
+  } catch (error) {
+    console.error("Error in verifyOtpAndSignIn:", error);
+    return { 
+      success: false, 
+      error: "An unexpected error occurred",
+    };
+  }
+};
+
+/**
+ * Resend verification code with email validation
+ * This allows resending from the verification page without requiring a session
+ */
+export const resendVerificationCode = async (
+  email: string
+): Promise<ActionResponse<{ message: string }>> => {
+  try {
+    // Find user by email
+    const user = await db
+      .select({
+        id: users.id,
+        phoneNumber: users.phoneNumber,
+      })
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    
+    if (user.length === 0) {
+      return { 
+        success: false, 
+        error: "User not found. Please try signing in again.",
+        data: { message: "Invalid user" }
+      };
+    }
+    
+    // Send verification code
+    if (!user[0].phoneNumber) {
+      return { 
+        success: false, 
+        error: "No phone number associated with this account",
+        data: { message: "Missing phone number" }
+      };
+    }
+    
+    const result = await sendVerificationCode(user[0].id, user[0].phoneNumber);
+    return result;
+  } catch (error) {
+    console.error("Error resending verification code:", error);
+    return { 
+      success: false, 
+      error: "Failed to resend verification code",
+      data: { message: "System error" }
+    };
+  }
+};
+
+/**
+ * Sends a verification code to a phone number without requiring a userId
+ * This is used for the booking flow when a user is not logged in
+ */
+export const sendOtpToPhoneNumber = async (
+  phoneNumber: string
+): Promise<ActionResponse<{ message: string }>> => {
+  try {
+    // Format the phone number to E.164 format
+    const formattedPhoneNumber = formatPhoneNumberE164(phoneNumber);
+    
+    // Call Twilio Verify API to send verification code
+    const twilioResponse = await sendVerification(formattedPhoneNumber, 'sms');
+    
+    if (!twilioResponse.success) {
+      console.error("Twilio error:", twilioResponse.error);
+      return { 
+        success: false, 
+        error: twilioResponse.error || "Failed to send verification code" 
+      };
+    }
+    
+    return { 
+      success: true, 
+      data: { 
+        message: "Verification code sent successfully"
+      } 
+    };
+  } catch (error) {
+    console.error("Error sending verification code:", error);
+    return { 
+      success: false, 
+      error: "Failed to send verification code" 
     };
   }
 }; 

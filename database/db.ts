@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import config from "@/lib/config";
+import config from "@/lib/config/config";
 
 
 const sql = neon(config.databaseUrl);

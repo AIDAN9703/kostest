@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Boat } from "@/types/types";
+import { Boat } from "@/lib/types/types";
 import BookingForm from "./BookingForm";
 import Image from "next/image";
 import { CalendarClock } from "lucide-react";

@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, CalendarClock, Ship, Users } from "lucide-react";
 import Link from "next/link";
+import { getDashboardStats } from "@/lib/actions/admin/dashboard";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard | KOS Yachts",
@@ -9,6 +10,22 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminDashboardPage() {
+  // Fetch dashboard statistics
+  const stats = await getDashboardStats();
+  
+  // Format numbers for display
+  const formatNumber = (num: number) => new Intl.NumberFormat('en-US').format(num);
+  const formatCurrency = (num: number) => new Intl.NumberFormat('en-US', { 
+    style: 'currency', 
+    currency: 'USD',
+    maximumFractionDigits: 0
+  }).format(num);
+  
+  // Format trend numbers
+  const formatTrend = (value: number) => {
+    return value > 0 ? `+${value.toFixed(1)}%` : `${value.toFixed(1)}%`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -29,52 +46,52 @@ export default async function AdminDashboardPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard 
           title="Total Boats" 
-          value="48" 
+          value={formatNumber(stats.totalBoats)} 
           description="Active listings"
           icon={<Ship className="h-5 w-5" />}
           linkHref="/admin/boats"
           trend={{
-            value: "+4.3%",
-            isPositive: true,
+            value: formatTrend(stats.comparisonStats.boatsTrend.value),
+            isPositive: stats.comparisonStats.boatsTrend.isPositive,
             text: "from last month"
           }}
           color="blue"
         />
         <StatsCard 
           title="Active Users" 
-          value="2,432" 
+          value={formatNumber(stats.totalUsers)} 
           description="Customer accounts"
           icon={<Users className="h-5 w-5" />}
           linkHref="/admin/users"
           trend={{
-            value: "+12.1%",
-            isPositive: true,
+            value: formatTrend(stats.comparisonStats.usersTrend.value),
+            isPositive: stats.comparisonStats.usersTrend.isPositive,
             text: "from last month"
           }}
           color="green"
         />
         <StatsCard 
           title="Bookings" 
-          value="356" 
+          value={formatNumber(stats.bookingsThisMonth)} 
           description="This month"
           icon={<CalendarClock className="h-5 w-5" />}
           linkHref="/admin/bookings"
           trend={{
-            value: "+2.5%",
-            isPositive: true,
+            value: formatTrend(stats.comparisonStats.bookingsTrend.value),
+            isPositive: stats.comparisonStats.bookingsTrend.isPositive,
             text: "from last month"
           }}
           color="purple"
         />
         <StatsCard 
           title="Revenue" 
-          value="$38,211" 
+          value={formatCurrency(stats.revenueThisMonth)} 
           description="This month"
           icon={<BarChart className="h-5 w-5" />}
           linkHref="/admin/finance"
           trend={{
-            value: "+18.2%",
-            isPositive: true,
+            value: formatTrend(stats.comparisonStats.revenueTrend.value),
+            isPositive: stats.comparisonStats.revenueTrend.isPositive,
             text: "from last month"
           }}
           color="amber"
@@ -90,32 +107,14 @@ export default async function AdminDashboardPage() {
             <CardDescription>Latest platform activity</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <ActivityItem
-                title="New booking request"
-                description="John Doe requested to book 'Luxury Yacht'"
-                time="2 hours ago"
-              />
-              <ActivityItem
-                title="User verification"
-                description="Jane Smith completed ID verification"
-                time="5 hours ago"
-              />
-              <ActivityItem
-                title="New boat listing"
-                description="Captain Mike added a new boat 'Ocean Explorer'"
-                time="Yesterday"
-              />
-              <ActivityItem
-                title="Payment received"
-                description="$1,250 payment for booking #12345"
-                time="Yesterday"
-              />
-              <ActivityItem
-                title="New review"
-                description="5-star review for 'Paradise Cruiser'"
-                time="2 days ago"
-              />
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="rounded-full bg-gray-100 p-3 mb-4">
+                <CalendarClock className="h-6 w-6 text-gray-400" />
+              </div>
+              <h3 className="text-base font-medium text-gray-600">No Recent Activity</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Activity logs will appear here as users interact with the platform
+              </p>
             </div>
             <div className="mt-4 text-center">
               <Link href="/admin/activity" className="text-sm text-primary hover:underline">

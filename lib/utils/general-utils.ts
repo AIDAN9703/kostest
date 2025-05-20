@@ -119,70 +119,6 @@ export function formatPhoneNumberE164(phoneNumber: string, defaultCountryCode: s
 }
 
 /**
- * Find a user by email and verification token
- * @param email User's email
- * @param token Verification token
- * @returns User object if found, null if not found
- */
-export async function findUserByEmailAndToken(email: string, token: string) {
-  try {
-    const { db } = await import('@/database/db');
-    const { users } = await import('@/database/schema');
-    const { eq, and, gt } = await import('drizzle-orm');
-
-    // Find user with matching email and token that hasn't expired
-    const user = await db
-      .select({
-        id: users.id,
-        email: users.email,
-        phoneNumber: users.phoneNumber,
-        firstName: users.firstName,
-        lastName: users.lastName,
-      })
-      .from(users)
-      .where(
-        and(
-          eq(users.email, email),
-          eq(users.verificationToken, token),
-          gt(users.verificationTokenExpires, new Date())
-        )
-      )
-      .limit(1);
-
-    return user.length > 0 ? user[0] : null;
-  } catch (error) {
-    console.error("Error finding user by email and token:", error);
-    return null;
-  }
-}
-
-/**
- * Clear a user's verification token
- * @param userId User ID
- * @returns True if successful, false if not
- */
-export async function clearUserVerificationToken(userId: string) {
-  try {
-    const { db } = await import('@/database/db');
-    const { users } = await import('@/database/schema');
-    const { eq } = await import('drizzle-orm');
-
-    await db
-      .update(users)
-      .set({
-        verificationToken: null,
-        verificationTokenExpires: null,
-      })
-      .where(eq(users.id, userId));
-    
-    return true;
-  } catch (error) {
-    console.error("Error clearing user verification token:", error);
-    return false;
-  }
-}
-
-/**
  * Debounce function to limit how often a function can be called
  * Includes a cancel method for cleanup
  * 
@@ -209,4 +145,21 @@ export function debounce<F extends (...args: any[]) => any>(
   };
   
   return debounced as F & { cancel: () => void };
+}
+
+/**
+ * Formats a date in a human-readable format
+ * @param date The date to format
+ * @returns A formatted date string
+ */
+export function formatDate(date: Date | string | null | undefined): string {
+  if (!date) return "Not available";
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  return dateObj.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }

@@ -5,9 +5,11 @@ import { ArrowLeft, User, Ship, Calendar, Filter, Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { db } from '@/database/db';
-import { users, boats, bookings } from '@/database/schema-calendar-test';
-import { like, or, ilike, desc } from 'drizzle-orm';
+import { users, boats, bookings, boatPricingTiers } from '@/database/schema';
+import { like, or, ilike, desc, eq, and, inArray } from 'drizzle-orm';
 import { formatDistanceToNow } from "date-fns";
+import { formatCurrency } from "@/lib/utils/general-utils";
+import { getBoatDefaultPrice, getBoatDefaultHours } from "@/lib/utils/pricing-utils";
 
 export const metadata: Metadata = {
   title: "Search Results | Admin Dashboard",
@@ -79,12 +81,23 @@ export default async function SearchPage({
       name: boats.name,
       category: boats.category,
       mainImage: boats.mainImage,
-      homePort: boats.homePort,
+      locationLabel: boats.locationLabel,
       active: boats.active,
-      hourlyRate: boats.hourlyRate,
       make: boats.make,
       model: boats.model,
       yearBuilt: boats.yearBuilt,
+      ownerId: boats.ownerId,
+      lengthFt: boats.lengthFt,
+      capacity: boats.capacity,
+      features: boats.features,
+      crewRequired: boats.crewRequired,
+      crewIncluded: boats.crewIncluded,
+      dayCharter: boats.dayCharter,
+      termCharter: boats.termCharter,
+      fuelIncluded: boats.fuelIncluded,
+      instantBook: boats.instantBook,
+      createdAt: boats.createdAt,
+      updatedAt: boats.updatedAt,
     })
     .from(boats)
     .where(
@@ -92,10 +105,54 @@ export default async function SearchPage({
         ilike(boats.name, `%${query}%`),
         ilike(boats.make, `%${query}%`),
         ilike(boats.model, `%${query}%`),
-        ilike(boats.homePort, `%${query}%`)
+        ilike(boats.locationLabel, `%${query}%`)
       )
     )
     .limit(20) : [];
+
+  // Get pricing tiers for all fetched boats
+  let boatsWithPricingTiers = [];
+  if (boatResults.length > 0) {
+    // Get all boat IDs for the query
+    const boatIds = boatResults.map(boat => boat.id);
+    
+    // Get pricing tiers for all boats in a single query
+    const pricingTiersResults = await db
+      .select()
+      .from(boatPricingTiers)
+      .where(and(
+        eq(boatPricingTiers.isActive, true),
+        inArray(boatPricingTiers.boatId, boatIds)
+      ));
+
+    // Group tiers by boat ID
+    const tiersByBoatId = pricingTiersResults.reduce((acc, tier) => {
+      if (!acc[tier.boatId]) acc[tier.boatId] = [];
+      acc[tier.boatId].push(tier);
+      return acc;
+    }, {} as Record<string, typeof boatPricingTiers.$inferSelect[]>);
+    
+    // Combine boat data with their pricing tiers
+    boatsWithPricingTiers = boatResults.map(boat => ({
+      ...boat,
+      ownerId: boat.ownerId || "",
+      lengthFt: boat.lengthFt || 0,
+      capacity: boat.capacity || 0,
+      features: boat.features || [],
+      crewRequired: boat.crewRequired ?? true,
+      crewIncluded: boat.crewIncluded ?? true,
+      dayCharter: boat.dayCharter ?? true,
+      termCharter: boat.termCharter ?? false,
+      fuelIncluded: boat.fuelIncluded ?? false,
+      instantBook: boat.instantBook ?? false,
+      active: boat.active ?? false,
+      createdAt: boat.createdAt || new Date(),
+      updatedAt: boat.updatedAt || new Date(),
+      pricingTiers: tiersByBoatId[boat.id] || []
+    }));
+  } else {
+    boatsWithPricingTiers = boatResults;
+  }
 
   // Search for bookings
   const bookingResults = type === 'all' || type === 'bookings' ? await db
@@ -277,7 +334,7 @@ export default async function SearchPage({
                     </tr>
                   </thead>
                   <tbody>
-                    {boatResults.map(boat => (
+                    {boatsWithPricingTiers.map(boat => (
                       <tr key={boat.id.toString()} className="border-b hover:bg-gray-50">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -305,9 +362,9 @@ export default async function SearchPage({
                         <td className="px-4 py-3 text-gray-600">
                           {boat.make} {boat.model} {boat.yearBuilt && `(${boat.yearBuilt})`}
                         </td>
-                        <td className="px-4 py-3 text-gray-600">{boat.homePort || "N/A"}</td>
+                        <td className="px-4 py-3 text-gray-600">{boat.locationLabel || "N/A"}</td>
                         <td className="px-4 py-3 font-medium">
-                          ${boat.hourlyRate}/hour
+                          {formatCurrency(getBoatDefaultPrice(boat))}/{getBoatDefaultHours(boat)}
                         </td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex h-6 w-6 items-center justify-center rounded-full ${boat.active ? "bg-green-500" : "bg-gray-300"}`}>

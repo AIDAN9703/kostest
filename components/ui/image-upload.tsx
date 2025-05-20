@@ -13,6 +13,7 @@ interface ImageUploadProps {
   variant?: "default" | "secondary" | "outline" | "ghost" | "link" | "destructive";
   size?: "default" | "sm" | "lg" | "icon";
   icon?: boolean;
+  multiple?: boolean;
 }
 
 export function ImageUpload({
@@ -23,67 +24,73 @@ export function ImageUpload({
   variant = "secondary",
   size = "sm",
   icon = true,
+  multiple = false,
 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast({
-        title: "Invalid file type",
-        description: "Please select an image file (JPEG, PNG, etc.)",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Validate file types
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select only image files (JPEG, PNG, etc.)",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Image size should be less than 5MB",
-        variant: "destructive",
-      });
-      return;
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Image size should be less than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setIsUploading(true);
     try {
-      // Create form data
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', type);
-      
-      // Upload to your API route
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Upload failed');
+      // Upload files sequentially
+      for (const file of Array.from(files)) {
+        // Create form data
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', type);
+        
+        // Upload to your API route
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Upload failed');
+        }
+        
+        const result = await response.json();
+        
+        // Call the callback with the image URL
+        onUploadComplete(result.url);
       }
-      
-      const result = await response.json();
-      
-      // Call the callback with the image URL
-      onUploadComplete(result.url);
       
       toast({
         title: "Upload successful",
-        description: "Your image has been uploaded successfully",
+        description: `Successfully uploaded ${files.length} image${files.length > 1 ? 's' : ''}`,
       });
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("Error uploading images:", error);
       toast({
         title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to upload image",
+        description: error instanceof Error ? error.message : "Failed to upload images",
         variant: "destructive",
       });
     } finally {
@@ -133,6 +140,7 @@ export function ImageUpload({
         className="hidden"
         onChange={handleFileChange}
         ref={fileInputRef}
+        multiple={multiple}
       />
     </div>
   );

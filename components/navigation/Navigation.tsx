@@ -28,6 +28,9 @@ const Navigation = ({ session }: { session: Session | null }) => {
     const isHomePage = pathname === '/'
     const { isExpanded, resetSearchExpansion, clearSearchValue, clearPlaceDetails } = useSearchStore()
     
+    // Check if user is an admin
+    const isAdmin = user?.role === 'ADMIN'
+    
     // Reset the isExpanded state when navigating to the home page
     useEffect(() => {
         if (isHomePage) {
@@ -122,6 +125,7 @@ const Navigation = ({ session }: { session: Session | null }) => {
                             scrolled={scrolled}
                             expandedItems={expandedItems}
                             setExpandedItems={setExpandedItems}
+                            isAdmin={isAdmin}
                         />
 
                         <Link 
@@ -165,6 +169,7 @@ const Navigation = ({ session }: { session: Session | null }) => {
                             scrolled={scrolled}
                             expandedItems={expandedItems}
                             getTextStyle={getTextStyle}
+                            isAdmin={isAdmin}
                         />
 
                         <SocialLinks 

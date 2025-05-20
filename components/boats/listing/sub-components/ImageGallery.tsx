@@ -1,6 +1,5 @@
-import Image from "next/image";
+import { Image as IKImage } from "@imagekit/next";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { getOptimizedImageUrl } from "@/lib/services/imagekit";
 import {
   Carousel,
   CarouselContent,
@@ -29,6 +28,9 @@ export function ImageGallery({ mainImage, galleryImages, alt }: ImageGalleryProp
     );
   }
 
+  // Check if a URL already has transformations
+  const hasTransformations = (src: string) => src.includes('tr=');
+
   return (
     <Carousel
       opts={{
@@ -37,22 +39,36 @@ export function ImageGallery({ mainImage, galleryImages, alt }: ImageGalleryProp
       }}
     >
       <CarouselContent>
-        {allImages.map((image, index) => (
+        {allImages.map((src, index) => (
           <CarouselItem key={index} className="md:basis-[60%] basis-full">
             <AspectRatio ratio={16/9} className="bg-gray-100 sm:rounded-xl">
-              <Image
-                src={getOptimizedImageUrl(image, {
-                  width: 1200,
-                  height: 200,
-                  format: 'auto',
-                  quality: 80
-                })}
-                alt={`${alt} - Image ${index + 1}`}
-                fill
-                className="object-cover sm:rounded-xl"
-                priority={index === 0}
-                sizes="(max-width: 768px) 100vw, (max-width: 1280px) 70vw, 800px"
-              />
+              {hasTransformations(src) ? (
+                // For URLs with existing transformations, use a regular img tag
+                <img
+                  src={src}
+                  alt={`${alt} - Image ${index + 1}`}
+                  className="object-cover w-full h-full sm:rounded-xl"
+                />
+              ) : (
+                // For other images, use the ImageKit component with transformations
+                <IKImage
+                  src={src}
+                  alt={`${alt} - Image ${index + 1}`}
+                  width={1600}
+                  height={900}
+                  className="object-cover w-full h-full sm:rounded-xl"
+                  loading={index === 0 ? "eager" : "lazy"}
+                  style={{ position: "absolute", inset: 0 }}
+                  transformation={[
+                    { 
+                      width: 1600,
+                      height: 900,
+                      quality: 90,
+                      format: "auto"
+                    }
+                  ]}
+                />
+              )}
             </AspectRatio>
           </CarouselItem>
         ))}
@@ -60,7 +76,7 @@ export function ImageGallery({ mainImage, galleryImages, alt }: ImageGalleryProp
       {allImages.length > 1 && (
         <>
           <CarouselPrevious className="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 w-6 h-6 md:w-10 md:h-10 bg-white/70 hover:bg-white/90 transition-colors" />
-          <CarouselNext className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 w-6 h-6 md:w-10 md:h-10  bg-white/70 hover:bg-white/90 transition-colors" />
+          <CarouselNext className="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 w-6 h-6 md:w-10 md:h-10 bg-white/70 hover:bg-white/90 transition-colors" />
         </>
       )}
     </Carousel>

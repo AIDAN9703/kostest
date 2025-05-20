@@ -14,13 +14,13 @@ import {
     SheetClose,
 } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { ChevronRight, ChevronUp, ChevronDown } from 'lucide-react'
+import { ChevronRight, ChevronUp, ChevronDown, Crown } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Session } from 'next-auth'
 import { signOut } from "next-auth/react"
 
 // Import the navigation data types
-import { NavigationItem, QuickLink, FeaturedItem, HeaderItem } from '@/types/types'
+import { NavigationItem, QuickLink, FeaturedItem, HeaderItem } from '@/lib/types/types'
 
 // Define the dropdown menu data structure for mobile
 const mobileDropdownMenus = {
@@ -88,6 +88,7 @@ interface MobileNavigationProps {
     scrolled: boolean;
     expandedItems: string[];
     setExpandedItems: React.Dispatch<React.SetStateAction<string[]>>;
+    isAdmin?: boolean;
 }
 
 // Animation variants for dropdown
@@ -104,7 +105,8 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
     isHomePage,
     scrolled,
     expandedItems,
-    setExpandedItems
+    setExpandedItems,
+    isAdmin = false
 }) => {
     const router = useRouter();
     const pathname = usePathname();
@@ -129,6 +131,12 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
             ? "text-white hover:text-white/80" 
             : "text-primary hover:text-primary/80"
     ), [isHomePage, scrolled]);
+
+    // Admin crown style
+    const crownStyle = useMemo(() => cn(
+        "w-5 h-5",
+        "text-white",
+    ), []);
 
     return (
         <Sheet modal={false}>
@@ -183,6 +191,19 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                                     <p className="text-sm font-medium text-primary">Welcome to KOS</p>
                                 </div>
                             )}
+                            {/* Add admin icon link in the header */}
+                            {isAdmin && (
+                                <SheetClose asChild>
+                                    <Link
+                                        href="/admin"
+                                        className="p-1.5 rounded-full hover:bg-primary/10"
+                                        title="Admin Dashboard"
+                                        aria-label="Admin Dashboard"
+                                    >
+                                        <Crown className={crownStyle} />
+                                    </Link>
+                                </SheetClose>
+                            )}
                         </div>
                     </div>
 
@@ -201,7 +222,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                                                         onClick={() => toggleExpanded(item.href)}
                                                         className="flex items-center justify-between w-full px-3 py-2 text-sm text-gray-700 hover:bg-primary/5 transition-colors"
                                                     >
-                                                        <span>{item.label}</span>
+                                                        <div className="flex items-center">
+                                                            <span>{item.label}</span>
+                                                        </div>
                                                         {expandedItems.includes(item.href) ? (
                                                             <ChevronUp className="w-4 h-4 text-gray-400" />
                                                         ) : (

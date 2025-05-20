@@ -2,7 +2,7 @@
 
 import AuthForm from "@/components/auth/AuthForm";
 import { signUpAction } from "@/lib/actions/auth/auth";
-import { signUpSchema } from "@/lib/validations";
+import { signUpSchema } from "@/lib/validation/validations";
 
 const Page = () => (
   <AuthForm
@@ -12,7 +12,6 @@ const Page = () => (
       email: "",
       firstName: "",
       lastName: "",
-      username: "",
       phoneNumber: "",
       birthday: "",
       password: "",

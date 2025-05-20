@@ -13,7 +13,8 @@ import {
   Calendar,
   Clock,
   Eye,
-  Trash
+  Trash,
+  Filter
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,37 +64,32 @@ export default async function UsersPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex justify-between items-center bg-white rounded-lg border p-4 shadow-sm">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-          <p className="text-gray-500">Manage all users of the platform</p>
-        </div>
-        <div className="flex items-center gap-2">
           <Link
             href="/admin/users/create"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-white shadow hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2.5 text-sm font-medium text-white shadow hover:bg-primary/90 transition-colors"
           >
             <UserPlus className="mr-2 h-4 w-4" />
             Add New User
           </Link>
         </div>
+        
+        <div className="flex items-center gap-3">
+          <Button variant="outline" size="sm" className="h-9">
+            <Filter className="mr-2 h-4 w-4" />
+            Filter
+          </Button>
+          <Button variant="outline" size="sm" className="h-9">
+            <ArrowUpDown className="mr-2 h-4 w-4" />
+            Sort
+          </Button>
+          <Button variant="outline" size="sm" className="h-9">
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
+        </div>
       </div>
-
-      {/* Filter & Export Options */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" size="sm" className="h-9">
-              <ArrowUpDown className="mr-2 h-4 w-4" />
-              Sort
-            </Button>
-            <Button variant="outline" size="sm" className="h-9">
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Users List */}
       <div className="overflow-x-auto rounded-md border bg-white">

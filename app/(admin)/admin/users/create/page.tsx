@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { UserForm } from "@/components/admin/users/CreateUserForm";
+import { UserForm } from "@/components/admin/users/UserForm";
 
 export const metadata: Metadata = {
   title: "Create User | Admin Dashboard",

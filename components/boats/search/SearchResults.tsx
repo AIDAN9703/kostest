@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Boat, BoatLocation } from "@/types/types";
+import { Boat, BoatLocation } from "@/lib/types/types";
 import { Button } from "@/components/ui/button";
 import { 
   Pagination, 

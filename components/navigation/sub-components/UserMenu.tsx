@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Session } from 'next-auth'
-import { NavigationItem } from '@/types/types'
+import { NavigationItem } from '@/lib/types/types'
 import { signOut } from 'next-auth/react'
 
 interface UserMenuProps {
@@ -90,7 +90,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
                     >
                         <Avatar className={avatarStyle}>
                             <AvatarImage 
-                                src={user?.profileImage || ''} 
+                                src={user?.profileImage || user?.image || ''} 
                                 className="object-cover"
                             />
                             <AvatarFallback className={avatarFallbackStyle}>

@@ -74,9 +74,6 @@ export default function PopularExperiences() {
           <h2 className="font-poppins font-medium text-3xl sm:text-4xl md:text-5xl text-primary leading-tight mb-2">
             All occasions, all the time
           </h2>
-          <p className="text-gray-600 text-lg font-poppins font-light">
-            More than just a boat and yacht rental - We craft your dream experiences.
-          </p>
         </motion.div>
 
         {/* Experiences Grid */}

@@ -2,7 +2,7 @@
 
 import React from "react";
 import AuthForm from "@/components/auth/AuthForm";
-import { signInSchema } from "@/lib/validations";
+import { signInSchema } from "@/lib/validation/validations";
 import { signInAction } from "@/lib/actions/auth/auth";
 import { useSearchParams } from "next/navigation";
 

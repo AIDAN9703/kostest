@@ -1,6 +1,6 @@
 "use client";
 
-import { Boat } from "@/types/types";
+import { Boat } from "@/lib/types/types";
 import { Button } from "@/components/ui/button";
 import { Star, ThumbsUp } from "lucide-react";
 

@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Boat } from "@/types/types";
+import { Boat } from "@/lib/types/types";
 import { formatCurrency } from "@/lib/utils/general-utils";
 import { Button } from "@/components/ui/button";
 import BoatCard from "@/components/ui/boat-card";

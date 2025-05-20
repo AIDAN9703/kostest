@@ -1,4 +1,18 @@
-
+CREATE TYPE "public"."AuthProvider" AS ENUM('EMAIL', 'GOOGLE', 'FACEBOOK', 'APPLE');--> statement-breakpoint
+CREATE TYPE "public"."BoatCategory" AS ENUM('PONTOON', 'YACHT', 'SAILBOAT', 'FISHING', 'SPEEDBOAT', 'HOUSEBOAT', 'JET_SKI', 'OTHER');--> statement-breakpoint
+CREATE TYPE "public"."BoatingExperienceLevel" AS ENUM('NONE', 'BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT', 'PROFESSIONAL');--> statement-breakpoint
+CREATE TYPE "public"."BoatingLicenseType" AS ENUM('NONE', 'STATE_BOATING_LICENSE', 'USCG_LICENSE', 'INTERNATIONAL_LICENSE', 'OTHER');--> statement-breakpoint
+CREATE TYPE "public"."BookingStatus" AS ENUM('PENDING', 'APPROVED', 'AWAITING_PAYMENT', 'CONFIRMED', 'DENIED', 'EXPIRED', 'CANCELLED', 'COMPLETED', 'REFUNDED');--> statement-breakpoint
+CREATE TYPE "public"."BookingType" AS ENUM('DAY_REQUEST', 'INSTANT_BOOK', 'TERM_CHARTER', 'MULTI_DAY', 'EXTERNAL_BOOKING');--> statement-breakpoint
+CREATE TYPE "public"."LineItemType" AS ENUM('CLEANING', 'CAPTAIN', 'VESSEL_FEE', 'BOOKING_FEE', 'TAX', 'TRANSACTION_FEE', 'OTHER');--> statement-breakpoint
+CREATE TYPE "public"."LocationType" AS ENUM('HOME_PORT', 'CURRENT_LOCATION', 'PICKUP_LOCATION', 'DROPOFF_LOCATION', 'DESTINATION');--> statement-breakpoint
+CREATE TYPE "public"."NotificationPreference" AS ENUM('ALL', 'IMPORTANT_ONLY', 'NONE');--> statement-breakpoint
+CREATE TYPE "public"."PaymentStatus" AS ENUM('PENDING', 'PAID', 'FAILED', 'REFUNDED', 'CHARGEBACK');--> statement-breakpoint
+CREATE TYPE "public"."UserRole" AS ENUM('USER', 'ADMIN', 'CAPTAIN', 'BROKER', 'OWNER');--> statement-breakpoint
+CREATE TYPE "public"."UserStatus" AS ENUM('ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION', 'BANNED');--> statement-breakpoint
+CREATE TYPE "public"."VerificationChannel" AS ENUM('SMS', 'CALL', 'EMAIL', 'WHATSAPP');--> statement-breakpoint
+CREATE TYPE "public"."VerificationStatus" AS ENUM('PENDING', 'PASSED', 'FAILED', 'EXPIRED');--> statement-breakpoint
+CREATE TYPE "public"."VerificationType" AS ENUM('PHONE', 'EMAIL', 'IDENTITY', 'AGE', 'PAYMENT_METHOD');--> statement-breakpoint
 CREATE TABLE "boat" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" text NOT NULL,
@@ -21,7 +35,6 @@ CREATE TABLE "boat" (
 	"sleeps" integer,
 	"beam" double precision,
 	"draft" double precision,
-	"weight" integer,
 	"fuel_type" text,
 	"engine_type" text,
 	"engine_power" text,
@@ -373,6 +386,8 @@ CREATE INDEX "boat_captain_idx" ON "boat" USING btree ("primary_captain_id");-->
 CREATE INDEX "boat_category_idx" ON "boat" USING btree ("category");--> statement-breakpoint
 CREATE INDEX "boat_location_idx" ON "boat" USING btree ("home_port");--> statement-breakpoint
 CREATE INDEX "boat_spatial_idx" ON "boat" USING gist ("location");--> statement-breakpoint
+CREATE INDEX "boat_search_name_idx" ON "boat" USING btree ("name");--> statement-breakpoint
+CREATE INDEX "boat_search_make_model_idx" ON "boat" USING btree ("make","model");--> statement-breakpoint
 CREATE INDEX "booking_type_idx" ON "booking" USING btree ("booking_type");--> statement-breakpoint
 CREATE INDEX "booking_status_idx" ON "booking" USING btree ("booking_status");--> statement-breakpoint
 CREATE INDEX "booking_user_idx" ON "booking" USING btree ("user_id");--> statement-breakpoint
@@ -381,6 +396,7 @@ CREATE INDEX "booking_captain_idx" ON "booking" USING btree ("captain_id");--> s
 CREATE INDEX "booking_date_idx" ON "booking" USING btree ("start_date","end_date");--> statement-breakpoint
 CREATE INDEX "booking_pickup_idx" ON "booking" USING gist ("pickup_coordinates");--> statement-breakpoint
 CREATE INDEX "booking_dropoff_idx" ON "booking" USING gist ("dropoff_coordinates");--> statement-breakpoint
+CREATE INDEX "booking_search_customer_idx" ON "booking" USING btree ("customer_name","customer_email");--> statement-breakpoint
 CREATE INDEX "captain_status_idx" ON "captain" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "captain_location_idx" ON "captain" USING btree ("city","state");--> statement-breakpoint
 CREATE INDEX "captain_license_idx" ON "captain" USING btree ("license_type");--> statement-breakpoint
@@ -400,6 +416,8 @@ CREATE INDEX "role_idx" ON "user" USING btree ("role");--> statement-breakpoint
 CREATE INDEX "boating_exp_idx" ON "user" USING btree ("boating_experience");--> statement-breakpoint
 CREATE INDEX "referral_code_idx" ON "user" USING btree ("referral_code");--> statement-breakpoint
 CREATE INDEX "referred_by_idx" ON "user" USING btree ("referred_by_id");--> statement-breakpoint
+CREATE INDEX "user_search_name_idx" ON "user" USING btree ("first_name","last_name");--> statement-breakpoint
+CREATE INDEX "user_search_username_idx" ON "user" USING btree ("username");--> statement-breakpoint
 CREATE INDEX "verification_user_idx" ON "verification" USING btree ("user_id");--> statement-breakpoint
 CREATE INDEX "verification_status_idx" ON "verification" USING btree ("status");--> statement-breakpoint
 CREATE INDEX "verification_type_idx" ON "verification" USING btree ("type");--> statement-breakpoint

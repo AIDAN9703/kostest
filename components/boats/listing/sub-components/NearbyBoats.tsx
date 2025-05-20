@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Boat } from "@/types/types";
+import { Boat } from "@/lib/types/types";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -20,14 +20,42 @@ export function NearbyBoats({ boat, limit = 3 }: NearbyBoatsProps) {
   const [boats, setBoats] = useState<Boat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Helper function to get the default tier price
+  const getDefaultPrice = (boat: Boat) => {
+    if (!boat.pricingTiers || boat.pricingTiers.length === 0) return 0;
+    
+    const defaultTier = boat.pricingTiers.find(tier => tier.isDefault && tier.isActive);
+    if (defaultTier) return defaultTier.price;
+    
+    // If no default tier, use the first active tier
+    const firstActiveTier = boat.pricingTiers.find(tier => tier.isActive);
+    if (firstActiveTier) return firstActiveTier.price;
+    
+    // Fallback to the first tier regardless of active status
+    return boat.pricingTiers[0].price;
+  };
+  
+  // Helper to get the hours display
+  const getHoursDisplay = (boat: Boat) => {
+    if (!boat.pricingTiers || boat.pricingTiers.length === 0) return "hour";
+    
+    const defaultTier = boat.pricingTiers.find(tier => tier.isDefault && tier.isActive);
+    if (defaultTier) return `${defaultTier.hours}hr`;
+    
+    const firstActiveTier = boat.pricingTiers.find(tier => tier.isActive);
+    if (firstActiveTier) return `${firstActiveTier.hours}hr`;
+    
+    return `${boat.pricingTiers[0].hours}hr`;
+  };
+
   useEffect(() => {
     const fetchNearbyBoats = async () => {
       setIsLoading(true);
       try {
         // Create search params to find boats in the same location
         const params = new URLSearchParams();
-        if (boat.homePort) {
-          params.append("location", boat.homePort);
+        if (boat.locationLabel) {
+          params.append("location", boat.locationLabel);
         }
         
         const response = await fetch(`/api/boats/search?${params.toString()}&limit=${limit}&exclude=${boat.id}`, {
@@ -51,14 +79,14 @@ export function NearbyBoats({ boat, limit = 3 }: NearbyBoatsProps) {
       }
     };
 
-    if (boat?.homePort) {
+    if (boat?.locationLabel) {
       fetchNearbyBoats();
     } else {
       setIsLoading(false);
     }
   }, [boat, limit]);
 
-  if (!boat.homePort || (!isLoading && boats.length === 0)) {
+  if (!boat.locationLabel || (!isLoading && boats.length === 0)) {
     return null;
   }
 
@@ -66,7 +94,7 @@ export function NearbyBoats({ boat, limit = 3 }: NearbyBoatsProps) {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="border-b border-gray-100 px-5 py-4">
         <h2 className="text-lg font-semibold text-primary font-serif">
-          More from {boat.homePort}
+          More from {boat.locationLabel}
         </h2>
         <p className="text-sm text-gray-500 mt-1">
           Discover similar boats in this area
@@ -120,11 +148,11 @@ export function NearbyBoats({ boat, limit = 3 }: NearbyBoatsProps) {
                 
                 <div className="flex items-center text-xs text-gray-500 mt-1">
                   <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                  <span className="truncate">{nearbyBoat.homePort}</span>
+                  <span className="truncate">{nearbyBoat.locationLabel}</span>
                 </div>
                 
                 <p className="text-sm font-semibold text-gray-900 mt-2">
-                  {formatCurrency(nearbyBoat.hourlyRate)}<span className="text-xs font-normal text-gray-500">/hour</span>
+                  {formatCurrency(getDefaultPrice(nearbyBoat))}<span className="text-xs font-normal text-gray-500">/{getHoursDisplay(nearbyBoat)}</span>
                 </p>
               </div>
             </Link>
@@ -137,8 +165,8 @@ export function NearbyBoats({ boat, limit = 3 }: NearbyBoatsProps) {
             variant="outline" 
             className="w-full mt-3"
           >
-            <Link href={`/boats/search?location=${encodeURIComponent(boat.homePort || '')}`}>
-              View all boats in {boat.homePort}
+            <Link href={`/boats/search?location=${encodeURIComponent(boat.locationLabel || '')}`}>
+              View all boats in {boat.locationLabel}
             </Link>
           </Button>
         )}

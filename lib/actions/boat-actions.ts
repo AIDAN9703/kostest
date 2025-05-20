@@ -1,8 +1,8 @@
 'use server';
 
 import { db } from "@/database/db";
-import { boats, boatCategoryEnum } from "@/database/schema";
-import { Boat, BoatLocation, SearchParamsType, SearchResults } from "@/types/types";
+import { boats, boatCategoryEnum, boatPricingTiers } from "@/database/schema";
+import { Boat, BoatLocation, SearchParamsType, SearchResults } from "@/lib/types/types";
 import { and, asc, desc, eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
 import { cache } from "react";
 import { parseArrayParam, parseNumberParam } from "@/lib/utils/search-params-utils";
@@ -52,6 +52,36 @@ export const getBoats = cache(async ({
       }
     }
     
+    // Price filtering implementation with proper join pattern
+    // Handle price filtering using subquery for proper relational data access
+    if (searchParams.minPrice || searchParams.maxPrice) {
+      const minPrice = parseNumberParam(searchParams.minPrice);
+      const maxPrice = parseNumberParam(searchParams.maxPrice);
+
+      // Add price filter condition using joined data approach
+      if (minPrice !== null || maxPrice !== null) {
+        // This is the SQL-based approach using a proper EXISTS subquery for pricing tiers
+        // This is more efficient than trying to do this with the Drizzle query builder
+        if (minPrice !== null) {
+          conditions.push(sql`EXISTS (
+            SELECT 1 FROM boat_pricing_tier 
+            WHERE boat_pricing_tier.boat_id = ${boats.id} 
+            AND boat_pricing_tier.is_active = TRUE 
+            AND boat_pricing_tier.price >= ${minPrice}
+          )`);
+        }
+
+        if (maxPrice !== null) {
+          conditions.push(sql`EXISTS (
+            SELECT 1 FROM boat_pricing_tier 
+            WHERE boat_pricing_tier.boat_id = ${boats.id} 
+            AND boat_pricing_tier.is_active = TRUE 
+            AND boat_pricing_tier.price <= ${maxPrice}
+          )`);
+        }
+      }
+    }
+    
     // Handle numeric filters using standardized number parsing
     const addNumericFilter = (param: string | string[] | undefined, field: any, operator: typeof gte | typeof lte) => {
       const value = parseNumberParam(param);
@@ -61,15 +91,15 @@ export const getBoats = cache(async ({
     };
     
     // Apply numeric filters
-    addNumericFilter(searchParams.minPrice, boats.hourlyRate, gte);
-    addNumericFilter(searchParams.maxPrice, boats.hourlyRate, lte);
     addNumericFilter(searchParams.minLength, boats.lengthFt, gte);
     addNumericFilter(searchParams.maxLength, boats.lengthFt, lte);
-    addNumericFilter(searchParams.minYear, boats.yearBuilt || 0, gte);
-    addNumericFilter(searchParams.maxYear, boats.yearBuilt || 3000, lte);
-    addNumericFilter(searchParams.cabins, boats.cabins || 0, gte);
-    addNumericFilter(searchParams.bathrooms, boats.bathrooms || 0, gte);
+    addNumericFilter(searchParams.minYear, boats.yearBuilt, gte);
+    addNumericFilter(searchParams.maxYear, boats.yearBuilt, lte);
+    
+    // Handle passenger/capacity filter
     addNumericFilter(searchParams.passengers, boats.capacity, gte);
+    
+    // Note: cabins and bathrooms filters are skipped as they're not in our schema
     
     // Handle location filter (point-based search)
     const location = Array.isArray(searchParams.location) 
@@ -126,14 +156,27 @@ export const getBoats = cache(async ({
     // Calculate pagination
     const offset = (page - 1) * limit;
     
-    // Determine sort order with standardized handling
+    // Handle sorting - professional approach for sorting by related table values
     let orderBy: any[] = [desc(boats.featured)];
     
     const sort = Array.isArray(searchParams.sort) ? searchParams.sort[0] : searchParams.sort;
     if (sort) {
       switch (sort) {
-        case 'price_asc': orderBy = [asc(boats.hourlyRate)]; break;
-        case 'price_desc': orderBy = [desc(boats.hourlyRate)]; break;
+        case 'price_asc':
+          // Sort by minimum tier price using a correlated subquery
+          orderBy = [sql`(
+            SELECT MIN(price) 
+            FROM boat_pricing_tier 
+            WHERE boat_id = ${boats.id} AND is_active = TRUE
+          ) ASC NULLS LAST`];
+          break;
+        case 'price_desc':
+          orderBy = [sql`(
+            SELECT MIN(price) 
+            FROM boat_pricing_tier 
+            WHERE boat_id = ${boats.id} AND is_active = TRUE
+          ) DESC NULLS LAST`];
+          break;
         case 'length_asc': orderBy = [asc(boats.lengthFt)]; break;
         case 'length_desc': orderBy = [desc(boats.lengthFt)]; break;
         case 'newest': orderBy = [desc(boats.createdAt)]; break;
@@ -157,7 +200,35 @@ export const getBoats = cache(async ({
     
     const totalCount = countResult[0]?.count || 0;
     const totalPages = Math.ceil(totalCount / limit);
-    const typedResults = results as unknown as Boat[];
+    
+    // After getting results, fetch pricing tiers for all boats in one query
+    const boatIds = results.map(boat => boat.id);
+    let pricingTiersMap: Record<string, any[]> = {};
+
+    if (boatIds.length > 0) {
+      const pricingTiers = await db
+        .select()
+        .from(boatPricingTiers)
+        .where(inArray(boatPricingTiers.boatId, boatIds));
+      
+      // Group by boat ID for efficient lookup
+      pricingTiersMap = pricingTiers.reduce((acc, tier) => {
+        if (!acc[tier.boatId]) {
+          acc[tier.boatId] = [];
+        }
+        acc[tier.boatId].push(tier);
+        return acc;
+      }, {} as Record<string, any[]>);
+    }
+
+    // Add pricing tiers to each boat
+    const boatsWithTiers = results.map(boat => ({
+      ...boat,
+      pricingTiers: pricingTiersMap[boat.id] || []
+    }));
+
+    // Type the results properly
+    const typedResults = boatsWithTiers as unknown as Boat[];
     
     // Get locations data for map display
     let locations: BoatLocation[] = [];
@@ -171,7 +242,6 @@ export const getBoats = cache(async ({
             id, 
             name, 
             category, 
-            hourly_rate as price,
             main_image as image_url,
             ST_Y(location::geometry) as latitude, 
             ST_X(location::geometry) as longitude
@@ -182,15 +252,24 @@ export const getBoats = cache(async ({
         
         const locationResults = await db.execute(query);
         
-        locations = (locationResults.rows as any[]).map(row => ({
-          id: row.id,
-          name: row.name,
-          latitude: parseFloat(row.latitude),
-          longitude: parseFloat(row.longitude),
-          category: row.category || "OTHER",
-          price: parseFloat(row.price),
-          imageUrl: row.image_url
-        }));
+        locations = (locationResults.rows as any[]).map(row => {
+          // Find the corresponding boat with pricing data
+          const boatWithPricing = typedResults.find(b => b.id === row.id);
+          // Get default price from pricing tiers or use 0
+          const price = boatWithPricing?.pricingTiers?.length 
+            ? boatWithPricing.pricingTiers[0].price
+            : 0;
+          
+          return {
+            id: row.id,
+            name: row.name,
+            latitude: parseFloat(row.latitude),
+            longitude: parseFloat(row.longitude),
+            category: row.category || "OTHER",
+            price: price,
+            imageUrl: row.image_url
+          };
+        });
       } catch (error) {
         console.error("Error fetching boat locations:", error);
       }

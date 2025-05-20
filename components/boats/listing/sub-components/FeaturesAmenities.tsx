@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Boat } from "@/types/types";
+import { Boat } from "@/lib/types/types";
 import { CheckCircle2, Music, Waves, ShieldAlert, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

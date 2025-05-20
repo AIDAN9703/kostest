@@ -2,7 +2,7 @@
 
 import { useRef, useEffect } from "react";
 import { AdvancedMarker, InfoWindow, AdvancedMarkerAnchorPoint } from "@vis.gl/react-google-maps";
-import { BoatLocation } from "@/types/types";
+import { BoatLocation } from "@/lib/types/types";
 import Link from "next/link";
 import { formatCurrency } from "@/lib/utils/general-utils";
 import { Button } from "@/components/ui/button";

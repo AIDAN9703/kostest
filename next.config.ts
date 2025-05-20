@@ -44,11 +44,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: false, // Re-enable linting
   },
-  // Next.js 15 caching configuration
-  staleTimes: {
-    // Default stale time for all page segments (24 hours in seconds)
-    default: 86400,
-  },
 };
 
 export default nextConfig;

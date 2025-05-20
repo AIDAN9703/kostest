@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Users } from "lucide-react";
-import { Boat } from "@/types/types";
+import { Boat } from "@/lib/types/types";
 import { formatCurrency } from "@/lib/utils/general-utils";
 import { GiCaptainHatProfile } from "react-icons/gi";
 import { TbRulerMeasure } from "react-icons/tb";
@@ -21,10 +21,10 @@ export function BasicInfo({ boat }: BasicInfoProps) {
           <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">
             {boat.displayTitle || boat.name}
           </h1>
-          {boat.homePort && (
+          {boat.locationLabel && (
             <div className="flex items-center text-primary">
               <MapPin className="w-4 h-4 mr-1" />
-              <span>{boat.homePort}</span>
+              <span>{boat.locationLabel}</span>
             </div>
           )}
         </div>

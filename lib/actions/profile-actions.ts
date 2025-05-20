@@ -6,8 +6,8 @@ import { users } from "@/database/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { profileUpdateSchema, ProfileFormValues } from "@/lib/validations";
-import { UserProfile, ProfileUpdateResponse } from "@/types/types";
+import { profileUpdateSchema, ProfileFormValues } from "@/lib/validation/validations";
+import { UserProfile, ProfileUpdateResponse } from "@/lib/types/types";
 
 /**
  * Get the current user's profile

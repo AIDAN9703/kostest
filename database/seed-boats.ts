@@ -1,4 +1,4 @@
-import { db } from './db';
+/*import { db } from './db';
 import { boats, users, boatCategoryEnum } from './schema';
 import { eq } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
@@ -279,4 +279,4 @@ seedBoats()
   .catch((error) => {
     console.error('Failed to seed boats:', error);
     process.exit(1);
-  }); 
+  }); */

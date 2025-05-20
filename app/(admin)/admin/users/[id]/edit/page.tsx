@@ -2,36 +2,64 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getUserById } from "@/lib/actions/admin/users";
-import { UserForm } from "@/components/admin/users/CreateUserForm";
+import { UserForm } from "@/components/admin/users/UserForm";
 import { notFound } from "next/navigation";
+import { type UpdateUserInput } from "@/lib/validation/admin/users";
 
 interface UserEditPageProps {
   params: Promise<{ id: string }>;
-}
-
-export async function generateMetadata({ params }: UserEditPageProps): Promise<Metadata> {
-  const resolvedParams = await params;
-  const user = await getUserById(resolvedParams.id).catch(() => null);
-  
-  const userName = user 
-    ? user.displayName || user.username || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User' 
-    : 'User';
-  
-  return {
-    title: `Edit ${userName} | Admin Dashboard`,
-    description: `Edit ${userName}'s information`
-  };
 }
 
 export default async function UserEditPage({ params }: UserEditPageProps) {
   const resolvedParams = await params;
   const userId = resolvedParams.id;
   
-  const user = await getUserById(userId).catch(() => null);
+  const userData = await getUserById(userId).catch(() => null);
   
-  if (!user) {
+  if (!userData) {
     notFound();
   }
+  
+  // Format the license expiry date if it exists
+  const formatLicenseExpiry = (date: Date | null): string | null => {
+    if (!date) return null;
+    return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD for date input
+  };
+  
+  // Transform database user to match the form's expected format
+  // Only include fields that are in the UpdateUserInput type
+  const user: Partial<UpdateUserInput> = {
+    firstName: userData.firstName || null,
+    lastName: userData.lastName || null,
+    displayName: userData.displayName || null,
+    bio: userData.bio || null,
+    profileImage: userData.profileImage || null,
+    username: userData.username,
+    email: userData.email,
+    phoneNumber: userData.phoneNumber || null,
+    role: userData.role,
+    status: userData.status,
+    twoFactorEnabled: userData.twoFactorEnabled,
+    // Only include authProvider if it's a valid value in the enum
+    ...(userData.authProvider ? { authProvider: userData.authProvider } : {}),
+    address: userData.address || null,
+    city: userData.city || null,
+    state: userData.state || null,
+    postalCode: userData.postalCode || null,
+    country: userData.country || null,
+    emailVerified: userData.emailVerified,
+    phoneVerified: userData.phoneVerified,
+    identityVerified: userData.identityVerified || false,
+    governmentIdVerified: userData.governmentIdVerified || false,
+    boatingExperience: userData.boatingExperience,
+    boatingLicenseNumber: userData.boatingLicenseNumber || null,
+    boatingLicenseExpiry: formatLicenseExpiry(userData.boatingLicenseExpiry),
+    boatingLicenseVerified: userData.boatingLicenseVerified || false,
+    stripeCustomerId: userData.stripeCustomerId || null,
+    stripeConnectAccountId: userData.stripeConnectAccountId || null,
+    hasBankAccountConnected: userData.hasBankAccountConnected || false,
+    marketingEmailsEnabled: userData.marketingEmailsEnabled,
+  };
   
   return (
     <div className="space-y-6">

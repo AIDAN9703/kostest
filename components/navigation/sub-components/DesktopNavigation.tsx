@@ -4,9 +4,9 @@ import React, { useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils/general-utils'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Crown } from 'lucide-react'
 import { Session } from 'next-auth'
-import { NavigationItem, HeaderItem } from '@/types/types'
+import { NavigationItem, HeaderItem } from '@/lib/types/types'
 
 // Define the dropdown menu data structure
 const dropdownMenus = {
@@ -70,6 +70,7 @@ interface DesktopNavigationProps {
     scrolled: boolean;
     expandedItems: string[];
     getTextStyle: (isActive: boolean) => string;
+    isAdmin?: boolean;
 }
 
 const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
@@ -77,7 +78,8 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
     isHomePage,
     scrolled,
     expandedItems,
-    getTextStyle
+    getTextStyle,
+    isAdmin = false
 }) => {
     const pathname = usePathname();
 
@@ -118,8 +120,37 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
         isHomePage && !scrolled ? "text-white" : "text-gray-700"
     ), [isHomePage, scrolled]);
 
+    // Admin crown style
+    const crownStyle = useMemo(() => cn(
+        "w-5 h-5",
+        "transition-all duration-200",
+        "hover:scale-110",
+        isHomePage && !scrolled ? "text-white" : "text-primary"
+    ), [isHomePage, scrolled]);
+
+    // Admin crown link/button style
+    const crownLinkStyle = useMemo(() => cn(
+        "p-1.5 rounded-full",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+        "hover:bg-primary/5",
+        "flex items-center justify-center",
+        "mr-3"
+    ), []);
+
     return (
         <div className="hidden lg:flex items-center gap-4">
+            {/* Admin crown icon - only shown for admins */}
+            {isAdmin && (
+                <Link 
+                    href="/admin" 
+                    className={crownLinkStyle} 
+                    title="Admin Dashboard"
+                    aria-label="Admin Dashboard"
+                >
+                    <Crown className={crownStyle} />
+                </Link>
+            )}
+            
             {navigationData.main.map((item) => (
                 <div key={item.href} className="relative group">
                     {item.href === "/explore" ? (

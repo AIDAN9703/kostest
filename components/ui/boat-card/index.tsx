@@ -3,13 +3,14 @@
 import React, { useState, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Boat } from "@/types/types";
+import { Boat } from "@/lib/types/types";
 import { Users, MapPin, Star, ChevronLeft, ChevronRight, Heart } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/general-utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { getOptimizedImageUrl } from "@/lib/services/imagekit";
 import { cn } from "@/lib/utils/general-utils";
+import { Image as IKImage } from "@imagekit/next";
+import { getBoatDefaultPrice, getBoatDefaultHours } from "@/lib/utils/pricing-utils";
 
 interface BoatCardProps {
   boat: Boat;
@@ -48,19 +49,16 @@ const BoatCard = ({
   const images = [
     boat.mainImage,
     ...(boat.galleryImages || []),
-    '/images/boats/yacht1.jpg' // fallback
   ].filter(Boolean);
 
-  // Process the current image URL with our ImageKit optimization
-  const currentImageUrl = getOptimizedImageUrl(
-    images[currentImageIndex] || '/images/boats/yacht1.jpg',
-    {
-      width: 622,
-      height: 350,
-      format: 'auto',
-      quality: 80
-    }
-  );
+  // If no images are available, use our custom fallback
+  const hasImages = images.length > 0;
+
+  // Check if a URL already has transformations
+  const hasTransformations = (src: string) => src?.includes('tr=');
+
+  // Get the current image
+  const currentImageUrl = hasImages ? images[currentImageIndex] : null;
 
   const handleImageNavigation = (direction: 'prev' | 'next') => {
     setCurrentImageIndex(prev => {
@@ -146,14 +144,46 @@ const BoatCard = ({
       >
         <CardHeader className="p-0">
           <AspectRatio ratio={aspectRatio} className="overflow-hidden">
-            <Image
-              src={currentImageUrl}
-              alt={boat.displayTitle || boat.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              priority={imagePriority ?? (index < 3)}
-            />
+            {hasImages ? (
+              hasTransformations(currentImageUrl!) ? (
+                // For URLs with existing transformations, use a regular img tag
+                <img
+                  src={currentImageUrl!}
+                  alt={boat.displayTitle || boat.name}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                // For other images, use the ImageKit component with transformations
+                <IKImage
+                  src={currentImageUrl!}
+                  alt={boat.displayTitle || boat.name}
+                  width={622}
+                  height={350}
+                  className="object-cover w-full h-full"
+                  style={{ position: "absolute", inset: 0 }}
+                  loading={index < 3 || imagePriority ? "eager" : "lazy"}
+                  transformation={[{
+                    width: 622,
+                    height: 350,
+                    quality: 85,
+                    format: "auto"
+                  }]}
+                />
+              )
+            ) : (
+              <div className="w-full h-full bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
+                <div className="relative w-16 h-16 mb-4">
+                  <Image
+                    src="/icons/updatekoslogo-branded.png"
+                    alt="KOS Logo"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <p className="text-gray-600 font-medium mb-1">No Images Available</p>
+                <p className="text-sm text-gray-500">Images for this boat are coming soon</p>
+              </div>
+            )}
             
             {/* Favorite button */}
             <button
@@ -211,7 +241,8 @@ const BoatCard = ({
                 variantStyles.priceTag
               )}>
                 <span className="text-sm sm:text-base font-medium text-[#1E293B]">
-                  {formatCurrency(boat.hourlyRate)}+<span className="text-xs sm:text-sm text-gray-500">/hour</span>
+                  {formatCurrency(getBoatDefaultPrice(boat))}
+                  <span className="text-xs sm:text-sm text-gray-500">/{getBoatDefaultHours(boat)}</span>
                 </span>
               </div>
             )}
@@ -259,13 +290,13 @@ const BoatCard = ({
                 </div>
                 
                 {/* Location */}
-                {showLocation && boat.homePort && boat.homePort !== 'N/A' && (
+                {showLocation && boat.locationLabel && boat.locationLabel !== 'N/A' && (
                   <div className={cn(
                     "text-gray-600",
                     variantStyles.location
                   )}>
                     <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm font-light tracking-wide truncate overflow-hidden">{boat.homePort}</span>
+                    <span className="text-xs sm:text-sm font-light tracking-wide truncate overflow-hidden">{boat.locationLabel}</span>
                   </div>
                 )}
                 

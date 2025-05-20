@@ -2,83 +2,169 @@
 
 import { revalidatePath } from 'next/cache'
 import { db } from '@/database/db'
-import { boats } from '@/database/schema'
-import { and, count, eq, desc, or, like } from 'drizzle-orm'
+import { boats, boatPricingTiers } from '@/database/schema'
+import { and, count, eq, desc, or, like, isNull, inArray, SQL, sql } from 'drizzle-orm'
+import { 
+  createBoatSchema, 
+  updateBoatSchema, 
+  boatFilterSchema,
+  pricingTierSchema,
+  type CreateBoatInput,
+  type UpdateBoatInput,
+  type BoatFilterInput,
+  type PricingTierInput
+} from "@/lib/validation/admin/boats";
+import { z } from "zod";
 
-// Helper to validate UUID format
-function isValidUUID(uuid: string) {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(uuid);
+// Original Drizzle inferred type for insert
+type DrizzleBoatInsert = typeof boats.$inferInsert;
+
+// Custom type for our manipulation payload for boats
+type BoatManipulationPayload = Omit<DrizzleBoatInsert, 'location'> & {
+  location?: SQL | null; // Allow SQL type specifically for the location field
+};
+
+/**
+ * Get boat pricing tiers
+ */
+export async function getBoatPricingTiers(boatId: string) {
+  try {
+    if (!boatId || !isValidUUID(boatId)) {
+      throw new Error(`Invalid UUID format: ${boatId}`);
+    }
+
+    const tiers = await db
+      .select()
+      .from(boatPricingTiers)
+      .where(eq(boatPricingTiers.boatId, boatId))
+      .orderBy(boatPricingTiers.hours);
+
+    return tiers;
+  } catch (error) {
+    console.error("Error fetching boat pricing tiers:", error);
+    throw error;
+  }
 }
 
 /**
  * Get all boats with pagination, filtering, and sorting
  */
-export async function getBoats(options: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  category?: string;
-  ownerId?: string;
-  active?: boolean;
-}) {
-  const { 
-    page = 1, 
-    limit = 10,
-    search,
-    category,
-    ownerId,
-    active
-  } = options;
-  
-  const offset = (page - 1) * limit;
-  const whereConditions = [];
-  
-  if (search) {
-    const searchConditions = [
-      like(boats.name, `%${search}%`),
-      like(boats.displayTitle || '', `%${search}%`),
-      like(boats.description || '', `%${search}%`)
-    ];
-    whereConditions.push(or(...searchConditions));
-  }
-  
-  if (category) {
-    whereConditions.push(eq(boats.category, category as any));
-  }
-  
-  if (ownerId) {
-    if (isValidUUID(ownerId)) {
-      whereConditions.push(eq(boats.ownerId, ownerId));
-    } else {
-      throw new Error(`Invalid owner UUID: ${ownerId}`);
+export async function getAllBoats(options: BoatFilterInput = {}) {
+  try {
+    // Validate input
+    const validatedOptions = boatFilterSchema.parse(options);
+    
+    const { 
+      page = 1, 
+      limit = 10,
+      search,
+      category,
+      featured,
+      active,
+      ownerId
+    } = validatedOptions;
+    
+    const offset = (page - 1) * limit;
+    const whereConditions = [];
+    
+    if (search) {
+      whereConditions.push(or(
+        // Prefix search (index-friendly)
+        like(boats.name, `${search}%`),
+        like(boats.make || '', `${search}%`),
+        like(boats.model || '', `${search}%`),
+        like(boats.locationLabel || '', `${search}%`),
+        // Fallback full text search
+        like(boats.name, `%${search}%`),
+        like(boats.description || '', `%${search}%`),
+        like(boats.make || '', `%${search}%`),
+        like(boats.model || '', `%${search}%`),
+        like(boats.locationLabel || '', `%${search}%`)
+      ));
     }
+    
+    if (category) whereConditions.push(eq(boats.category, category));
+    
+    // Fix the boolean filter handling
+    if (featured !== undefined) {
+      whereConditions.push(featured ? eq(boats.featured, true) : or(eq(boats.featured, false), isNull(boats.featured)));
+    }
+    
+    if (active !== undefined) {
+      whereConditions.push(active ? eq(boats.active, true) : eq(boats.active, false));
+    }
+    
+    if (ownerId) whereConditions.push(eq(boats.ownerId, ownerId));
+    
+    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+    
+    // Execute both queries concurrently for better performance
+    const [boatsData, countResult] = await Promise.all([
+      db.select({
+        id: boats.id,
+        name: boats.name,
+        displayTitle: boats.displayTitle,
+        category: boats.category,
+        active: boats.active,
+        featured: boats.featured,
+        make: boats.make,
+        model: boats.model,
+        locationLabel: boats.locationLabel,
+        lengthFt: boats.lengthFt,
+        capacity: boats.capacity,
+        createdAt: boats.createdAt,
+        mainImage: boats.mainImage
+      })
+        .from(boats)
+        .where(whereClause)
+        .limit(limit)
+        .offset(offset)
+        .orderBy(desc(boats.createdAt)),
+        
+      db.select({ value: count() })
+        .from(boats)
+        .where(whereClause)
+    ]);
+    
+    const totalCount = countResult[0].value;
+    
+    // --- Optimised: batch-fetch pricing tiers instead of N+1 queries ---
+    const boatIds = boatsData.map((b) => b.id);
+    let tiersByBoatId: Record<string, typeof boatPricingTiers.$inferSelect[]> = {};
+
+    if (boatIds.length > 0) {
+      const allTiers = await db
+        .select()
+        .from(boatPricingTiers)
+        .where(inArray(boatPricingTiers.boatId, boatIds))
+        .orderBy(boatPricingTiers.hours);
+
+      // Group tiers by boatId for quick lookup
+      tiersByBoatId = allTiers.reduce((acc, tier) => {
+        (acc[tier.boatId] = acc[tier.boatId] || []).push(tier);
+        return acc;
+      }, {} as Record<string, typeof boatPricingTiers.$inferSelect[]>);
+    }
+
+    const boatsWithPricingTiers = boatsData.map((boat) => ({
+      ...boat,
+      pricingTiers: tiersByBoatId[boat.id] || [],
+    }));
+    
+    return {
+      boats: boatsWithPricingTiers,
+      totalCount,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit)
+    };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error("Validation error in getAllBoats:", error.errors);
+      throw new Error("Invalid filter parameters");
+    }
+    throw error;
   }
-  
-  if (active !== undefined) {
-    whereConditions.push(eq(boats.active, active));
-  }
-  
-  const boatsData = await db
-    .select()
-    .from(boats)
-    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
-    .limit(limit)
-    .offset(offset)
-    .orderBy(desc(boats.createdAt));
-  
-  const [{ value: totalCount }] = await db
-    .select({ value: count() })
-    .from(boats)
-    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
-  
-  return {
-    boats: boatsData,
-    totalCount,
-    page,
-    limit,
-    totalPages: Math.ceil(totalCount / limit)
-  };
 }
 
 /**
@@ -89,47 +175,218 @@ export async function getBoatById(id: string) {
     throw new Error(`Invalid UUID format: ${id}`);
   }
 
-  const boatData = await db
+  // Fetch basic boat data
+  const [boat] = await db
     .select()
     .from(boats)
     .where(eq(boats.id, id))
     .limit(1);
+
+  if (!boat) {
+    return null;
+  }
+
+  // Fetch pricing tiers
+  const pricingTiers = await getBoatPricingTiers(id);
   
-  return boatData[0] || null;
+  // Extract coordinates from PostGIS point if available
+  let locationCoordinates = null;
+  try {
+    if (boat.location) {
+      const locationResult = await db.execute(sql`
+        SELECT 
+          ST_Y(location::geometry) as lat, 
+          ST_X(location::geometry) as lng
+        FROM "boat" 
+        WHERE id = ${id}
+      `);
+      
+      if (locationResult.rows && locationResult.rows.length > 0) {
+        const { lat, lng } = locationResult.rows[0] as { lat: string, lng: string };
+        locationCoordinates = { lat: parseFloat(lat), lng: parseFloat(lng) };
+      }
+    }
+  } catch (error) {
+    // Continue without coordinates if there's an error
+  }
+  
+  // Return boat with pricing tiers and location coordinates
+  return { 
+    ...boat, 
+    pricingTiers,
+    locationCoordinates
+  };
+}
+
+/**
+ * Create pricing tiers for a boat
+ */
+async function createBoatPricingTiers(boatId: string, tiers: PricingTierInput[]) {
+  if (!tiers || tiers.length === 0) return [];
+  
+  try {
+    // Map the tiers to include the boat ID
+    const tiersWithBoatId = tiers.map(tier => ({
+      ...tier,
+      boatId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
+    
+    // Insert all pricing tiers
+    const result = await db.insert(boatPricingTiers)
+      .values(tiersWithBoatId)
+      .returning();
+      
+    return result;
+  } catch (error) {
+    console.error("Error creating boat pricing tiers:", error);
+    throw error;
+  }
+}
+
+/**
+ * Update pricing tiers for a boat
+ */
+async function updateBoatPricingTiers(boatId: string, tiers: PricingTierInput[]) {
+  try {
+    // Get existing pricing tiers for the boat
+    const existingTiers = await getBoatPricingTiers(boatId);
+    
+    // Delete all existing tiers first
+    if (existingTiers.length > 0) {
+      await db.delete(boatPricingTiers)
+        .where(eq(boatPricingTiers.boatId, boatId));
+    }
+    
+    // If there are new tiers to create, create them
+    if (tiers && tiers.length > 0) {
+      return await createBoatPricingTiers(boatId, tiers);
+    }
+    
+    return [];
+  } catch (error) {
+    console.error("Error updating boat pricing tiers:", error);
+    throw error;
+  }
 }
 
 /**
  * Create a new boat
  */
-export async function createBoat(data: any) {
-  const result = await db
-    .insert(boats)
-    .values(data)
-    .returning();
-  
-  revalidatePath('/admin/boats');
-  
-  return result[0];
+export async function createBoat(boatData: CreateBoatInput) {
+  try {
+    // Validate input data
+    const validatedData = createBoatSchema.parse(boatData);
+
+    // Extract pricing tiers and location data from the input
+    const { pricingTiers, locationCoordinates, ...boatValues } = validatedData;
+
+    // Prepare insert data for the boat row
+    const insertData: Partial<BoatManipulationPayload> = {
+      ...boatValues,
+      insuranceExpiry: boatValues.insuranceExpiry ? new Date(boatValues.insuranceExpiry) : null,
+      lastMaintenanceDate: boatValues.lastMaintenanceDate ? new Date(boatValues.lastMaintenanceDate) : null,
+      nextMaintenanceDate: boatValues.nextMaintenanceDate ? new Date(boatValues.nextMaintenanceDate) : null,
+    };
+
+    // Add PostGIS point if coordinates provided
+    if (locationCoordinates?.lat && locationCoordinates?.lng) {
+      insertData.location = sql`ST_SetSRID(ST_MakePoint(${locationCoordinates.lng}, ${locationCoordinates.lat}), 4326)`;
+    }
+
+    // 1) Insert the boat row first
+    const [boatRow] = await db.insert(boats).values(insertData as DrizzleBoatInsert).returning();
+
+    let tiersInserted = false;
+    try {
+      // 2) Insert pricing tiers (if any)
+      if (pricingTiers && pricingTiers.length > 0) {
+        const tiersWithBoatId = pricingTiers.map((tier) => ({
+          ...tier,
+          boatId: boatRow.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }));
+        await db.insert(boatPricingTiers).values(tiersWithBoatId);
+      }
+      tiersInserted = true;
+    } finally {
+      // Compensation: if tier insertion failed, remove the boat to keep data consistent
+      if (!tiersInserted) {
+        await db.delete(boats).where(eq(boats.id, boatRow.id));
+      }
+    }
+
+    const newBoat = await getBoatById(boatRow.id);
+    revalidatePath('/admin/boats');
+    return newBoat;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error("Validation error in createBoat:", error.errors);
+      const errorMessages = error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
+      throw new Error(`Invalid boat data: ${errorMessages}`);
+    }
+    console.error("Error creating boat:", error);
+    throw error;
+  }
 }
 
 /**
  * Update an existing boat
  */
-export async function updateBoat(id: string, data: any) {
+export async function updateBoat(id: string, data: UpdateBoatInput) {
   if (!id || !isValidUUID(id)) {
     throw new Error(`Invalid UUID format: ${id}`);
   }
 
-  const result = await db
-    .update(boats)
-    .set(data)
-    .where(eq(boats.id, id))
-    .returning();
-  
-  revalidatePath(`/admin/boats/${id}`);
-  revalidatePath('/admin/boats');
-  
-  return result[0];
+  try {
+    // Validate input data
+    const validatedData = updateBoatSchema.parse(data);
+    
+    // Extract pricing tiers and location data from the input
+    const { pricingTiers, locationCoordinates, ...boatValues } = validatedData;
+    
+    // Process dates properly
+    const updateData: Partial<BoatManipulationPayload> = {
+      ...boatValues,
+      insuranceExpiry: boatValues.insuranceExpiry ? new Date(boatValues.insuranceExpiry) : null,
+      lastMaintenanceDate: boatValues.lastMaintenanceDate ? new Date(boatValues.lastMaintenanceDate) : null,
+      nextMaintenanceDate: boatValues.nextMaintenanceDate ? new Date(boatValues.nextMaintenanceDate) : null,
+      updatedAt: new Date()
+    };
+    
+    // Handle map coordinates
+    if (locationCoordinates?.lat && locationCoordinates?.lng) {
+      updateData.location = sql`ST_SetSRID(ST_MakePoint(${locationCoordinates.lng}, ${locationCoordinates.lat}), 4326)`;
+    } else if (locationCoordinates === null) {
+      updateData.location = null;
+    }
+    
+    const [boat] = await db
+      .update(boats)
+      .set(updateData)
+      .where(eq(boats.id, id))
+      .returning();
+    
+    // Update pricing tiers if provided
+    if (pricingTiers !== undefined) {
+      await updateBoatPricingTiers(id, pricingTiers);
+    }
+    
+    revalidatePath(`/admin/boats/${id}`);
+    revalidatePath('/admin/boats');
+    
+    return boat;
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      console.error("Validation error in updateBoat:", error.errors);
+      const errorMessages = error.errors.map(err => `${err.path.join('.')}: ${err.message}`).join(', ');
+      throw new Error(`Invalid boat data: ${errorMessages}`);
+    }
+    console.error("Error updating boat:", error);
+    throw error;
+  }
 }
 
 /**
@@ -140,38 +397,66 @@ export async function deleteBoat(id: string) {
     throw new Error(`Invalid UUID format: ${id}`);
   }
 
-  await db
-    .delete(boats)
-    .where(eq(boats.id, id));
-  
-  revalidatePath('/admin/boats');
-  
-  return { success: true };
+  try {
+    // Delete pricing tiers first
+    await db.delete(boatPricingTiers)
+      .where(eq(boatPricingTiers.boatId, id));
+    
+    // Then delete the boat
+    await db
+      .delete(boats)
+      .where(eq(boats.id, id));
+    
+    revalidatePath('/admin/boats');
+    
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting boat:", error);
+    throw new Error("Failed to delete boat. Please try again.");
+  }
 }
 
 /**
- * Toggle boat active status
+ * Toggle the active status of a boat
  */
 export async function toggleBoatStatus(id: string) {
   if (!id || !isValidUUID(id)) {
     throw new Error(`Invalid UUID format: ${id}`);
   }
-  
-  // First get the current status
-  const boat = await getBoatById(id);
-  if (!boat) {
-    throw new Error(`Boat not found: ${id}`);
+
+  try {
+    // Get the current status
+    const [boat] = await db
+      .select({ active: boats.active })
+      .from(boats)
+      .where(eq(boats.id, id))
+      .limit(1);
+    
+    if (!boat) {
+      throw new Error("Boat not found");
+    }
+    
+    // Toggle the active status
+    await db
+      .update(boats)
+      .set({ 
+        active: !boat.active,
+        updatedAt: new Date()
+      })
+      .where(eq(boats.id, id));
+    
+    revalidatePath(`/admin/boats/${id}`);
+    revalidatePath('/admin/boats');
+    
+    return { success: true, active: !boat.active };
+  } catch (error) {
+    console.error("Error toggling boat status:", error);
+    throw new Error("Failed to update boat status. Please try again.");
   }
-  
-  // Then update with the opposite status
-  const result = await db
-    .update(boats)
-    .set({ active: !boat.active })
-    .where(eq(boats.id, id))
-    .returning();
-  
-  revalidatePath(`/admin/boats/${id}`);
-  revalidatePath('/admin/boats');
-  
-  return result[0];
+}
+
+// Helper to validate UUID format
+function isValidUUID(uuid: string) {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
 } 

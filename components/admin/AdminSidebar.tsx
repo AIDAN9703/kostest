@@ -63,7 +63,7 @@ export default function AdminSidebar() {
 
   return (
     <div className={cn(
-      "bg-white border-r border-gray-200 flex flex-col h-full transition-all duration-300",
+      "bg-white border-r border-gray-200 h-screen fixed left-0 top-0 flex flex-col transition-all duration-300",
       collapsed ? "w-20" : "w-64"
     )}>
       {/* Logo */}
@@ -102,14 +102,14 @@ export default function AdminSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 px-2">
+      <nav className="flex-1 py-4 px-2 overflow-y-auto">
         <ul className="space-y-1">
           {navItems.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
                 className={cn(
-                  "flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100",
+                  "flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-50",
                   pathname === item.href && "bg-blue-50 text-primary",
                   collapsed ? "justify-center" : "justify-start"
                 )}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ProfileFormValues, profileUpdateSchema } from "@/lib/validations";
+import { ProfileFormValues, profileUpdateSchema } from "@/lib/validation/validations";
 import { updateUserProfile } from "@/lib/actions/profile-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,9 +25,10 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, User, Image as ImageIcon } from "lucide-react";
-import { UserProfile } from "@/types/types";
+import { UserProfile } from "@/lib/types/types";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { getOptimizedImageUrl } from '@/lib/services/imagekit';
+import { Image as IKImage, ImageKitProvider } from "@imagekit/next";
 
 interface ProfileSettingsFormProps {
   user: UserProfile;
@@ -228,111 +229,82 @@ const ProfileImagesSection = ({ form, user }: { form: any; user: any }) => {
   const [profilePreview, setProfilePreview] = useState<string | null>(user?.profileImage || null);
   const [coverPreview, setCoverPreview] = useState<string | null>(user?.coverImage || null);
 
-  // Get optimized preview images
-  const optimizedProfilePreview = getOptimizedImageUrl(profilePreview, {
-    width: 200,
-    height: 200,
-    format: 'webp',
-    quality: 90
-  });
-
-  const optimizedCoverPreview = getOptimizedImageUrl(coverPreview, {
-    width: 800,
-    height: 300,
-    format: 'webp',
-    quality: 85
-  });
-
-  // Handle profile image upload complete
-  const handleProfileImageUpload = (imageUrl: string) => {
-    // Only update if the image URL is different
-    if (imageUrl !== profilePreview) {
-      setProfilePreview(imageUrl);
-      form.setValue('profileImage', imageUrl, { 
-        shouldDirty: true,
-        shouldTouch: false,
-        shouldValidate: false
-      });
-    }
-  };
-
-  // Handle cover image upload complete
-  const handleCoverImageUpload = (imageUrl: string) => {
-    // Only update if the image URL is different
-    if (imageUrl !== coverPreview) {
-      setCoverPreview(imageUrl);
-      form.setValue('coverImage', imageUrl, { 
-        shouldDirty: true,
-        shouldTouch: false,
-        shouldValidate: false
-      });
-    }
-  };
-
   return (
-    <div className="space-y-4 pt-6 border-t border-gray-200">
-      <h3 className="text-lg font-medium">Profile Images</h3>
-      
-      <div className="space-y-6">
-        {/* Profile Image */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <FormLabel className="text-base">Profile Image</FormLabel>
-            <ImageUpload
-              type="profile"
-              onUploadComplete={handleProfileImageUpload}
-              buttonText="Upload Image"
-              variant="outline"
-              size="sm"
-            />
-          </div>
-          
-          {profilePreview ? (
-            <div className="mt-2 relative w-24 h-24 rounded-full overflow-hidden border border-gray-200">
-              <img 
-                src={optimizedProfilePreview} 
-                alt="Profile Preview" 
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <p className="text-sm font-medium">Profile Image</p>
+        <div className="flex items-center justify-center">
+          <div className="border-2 border-primary/20 rounded-full w-32 h-32 overflow-hidden">
+            {profilePreview ? (
+              <IKImage
+                src={profilePreview}
+                width={128}
+                height={128}
+                alt="Profile preview"
                 className="w-full h-full object-cover"
+                transformation={[{
+                  width: 256,
+                  height: 256,
+                  quality: 90,
+                  format: "auto"
+                }]}
               />
-            </div>
-          ) : (
-            <div className="mt-2 w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border border-gray-200">
-              <User className="h-8 w-8 text-gray-400" />
-            </div>
-          )}
-          
-          <input type="hidden" {...form.register('profileImage')} />
+            ) : (
+              <div className="bg-gray-100 h-full w-full flex items-center justify-center">
+                <User className="h-16 w-16 text-gray-400" />
+              </div>
+            )}
+          </div>
         </div>
-
-        {/* Cover Image */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <FormLabel className="text-base">Cover Image</FormLabel>
-            <ImageUpload
-              type="cover"
-              onUploadComplete={handleCoverImageUpload}
-              buttonText="Upload Image"
-              variant="outline"
-              size="sm"
-            />
-          </div>
-          
+        
+        <ImageUpload
+          type="profile"
+          onUploadComplete={(url: string) => {
+            form.setValue("profileImage", url);
+            setProfilePreview(url);
+          }}
+          buttonText="Change Profile Image"
+          variant="outline"
+          size="sm"
+          multiple={false}
+        />
+      </div>
+      
+      <div className="space-y-2">
+        <p className="text-sm font-medium">Cover Image</p>
+        <div className="w-full h-32 overflow-hidden rounded-md border-2 border-primary/20">
           {coverPreview ? (
-            <div className="mt-2 relative w-full h-32 sm:h-64 rounded-md overflow-hidden border border-gray-200">
-              <img 
-                src={optimizedCoverPreview} 
-                alt="Cover Preview" 
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <IKImage
+              src={coverPreview}
+              width={640}
+              height={128}
+              alt="Cover preview"
+              className="w-full h-full object-cover"
+              transformation={[{
+                width: 800,
+                height: 200,
+                quality: 85,
+                format: "auto"
+              }]}
+            />
           ) : (
-            <div className="mt-2 w-full rounded-md bg-gray-100 flex items-center justify-center border border-gray-200">
+            <div className="bg-gray-100 h-full w-full flex items-center justify-center">
               <ImageIcon className="h-8 w-8 text-gray-400" />
             </div>
           )}
-          
-          <input type="hidden" {...form.register('coverImage')} />
         </div>
+        
+        <ImageUpload
+          type="cover"
+          onUploadComplete={(url: string) => {
+            form.setValue("coverImage", url);
+            setCoverPreview(url);
+          }}
+          buttonText="Change Cover Image"
+          variant="outline"
+          size="sm"
+          multiple={false}
+        />
       </div>
     </div>
   );

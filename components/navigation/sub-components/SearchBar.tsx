@@ -5,7 +5,7 @@ import { Search, MapPin } from 'lucide-react'
 import { useSearchStore } from '@/store/useSearchStore'
 import { Button } from "@/components/ui/button"
 import { CustomPlacesAutocomplete } from "@/components/ui/custom-places-autocomplete"
-import { LocationData } from "@/types/types"
+import { LocationData } from "@/lib/types/types"
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 

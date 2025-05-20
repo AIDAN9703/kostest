@@ -1,5 +1,5 @@
 import { Phone, Mail, MapPin, Clock, Ship, Calendar, Users2, User, Bookmark, ShoppingBag, LogOut } from 'lucide-react';
-import { NavigationItem, QuickLink, FeaturedItem } from '@/types/types';
+import { NavigationItem, QuickLink, FeaturedItem } from '@/lib/types/types';
 
 export const navigationData: {
     main: NavigationItem[];

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { APIProvider, Map, useMap } from "@vis.gl/react-google-maps";
-import { BoatLocation } from "@/types/types";
+import { BoatLocation } from "@/lib/types/types";
 import { Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";

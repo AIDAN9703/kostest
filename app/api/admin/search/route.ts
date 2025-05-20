@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
 import { db } from '@/database/db';
-import { users, boats, bookings } from '@/database/schema-calendar-test';
+import { users, boats, bookings } from '@/database/schema';
 import { like, or, ilike, desc } from 'drizzle-orm';
 
 export async function GET(request: Request) {
@@ -44,7 +44,7 @@ export async function GET(request: Request) {
         name: boats.name,
         category: boats.category,
         mainImage: boats.mainImage,
-        homePort: boats.homePort,
+        locationLabel: boats.locationLabel,
       })
       .from(boats)
       .where(
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
           ilike(boats.name, `%${q}%`),
           ilike(boats.make, `%${q}%`),
           ilike(boats.model, `%${q}%`),
-          ilike(boats.homePort, `%${q}%`)
+          ilike(boats.locationLabel, `%${q}%`)
         )
       )
       .limit(5);
@@ -92,7 +92,7 @@ export async function GET(request: Request) {
       ...boatResults.map(boat => ({
         id: boat.id.toString(),
         title: boat.name,
-        subtitle: `${boat.category}${boat.homePort ? ` · ${boat.homePort}` : ''}`,
+        subtitle: `${boat.category}${boat.locationLabel ? ` · ${boat.locationLabel}` : ''}`,
         type: 'boat' as const,
         url: `/admin/boats/${boat.id}`,
         image: boat.mainImage || undefined,

@@ -5,22 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1744673865981,
-      "tag": "0000_gigantic_steve_rogers",
+      "when": 1746597286359,
+      "tag": "0000_natural_sunfire",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1745965576784,
-      "tag": "0001_curved_rumiko_fujikawa",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1746226038248,
-      "tag": "0002_foamy_caretaker",
+      "when": 1746597440200,
+      "tag": "0001_elite_mandarin",
       "breakpoints": true
     }
   ]

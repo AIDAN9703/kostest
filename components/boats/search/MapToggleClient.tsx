@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Map, X } from "lucide-react";
 import VisGLSearchMap, { DEFAULT_US_BOUNDS } from "@/components/boats/search/map/VisGLSearchMap";
-import { BoatLocation } from "@/types/types";
+import { BoatLocation } from "@/lib/types/types";
 import { useSearchURL } from "@/hooks/useSearchURL";
 import { parseBooleanParam } from "@/lib/utils/search-params-utils";
 

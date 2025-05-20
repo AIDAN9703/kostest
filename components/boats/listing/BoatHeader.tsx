@@ -9,7 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Boat } from "@/types/types";
+import { Boat } from "@/lib/types/types";
 
 interface BoatHeaderProps {
   boat: Boat;

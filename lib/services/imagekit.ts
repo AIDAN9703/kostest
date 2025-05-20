@@ -7,7 +7,8 @@ export const imagekit = new ImageKit({
   urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || ''
 });
 
-// Helper function to transform image URLs for optimization
+// Helper function for backward compatibility
+// This is simpler than before and only used for components that haven't been updated
 export const getOptimizedImageUrl = (
   url: string | null | undefined, 
   options: { 
@@ -15,32 +16,36 @@ export const getOptimizedImageUrl = (
     height?: number; 
     quality?: number;
     format?: 'auto' | 'webp' | 'jpg' | 'png';
-    blur?: number;
   } = {}
 ) => {
   if (!url) return '';
   
-  const imageKitEndpoint = process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT;
-  
-  // If not an ImageKit URL or endpoint is not set, return original URL
-  if (!imageKitEndpoint || !url.includes(imageKitEndpoint)) {
+  // If not an ImageKit URL or it already has transformations, return as is
+  if (!url.includes(process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT!) || url.includes('tr=')) {
     return url;
   }
+
+  // Apply minimal transformations
+  const defaultOptions = {
+    width: options.width || 1200,
+    height: options.height,
+    quality: options.quality || 80,
+    format: options.format || 'auto',
+  };
   
   // Build transformation string
-  const transformations = [];
+  let transform = `tr=`;
+  if (defaultOptions.width) transform += `w-${defaultOptions.width},`;
+  if (defaultOptions.height) transform += `h-${defaultOptions.height},`;
+  transform += `q-${defaultOptions.quality},f-${defaultOptions.format}`;
   
-  if (options.width) transformations.push(`w-${options.width}`);
-  if (options.height) transformations.push(`h-${options.height}`);
-  if (options.quality) transformations.push(`q-${options.quality}`);
-  if (options.format) transformations.push(`f-${options.format}`);
-  if (options.blur) transformations.push(`bl-${options.blur}`);
+  // Ensure transform is correctly inserted before query parameters if any
+  const [baseUrl, queryParams] = url.split('?');
+  const transformedUrl = queryParams 
+    ? `${baseUrl}/${transform}?${queryParams}` 
+    : `${baseUrl}/${transform}`;
   
-  // If no transformations, return original URL
-  if (transformations.length === 0) return url;
-  
-  // Add transformations to URL
-  return `${url}?tr=${transformations.join(',')}`;
+  return transformedUrl;
 };
 
 // Helper function to get responsive image URLs
@@ -63,7 +68,7 @@ export const getResponsiveImageSrcSet = (
     .map(width => {
       const imgUrl = getOptimizedImageUrl(url, {
         width,
-        quality: options.quality,
+        quality: options.quality || 95,
         format: options.format
       });
       return `${imgUrl} ${width}w`;

@@ -81,10 +81,10 @@ export default function HeroSection2() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image 
-          src="/images/herooption13.jpeg" 
+          src="/images/herooption22.jpg" 
           alt="Luxury yachts in crystal clear waters"
           fill
-          className="object-cover object-center"
+          className="object-cover"
           priority
           loading="eager"
           sizes="100vw"

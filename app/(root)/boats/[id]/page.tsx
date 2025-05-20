@@ -6,7 +6,7 @@ import { auth } from "@/auth";
 import BoatDetails from "@/components/boats/listing/BoatDetails";
 import BookingFormToggle from "@/components/boats/listing/BookingFormToggle";
 import { MobileBookingBar } from "@/components/boats/listing/MobileBookingBar";
-import { Boat } from "@/types/types";
+import { Boat } from "@/lib/types/types";
 import { ImageGallery } from "@/components/boats/listing/sub-components/ImageGallery";
 
 export default async function BoatPage({ params }: { params: Promise<{ id: string }> }) {
