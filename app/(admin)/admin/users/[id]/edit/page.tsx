@@ -1,19 +1,49 @@
-import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getUserById } from "@/lib/actions/admin/users";
 import { UserForm } from "@/components/admin/users/UserForm";
 import { notFound } from "next/navigation";
 import { type UpdateUserInput } from "@/lib/validation/admin/users";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserEditPageProps {
   params: Promise<{ id: string }>;
 }
 
+// Add revalidation to improve performance
+export const revalidate = 30;
+
 export default async function UserEditPage({ params }: UserEditPageProps) {
   const resolvedParams = await params;
   const userId = resolvedParams.id;
   
+  return (
+    <div className="space-y-6">
+      {/* Page Header with Back Button */}
+      <div className="flex items-center gap-4">
+        <Link
+          href={`/admin/users/${userId}`}
+          className="text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Edit User</h1>
+          <p className="text-gray-500">Update user information</p>
+        </div>
+      </div>
+      
+      {/* User Edit Form with Suspense for progressive loading */}
+      <Suspense fallback={<FormSkeleton />}>
+        <UserFormWithData userId={userId} />
+      </Suspense>
+    </div>
+  );
+}
+
+// Separate component for data fetching to enable Suspense
+async function UserFormWithData({ userId }: { userId: string }) {
   const userData = await getUserById(userId).catch(() => null);
   
   if (!userData) {
@@ -61,24 +91,34 @@ export default async function UserEditPage({ params }: UserEditPageProps) {
     marketingEmailsEnabled: userData.marketingEmailsEnabled,
   };
   
+  return <UserForm user={user} userId={userId} />;
+}
+
+// Skeleton UI for the form loading state
+function FormSkeleton() {
   return (
     <div className="space-y-6">
-      {/* Page Header with Back Button */}
-      <div className="flex items-center gap-4">
-        <Link
-          href={`/admin/users/${userId}`}
-          className="text-gray-500 hover:text-gray-700 transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Edit User</h1>
-          <p className="text-gray-500">Update user information</p>
+      {[1, 2, 3, 4].map((card) => (
+        <div key={card} className="border rounded-lg overflow-hidden">
+          <div className="bg-gray-50 border-b p-4">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-4 w-60 mt-2" />
+          </div>
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {Array.from({ length: 6 }, (_, i) => (
+                <div key={i} className="space-y-2">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+      ))}
+      <div className="flex justify-end">
+        <Skeleton className="h-10 w-24" />
       </div>
-      
-      {/* User Edit Form */}
-      <UserForm user={user} userId={userId} />
     </div>
   );
 } 

@@ -1,4 +1,3 @@
-import { formatDistanceToNow } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle } from "lucide-react";
@@ -8,12 +7,6 @@ interface UserDetailsProps {
 }
 
 export function UserDetails({ user }: UserDetailsProps) {
-  // Helper to format dates
-  const formatDate = (date: Date | null | undefined) => {
-    if (!date) return "Never";
-    return formatDistanceToNow(new Date(date), { addSuffix: true });
-  };
-
   // Helper to display boolean values
   const BooleanStatus = ({ value }: { value: boolean }) => (
     value ? 
@@ -27,9 +20,18 @@ export function UserDetails({ user }: UserDetailsProps) {
       </div>
   );
 
-  // Format joined/created date
-  const joinedDate = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "Unknown";
-  const joinedTimeAgo = user.createdAt ? formatDate(new Date(user.createdAt)) : "Unknown";
+  // Helper to format dates
+  const formatDate = (date: string | Date | null | undefined): string => {
+    if (!date) return "Not set";
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString(undefined, { 
+      year: 'numeric', 
+      month: 'short', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -120,15 +122,15 @@ export function UserDetails({ user }: UserDetailsProps) {
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-gray-500">Joined Date</p>
-            <p title={joinedDate}>{joinedTimeAgo}</p>
+            <p>{formatDate(user.createdAt)}</p>
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-gray-500">Last Login</p>
-            <p>{user.lastLoginAt ? formatDate(new Date(user.lastLoginAt)) : "Never"}</p>
+            <p>{user.lastLoginAt ? formatDate(user.lastLoginAt) : "Never"}</p>
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-gray-500">Password Changed</p>
-            <p>{user.passwordChangedAt ? formatDate(new Date(user.passwordChangedAt)) : "Never"}</p>
+            <p>{user.passwordChangedAt ? formatDate(user.passwordChangedAt) : "Never"}</p>
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-gray-500">Two-Factor Authentication</p>
@@ -169,7 +171,7 @@ export function UserDetails({ user }: UserDetailsProps) {
           {user.boatingLicenseExpiry && (
             <div className="space-y-1">
               <p className="text-sm font-medium text-gray-500">Boating License Expiry</p>
-              <p>{formatDate(new Date(user.boatingLicenseExpiry))}</p>
+              <p>{formatDate(user.boatingLicenseExpiry)}</p>
             </div>
           )}
           <div className="space-y-1">
@@ -188,7 +190,7 @@ export function UserDetails({ user }: UserDetailsProps) {
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-1">
             <p className="text-sm font-medium text-gray-500">Last Active</p>
-            <p>{user.lastActiveAt ? formatDate(new Date(user.lastActiveAt)) : "Never"}</p>
+            <p>{user.lastActiveAt ? formatDate(user.lastActiveAt) : "Never"}</p>
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium text-gray-500">Total Bookings</p>

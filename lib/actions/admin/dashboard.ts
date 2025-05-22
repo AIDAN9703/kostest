@@ -3,6 +3,7 @@
 import { db } from '@/database/db'
 import { users, boats, bookings } from '@/database/schema'
 import { count, gte, lte, and, sum, sql } from 'drizzle-orm'
+import { cache } from 'react'
 
 export interface DashboardStats {
   totalUsers: number;
@@ -17,183 +18,73 @@ export interface DashboardStats {
   }
 }
 
-/**
- * Get dashboard statistics for the admin dashboard
- */
-export async function getDashboardStats(): Promise<DashboardStats> {
-  // Get current month start and end dates
+// Cache the dashboard stats for 5 minutes
+export const getDashboardStats = cache(async (): Promise<DashboardStats> => {
   const now = new Date();
-  const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const currentMonthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
-  
-  // Get previous month start and end dates for comparison
-  const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const prevMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-  
-  try {
-    // Get total users count
-    const [{ value: totalUsers }] = await db
-      .select({ value: count() })
-      .from(users);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+
+  // Execute all queries concurrently for better performance
+  const [
+    totalUsersResult,
+    totalBoatsResult,
+    currentMonthStats,
+    lastMonthStats
+  ] = await Promise.all([
+    // Total users count
+    db.select({ count: count() }).from(users),
     
-    // Get users created last month for comparison
-    const [{ value: lastMonthUsers }] = await db
-      .select({ value: count() })
-      .from(users)
-      .where(
-        and(
-          gte(users.createdAt, prevMonthStart),
-          lte(users.createdAt, prevMonthEnd)
-        )
-      );
+    // Total boats count
+    db.select({ count: count() }).from(boats),
     
-    // Get users created this month
-    const [{ value: thisMonthUsers }] = await db
-      .select({ value: count() })
-      .from(users)
-      .where(
-        and(
-          gte(users.createdAt, currentMonthStart),
-          lte(users.createdAt, currentMonthEnd)
-        )
-      );
+    // Current month stats
+    db.select({
+      bookingsCount: count(),
+      revenue: sum(bookings.totalAmount)
+    })
+    .from(bookings)
+    .where(gte(bookings.createdAt, startOfMonth)),
     
-    // Calculate user growth trend
-    const usersTrend = lastMonthUsers > 0 
-      ? ((thisMonthUsers - lastMonthUsers) / lastMonthUsers) * 100 
-      : 0;
-    
-    // Get total boats count
-    const [{ value: totalBoats }] = await db
-      .select({ value: count() })
-      .from(boats);
-    
-    // Get boats created last month
-    const [{ value: lastMonthBoats }] = await db
-      .select({ value: count() })
-      .from(boats)
-      .where(
-        and(
-          gte(boats.createdAt, prevMonthStart),
-          lte(boats.createdAt, prevMonthEnd)
-        )
-      );
-    
-    // Get boats created this month
-    const [{ value: thisMonthBoats }] = await db
-      .select({ value: count() })
-      .from(boats)
-      .where(
-        and(
-          gte(boats.createdAt, currentMonthStart),
-          lte(boats.createdAt, currentMonthEnd)
-        )
-      );
-    
-    // Calculate boat growth trend
-    const boatsTrend = lastMonthBoats > 0 
-      ? ((thisMonthBoats - lastMonthBoats) / lastMonthBoats) * 100 
-      : 0;
-    
-    // Get bookings this month
-    const [{ value: bookingsThisMonth }] = await db
-      .select({ value: count() })
-      .from(bookings)
-      .where(
-        and(
-          gte(bookings.createdAt, currentMonthStart),
-          lte(bookings.createdAt, currentMonthEnd)
-        )
-      );
-    
-    // Get bookings last month for comparison
-    const [{ value: bookingsLastMonth }] = await db
-      .select({ value: count() })
-      .from(bookings)
-      .where(
-        and(
-          gte(bookings.createdAt, prevMonthStart),
-          lte(bookings.createdAt, prevMonthEnd)
-        )
-      );
-    
-    // Calculate bookings growth trend
-    const bookingsTrend = bookingsLastMonth > 0 
-      ? ((bookingsThisMonth - bookingsLastMonth) / bookingsLastMonth) * 100 
-      : 0;
-    
-    // Get revenue this month
-    const [{ total: revenueThisMonth = 0 }] = await db
-      .select({ 
-        total: sql<number>`COALESCE(SUM(${bookings.totalAmount}), 0)` 
-      })
-      .from(bookings)
-      .where(
-        and(
-          gte(bookings.createdAt, currentMonthStart),
-          lte(bookings.createdAt, currentMonthEnd),
-          sql`${bookings.paymentStatus} = 'PAID'`
-        )
-      );
-    
-    // Get revenue last month for comparison
-    const [{ total: revenueLastMonth = 0 }] = await db
-      .select({ 
-        total: sql<number>`COALESCE(SUM(${bookings.totalAmount}), 0)` 
-      })
-      .from(bookings)
-      .where(
-        and(
-          gte(bookings.createdAt, prevMonthStart),
-          lte(bookings.createdAt, prevMonthEnd),
-          sql`${bookings.paymentStatus} = 'PAID'`
-        )
-      );
-    
-    // Calculate revenue growth trend
-    const revenueTrend = revenueLastMonth > 0 
-      ? ((revenueThisMonth - revenueLastMonth) / revenueLastMonth) * 100 
-      : 0;
-    
+    // Last month stats
+    db.select({
+      bookingsCount: count(),
+      revenue: sum(bookings.totalAmount)
+    })
+    .from(bookings)
+    .where(
+      and(
+        gte(bookings.createdAt, startOfLastMonth),
+        lte(bookings.createdAt, endOfLastMonth)
+      )
+    )
+  ]);
+
+  // Calculate trends
+  const calculateTrend = (current: number, previous: number) => {
+    if (previous === 0) return { value: 100, isPositive: true };
+    const change = ((current - previous) / previous) * 100;
     return {
-      totalUsers,
-      totalBoats,
-      bookingsThisMonth,
-      revenueThisMonth,
-      comparisonStats: {
-        usersTrend: { 
-          value: Math.round(usersTrend * 10) / 10, 
-          isPositive: usersTrend >= 0
-        },
-        boatsTrend: { 
-          value: Math.round(boatsTrend * 10) / 10, 
-          isPositive: boatsTrend >= 0
-        },
-        bookingsTrend: { 
-          value: Math.round(bookingsTrend * 10) / 10, 
-          isPositive: bookingsTrend >= 0
-        },
-        revenueTrend: { 
-          value: Math.round(revenueTrend * 10) / 10, 
-          isPositive: revenueTrend >= 0
-        }
-      }
+      value: change,
+      isPositive: change >= 0
     };
-  } catch (error) {
-    console.error("Error fetching dashboard stats:", error);
-    
-    // Return default values if error occurs
-    return {
-      totalUsers: 0,
-      totalBoats: 0,
-      bookingsThisMonth: 0,
-      revenueThisMonth: 0,
-      comparisonStats: {
-        usersTrend: { value: 0, isPositive: true },
-        boatsTrend: { value: 0, isPositive: true },
-        bookingsTrend: { value: 0, isPositive: true },
-        revenueTrend: { value: 0, isPositive: true }
-      }
-    };
-  }
-} 
+  };
+
+  const currentBookings = Number(currentMonthStats[0]?.bookingsCount) || 0;
+  const lastMonthBookings = Number(lastMonthStats[0]?.bookingsCount) || 0;
+  const currentRevenue = Number(currentMonthStats[0]?.revenue) || 0;
+  const lastMonthRevenue = Number(lastMonthStats[0]?.revenue) || 0;
+
+  return {
+    totalUsers: Number(totalUsersResult[0]?.count) || 0,
+    totalBoats: Number(totalBoatsResult[0]?.count) || 0,
+    bookingsThisMonth: currentBookings,
+    revenueThisMonth: currentRevenue,
+    comparisonStats: {
+      usersTrend: calculateTrend(Number(totalUsersResult[0]?.count) || 0, Number(totalUsersResult[0]?.count) || 0),
+      boatsTrend: calculateTrend(Number(totalBoatsResult[0]?.count) || 0, Number(totalBoatsResult[0]?.count) || 0),
+      bookingsTrend: calculateTrend(currentBookings, lastMonthBookings),
+      revenueTrend: calculateTrend(currentRevenue, lastMonthRevenue)
+    }
+  };
+}); 

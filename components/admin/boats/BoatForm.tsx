@@ -539,29 +539,6 @@ export function BoatForm({ boat, boatId }: BoatFormProps = {}) {
             <CardDescription>Set pricing options for this boat</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6 pt-6">
-            {/* Cleaning Fee only (tiers handle base pricing) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="cleaningFee"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cleaning Fee ($)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number"
-                        {...field}
-                        value={field.value || ""}
-                        onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
-                        placeholder="Cleaning fee" 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
             {/* Pricing Tiers */}
             <div className="border-t border-gray-100 pt-6">
               <FormField
@@ -600,6 +577,29 @@ export function BoatForm({ boat, boatId }: BoatFormProps = {}) {
                       </FormControl>
                       <FormDescription>
                         Refundable security deposit
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="cleaningFee"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cleaning Fee ($)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                          placeholder="Cleaning fee" 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        One-time fee charged per booking
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

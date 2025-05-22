@@ -4,6 +4,9 @@ import { BarChart, CalendarClock, Ship, Users } from "lucide-react";
 import Link from "next/link";
 import { getDashboardStats } from "@/lib/actions/admin/dashboard";
 
+// Add route segment config for caching
+export const revalidate = 300; // Revalidate every 5 minutes
+
 export const metadata: Metadata = {
   title: "Admin Dashboard | KOS Yachts",
   description: "Admin dashboard for KOS Yachts platform",

@@ -10,7 +10,8 @@ import {
   PaginationItem, 
   PaginationLink, 
   PaginationNext, 
-  PaginationPrevious 
+  PaginationPrevious,
+  PaginationEllipsis 
 } from "@/components/ui/pagination";
 import { ArrowUpDown, Loader2, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils/general-utils";
@@ -103,7 +104,7 @@ export default function SearchResults({
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   
   // Use custom pagination hook
-  const paginationRange = usePagination({
+  const { pages, hasNextPage, hasPreviousPage } = usePagination({
     currentPage,
     totalPages
   });
@@ -247,48 +248,67 @@ export default function SearchResults({
       {totalPages > 1 && (
         <Pagination className="mt-12">
           <PaginationContent>
-            {currentPage > 1 && (
-              <PaginationItem>
-                <PaginationPrevious 
-                  href="#" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handlePageChange(currentPage - 1);
-                  }}
-                />
-              </PaginationItem>
-            )}
+            <PaginationItem>
+              <PaginationPrevious 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  handlePageChange(currentPage - 1);
+                }}
+                aria-disabled={!hasPreviousPage}
+                className={!hasPreviousPage ? "pointer-events-none opacity-50" : ""}
+              />
+            </PaginationItem>
             
-            {paginationRange.map((page, i) => (
-              <PaginationItem key={i}>
-                {typeof page === 'number' ? (
-                  <PaginationLink
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handlePageChange(page);
-                    }}
-                    isActive={page === currentPage}
-                  >
-                    {page}
-                  </PaginationLink>
-                ) : (
-                  <span className="px-4 py-2 text-sm text-gray-400">...</span>
-                )}
-              </PaginationItem>
-            ))}
+            {pages.map((page) => {
+              // Show first page, last page, current page, and pages around current page
+              if (
+                page === 1 ||
+                page === totalPages ||
+                (page >= currentPage - 1 && page <= currentPage + 1)
+              ) {
+                return (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handlePageChange(page);
+                      }}
+                      isActive={page === currentPage}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              }
+
+              // Show ellipsis for gaps
+              if (
+                (page === 2 && currentPage > 3) ||
+                (page === totalPages - 1 && currentPage < totalPages - 2)
+              ) {
+                return (
+                  <PaginationItem key={page}>
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                );
+              }
+
+              return null;
+            })}
             
-            {currentPage < totalPages && (
-              <PaginationItem>
-                <PaginationNext 
-                  href="#" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handlePageChange(currentPage + 1);
-                  }}
-                />
-              </PaginationItem>
-            )}
+            <PaginationItem>
+              <PaginationNext 
+                href="#" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  handlePageChange(currentPage + 1);
+                }}
+                aria-disabled={!hasNextPage}
+                className={!hasNextPage ? "pointer-events-none opacity-50" : ""}
+              />
+            </PaginationItem>
           </PaginationContent>
         </Pagination>
       )}

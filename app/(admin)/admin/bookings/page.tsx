@@ -24,11 +24,27 @@ import { formatCurrency } from "@/lib/utils/general-utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getInquiries, updateInquiryStatus } from "@/lib/actions/admin/inquiries";
 import { redirect } from "next/navigation";
+import { DataTablePagination } from "@/components/admin/DataTablePagination";
 
 export const metadata: Metadata = {
   title: "Bookings & Inquiries | Admin Dashboard",
   description: "Manage bookings and customer inquiries on the platform",
 };
+
+// Constants
+const ITEMS_PER_PAGE = 10;
+
+// Types
+interface SearchParams {
+  tab?: string;
+  page?: string;
+  inquiryPage?: string;
+  inquiryStatus?: string;
+  inquirySearch?: string;
+  updateInquiry?: string;
+  status?: string;
+  search?: string;
+}
 
 // Mock data
 const bookings = [
@@ -138,14 +154,7 @@ function formatDate(date: Date | string | null | undefined): string {
 export default async function BookingsPage({ 
   searchParams 
 }: { 
-  searchParams: Promise<{ 
-    tab?: string;
-    inquiryPage?: string;
-    inquiryStatus?: string;
-    inquirySearch?: string;
-    updateInquiry?: string;
-    status?: string;
-  }> 
+  searchParams: Promise<SearchParams>;
 }) {
   // Await the searchParams promise
   const resolvedParams = await searchParams;
@@ -178,17 +187,29 @@ export default async function BookingsPage({
   // Get the active tab from search params or default to "bookings"
   const activeTab = resolvedParams.tab || "bookings";
   
-  // Fetch inquiries data if on inquiries tab
-  const inquiryPage = resolvedParams.inquiryPage ? parseInt(resolvedParams.inquiryPage) : 1;
-  const inquiryStatus = resolvedParams.inquiryStatus || undefined;
-  const inquirySearch = resolvedParams.inquirySearch || undefined;
+  // Parse and validate page numbers
+  const currentPage = resolvedParams.page ? Math.max(1, parseInt(resolvedParams.page)) : 1;
+  const inquiryPage = resolvedParams.inquiryPage ? Math.max(1, parseInt(resolvedParams.inquiryPage)) : 1;
   
+  // Get search and filter parameters
+  const search = resolvedParams.search;
+  const inquiryStatus = resolvedParams.inquiryStatus;
+  const inquirySearch = resolvedParams.inquirySearch;
+  
+  // Fetch inquiries data if on inquiries tab
   const inquiriesData = await getInquiries({
     page: inquiryPage,
-    limit: 10,
+    limit: ITEMS_PER_PAGE,
     status: inquiryStatus,
     search: inquirySearch,
   });
+
+  // Mock pagination data for bookings (replace with actual data)
+  const bookingsData = {
+    bookings,
+    totalCount: 42,
+    totalPages: 5
+  };
 
   return (
     <div className="space-y-6">
@@ -321,19 +342,22 @@ export default async function BookingsPage({
                   ))}
                 </TableBody>
               </Table>
-              <div className="flex items-center justify-between px-4 py-4 border-t">
-                <div className="text-sm text-gray-500">
-                  Showing <strong>5</strong> of <strong>42</strong> bookings
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" disabled>
-                    Previous
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Next
-                  </Button>
-                </div>
-              </div>
+              
+              {/* Bookings Pagination */}
+              {bookingsData.totalPages > 1 && (
+                <DataTablePagination
+                  currentPage={currentPage}
+                  totalPages={bookingsData.totalPages}
+                  totalCount={bookingsData.totalCount}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                  searchParams={{
+                    search,
+                    status: resolvedParams.status
+                  }}
+                  baseUrl="/admin/bookings"
+                  itemName="bookings"
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -363,21 +387,11 @@ export default async function BookingsPage({
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <a href="?tab=inquiries">All Inquiries</a>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <a href="?tab=inquiries&inquiryStatus=PENDING">Pending</a>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <a href="?tab=inquiries&inquiryStatus=CONTACTED">Contacted</a>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <a href="?tab=inquiries&inquiryStatus=RESOLVED">Resolved</a>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <a href="?tab=inquiries&inquiryStatus=ARCHIVED">Archived</a>
-                      </DropdownMenuItem>
+                      <DropdownMenuItem>All Inquiries</DropdownMenuItem>
+                      <DropdownMenuItem>New</DropdownMenuItem>
+                      <DropdownMenuItem>In Progress</DropdownMenuItem>
+                      <DropdownMenuItem>Resolved</DropdownMenuItem>
+                      <DropdownMenuItem>Closed</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -467,32 +481,11 @@ export default async function BookingsPage({
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>Actions</DropdownMenuLabel>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem asChild>
-                                <a href={`mailto:${inquiry.email}`}>
-                                  Email Customer
-                                </a>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <a href={`tel:${inquiry.phone}`}>
-                                  Call Customer
-                                </a>
-                              </DropdownMenuItem>
+                              <DropdownMenuItem>View Details</DropdownMenuItem>
+                              <DropdownMenuItem>Contact Customer</DropdownMenuItem>
+                              <DropdownMenuItem>Update Status</DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem asChild>
-                                <a href={`?tab=inquiries&updateInquiry=${inquiry.id}&status=CONTACTED${inquiryStatus ? `&inquiryStatus=${inquiryStatus}` : ''}${inquirySearch ? `&inquirySearch=${inquirySearch}` : ''}${inquiryPage ? `&inquiryPage=${inquiryPage}` : ''}`}>
-                                  Mark as Contacted
-                                </a>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <a href={`?tab=inquiries&updateInquiry=${inquiry.id}&status=RESOLVED${inquiryStatus ? `&inquiryStatus=${inquiryStatus}` : ''}${inquirySearch ? `&inquirySearch=${inquirySearch}` : ''}${inquiryPage ? `&inquiryPage=${inquiryPage}` : ''}`}>
-                                  Mark as Resolved
-                                </a>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <a href={`?tab=inquiries&updateInquiry=${inquiry.id}&status=ARCHIVED${inquiryStatus ? `&inquiryStatus=${inquiryStatus}` : ''}${inquirySearch ? `&inquirySearch=${inquirySearch}` : ''}${inquiryPage ? `&inquiryPage=${inquiryPage}` : ''}`}>
-                                  Archive Inquiry
-                                </a>
-                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-red-600">Delete Inquiry</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -501,41 +494,22 @@ export default async function BookingsPage({
                   )}
                 </TableBody>
               </Table>
-              <div className="flex items-center justify-between px-4 py-4 border-t">
-                <div className="text-sm text-gray-500">
-                  Showing <strong>{inquiriesData.inquiries.length}</strong> of <strong>{inquiriesData.totalCount}</strong> inquiries
-                </div>
-                {inquiriesData.totalPages > 1 && (
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      disabled={inquiryPage <= 1}
-                      asChild
-                    >
-                      <a 
-                        href={`?tab=inquiries&inquiryPage=${inquiryPage - 1}${inquiryStatus ? `&inquiryStatus=${inquiryStatus}` : ''}${inquirySearch ? `&inquirySearch=${inquirySearch}` : ''}`}
-                        aria-disabled={inquiryPage <= 1}
-                      >
-                        Previous
-                      </a>
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      disabled={inquiryPage >= inquiriesData.totalPages}
-                      asChild
-                    >
-                      <a 
-                        href={`?tab=inquiries&inquiryPage=${inquiryPage + 1}${inquiryStatus ? `&inquiryStatus=${inquiryStatus}` : ''}${inquirySearch ? `&inquirySearch=${inquirySearch}` : ''}`}
-                        aria-disabled={inquiryPage >= inquiriesData.totalPages}
-                      >
-                        Next
-                      </a>
-                    </Button>
-                  </div>
-                )}
-              </div>
+              
+              {/* Inquiries Pagination */}
+              {inquiriesData.totalPages > 1 && (
+                <DataTablePagination
+                  currentPage={inquiryPage}
+                  totalPages={inquiriesData.totalPages}
+                  totalCount={inquiriesData.totalCount}
+                  itemsPerPage={ITEMS_PER_PAGE}
+                  searchParams={{
+                    inquirySearch,
+                    inquiryStatus
+                  }}
+                  baseUrl="/admin/bookings"
+                  itemName="inquiries"
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>

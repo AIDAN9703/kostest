@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description: "Create a new user account",
 };
 
+// Add revalidation to improve performance
+export const revalidate = 30;
+
 export default function CreateUserPage() {
   return (
     <div className="space-y-6">

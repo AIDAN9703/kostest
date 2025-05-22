@@ -24,52 +24,38 @@ function isValidUUID(uuid: string) {
 /**
  * Get all users with pagination, filtering, and sorting
  */
-export async function getAllUsers(options: UserFilterInput = {}) {
+export async function getAllUsers(options: { page?: number; limit?: number } = {}) {
   try {
-    // Validate input
-    const validatedOptions = userFilterSchema.parse(options);
-    
     const { 
       page = 1, 
       limit = 10,
-      search,
-      role,
-      status
-    } = validatedOptions;
+    } = options;
     
     const offset = (page - 1) * limit;
-    const whereConditions = [];
     
-    if (search) {
-      whereConditions.push(or(
-        // Prefix search (index-friendly)
-        like(users.username, `${search}%`),
-        like(users.email, `${search}%`),
-        // Fallback full text search
-        like(users.username, `%${search}%`),
-        like(users.firstName || '', `%${search}%`),
-        like(users.lastName || '', `%${search}%`),
-        like(users.email, `%${search}%`)
-      ));
-    }
-    
-    if (role) whereConditions.push(eq(users.role, role));
-    if (status) whereConditions.push(eq(users.status, status));
-    
-    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+    // OPTIMIZATION: Only select fields needed for the user listing
+    const selectFields = {
+      id: users.id,
+      username: users.username,
+      email: users.email,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      profileImage: users.profileImage,
+      status: users.status,
+      role: users.role,
+      phoneNumber: users.phoneNumber,
+    };
     
     // Execute both queries concurrently for better performance
     const [usersData, countResult] = await Promise.all([
-      db.select()
+      db.select(selectFields)
         .from(users)
-        .where(whereClause)
         .limit(limit)
         .offset(offset)
         .orderBy(desc(users.createdAt)),
         
       db.select({ value: count() })
         .from(users)
-        .where(whereClause)
     ]);
     
     const totalCount = countResult[0].value;

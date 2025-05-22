@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { db } from '@/database/db'
-import { boats, boatPricingTiers } from '@/database/schema'
+import { boats, boatPricingTiers, users } from '@/database/schema'
 import { and, count, eq, desc, or, like, isNull, inArray, SQL, sql } from 'drizzle-orm'
 import { 
   createBoatSchema, 
@@ -76,51 +76,57 @@ export async function getAllBoats(options: BoatFilterInput = {}) {
         like(boats.locationLabel || '', `${search}%`),
         // Fallback full text search
         like(boats.name, `%${search}%`),
-        like(boats.description || '', `%${search}%`),
-        like(boats.make || '', `%${search}%`),
-        like(boats.model || '', `%${search}%`),
-        like(boats.locationLabel || '', `%${search}%`)
+        like(boats.description || '', `%${search}%`)
       ));
     }
     
     if (category) whereConditions.push(eq(boats.category, category));
     
-    // Fix the boolean filter handling
-    if (featured !== undefined) {
-      whereConditions.push(featured ? eq(boats.featured, true) : or(eq(boats.featured, false), isNull(boats.featured)));
-    }
-    
-    if (active !== undefined) {
-      whereConditions.push(active ? eq(boats.active, true) : eq(boats.active, false));
-    }
+    // Handle boolean filters with undefined values
+    if (featured !== undefined) whereConditions.push(eq(boats.featured, featured));
+    if (active !== undefined) whereConditions.push(eq(boats.active, active));
     
     if (ownerId) whereConditions.push(eq(boats.ownerId, ownerId));
     
     const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
     
+    // OPTIMIZATION: Select only fields needed for listing
+    const selectFields = {
+      id: boats.id,
+      name: boats.name,
+      category: boats.category,
+      capacity: boats.capacity,
+      lengthFt: boats.lengthFt,
+      active: boats.active,
+      featured: boats.featured,
+      mainImage: boats.mainImage,
+      createdAt: boats.createdAt,
+      // Only essential owner info
+      ownerName: sql<string>`CONCAT(${users.firstName}, ' ', ${users.lastName})`,
+      ownerId: boats.ownerId,
+    };
+    
+    // OPTIMIZATION: Use a subquery to get the lowest price tier in one query
+    const boatsQuery = db.select({
+      ...selectFields,
+      // Include lowest pricing tier in main query
+      basePrice: sql<number>`(
+        SELECT MIN(price) 
+        FROM ${boatPricingTiers} 
+        WHERE ${boatPricingTiers.boatId} = ${boats.id} 
+        AND ${boatPricingTiers.isActive} = true
+      )`,
+    })
+    .from(boats)
+    .leftJoin(users, eq(boats.ownerId, users.id))
+    .where(whereClause)
+    .limit(limit)
+    .offset(offset)
+    .orderBy(desc(boats.createdAt));
+    
     // Execute both queries concurrently for better performance
     const [boatsData, countResult] = await Promise.all([
-      db.select({
-        id: boats.id,
-        name: boats.name,
-        displayTitle: boats.displayTitle,
-        category: boats.category,
-        active: boats.active,
-        featured: boats.featured,
-        make: boats.make,
-        model: boats.model,
-        locationLabel: boats.locationLabel,
-        lengthFt: boats.lengthFt,
-        capacity: boats.capacity,
-        createdAt: boats.createdAt,
-        mainImage: boats.mainImage
-      })
-        .from(boats)
-        .where(whereClause)
-        .limit(limit)
-        .offset(offset)
-        .orderBy(desc(boats.createdAt)),
-        
+      boatsQuery,
       db.select({ value: count() })
         .from(boats)
         .where(whereClause)
@@ -128,31 +134,8 @@ export async function getAllBoats(options: BoatFilterInput = {}) {
     
     const totalCount = countResult[0].value;
     
-    // --- Optimised: batch-fetch pricing tiers instead of N+1 queries ---
-    const boatIds = boatsData.map((b) => b.id);
-    let tiersByBoatId: Record<string, typeof boatPricingTiers.$inferSelect[]> = {};
-
-    if (boatIds.length > 0) {
-      const allTiers = await db
-        .select()
-        .from(boatPricingTiers)
-        .where(inArray(boatPricingTiers.boatId, boatIds))
-        .orderBy(boatPricingTiers.hours);
-
-      // Group tiers by boatId for quick lookup
-      tiersByBoatId = allTiers.reduce((acc, tier) => {
-        (acc[tier.boatId] = acc[tier.boatId] || []).push(tier);
-        return acc;
-      }, {} as Record<string, typeof boatPricingTiers.$inferSelect[]>);
-    }
-
-    const boatsWithPricingTiers = boatsData.map((boat) => ({
-      ...boat,
-      pricingTiers: tiersByBoatId[boat.id] || [],
-    }));
-    
     return {
-      boats: boatsWithPricingTiers,
+      boats: boatsData,
       totalCount,
       page,
       limit,

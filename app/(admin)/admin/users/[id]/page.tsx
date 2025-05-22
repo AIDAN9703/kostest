@@ -5,10 +5,15 @@ import { getUserById } from "@/lib/actions/admin/users";
 import { UserProfileHeader } from "@/components/admin/users/UserProfileHeader";
 import { UserDetails } from "@/components/admin/users/UserDetails";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserDetailPageProps {
   params: Promise<{ id: string }>;
 }
+
+// Add revalidation to improve performance
+export const revalidate = 30;
 
 export async function generateMetadata({ params }: UserDetailPageProps): Promise<Metadata> {
   const resolvedParams = await params;
@@ -28,12 +33,6 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
   const resolvedParams = await params;
   const userId = resolvedParams.id;
   
-  const user = await getUserById(userId).catch(() => null);
-  
-  if (!user) {
-    notFound();
-  }
-  
   return (
     <div className="space-y-6">
       {/* Page Header with Back Button */}
@@ -50,11 +49,60 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
         </div>
       </div>
 
+      {/* User Profile with Suspense for progressive loading */}
+      <Suspense fallback={<ProfileSkeleton />}>
+        <UserProfile userId={userId} />
+      </Suspense>
+    </div>
+  );
+}
+
+// Separate component for data fetching to enable Suspense
+async function UserProfile({ userId }: { userId: string }) {
+  const user = await getUserById(userId).catch(() => null);
+  
+  if (!user) {
+    notFound();
+  }
+  
+  return (
+    <>
       {/* User Profile Header */}
       <UserProfileHeader user={user} />
       
       {/* User Details */}
       <UserDetails user={user} />
-    </div>
+    </>
+  );
+}
+
+// Skeleton UI for loading state
+function ProfileSkeleton() {
+  return (
+    <>
+      <div className="rounded-lg border p-6">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-center">
+          <Skeleton className="h-24 w-24 rounded-full" />
+          <div className="space-y-4 flex-1">
+            <Skeleton className="h-8 w-64" />
+            <div className="flex gap-4">
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-5 w-20" />
+            </div>
+            <div className="flex gap-4">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-5 w-32" />
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Skeleton className="h-[300px] rounded-lg" />
+        <Skeleton className="h-[300px] rounded-lg" />
+        <Skeleton className="h-[300px] rounded-lg" />
+        <Skeleton className="h-[300px] rounded-lg" />
+      </div>
+    </>
   );
 } 
