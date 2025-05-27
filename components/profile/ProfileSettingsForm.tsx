@@ -259,6 +259,7 @@ const ProfileImagesSection = ({ form, user }: { form: any; user: any }) => {
         
         <ImageUpload
           type="profile"
+          entityId={user.id}
           onUploadComplete={(url: string) => {
             form.setValue("profileImage", url);
             setProfilePreview(url);
@@ -296,6 +297,7 @@ const ProfileImagesSection = ({ form, user }: { form: any; user: any }) => {
         
         <ImageUpload
           type="cover"
+          entityId={user.id}
           onUploadComplete={(url: string) => {
             form.setValue("coverImage", url);
             setCoverPreview(url);

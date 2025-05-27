@@ -119,14 +119,6 @@ const quotes = [
 export default function QuotesPage() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Quote Generator</h1>
-        <Button>
-          <FilePlus className="h-4 w-4 mr-2" />
-          New Quote
-        </Button>
-      </div>
-      
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <QuickStatCard title="Total Quotes" value="127" trend="+12% from last month" />
         <QuickStatCard title="Accepted" value="84" trend="+8% from last month" />

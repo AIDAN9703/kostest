@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminHeader from "@/components/admin/AdminHeader";
+import { FloatingActionButton } from "@/components/admin/FloatingActionButton";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   // Check authentication and authorization
@@ -32,6 +33,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           {children}
         </main>
       </div>
+      
+      {/* Floating Action Button */}
+      <FloatingActionButton />
     </div>
   );
 } 

@@ -169,14 +169,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                 <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                 <div className="flex flex-col h-full">
                     {/* sidebar menu header */}
-                    <div className="p-2 border-b bg-primary/5">
+                    <div className="p-4 border-b">
                         <div className="flex items-center gap-4">
                             <div className="relative">
                                 <Image 
                                     src="/icons/logo.png" 
                                     alt="Logo" 
-                                    width={40} 
-                                    height={40}
+                                    width={42} 
+                                    height={42}
                                     className="rounded-full"
                                     priority
                                 />
@@ -209,9 +209,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
                     {/* sidebar menu content */}
                     <ScrollArea className="flex-1">
-                        <div className="px-2 py-4">
+                        <div className="px-4 py-6">
                             {/* Main Navigation */}
-                            <div className="px-2 mb-6">
+                            <div className="mb-8">
                                 <h3 className="text-xs font-semibold text-gray-400 mb-3 px-1">NAVIGATION</h3>
                                 <div className="space-y-1">
                                     {navigationData.main.map((item) => (
@@ -318,7 +318,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                             </div>
 
                             {/* Secondary Navigation */}
-                            <div className="px-2 mb-6">
+                            <div className="mb-8">
                                 <h3 className="text-xs font-semibold text-gray-400 mb-3 px-1">MORE</h3>
                                 <div className="grid grid-cols-2 gap-2">
                                     {navigationData.secondary.map((item) => (
@@ -335,56 +335,32 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                             </div>
 
                             {/* Quick Contact Links */}
-                            <div className="px-2 mb-6">
+                            <div>
                                 <h3 className="text-xs font-semibold text-gray-400 mb-3 px-1">QUICK LINKS</h3>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="space-y-2">
                                     {quickLinks.map((item) => (
                                         <a
                                             key={item.label}
                                             href={item.href}
-                                            className="flex flex-col gap-1 p-3 rounded-lg hover:bg-primary/5 transition-colors"
+                                            className="flex items-center gap-3 p-3 rounded-lg hover:bg-primary/5 transition-colors"
                                         >
-                                            <div className="flex items-center gap-2 text-primary">
+                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
                                                 <item.icon className="w-4 h-4" />
-                                                <span className="text-xs font-medium">{item.label}</span>
                                             </div>
-                                            <span className="text-sm text-gray-600 font-medium truncate">
-                                                {item.value}
-                                            </span>
+                                            <div>
+                                                <div className="text-sm font-medium text-gray-700">{item.label}</div>
+                                                <div className="text-xs text-gray-500">{item.value}</div>
+                                            </div>
                                         </a>
                                     ))}
                                 </div>
                             </div>
 
-                            {/* Featured Items */}
-                            <div className="px-2 mb-6">
-                                <h3 className="text-xs font-semibold text-gray-400 mb-3 px-1">FEATURED</h3>
-                                <div className="space-y-2">
-                                    {featuredItems.map((item) => (
-                                        <Link
-                                            key={item.title}
-                                            href={item.href}
-                                            className="flex items-start gap-3 p-3 rounded-lg hover:bg-primary/5 transition-colors"
-                                        >
-                                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                                                <item.icon className="w-5 h-5" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs text-primary font-medium">{item.label}</span>
-                                                </div>
-                                                <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
-                                                <p className="text-xs text-gray-500 truncate">{item.desc}</p>
-                                            </div>
-                                        </Link>
-                                    ))}
-                                </div>
-                            </div>
                         </div>
                     </ScrollArea>
 
                     {/* sidebar menu footer */}
-                    <div className="border-t p-4 bg-gray-50/50">
+                    <div className="border-t p-4">
                         {user ? (
                             <Button 
                                 onClick={() => signOut()}
@@ -397,9 +373,9 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                             <SheetClose asChild>
                                 <Button 
                                     onClick={() => router.push('/sign-in')}
-                                    className="w-full focus:ring-2 focus:ring-primary/50 text-white"
+                                    className="w-full bg-primary hover:bg-primary/90 text-white"
                                 >
-                                    Sign On
+                                    Sign In
                                 </Button>
                             </SheetClose>
                         )}

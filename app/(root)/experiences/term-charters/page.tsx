@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle2, Calendar, Users, Navigation, Globe } from "lucide-react";
+import { Calendar, Users, Navigation, Shield, Anchor } from "lucide-react";
 import ExperienceLayout from "@/components/experiences/ExperienceLayout";
 import { db } from "@/database/db";
 import { boats } from "@/database/schema";
@@ -9,13 +9,14 @@ import { eq, and } from "drizzle-orm";
 import { Boat } from "@/lib/types/types";
 import BoatCard from "@/components/ui/boat-card";
 import { Button } from "@/components/ui/button";
+import RequestTermCharter from "./RequestTermCharter";
 
 export const metadata: Metadata = {
   title: "Term Charters | KOSyachts",
   description: "Experience extended luxury voyages with our premium term charters.",
 };
 
-// FAQs
+// FAQs - reduced to just most important ones
 const faqs = [
   {
     question: "What is a term charter?",
@@ -28,34 +29,6 @@ const faqs = [
   {
     question: "Do I need boating experience for a term charter?",
     answer: "No experience is necessary as our term charters include professional crew who handle all aspects of vessel operation. You can be as involved or hands-off as you prefer."
-  },
-  {
-    question: "Can we customize our itinerary?",
-    answer: "Absolutely! While we offer suggested itineraries, we work with you to customize your journey based on your interests, time frame, and preferences. Your captain may suggest modifications based on weather and sea conditions."
-  }
-];
-
-// Benefits of term charters
-const benefits = [
-  {
-    icon: <Calendar className="h-6 w-6" />,
-    title: "Extended Duration",
-    description: "From a few days to several weeks, experience true nautical living"
-  },
-  {
-    icon: <Users className="h-6 w-6" />,
-    title: "Professional Crew",
-    description: "Expert captains and staff handling all vessel operations"
-  },
-  {
-    icon: <Navigation className="h-6 w-6" />,
-    title: "Multiple Destinations",
-    description: "Explore various locations during a single journey"
-  },
-  {
-    icon: <Globe className="h-6 w-6" />,
-    title: "Exclusive Access",
-    description: "Reach secluded areas only accessible by private vessel"
   }
 ];
 
@@ -75,6 +48,30 @@ async function getTermCharterBoats(): Promise<Boat[]> {
   }
 }
 
+// Destinations for gallery
+const destinations = [
+  {
+    name: "Bahamas",
+    image: "/images/experiences/bahamas.jpg",
+    altText: "Crystal clear Bahamian waters with yacht"
+  },
+  {
+    name: "Caribbean",
+    image: "/images/experiences/caribbean.jpg",
+    altText: "Luxury yacht in Caribbean waters"
+  },
+  {
+    name: "Mediterranean",
+    image: "/images/experiences/mediterranean.jpg",
+    altText: "Yacht cruising along Mediterranean coast"
+  },
+  {
+    name: "Florida Keys",
+    image: "/images/experiences/keys.jpg",
+    altText: "Yacht in Florida Keys with sunset"
+  }
+];
+
 export default async function TermChartersPage() {
   // Fetch term charter boats
   const termCharterBoats = await getTermCharterBoats();
@@ -84,82 +81,30 @@ export default async function TermChartersPage() {
       title="Term Charters"
       description="Experience extended voyages with premium vessels and professional crews. Discover multiple destinations in ultimate comfort and luxury."
       heroImage="/images/experiences/termcharter.avif"
-      buttonText="Request a Quote"
-      buttonLink="mailto:contact@kosyachts.com"
+      buttonText="Get Started"
+      buttonLink="#request-quote"
       imageOverlayColor="from-[#0c4a6e]/70 to-[#0c4a6e]/40"
       faqs={faqs}
       relatedExperiences={[]}
     >
-      <div className="max-w-7xl mx-auto space-y-10 px-6 font-poppins">
-        {/* Modern Intro Section */}
-        <section className="pt-4">
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden p-8 md:p-12">
-            <div className="flex flex-col max-w-3xl mx-auto">
-              <h2 className="text-3xl font-bold mb-6 text-primary font-poppins">Extended Luxury Voyages</h2>
-              <p className="text-gray-600 mb-8 leading-relaxed font-poppins">
-                Our term charters combine luxury accommodations, professional crew, and the freedom to explore 
-                multiple destinations. With all aspects of vessel operation handled for you, simply relax and 
-                focus on creating unforgettable memories.
-              </p>
-              
-              <div className="grid sm:grid-cols-2 gap-6 mt-2">
-                {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-start">
-                    <div className=" p-2 mr-3 text-primary">
-                      {benefit.icon}
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-primary font-poppins">{benefit.title}</h3>
-                      <p className="text-sm text-gray-500 font-poppins">{benefit.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-        {/* What's Included Section */}
-        <section className="pb-12">
-          <div className=" rounded-xl p-8 md:p-10">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold mb-3 text-[#0c4a6e] font-poppins">What's Included</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto font-poppins">
-                Our term charters provide everything you need for an exceptional voyage.
-              </p>
-            </div>
-            
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                "Professional captain and crew",
-                "Luxury accommodations onboard",
-                "Navigation and vessel operation",
-                "Itinerary planning assistance",
-                "Daily cabin service",
-                "Water toys and equipment",
-                "24/7 shoreside support",
-                "Comprehensive insurance"
-              ].map((item, index) => (
-                <div key={index} className=" p-4 flex items-start">
-                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5 mr-3" />
-                  <span className="text-gray-700 font-poppins">{item}</span>
-                </div>
-              ))}
-            </div>
+      <div className="space-y-16">
+        {/* Request Form */}
+        <section id="request-quote" className=" py-12 px-6 md:px-12 -mx-8">
+          <div className="max-w-5xl mx-auto bg-gray-50 rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <RequestTermCharter />
           </div>
         </section>
         
         {/* Available Boats Section */}
-        <section>
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3 text-[#0c4a6e] font-poppins">Available Term Charter Boats</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto font-poppins">
-              Browse our selection of premier vessels available for extended journeys. 
-              Each boat includes professional crew and luxury accommodations.
-            </p>
-          </div>
-          <div className="text-right text-primary font-poppins p-2">Contact our charter team</div>
-          
-          {termCharterBoats.length > 0 ? (
+        {termCharterBoats.length > 0 && (
+          <section>
+            <div className="text-center mb-10">
+              <h2 className="text-3xl font-bold mb-3 text-primary">Available Vessels</h2>
+              <p className="text-gray-600 max-w-2xl mx-auto">
+                Browse our selection of premier vessels available for extended journeys
+              </p>
+            </div>
+            
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {termCharterBoats.map(boat => (
                 <BoatCard 
@@ -169,22 +114,8 @@ export default async function TermChartersPage() {
                 />
               ))}
             </div>
-          ) : (
-            <div className="bg-gray-50 rounded-xl p-8 text-center">
-              <h3 className="text-xl font-semibold mb-3 text-gray-800 font-poppins">Custom Term Charter Options</h3>
-              <p className="text-gray-600 mb-6 font-poppins">
-                We can arrange a custom term charter experience with any of our premium vessels. 
-                Contact our team to discuss your specific requirements.
-              </p>
-              <Link href="/contact">
-                <Button className="bg-primary hover:bg-primary/90 text-white font-poppins">
-                  Contact Our Charter Team
-                </Button>
-              </Link>
-            </div>
-          )}
-        </section>
-        
+          </section>
+        )}
       </div>
     </ExperienceLayout>
   );

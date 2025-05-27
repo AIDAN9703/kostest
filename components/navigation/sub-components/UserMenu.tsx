@@ -147,7 +147,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
             onClick={navigateToSignIn}
             className={logOnButtonStyle}
         >
-           Sign On
+           Sign In
         </button>
     )
 }

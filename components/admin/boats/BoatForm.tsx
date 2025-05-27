@@ -475,6 +475,8 @@ export function BoatForm({ boat, boatId }: BoatFormProps = {}) {
                     
                     <ImageUpload
                       type="boat"
+                      entityId={boatId || "new"} // Use "new" for new boats
+                      entityName={form.getValues("name") || "boat"} // Use boat name or fallback
                       onUploadComplete={(url) => field.onChange(url)}
                       buttonText="Upload Image"
                       variant="outline"
@@ -520,6 +522,8 @@ export function BoatForm({ boat, boatId }: BoatFormProps = {}) {
                   
                   <ImageUpload
                     type="boat"
+                    entityId={boatId || "new"} // Use "new" for new boats
+                    entityName={form.getValues("name") || "boat"} // Use boat name or fallback
                     onUploadComplete={(url) => handleGalleryUpload(url, field)}
                     buttonText="Add Gallery Images"
                     variant="outline"

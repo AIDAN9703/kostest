@@ -54,7 +54,7 @@
     "drizzle-orm": "^0.39.2",
     "embla-carousel-react": "^8.5.2",
     "eslint-plugin-drizzle": "^0.2.3",
-    "framer-motion": "^12.7.4",
+    "framer-motion": "^12.14.0",
     "imagekit": "^6.0.0",
     "imagekitio-next": "^1.0.1",
     "lodash": "^4.17.21",

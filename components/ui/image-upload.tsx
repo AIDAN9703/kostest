@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 interface ImageUploadProps {
   onUploadComplete: (imageUrl: string) => void;
   type: "profile" | "cover" | "boat" | "misc";
+  entityId?: string;
+  entityName?: string;
   buttonText?: string;
   className?: string;
   variant?: "default" | "secondary" | "outline" | "ghost" | "link" | "destructive";
@@ -19,6 +21,8 @@ interface ImageUploadProps {
 export function ImageUpload({
   onUploadComplete,
   type,
+  entityId,
+  entityName,
   buttonText = "Upload Image",
   className = "",
   variant = "secondary",
@@ -56,6 +60,16 @@ export function ImageUpload({
       }
     }
 
+    // Validate required fields for boat uploads
+    if (type === 'boat' && (!entityId || !entityName)) {
+      toast({
+        title: "Missing information",
+        description: "Boat ID and name are required for boat image uploads",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsUploading(true);
     try {
       // Upload files sequentially
@@ -64,6 +78,10 @@ export function ImageUpload({
         const formData = new FormData();
         formData.append('file', file);
         formData.append('type', type);
+        
+        // Add entity information if provided
+        if (entityId) formData.append('entityId', entityId);
+        if (entityName) formData.append('entityName', entityName);
         
         // Upload to your API route
         const response = await fetch('/api/upload', {

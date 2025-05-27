@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { imagekit } from '@/lib/services/imagekit';
 
+type UploadType = 'profile' | 'cover' | 'boat' | 'misc';
+
+interface UploadOptions {
+  type: UploadType;
+  entityId?: string; // For boat ID, user ID, etc.
+  entityName?: string; // For boat name, etc.
+}
+
 export async function POST(request: Request) {
   try {
     // Check authentication
@@ -12,7 +20,9 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const type = formData.get('type') as string; // 'profile' or 'cover'
+    const type = formData.get('type') as UploadType;
+    const entityId = formData.get('entityId') as string;
+    const entityName = formData.get('entityName') as string;
     
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
@@ -32,8 +42,35 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
-    // Create a folder path based on user ID and image type
-    const folder = `/users/${session.user.id}/${type}`;
+    // Determine folder path based on type and entity
+    let folder = '';
+    let tags: string[] = [type];
+
+    switch (type) {
+      case 'profile':
+        folder = `/users/${session.user.id}/profile`;
+        tags.push(`user_${session.user.id}`);
+        break;
+      case 'cover':
+        folder = `/users/${session.user.id}/cover`;
+        tags.push(`user_${session.user.id}`);
+        break;
+      case 'boat':
+        if (!entityId || !entityName) {
+          return NextResponse.json({ error: 'Boat ID and name are required for boat images' }, { status: 400 });
+        }
+        // Create a URL-friendly version of the boat name
+        const safeBoatName = entityName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+        folder = `/boats/${entityId}-${safeBoatName}`;
+        tags.push(`boat_${entityId}`);
+        break;
+      case 'misc':
+        folder = `/misc/${session.user.id}`;
+        tags.push(`user_${session.user.id}`);
+        break;
+      default:
+        return NextResponse.json({ error: 'Invalid upload type' }, { status: 400 });
+    }
     
     // Upload to ImageKit
     const result = await imagekit.upload({
@@ -41,13 +78,16 @@ export async function POST(request: Request) {
       fileName: `${type}_${Date.now()}.${file.name.split('.').pop()}`,
       folder: folder,
       useUniqueFileName: true,
-      tags: [type, `user_${session.user.id}`]
+      tags: tags,
+      responseFields: ['tags', 'metadata'] // Get additional fields in response
     });
     
     return NextResponse.json({
       url: result.url,
       fileId: result.fileId,
-      thumbnailUrl: result.thumbnailUrl
+      thumbnailUrl: result.thumbnailUrl,
+      tags: result.tags,
+      metadata: result.metadata
     });
   } catch (error) {
     console.error('Upload error:', error);

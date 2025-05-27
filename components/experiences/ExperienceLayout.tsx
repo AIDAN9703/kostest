@@ -4,6 +4,12 @@ import { ReactNode } from "react";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export interface ExperienceLayoutProps {
   title: string;
@@ -75,25 +81,30 @@ export default function ExperienceLayout({
       </div>
 
       {/* Main Content */}
-      {children}
+      <div className="container mx-auto px-4 md:px-8">
+        {children}
+      </div>
 
       {/* FAQs Section */}
       {faqs.length > 0 && (
         <div className=" py-16 md:py-24">
-          <div className="container font-poppins text-primary">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
+          <div className="container mx-auto px-4 md:px-8">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-primary">
               Frequently Asked Questions
             </h2>
-            <div className="max-w-4xl mx-auto">
-              {faqs.map((faq, index) => (
-                <div 
-                  key={index} 
-                  className="mb-6 p-6"
-                >
-                  <h3 className="text-xl font-semibold mb-3">{faq.question}</h3>
-                  <p className="text-gray-600">{faq.answer}</p>
-                </div>
-              ))}
+            <div className="max-w-3xl mx-auto">
+              <Accordion type="single" collapsible className="w-full">
+                {faqs.map((faq, index) => (
+                  <AccordionItem key={index} value={`item-${index}`}>
+                    <AccordionTrigger className="text-left text-lg font-semibold text-primary hover:no-underline">
+                      {faq.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-600 leading-relaxed">
+                      {faq.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
             </div>
           </div>
         </div>
