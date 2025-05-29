@@ -155,7 +155,7 @@ export default function ClientsShowcase() {
   );
 
   return (
-    <section className="py-6 sm:py-10 relative overflow-hidden">
+    <section className="py-6 sm:py-12 relative overflow-hidden">
       <div className="max-w-full sm:max-w-[80%] mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8 lg:gap-12">
           {/* Title and Navigation */}

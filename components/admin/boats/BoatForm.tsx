@@ -36,6 +36,8 @@ import { PricingTiers } from "@/components/admin/boats/PricingTiers";
 import { CustomPlacesAutocomplete } from "@/components/ui/custom-places-autocomplete";
 import { LocationData } from "@/lib/types/types";
 import { OwnerSelect } from "@/components/admin/boats/OwnerSelect";
+import { motion, Reorder, useReducedMotion } from "framer-motion";
+import { GripVertical } from "lucide-react";
 
 // Define props type
 interface BoatFormProps {
@@ -493,42 +495,69 @@ export function BoatForm({ boat, boatId }: BoatFormProps = {}) {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Gallery Images</FormLabel>
-                  <div className="flex flex-wrap gap-4 mb-4">
-                    {field.value && field.value.length > 0 ? field.value.map((image, index) => (
-                      <div key={index} className="relative w-32 h-32 border rounded-md overflow-hidden">
-                        <img
-                          src={image}
-                          alt={`Gallery image ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                          onClick={() => {
-                            const newImages = [...field.value || []];
-                            newImages.splice(index, 1);
-                            field.onChange(newImages.length ? newImages : undefined);
-                          }}
-                        >
-                          ×
-                        </button>
-                      </div>
-                    )) : (
-                      <div className="w-32 h-32 border rounded-md flex items-center justify-center bg-gray-50">
-                        <Ship className="h-8 w-8 text-gray-300" />
-                      </div>
-                    )}
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Reorder.Group 
+                        axis="x" 
+                        values={field.value || []} 
+                        onReorder={(newOrder) => field.onChange(newOrder)}
+                        className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4"
+                      >
+                        {field.value && field.value.length > 0 ? field.value.map((image, index) => (
+                          <Reorder.Item
+                            key={image}
+                            value={image}
+                            className="relative flex-shrink-0 cursor-grab active:cursor-grabbing"
+                            whileDrag={{
+                              scale: 1.05,
+                              boxShadow: "0 5px 15px rgba(0,0,0,0.25)",
+                              zIndex: 50
+                            }}
+                          >
+                            <div className="relative w-32 h-32 border rounded-md overflow-hidden group">
+                              <img
+                                src={image}
+                                alt={`Gallery image ${index + 1}`}
+                                className="w-full h-full object-cover pointer-events-none"
+                              />
+                              {/* Drag Handle */}
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                <GripVertical className="h-6 w-6 text-white" />
+                              </div>
+                              {/* Delete Button */}
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                                onClick={() => {
+                                  const newImages = [...field.value || []];
+                                  newImages.splice(index, 1);
+                                  field.onChange(newImages.length ? newImages : undefined);
+                                }}
+                              >
+                                ×
+                              </Button>
+                            </div>
+                          </Reorder.Item>
+                        )) : (
+                          <div className="w-32 h-32 border rounded-md flex items-center justify-center bg-gray-50">
+                            <Ship className="h-8 w-8 text-gray-300" />
+                          </div>
+                        )}
+                      </Reorder.Group>
+                    </div>
+                    
+                    <ImageUpload
+                      type="boat"
+                      entityId={boatId || "new"}
+                      entityName={form.getValues("name") || "boat"}
+                      onUploadComplete={(url) => handleGalleryUpload(url, field)}
+                      buttonText="Add Gallery Images"
+                      variant="outline"
+                      multiple={true}
+                    />
                   </div>
-                  
-                  <ImageUpload
-                    type="boat"
-                    entityId={boatId || "new"} // Use "new" for new boats
-                    entityName={form.getValues("name") || "boat"} // Use boat name or fallback
-                    onUploadComplete={(url) => handleGalleryUpload(url, field)}
-                    buttonText="Add Gallery Images"
-                    variant="outline"
-                    multiple={true}
-                  />
                   <FormMessage />
                 </FormItem>
               )}

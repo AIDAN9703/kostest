@@ -69,7 +69,7 @@ export default function AdminSidebar() {
       {/* Logo */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200">
         {!collapsed && (
-          <Link href="/admin" className="flex items-center">
+          <Link href="/" className="flex items-center">
             <Image 
               src="/icons/logo.png" 
               alt="KOS Yachts Admin" 

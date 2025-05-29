@@ -91,7 +91,7 @@ export default function LocationsSection() {
   };
 
   return (
-    <section className="relative py-6 sm:py-10 font-poppins">
+    <section className="relative py-6 sm:py-12 font-poppins">
       <div className="max-w-full sm:max-w-[80%] mx-auto px-6">
         <div className="flex flex-col">
           {/* Mobile & Desktop Header */}

@@ -14,6 +14,9 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useReducedMotion } from 'framer-motion';
+
 // Reusable animation variants for DRY code
 const fadeInUpAnimation = {
   initial: { opacity: 0, y: 20 },
@@ -26,6 +29,14 @@ const fadeInUpAnimation = {
 
 // Server component for the overall section
 const FeaturedFleet = ({ boats }: { boats: Boat[] }) => {
+  const prefersReducedMotion = useReducedMotion();
+
+  // Optimize button animations for performance
+  const buttonVariants = {
+    hover: prefersReducedMotion ? {} : { scale: 1.05 },
+    tap: prefersReducedMotion ? {} : { scale: 0.95 }
+  };
+
   return (
     <section className="py-2 sm:py-4 relative overflow-hidden">
       <div className="max-w-full sm:max-w-[80%] mx-auto px-4">
@@ -61,8 +72,38 @@ const FeaturedFleet = ({ boats }: { boats: Boat[] }) => {
           </CarouselContent>
           {boats.length > 2 && (
             <>
-              <CarouselPrevious className="left-1 sm:left-4 lg:-left-12 w-8 h-8 sm:w-10 sm:h-10" />
-              <CarouselNext className="right-1 sm:right-4 lg:-right-12 w-8 h-8 sm:w-10 sm:h-10" />
+              <motion.button
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+                onClick={() => {
+                  const carousel = document.querySelector('[data-carousel]');
+                  if (carousel) {
+                    const prevButton = carousel.querySelector('[data-carousel-prev]');
+                    if (prevButton instanceof HTMLElement) prevButton.click();
+                  }
+                }}
+                className="absolute left-1 sm:left-4 lg:-left-12 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-sm hover:shadow transition-all duration-300 border border-slate-200"
+                aria-label="Previous boats"
+              >
+                <ChevronLeft className="w-5 h-5 text-slate-700" />
+              </motion.button>
+              <motion.button
+                variants={buttonVariants}
+                whileHover="hover"
+                whileTap="tap"
+                onClick={() => {
+                  const carousel = document.querySelector('[data-carousel]');
+                  if (carousel) {
+                    const nextButton = carousel.querySelector('[data-carousel-next]');
+                    if (nextButton instanceof HTMLElement) nextButton.click();
+                  }
+                }}
+                className="absolute right-1 sm:right-4 lg:-right-12 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-sm hover:shadow transition-all duration-300 border border-slate-200"
+                aria-label="Next boats"
+              >
+                <ChevronRight className="w-5 h-5 text-slate-700" />
+              </motion.button>
             </>
           )}
         </Carousel>
