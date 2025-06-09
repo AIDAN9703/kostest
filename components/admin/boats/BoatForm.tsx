@@ -30,13 +30,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useState } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import { ArrayField } from "@/components/admin/boats/FormHelpers";
 import { PricingTiers } from "@/components/admin/boats/PricingTiers";
 import { CustomPlacesAutocomplete } from "@/components/ui/custom-places-autocomplete";
 import { LocationData } from "@/lib/types/types";
 import { OwnerSelect } from "@/components/admin/boats/OwnerSelect";
-import { motion, Reorder, useReducedMotion } from "framer-motion";
+import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 import { GripVertical } from "lucide-react";
 
 // Define props type
@@ -45,10 +45,71 @@ interface BoatFormProps {
   boatId?: string; // undefined for create, populated for edit
 }
 
+// Simple image item component
+const ImageItem = memo(({ 
+  image, 
+  index, 
+  isMain, 
+  onDelete
+}: { 
+  image: string; 
+  index: number; 
+  isMain: boolean; 
+  onDelete: (index: number) => void;
+}) => {
+  return (
+    <div className="relative w-32 h-32 border rounded-md overflow-hidden group bg-gray-100 flex-shrink-0">
+      {/* Main Image Badge */}
+      {isMain && (
+        <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded z-10 shadow-sm font-medium">
+          Main
+        </div>
+      )}
+      
+      <img
+        src={image}
+        alt={`${isMain ? 'Main' : 'Gallery'} image ${index + 1}`}
+        className="w-full h-full object-cover"
+        loading="lazy"
+        draggable={false}
+      />
+      
+      {/* Drag Handle */}
+      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-grab active:cursor-grabbing">
+        <GripVertical className="h-6 w-6 text-white drop-shadow-md" />
+      </div>
+      
+      {/* Delete Button */}
+      <button
+        type="button"
+        className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold z-20"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onDelete(index);
+        }}
+      >
+        ×
+      </button>
+    </div>
+  );
+});
+
+ImageItem.displayName = 'ImageItem';
+
 export function BoatForm({ boat, boatId }: BoatFormProps = {}) {
   const router = useRouter();
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
+  
+  // Separate state for images to avoid form re-renders
+  const [images, setImages] = useState<string[]>(() => {
+    if (!boat) return [];
+    const allImages = [];
+    if (boat.mainImage) allImages.push(boat.mainImage);
+    if (boat.galleryImages?.length) allImages.push(...boat.galleryImages);
+    return allImages.filter(Boolean);
+  });
   
   // Determine whether we're creating or updating a boat
   const isCreating = !boatId;
@@ -82,9 +143,23 @@ export function BoatForm({ boat, boatId }: BoatFormProps = {}) {
   const { formState } = form;
   const { isSubmitting } = formState;
 
+  // Simple form image sync
+  const updateFormImages = useCallback((newImages: string[]) => {
+    if (newImages.length === 0) {
+      form.setValue("mainImage", "");
+      form.setValue("galleryImages", []);
+    } else {
+      form.setValue("mainImage", newImages[0]);
+      form.setValue("galleryImages", newImages.slice(1));
+    }
+  }, [form]);
+
   // Handle form submission
   async function onSubmit(data: CreateBoatInput | UpdateBoatInput) {
     try {
+      // Ensure form has latest image data
+      updateFormImages(images);
+      
       if (isCreating) {
         // Creating a new boat
         await createBoat(data as CreateBoatInput);
@@ -114,14 +189,41 @@ export function BoatForm({ boat, boatId }: BoatFormProps = {}) {
     }
   }
 
-  // Handle gallery image upload with proper array handling
-  const handleGalleryUpload = (url: string, field: any) => {
-    // Make sure we properly maintain the array of images by getting the current state
-    // from the form, not the field which might be stale during multiple uploads
-    const currentImages = form.getValues("galleryImages") || [];
-    // Update the form with the new array including the new image
-    field.onChange([...currentImages, url]);
-  };
+  // Simple image upload handler
+  const handleImageUpload = useCallback((url: string) => {
+    setImages(prev => {
+      const newImages = [...prev, url];
+      updateFormImages(newImages);
+      return newImages;
+    });
+  }, [updateFormImages]);
+
+  // Simple drag end handler
+  const handleDragEnd = useCallback((result: DropResult) => {
+    if (!result.destination) return;
+    
+    const startIndex = result.source.index;
+    const endIndex = result.destination.index;
+    
+    if (startIndex === endIndex) return;
+    
+    setImages(prev => {
+      const newImages = Array.from(prev);
+      const [reorderedItem] = newImages.splice(startIndex, 1);
+      newImages.splice(endIndex, 0, reorderedItem);
+      updateFormImages(newImages);
+      return newImages;
+    });
+  }, [updateFormImages]);
+
+  // Simple image delete handler
+  const handleImageDelete = useCallback((indexToDelete: number) => {
+    setImages(prev => {
+      const newImages = prev.filter((_, index) => index !== indexToDelete);
+      updateFormImages(newImages);
+      return newImages;
+    });
+  }, [updateFormImages]);
 
   // Render form
   return (
@@ -297,6 +399,28 @@ export function BoatForm({ boat, boatId }: BoatFormProps = {}) {
               
               {/* OwnerEmail removed – owner selected via ID */}
             </div>
+            
+            <FormField
+              control={form.control}
+              name="ownerNotes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Owner Notes</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      {...field} 
+                      value={field.value || ""} 
+                      placeholder="Internal notes about the owner or boat for admin use..." 
+                      className="min-h-[80px]" 
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Internal notes about the owner or special requirements (visible only to admins)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </CardContent>
         </Card>
 
@@ -453,115 +577,119 @@ export function BoatForm({ boat, boatId }: BoatFormProps = {}) {
         <Card>
           <CardHeader>
             <CardTitle>Media</CardTitle>
-            <CardDescription>Images of the boat</CardDescription>
+            <CardDescription>
+              Upload and arrange images. The first image will be used as the main image.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="mainImage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Main Image</FormLabel>
-                  <div className="flex items-start gap-4">
-                    <div className="relative w-40 h-40 border rounded-md overflow-hidden bg-gray-50 flex items-center justify-center">
-                      {field.value ? (
-                        <img
-                          src={field.value}
-                          alt="Main boat image"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <Ship className="h-10 w-10 text-gray-300" />
-                      )}
-                    </div>
-                    
-                    <ImageUpload
-                      type="boat"
-                      entityId={boatId || "new"} // Use "new" for new boats
-                      entityName={form.getValues("name") || "boat"} // Use boat name or fallback
-                      onUploadComplete={(url) => field.onChange(url)}
-                      buttonText="Upload Image"
-                      variant="outline"
-                    />
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="galleryImages"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Gallery Images</FormLabel>
-                  <div className="space-y-4">
-                    <div className="relative">
-                      <Reorder.Group 
-                        axis="x" 
-                        values={field.value || []} 
-                        onReorder={(newOrder) => field.onChange(newOrder)}
-                        className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4"
+            {/* Proper React Beautiful DnD Implementation */}
+            <FormItem>
+              <FormLabel>
+                Boat Images 
+                <span className="text-sm font-normal text-gray-500 ml-2">
+                  (First image becomes main image)
+                </span>
+              </FormLabel>
+              <div className="space-y-4">
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable 
+                    droppableId="image-gallery" 
+                    direction="horizontal"
+                    isDropDisabled={false}
+                    isCombineEnabled={false}
+                    ignoreContainerClipping={false}
+                  >
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`p-4 rounded-lg border-2 border-dashed transition-colors overflow-x-auto ${
+                          snapshot.isDraggingOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300'
+                        }`}
+                        style={{
+                          display: 'flex',
+                          gap: '16px',
+                          minHeight: '140px',
+                          alignItems: 'flex-start',
+                        }}
                       >
-                        {field.value && field.value.length > 0 ? field.value.map((image, index) => (
-                          <Reorder.Item
-                            key={image}
-                            value={image}
-                            className="relative flex-shrink-0 cursor-grab active:cursor-grabbing"
-                            whileDrag={{
-                              scale: 1.05,
-                              boxShadow: "0 5px 15px rgba(0,0,0,0.25)",
-                              zIndex: 50
-                            }}
-                          >
-                            <div className="relative w-32 h-32 border rounded-md overflow-hidden group">
-                              <img
-                                src={image}
-                                alt={`Gallery image ${index + 1}`}
-                                className="w-full h-full object-cover pointer-events-none"
-                              />
-                              {/* Drag Handle */}
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-                                <GripVertical className="h-6 w-6 text-white" />
-                              </div>
-                              {/* Delete Button */}
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                className="absolute top-1 right-1 w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                                onClick={() => {
-                                  const newImages = [...field.value || []];
-                                  newImages.splice(index, 1);
-                                  field.onChange(newImages.length ? newImages : undefined);
-                                }}
-                              >
-                                ×
-                              </Button>
+                        {images.length > 0 ? (
+                          images.map((image, index) => (
+                            <Draggable 
+                              key={`image-${index}`} 
+                              draggableId={`image-${index}`} 
+                              index={index}
+                              isDragDisabled={false}
+                            >
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  style={{
+                                    ...provided.draggableProps.style,
+                                  }}
+                                >
+                                  <ImageItem
+                                    image={image}
+                                    index={index}
+                                    isMain={index === 0}
+                                    onDelete={handleImageDelete}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        ) : (
+                          <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center bg-gray-50 flex-shrink-0">
+                            <div className="text-center">
+                              <Ship className="h-8 w-8 text-gray-400 mx-auto mb-1" />
+                              <p className="text-xs text-gray-500">No images</p>
                             </div>
-                          </Reorder.Item>
-                        )) : (
-                          <div className="w-32 h-32 border rounded-md flex items-center justify-center bg-gray-50">
-                            <Ship className="h-8 w-8 text-gray-300" />
                           </div>
                         )}
-                      </Reorder.Group>
-                    </div>
-                    
-                    <ImageUpload
-                      type="boat"
-                      entityId={boatId || "new"}
-                      entityName={form.getValues("name") || "boat"}
-                      onUploadComplete={(url) => handleGalleryUpload(url, field)}
-                      buttonText="Add Gallery Images"
-                      variant="outline"
-                      multiple={true}
-                    />
-                  </div>
-                  <FormMessage />
-                </FormItem>
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+                
+                {/* Upload Button */}
+                <ImageUpload
+                  type="boat"
+                  entityId={boatId || "new"}
+                  entityName={form.getValues("name") || "boat"}
+                  onUploadComplete={handleImageUpload}
+                  buttonText={images.length === 0 ? "Upload First Image" : "Add More Images"}
+                  variant="outline"
+                  multiple={true}
+                />
+                
+                {/* Helper text */}
+                <p className="text-sm text-gray-500">
+                  Drag images horizontally to reorder them. The first image will automatically be used as the main image displayed in listings.
+                </p>
+                
+                {/* Image count */}
+                {images.length > 0 && (
+                  <p className="text-sm text-blue-600 font-medium">
+                    {images.length} image{images.length !== 1 ? 's' : ''} uploaded
+                  </p>
+                )}
+              </div>
+              
+              {/* Show form errors for both fields */}
+              {form.formState.errors.mainImage && (
+                <p className="text-sm font-medium text-destructive">
+                  {form.formState.errors.mainImage.message}
+                </p>
               )}
-            />
+              {form.formState.errors.galleryImages && (
+                <p className="text-sm font-medium text-destructive">
+                  {form.formState.errors.galleryImages.message}
+                </p>
+              )}
+            </FormItem>
           </CardContent>
         </Card>
 

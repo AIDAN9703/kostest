@@ -77,7 +77,7 @@ export default function AdminSidebar() {
               height={40} 
               className="mr-2"
             />
-            <span className="text-xl font-bold text-primary">KOSAdmin</span>
+            <span className="text-xl font-bold text-primary">KOS Admin</span>
           </Link>
         )}
         {collapsed && (

@@ -103,6 +103,7 @@ export interface Boat {
   galleryImages?: string[] | null;
   virtualTourUrl?: string | null;
   videoUrl?: string | null;
+  cancellationPolicy?: string | null;
   
   // Pricing tiers - comes from a join/separate query (not in the boats table)
   pricingTiers?: PricingTier[];

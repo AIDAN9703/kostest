@@ -33,8 +33,8 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
         {/* Full-width image gallery on mobile, constrained on desktop */}
         <div className="sm:pl-4">
           <ImageGallery 
-            mainImage={boat.mainImage}
-            galleryImages={boat.galleryImages}
+            mainImage={boat.mainImage || ''}
+            galleryImages={boat.galleryImages || []}
             alt={boat.name}
           />
         </div>

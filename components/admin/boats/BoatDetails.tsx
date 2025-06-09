@@ -8,6 +8,10 @@ import { boats, boatPricingTiers } from "@/database/schema";
 interface BoatDetailsProps {
   boat: typeof boats.$inferSelect & {
     pricingTiers?: typeof boatPricingTiers.$inferSelect[];
+    ownerFirstName?: string | null;
+    ownerLastName?: string | null;
+    ownerEmail?: string | null;
+    ownerDisplayName?: string | null;
   };
 }
 
@@ -182,6 +186,64 @@ export function BoatDetails({ boat }: BoatDetailsProps) {
 
       {/* Right Column - 1/3 width */}
       <div className="space-y-6">
+        {/* Owner Information Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Owner Information</CardTitle>
+            <CardDescription>Boat owner details and notes</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Owner Name</h3>
+              <p className="mt-1 text-sm font-medium">
+                {boat.ownerDisplayName || 
+                 (boat.ownerFirstName && boat.ownerLastName 
+                   ? `${boat.ownerFirstName} ${boat.ownerLastName}` 
+                   : "No name available")}
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Owner Email</h3>
+              <p className="mt-1 text-sm text-blue-600">
+                {boat.ownerEmail || "No email available"}
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="text-sm font-medium text-gray-500">Owner ID</h3>
+              <p className="mt-1 text-xs font-mono bg-gray-50 p-2 rounded border text-gray-600">
+                {boat.ownerId}
+              </p>
+            </div>
+            
+            {boat.ownerNotes && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Owner Notes</h3>
+                <div className="mt-1 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                  <p className="text-sm text-amber-800 whitespace-pre-line">
+                    {boat.ownerNotes}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {!boat.ownerNotes && (
+              <div>
+                <h3 className="text-sm font-medium text-gray-500">Owner Notes</h3>
+                <p className="mt-1 text-sm text-gray-400 italic">No owner notes available</p>
+              </div>
+            )}
+          </CardContent>
+          <CardFooter>
+            <Link href={`/admin/boats/${boat.id}/edit`} className="w-full">
+              <Button variant="outline" className="w-full">
+                Edit Owner Notes
+              </Button>
+            </Link>
+          </CardFooter>
+        </Card>
+
         {/* Pricing Card */}
         <Card>
           <CardHeader>

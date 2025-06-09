@@ -66,8 +66,8 @@ const seasons = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "KOSyachts",
-  description: "KOSyachts is the leading yacht charter experience in the South Florida area.",
+  title: "KOS Yachts",
+  description: "KOS Yachts is the leading yacht charter experience in the South Florida area.",
 };
 
 export const viewport: Viewport = {

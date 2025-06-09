@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,9 +25,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ImageUpload } from "@/components/ui/image-upload";
-import { Loader2, Ship } from "lucide-react";
+import { Loader2, Ship, GripVertical } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 
 // Define the form schema
 const boatFormSchema = z.object({
@@ -70,13 +71,72 @@ interface BoatFormProps {
   boat?: any; // Optional boat data for editing
 }
 
+// Simple image item component
+const ImageItem = memo(({ 
+  image, 
+  index, 
+  isMain, 
+  onDelete
+}: { 
+  image: string; 
+  index: number; 
+  isMain: boolean; 
+  onDelete: (index: number) => void;
+}) => {
+  return (
+    <div className="relative w-32 h-32 border rounded-md overflow-hidden group bg-gray-100 flex-shrink-0">
+      {/* Main Image Badge */}
+      {isMain && (
+        <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded z-10 shadow-sm font-medium">
+          Main
+        </div>
+      )}
+      
+      <img
+        src={image}
+        alt={`${isMain ? 'Main' : 'Gallery'} image ${index + 1}`}
+        className="w-full h-full object-cover"
+        loading="lazy"
+        draggable={false}
+      />
+      
+      {/* Drag Handle */}
+      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-grab active:cursor-grabbing">
+        <GripVertical className="h-6 w-6 text-white drop-shadow-md" />
+      </div>
+      
+      {/* Delete Button */}
+      <button
+        type="button"
+        className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold z-20"
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onDelete(index);
+        }}
+      >
+        ×
+      </button>
+    </div>
+  );
+});
+
+ImageItem.displayName = 'ImageItem';
+
 export default function BoatForm({ userId, boat }: BoatFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [mainImage, setMainImage] = useState<string | null>(boat?.mainImage || null);
-  const [galleryImages, setGalleryImages] = useState<string[]>(boat?.galleryImages || []);
-
+  
+  // Separate state for images to avoid form re-renders
+  const [images, setImages] = useState<string[]>(() => {
+    if (!boat) return [];
+    const allImages = [];
+    if (boat.mainImage) allImages.push(boat.mainImage);
+    if (boat.galleryImages?.length) allImages.push(...boat.galleryImages);
+    return allImages.filter(Boolean);
+  });
+  
   // Initialize form with default values or existing boat data
   const form = useForm<BoatFormValues>({
     resolver: zodResolver(boatFormSchema),
@@ -107,30 +167,90 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
     },
   });
 
-  // Handle main image upload
-  const handleMainImageUpload = (imageUrl: string) => {
-    setMainImage(imageUrl);
-    form.setValue("mainImage", imageUrl, { 
-      shouldDirty: true,
-      shouldValidate: true,
-    });
-  };
+  // Simple form image sync
+  const updateFormImages = useCallback((newImages: string[]) => {
+    if (newImages.length === 0) {
+      form.setValue("mainImage", "");
+      form.setValue("galleryImages", []);
+    } else {
+      form.setValue("mainImage", newImages[0]);
+      form.setValue("galleryImages", newImages.slice(1));
+    }
+  }, [form]);
 
-  // Handle gallery image upload
-  const handleGalleryImageUpload = (imageUrl: string) => {
-    const newGalleryImages = [...galleryImages, imageUrl];
-    setGalleryImages(newGalleryImages);
-    form.setValue("galleryImages", newGalleryImages, { 
-      shouldDirty: true,
-      shouldValidate: true,
+  // Simple image upload handler
+  const handleImageUpload = useCallback((url: string) => {
+    setImages(prev => {
+      const newImages = [...prev, url];
+      updateFormImages(newImages);
+      return newImages;
     });
-  };
+  }, [updateFormImages]);
+
+  // Simple drag end handler
+  const handleDragEnd = useCallback((result: DropResult) => {
+    if (!result.destination) return;
+    
+    const startIndex = result.source.index;
+    const endIndex = result.destination.index;
+    
+    if (startIndex === endIndex) return;
+    
+    setImages(prev => {
+      const newImages = Array.from(prev);
+      const [reorderedItem] = newImages.splice(startIndex, 1);
+      newImages.splice(endIndex, 0, reorderedItem);
+      updateFormImages(newImages);
+      return newImages;
+    });
+  }, [updateFormImages]);
+
+  // Simple image delete handler
+  const handleImageDelete = useCallback((indexToDelete: number) => {
+    setImages(prev => {
+      const newImages = prev.filter((_, index) => index !== indexToDelete);
+      updateFormImages(newImages);
+      return newImages;
+    });
+  }, [updateFormImages]);
+
+  // Heavily memoized image items with stable keys
+  const imageItems = useMemo(() => {
+    return images.map((image, index) => (
+      <Draggable key={`img-${image}-${index}`} draggableId={`img-${image}-${index}`} index={index}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            style={{
+              ...provided.draggableProps.style,
+              // Prevent layout shift by maintaining space
+              transform: snapshot.isDragging 
+                ? provided.draggableProps.style?.transform 
+                : 'translate(0, 0)',
+            }}
+          >
+            <ImageItem
+              image={image}
+              index={index}
+              isMain={index === 0}
+              onDelete={handleImageDelete}
+            />
+          </div>
+        )}
+      </Draggable>
+    ));
+  }, [images, handleImageDelete]);
 
   // Handle form submission
   const onSubmit = async (data: BoatFormValues) => {
     setIsSubmitting(true);
     
     try {
+      // Ensure form has latest image data
+      updateFormImages(images);
+      
       // Prepare the boat data
       const boatData = {
         ...data,
@@ -385,78 +505,114 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
         {/* Images Section */}
         <div className="space-y-6">
           <h2 className="text-lg font-medium border-b pb-2">Images</h2>
+          <p className="text-sm text-gray-600">Upload and arrange images. The first image will be used as the main image.</p>
           
           <div className="space-y-4">
+            {/* Proper React Beautiful DnD Implementation */}
             <div>
-              <FormLabel>Main Image*</FormLabel>
-              <div className="mt-2 flex items-center gap-4">
-                <div className="relative w-40 h-40 border rounded-md overflow-hidden bg-gray-50">
-                  {mainImage ? (
-                    <img 
-                      src={mainImage} 
-                      alt="Main boat image" 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Ship className="h-10 w-10 text-gray-300" />
-                    </div>
-                  )}
-                </div>
+              <FormLabel>
+                Boat Images*
+                <span className="text-sm font-normal text-gray-500 ml-2">
+                  (First image becomes main image)
+                </span>
+              </FormLabel>
+              <div className="mt-2 space-y-4">
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable 
+                    droppableId="image-gallery" 
+                    direction="horizontal"
+                    isDropDisabled={false}
+                    isCombineEnabled={false}
+                    ignoreContainerClipping={false}
+                  >
+                    {(provided, snapshot) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className={`p-4 rounded-lg border-2 border-dashed transition-colors overflow-x-auto ${
+                          snapshot.isDraggingOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300'
+                        }`}
+                        style={{
+                          display: 'flex',
+                          gap: '16px',
+                          minHeight: '140px',
+                          alignItems: 'flex-start',
+                        }}
+                      >
+                        {images.length > 0 ? (
+                          images.map((image, index) => (
+                            <Draggable 
+                              key={`image-${index}`} 
+                              draggableId={`image-${index}`} 
+                              index={index}
+                              isDragDisabled={false}
+                            >
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                  style={{
+                                    ...provided.draggableProps.style,
+                                  }}
+                                >
+                                  <ImageItem
+                                    image={image}
+                                    index={index}
+                                    isMain={index === 0}
+                                    onDelete={handleImageDelete}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))
+                        ) : (
+                          <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center bg-gray-50 flex-shrink-0">
+                            <div className="text-center">
+                              <Ship className="h-8 w-8 text-gray-400 mx-auto mb-1" />
+                              <p className="text-xs text-gray-500">No images</p>
+                            </div>
+                          </div>
+                        )}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
                 
+                {/* Upload Button */}
                 <ImageUpload
                   type="boat"
-                  onUploadComplete={handleMainImageUpload}
-                  buttonText="Upload Main Image"
+                  onUploadComplete={handleImageUpload}
+                  buttonText={images.length === 0 ? "Upload First Image" : "Add More Images"}
                   variant="outline"
+                  multiple={true}
                 />
+                
+                {/* Helper text */}
+                <p className="text-sm text-gray-500">
+                  Drag images horizontally to reorder them. The first image will automatically be used as the main image displayed in listings.
+                </p>
+                
+                {/* Image count */}
+                {images.length > 0 && (
+                  <p className="text-sm text-blue-600 font-medium">
+                    {images.length} image{images.length !== 1 ? 's' : ''} uploaded
+                  </p>
+                )}
               </div>
+              
+              {/* Show form errors for both fields */}
               {form.formState.errors.mainImage && (
                 <p className="text-sm font-medium text-destructive mt-2">
                   {form.formState.errors.mainImage.message}
                 </p>
               )}
-            </div>
-            
-            <div>
-              <FormLabel>Gallery Images</FormLabel>
-              <div className="mt-2">
-                <div className="flex flex-wrap gap-4 mb-4">
-                  {galleryImages.map((image, index) => (
-                    <div key={index} className="relative w-32 h-32 border rounded-md overflow-hidden">
-                      <img 
-                        src={image} 
-                        alt={`Gallery image ${index + 1}`} 
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                        onClick={() => {
-                          const newImages = galleryImages.filter((_, i) => i !== index);
-                          setGalleryImages(newImages);
-                          form.setValue("galleryImages", newImages);
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                  
-                  {galleryImages.length === 0 && (
-                    <div className="w-32 h-32 border rounded-md flex items-center justify-center bg-gray-50">
-                      <Ship className="h-8 w-8 text-gray-300" />
-                    </div>
-                  )}
-                </div>
-                
-                <ImageUpload
-                  type="boat"
-                  onUploadComplete={handleGalleryImageUpload}
-                  buttonText="Add Gallery Image"
-                  variant="outline"
-                />
-              </div>
+              {form.formState.errors.galleryImages && (
+                <p className="text-sm font-medium text-destructive mt-2">
+                  {form.formState.errors.galleryImages.message}
+                </p>
+              )}
             </div>
           </div>
         </div>

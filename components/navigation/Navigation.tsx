@@ -93,9 +93,9 @@ const Navigation = ({ session }: { session: Session | null }) => {
         "transition-all duration-300",
         isHomePage 
             ? scrolled 
-                ? "bg-white backdrop-blur-sm shadow-sm py-3" 
+                ? "bg-white backdrop-blur-sm shadow-md py-3" 
                 : "bg-transparent py-5"
-            : "bg-white backdrop-blur-sm shadow-sm py-3"
+            : "bg-white backdrop-blur-sm shadow-md py-3"
     ), [isHomePage, scrolled])
 
     // Memoized text style function
@@ -113,7 +113,7 @@ const Navigation = ({ session }: { session: Session | null }) => {
     return (
         <header className={headerStyle}>
             <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
-                <nav className="grid grid-cols-[auto_1fr_auto] items-center h-10 gap-4" role="navigation" aria-label="Main navigation">
+                <nav className="grid grid-cols-[auto_1fr_auto] items-center h-14 gap-4" role="navigation" aria-label="Main navigation">
                     {/* Left section: Logo + Main Navigation */}
                     <div className="flex items-center gap-3">
                         <MobileNavigation 

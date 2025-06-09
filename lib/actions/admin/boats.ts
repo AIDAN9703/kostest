@@ -158,10 +158,19 @@ export async function getBoatById(id: string) {
     throw new Error(`Invalid UUID format: ${id}`);
   }
 
-  // Fetch basic boat data
+  // Fetch basic boat data with owner information
   const [boat] = await db
-    .select()
+    .select({
+      // All boat fields
+      ...boats,
+      // Owner information
+      ownerFirstName: users.firstName,
+      ownerLastName: users.lastName,
+      ownerEmail: users.email,
+      ownerDisplayName: users.displayName,
+    })
     .from(boats)
+    .leftJoin(users, eq(boats.ownerId, users.id))
     .where(eq(boats.id, id))
     .limit(1);
 

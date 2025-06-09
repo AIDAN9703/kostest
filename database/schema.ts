@@ -354,6 +354,7 @@ export const boats = pgTable("boat",{
     
     // Owner Information
     ownerId: uuid("owner_id").notNull().references(() => users.id),
+    ownerNotes: text("owner_notes"), // Added owner notes for internal use
     
     // Boat Specifications
     make: text("make"),

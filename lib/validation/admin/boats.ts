@@ -29,6 +29,7 @@ const boatBaseSchema = z.object({
   
   // Owner Information
   ownerId: z.string().uuid("Invalid owner ID format"),
+  ownerNotes: z.string().optional().nullable(),
   
   // Boat Specifications
   make: z.string().optional().nullable(),
