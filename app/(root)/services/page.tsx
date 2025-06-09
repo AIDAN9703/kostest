@@ -3,18 +3,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, CheckCircle, Shield, Award } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { motion } from 'framer-motion'
 
 export const metadata: Metadata = {
   title: 'Our Services | KOS',
   description: 'Comprehensive boating and yacht services including charter management, yacht management, sales, term charters, and dock management.',
-}
-
-// Animation variants for consistency
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: (delay = 0) => ({ duration: 0.5, delay })
 }
 
 interface ServiceCardProps {
@@ -26,12 +18,9 @@ interface ServiceCardProps {
 }
 
 const ServiceCard = ({ title, description, image, href, index }: ServiceCardProps) => (
-  <motion.div 
-    className="group relative h-[400px] rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
-    initial={fadeInUp.initial}
-    whileInView={fadeInUp.animate}
-    transition={fadeInUp.transition(index * 0.1)}
-    viewport={{ once: true }}
+  <div 
+    className="group relative h-[400px] rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in-up"
+    style={{ animationDelay: `${index * 100}ms` }}
   >
     <Image 
       src={image} 
@@ -50,7 +39,7 @@ const ServiceCard = ({ title, description, image, href, index }: ServiceCardProp
         </Button>
       </Link>
     </div>
-  </motion.div>
+  </div>
 )
 
 export default function ServicesPage() {
@@ -105,42 +94,23 @@ export default function ServicesPage() {
         
         <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-4xl mx-auto font-poppins text-white">
-            <motion.span 
-              initial={fadeInUp.initial}
-              animate={fadeInUp.animate}
-              transition={fadeInUp.transition()}
-              className="inline-block text-white/90 text-sm font-medium mb-4 tracking-wide uppercase"
-            >
+            <span className="inline-block text-white/90 text-sm font-medium mb-4 tracking-wide uppercase animate-fade-in-up">
               Professional Marine Services
-            </motion.span>
-            <motion.h1 
-              initial={fadeInUp.initial}
-              animate={fadeInUp.animate}
-              transition={fadeInUp.transition(0.2)}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold mb-6 leading-tight"
-            >
+            </span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold mb-6 leading-tight animate-fade-in-up [animation-delay:200ms]">
               Our Services
-            </motion.h1>
-            <motion.p 
-              initial={fadeInUp.initial}
-              animate={fadeInUp.animate}
-              transition={fadeInUp.transition(0.4)}
-              className="text-white/90 max-w-2xl mx-auto text-lg md:text-xl lg:text-2xl mb-8 leading-relaxed"
-            >
+            </h1>
+            <p className="text-white/90 max-w-2xl mx-auto text-lg md:text-xl lg:text-2xl mb-8 leading-relaxed animate-fade-in-up [animation-delay:400ms]">
               Comprehensive boating services tailored to enhance your maritime experience.
-            </motion.p>
-            <motion.div
-              initial={fadeInUp.initial}
-              animate={fadeInUp.animate}
-              transition={fadeInUp.transition(0.6)}
-            >
+            </p>
+            <div className="animate-fade-in-up [animation-delay:600ms]">
               <Link href="#services">
                 <Button className="bg-gradient-to-r from-sky-400 to-emerald-400 hover:from-sky-500 hover:to-emerald-500 text-white border-0 group">
                   Explore Services
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Button>
               </Link>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -148,13 +118,7 @@ export default function ServicesPage() {
       {/* Services Grid - Enhanced Design */}
       <section id="services" className="py-16 md:py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            className="text-center mb-16"
-            initial={fadeInUp.initial}
-            whileInView={fadeInUp.animate}
-            transition={fadeInUp.transition()}
-            viewport={{ once: true }}
-          >
+          <div className="text-center mb-16 animate-fade-in-up">
             <span className="text-primary font-medium text-sm tracking-wide uppercase">How We Can Help</span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary font-poppins">
               Complete Service Portfolio
@@ -162,7 +126,7 @@ export default function ServicesPage() {
             <p className="text-gray-600 max-w-3xl mx-auto text-lg">
               From yacht management to sales and charters, we offer a complete range of premium marine services.
             </p>
-          </motion.div>
+          </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {services.slice(0, 2).map((service, index) => (
@@ -196,12 +160,7 @@ export default function ServicesPage() {
       <section className="py-16 md:py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <motion.div
-              initial={fadeInUp.initial}
-              whileInView={fadeInUp.animate}
-              transition={fadeInUp.transition()}
-              viewport={{ once: true }}
-            >
+            <div className="animate-fade-in-left">
               <span className="text-primary font-medium text-sm tracking-wide uppercase">The KOS Difference</span>
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-8 text-primary font-poppins leading-tight">
                 Why Choose Our Services
@@ -225,13 +184,10 @@ export default function ServicesPage() {
                     description: "Our meticulous attention to detail ensures your needs are met with precision and care."
                   }
                 ].map((feature, index) => (
-                  <motion.div 
+                  <div 
                     key={index}
-                    className="flex gap-4"
-                    initial={fadeInUp.initial}
-                    whileInView={fadeInUp.animate}
-                    transition={fadeInUp.transition(index * 0.1)}
-                    viewport={{ once: true }}
+                    className="flex gap-4 animate-fade-in-up"
+                    style={{ animationDelay: `${index * 100}ms` }}
                   >
                     <div className="w-12 h-12 flex-shrink-0 bg-gradient-to-r from-sky-100 to-emerald-100 rounded-full flex items-center justify-center">
                       <feature.icon className="h-6 w-6 text-primary" />
@@ -240,18 +196,12 @@ export default function ServicesPage() {
                       <h3 className="text-xl font-medium mb-2 text-primary font-poppins">{feature.title}</h3>
                       <p className="text-gray-600 leading-relaxed">{feature.description}</p>
                     </div>
-                  </motion.div>
+                  </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
             
-            <motion.div 
-              className="relative h-[500px] md:h-[600px] rounded-2xl overflow-hidden shadow-xl"
-              initial={fadeInUp.initial}
-              whileInView={fadeInUp.animate}
-              transition={fadeInUp.transition(0.2)}
-              viewport={{ once: true }}
-            >
+            <div className="relative h-[500px] md:h-[600px] rounded-2xl overflow-hidden shadow-xl animate-fade-in-right">
               <Image
                 src="/images/boats/beach.jpg"
                 alt="Premium yacht services"
@@ -259,7 +209,7 @@ export default function ServicesPage() {
                 className="object-cover"
                 quality={90}
               />
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -268,13 +218,7 @@ export default function ServicesPage() {
       <section className="py-16 md:py-24 bg-primary text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/90"></div>
         
-        <motion.div 
-          className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10"
-          initial={fadeInUp.initial}
-          whileInView={fadeInUp.animate}
-          transition={fadeInUp.transition()}
-          viewport={{ once: true }}
-        >
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 animate-fade-in-up">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 font-poppins">Ready to Get Started?</h2>
           <p className="text-white/85 max-w-2xl mx-auto mb-10 text-lg leading-relaxed">
             Contact our team today to discuss how our services can enhance your boating experience.
@@ -287,7 +231,7 @@ export default function ServicesPage() {
               </Button>
             </Link>
           </div>
-        </motion.div>
+        </div>
       </section>
     </div>
   )
