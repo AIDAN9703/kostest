@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { db } from '@/database/db'
 import { boats, boatPricingTiers, users } from '@/database/schema'
 import { and, count, eq, desc, or, like, isNull, inArray, SQL, sql } from 'drizzle-orm'
+import { getTableColumns } from 'drizzle-orm'
 import { 
   createBoatSchema, 
   updateBoatSchema, 
@@ -161,8 +162,8 @@ export async function getBoatById(id: string) {
   // Fetch basic boat data with owner information
   const [boat] = await db
     .select({
-      // All boat fields
-      ...boats,
+      // All boat fields using getTableColumns
+      ...getTableColumns(boats),
       // Owner information
       ownerFirstName: users.firstName,
       ownerLastName: users.lastName,
@@ -446,7 +447,6 @@ export async function toggleBoatStatus(id: string) {
     throw new Error("Failed to update boat status. Please try again.");
   }
 }
-
 // Helper to validate UUID format
 function isValidUUID(uuid: string) {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
