@@ -12,8 +12,8 @@ export default function CharterManagementPage() {
       title="Charter Management"
       subtitle="Owner Services"
       description="Turn your vessel into a revenue-generating asset with our comprehensive charter management services."
-      heroImage="/images/herooption4.jpg"
-      secondaryImage="/images/boats/yacht2.jpg"
+      heroImage="/images/services/charter-management2.jpg"
+      secondaryImage="/images/services/charter-management.jpg"
       features={[
         {
           title: "Revenue Optimization",
@@ -37,9 +37,9 @@ export default function CharterManagementPage() {
         }
       ]}
       stats={[
-        { value: "250+", label: "Managed Vessels" },
+        { value: "200+", label: "Managed Vessels" },
         { value: "98%", label: "Owner Satisfaction" },
-        { value: "35%", label: "Average Revenue Increase" }
+        { value: "2000+", label: "Successful Charters" }
       ]}
       steps={[
         {
@@ -82,7 +82,7 @@ export default function CharterManagementPage() {
         },
         {
           question: "What percentage does KOS take?",
-          answer: "Our commission structure is competitive and transparent, typically ranging from 20-30% depending on the services included. We'll provide a detailed breakdown during your consultation."
+          answer: "Our commission structure is competitive and transparent. We are flexible and work closely with each customer to tailor our services according to their needs and boat specifications. We'll provide a detailed breakdown during your consultation."
         }
       ]}
       ctaText="Become a Charter Owner"

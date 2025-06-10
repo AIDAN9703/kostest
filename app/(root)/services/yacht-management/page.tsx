@@ -12,8 +12,8 @@ export default function YachtManagementPage() {
       title="Yacht Management"
       subtitle="Owner Services"
       description="Comprehensive yacht management solutions for owners seeking peace of mind and pristine vessel condition."
-      heroImage="/images/herooption13.jpeg"
-      secondaryImage="/images/boats/yacht3.jpg"
+      heroImage="/images/services/yacht-management.jpg"
+      secondaryImage="/images/services/yacht-management2.jpg"
       features={[
         {
           title: "Crew Management",
@@ -37,8 +37,8 @@ export default function YachtManagementPage() {
         }
       ]}
       stats={[
-        { value: "150+", label: "Luxury Yachts Managed" },
-        { value: "99%", label: "Client Retention Rate" },
+        { value: "20+", label: "Luxury Yachts Managed" },
+        { value: "24/7", label: "Support" },
         { value: "20%", label: "Maintenance Cost Savings" }
       ]}
       steps={[

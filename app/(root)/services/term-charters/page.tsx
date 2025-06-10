@@ -12,8 +12,8 @@ export default function TermChartersPage() {
       title="Term Charters"
       subtitle="Charter Services"
       description="Experience extended time on the water with our premium term charter options for weeks or months."
-      heroImage="/images/heroaerial1.jpeg"
-      secondaryImage="/images/boats/aerial3.jpg"
+      heroImage="/images/services/term-charter.png"
+      secondaryImage="/images/services/term-charter2.jpg"
       features={[
         {
           title: "Extended Duration",
@@ -39,7 +39,7 @@ export default function TermChartersPage() {
       stats={[
         { value: "100+", label: "Destinations Worldwide" },
         { value: "100%", label: "Satisfaction Guarantee" },
-        { value: "75%", label: "Repeat Clients" }
+        { value: "600+", label: "Successful Charters" }
       ]}
       steps={[
         {
@@ -70,15 +70,15 @@ export default function TermChartersPage() {
       faqItems={[
         {
           question: "What is the minimum duration for a term charter?",
-          answer: "Our term charters typically start at two weeks. For shorter durations, we recommend our standard charter offerings."
+          answer: "Our term charters are highly flexible, allowing us to create customized itineraries of any length to suit your preferences. Whether you're looking for a short getaway or an extended journey, we can tailor the experience to meet your needs."
         },
         {
           question: "Can we change our itinerary during the charter?",
           answer: "Absolutely. One of the benefits of term charters is flexibility. Weather, preferences, or simply discovering a new destination can all be accommodated, subject to logistical and permit constraints."
         },
         {
-          question: "How are crews handled for multi-month charters?",
-          answer: "For longer charters, we typically arrange crew rotations to ensure consistent service quality. This can be discussed during planning to meet your preferences."
+          question: "What amenities are available on board during a term charter?",
+          answer: "Our yachts are equipped with a range of amenities including Wi-Fi, entertainment systems, water sports equipment, and gourmet dining options. Specific amenities can be tailored to your preferences during the planning phase."
         },
         {
           question: "What happens if we need to cut our charter short?",

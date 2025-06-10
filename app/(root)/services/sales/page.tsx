@@ -12,8 +12,8 @@ export default function SalesPage() {
       title="Yacht & Boat Sales"
       subtitle="Sales Services"
       description="Expert guidance for buying or selling your vessel with professional representation at every step."
-      heroImage="/images/herooption6.png"
-      secondaryImage="/images/boats/motor-yacht1.jpg"
+      heroImage="/images/services/yacht-sales.jpg"
+      secondaryImage="/images/services/sales.webp"
       features={[
         {
           title: "Vessel Valuation",
@@ -37,8 +37,8 @@ export default function SalesPage() {
         }
       ]}
       stats={[
-        { value: "$850M+", label: "In Sales Volume" },
-        { value: "98%", label: "List-to-Sale Ratio" },
+        { value: "50+", label: "Transactions" },
+        { value: "10+ Years", label: "Industry Experience" },
         { value: "45", label: "Days Avg. Time to Sale" }
       ]}
       steps={[

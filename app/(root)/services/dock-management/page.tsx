@@ -12,8 +12,8 @@ export default function DockManagementPage() {
       title="Dock Management"
       subtitle="Property Services"
       description="Professional management services for private docks, marinas, and waterfront properties."
-      heroImage="/images/herooption16.jpeg"
-      secondaryImage="/images/boats/aerial6.jpg"
+      heroImage="/images/services/dock-management.jpg"
+      secondaryImage="/images/boats/aerial4.jpg"
       features={[
         {
           title: "Infrastructure Maintenance",
@@ -35,11 +35,6 @@ export default function DockManagementPage() {
           title: "Environmental Compliance",
           description: "Ensuring all operations meet environmental regulations with proper waste management and pollution prevention measures."
         }
-      ]}
-      stats={[
-        { value: "75+", label: "Managed Properties" },
-        { value: "4,500+", label: "Slips Under Management" },
-        { value: "98%", label: "Occupancy Rate" }
       ]}
       steps={[
         {
