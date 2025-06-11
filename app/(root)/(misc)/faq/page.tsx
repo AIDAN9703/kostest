@@ -7,12 +7,12 @@ import { ArrowRight, Mail, Phone, MessageCircle } from 'lucide-react'
 
 const faqItems = [
   {
-    question: "Why KOSyachts?",
-    answer: "A large owned and managed fleet. We pride ourselves on running safe and legal charters. Our team is here around the clock to ensure you live like royalty!"
+    question: "Why KOS Yachts?",
+    answer: "KOS Yachts combines luxury service with operational excellence. We're not just a charter company—we're a full-service yacht management firm that handles every detail, from bookings to maintenance, with care and professionalism."
   },
   {
     question: "How does the process work?",
-    answer: "The first step is to do a search for your ideal charter vessel. We have options for any capacity or budget. All boats/yachts under Seas, cars under streets, and planes under skys. Once your ideal vessel is found, please feel free to continue to book online. At any step of the process, please feel free to contact our team at contact@kosyachts.com. Our team will always send a confirmation and follow up before the trip start."
+    answer: "steps"
   },
   {
     question: "What do your yachts/boats include?",
@@ -94,7 +94,24 @@ export default function FAQPage() {
                   </span>
                 </summary>
                 <div className="px-6 pb-6 text-gray-600 leading-relaxed font-light">
-                  {item.answer}
+                  {item.answer === "steps" ? (
+                    <div className="space-y-4">
+                      <div>
+                        <div className="font-medium text-primary mb-2">1. Choose Your Yacht</div>
+                        <div>Browse our fleet or tell us what you're looking for—we'll help you find the perfect fit for your occasion, group size, and budget.</div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-primary mb-2">2. Customize & Confirm</div>
+                        <div>Work with our team to tailor your experience. Once details are set, you'll receive a quote and secure your date with a deposit.</div>
+                      </div>
+                      <div>
+                        <div className="font-medium text-primary mb-2">3. Sail & Enjoy</div>
+                        <div>We'll send all trip info 48 hours prior. Show up, step aboard, and enjoy a seamless luxury experience—our crew handles the rest.</div>
+                      </div>
+                    </div>
+                  ) : (
+                    item.answer
+                  )}
                 </div>
               </details>
             ))}

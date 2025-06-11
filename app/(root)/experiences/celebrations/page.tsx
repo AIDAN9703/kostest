@@ -16,14 +16,14 @@ const relatedExperiences = [
     id: "sand-bar",
     title: "Sand Bar Excursions",
     description: "Relax and enjoy pristine sandbar locations only accessible by boat.",
-    image: "/images/experiences/sandbar.jpg",
+    image: "/images/experiences/hauloversandbar.jpeg",
     href: "/experiences/sand-bar",
   },
   {
     id: "term-charters",
     title: "Term Charters",
     description: "Extended voyages with premium vessels and professional crews.",
-    image: "/images/experiences/term-charters.jpg",
+    image: "/images/experiences/termcharter.avif",
     href: "/experiences/term-charters",
   },
 ];
@@ -81,7 +81,7 @@ const celebrationTypes = [
   {
     title: "Birthdays",
     description: "Make your birthday truly memorable with a celebration on the water. Perfect for milestone birthdays or annual celebrations.",
-    image: "/images/experiences/birthday.jpg",
+    image: "/images/experiences/birthday.png",
     features: ["Custom cake options", "Decorations", "Photography service"],
     popular: false
   },
@@ -95,28 +95,28 @@ const celebrationTypes = [
   {
     title: "Anniversaries",
     description: "Celebrate your love with a romantic anniversary cruise, complete with sunset views and champagne.",
-    image: "/images/experiences/anniversary.jpg",
+    image: "/images/experiences/sunset.jpg",
     features: ["Romantic setting", "Gourmet dining", "Private moments"],
     popular: false
   },
   {
     title: "Corporate Events",
     description: "Impress clients or reward your team with a corporate outing that stands out from the typical venue.",
-    image: "/images/experiences/corporate.jpg",
+    image: "/images/experiences/corporateevents.webp",
     features: ["Meeting facilities", "Team building", "Catering options"],
     popular: false
   },
   {
     title: "Wedding Proposals",
     description: "Create the perfect moment to pop the question with a private cruise designed for romance.",
-    image: "/images/experiences/proposal.jpg",
+    image: "/images/experiences/sunset.jpg",
     features: ["Private setting", "Customizable experience", "Photography"],
     popular: false
   },
   {
     title: "Wedding Ceremonies",
     description: "Say 'I do' with the beautiful water as your backdrop. We can accommodate both the ceremony and reception.",
-    image: "/images/experiences/wedding.jpg",
+    image: "/images/experiences/yachtparty.jpg",
     features: ["Ceremony setup", "Reception options", "Professional coordination"],
     popular: true
   }
@@ -127,241 +127,150 @@ export default function CelebrationsPage() {
     <ExperienceLayout
       title="Celebrations & Special Events"
       description="Host your most important moments on the water for a truly unforgettable experience. From birthdays to weddings, we'll make your celebration extraordinary."
-      heroImage="/images/experiences/celebrations-hero.jpg"
-      imageOverlayColor="from-[#581c87]/70 to-[#581c87]/40"
+      heroImage="/images/experiences/yachtparty.jpg"
       faqs={faqs}
       relatedExperiences={relatedExperiences}
       buttonText="Plan Your Event"
       buttonLink="/contact"
     >
-      <div className="max-w-7xl mx-auto space-y-10 px-6 font-poppins">
-        {/* Modern Intro Section */}
-        <section className="pt-4">
-          <div className="bg-white rounded-2xl shadow-sm overflow-hidden p-8 md:p-12">
-            <div className="flex flex-col max-w-3xl mx-auto">
-              <h2 className="text-3xl font-bold mb-6 text-primary font-poppins">Unforgettable Celebrations on the Water</h2>
-              <p className="text-gray-600 mb-8 leading-relaxed font-poppins">
-                Make your special occasion truly extraordinary with a celebration on the water. 
-                Our luxury vessels provide the perfect setting for birthdays, anniversaries, 
-                bachelor/bachelorette parties, corporate events, and more. With stunning waterfront views 
-                and professional crew, we'll help you create an event that your guests will remember for years to come.
-              </p>
-              
-              <div className="grid sm:grid-cols-2 gap-6 mt-2">
-                {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-start">
-                    <div className="p-2 mr-3 text-primary">
-                      {benefit.icon}
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-primary font-poppins">{benefit.title}</h3>
-                      <p className="text-sm text-gray-500 font-poppins">{benefit.description}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* What's Included Section */}
-        <section className="pb-12">
-          <div className="rounded-xl p-8 md:p-10">
-            <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold mb-3 text-primary font-poppins">Our Celebration Services</h2>
-              <p className="text-gray-600 max-w-2xl mx-auto font-poppins">
-                We provide comprehensive event services to ensure your celebration is perfect from start to finish.
-              </p>
-            </div>
-            
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[
-                "Professional event planning assistance",
-                "Flexible catering options and bar packages",
-                "Entertainment and music systems",
-                "Custom decoration arrangements",
-                "Photography and videography services",
-                "Multiple destination options",
-                "Weather contingency planning",
-                "Special amenities for guest(s) of honor"
-              ].map((item, index) => (
-                <div key={index} className="p-4 flex items-start">
-                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5 mr-3" />
-                  <span className="text-gray-700 font-poppins">{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-        
-        {/* Celebration Types Section */}
-        <section>
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3 text-primary font-poppins">Celebration Types</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto font-poppins">
-              We host a wide variety of special events, each tailored to create the perfect atmosphere for your occasion.
-            </p>
-          </div>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {celebrationTypes.map((celebration, index) => (
-              <div 
-                key={index} 
-                className={`border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow ${
-                  celebration.popular ? 'border-primary/30' : ''
-                }`}
-              >
-                <div className="relative h-48">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
-                  <Image
-                    src={celebration.image}
-                    alt={celebration.title}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
-                    <h3 className="text-xl font-bold text-white font-poppins">{celebration.title}</h3>
-                    {celebration.popular && (
-                      <div className="flex items-center mt-1">
-                        <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
-                        <span className="text-xs text-white/90 ml-1 font-poppins">Popular Choice</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="p-4">
-                  <p className="text-gray-600 mb-3 font-poppins">{celebration.description}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {celebration.features.map((feature, fIndex) => (
-                      <span 
-                        key={fIndex}
-                        className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full font-poppins"
-                      >
-                        {feature}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-        
-        {/* Planning Process Section */}
-        <section>
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3 text-primary font-poppins">Planning Your Celebration</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto font-poppins">
-              Our streamlined process makes planning your special event simple and stress-free.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center bg-white p-6 rounded-xl border">
-              <div className="bg-primary/10 text-primary h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold font-poppins">1</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-3 font-poppins">Consultation</h3>
-              <p className="text-gray-600 font-poppins">
-                We begin with a consultation to understand your vision, guest count, preferred date, 
-                and budget. Our event coordinators will help guide you through the available options.
-              </p>
-            </div>
-            
-            <div className="text-center bg-white p-6 rounded-xl border">
-              <div className="bg-primary/10 text-primary h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold font-poppins">2</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-3 font-poppins">Customization</h3>
-              <p className="text-gray-600 font-poppins">
-                Next, we'll help you select the perfect vessel and customize all aspects of your 
-                celebration, from catering and decorations to entertainment and activities.
-              </p>
-            </div>
-            
-            <div className="text-center bg-white p-6 rounded-xl border">
-              <div className="bg-primary/10 text-primary h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-2xl font-bold font-poppins">3</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-3 font-poppins">Celebration</h3>
-              <p className="text-gray-600 font-poppins">
-                On the day of your event, our professional crew will handle all the details, 
-                allowing you to relax and enjoy your special celebration on the water.
-              </p>
-            </div>
-          </div>
-        </section>
-        
-        {/* Celebration Packages Section */}
-        <section>
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-3 text-primary font-poppins">Celebration Packages</h2>
-            <p className="text-gray-600 max-w-2xl mx-auto font-poppins">
-              Choose from our carefully crafted packages or let us create a custom solution for your event.
-            </p>
-          </div>
-          
-          <div className="grid sm:grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="p-6 border rounded-xl">
-              <h3 className="text-xl font-semibold mb-3 font-poppins">Intimate Gathering</h3>
-              <p className="text-gray-600 mb-4 font-poppins">
-                Perfect for small celebrations with your closest friends and family.
-              </p>
-              <ul className="space-y-2 mb-4 text-sm text-gray-600 font-poppins">
-                <li>• Up to 12 guests</li>
-                <li>• 4-hour charter</li>
-                <li>• Basic catering options available</li>
-                <li>• Bluetooth sound system</li>
-              </ul>
-              <p className="font-medium font-poppins">Starting from $2,000</p>
-            </div>
-            
-            <div className="p-6 border rounded-xl bg-primary/5 relative">
-              <div className="absolute top-0 right-0 bg-primary text-white text-xs px-3 py-1 rounded-bl-lg rounded-tr-lg font-medium font-poppins">
-                MOST POPULAR
-              </div>
-              <h3 className="text-xl font-semibold mb-3 font-poppins">Premium Celebration</h3>
-              <p className="text-gray-600 mb-4 font-poppins">
-                Our most popular package for medium-sized events with enhanced amenities.
-              </p>
-              <ul className="space-y-2 mb-4 text-sm text-gray-600 font-poppins">
-                <li>• Up to 25 guests</li>
-                <li>• 6-hour charter</li>
-                <li>• Premium catering included</li>
-                <li>• Open bar package available</li>
-                <li>• Professional event coordinator</li>
-              </ul>
-              <p className="font-medium font-poppins">Starting from $4,500</p>
-            </div>
-            
-            <div className="p-6 border rounded-xl">
-              <h3 className="text-xl font-semibold mb-3 font-poppins">Luxury Event</h3>
-              <p className="text-gray-600 mb-4 font-poppins">
-                For larger celebrations where you want to impress your guests with the ultimate experience.
-              </p>
-              <ul className="space-y-2 mb-4 text-sm text-gray-600 font-poppins">
-                <li>• Up to 50+ guests</li>
-                <li>• 8-hour charter</li>
-                <li>• Gourmet catering and premium bar</li>
-                <li>• Professional DJ and entertainment</li>
-                <li>• Custom decorations and setup</li>
-                <li>• Photography services</li>
-              </ul>
-              <p className="font-medium font-poppins">Starting from $8,000</p>
-              <div className="mt-4">
-                <Link href="/contact">
-                  <Button className="bg-primary hover:bg-primary/90 text-white font-poppins">
-                    Start Planning Today
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-          <p className="text-center text-sm text-gray-500 mt-4 font-poppins">
-            Custom packages available for special events and larger celebrations.
+      {/* Introduction Section */}
+      <section className="mb-16">
+        <div className="text-center mb-12 animate-fade-in-up">
+          <span className="text-primary font-medium text-sm tracking-wide uppercase">Special Events</span>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
+            Unforgettable Celebrations on the Water
+          </h2>
+          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light leading-relaxed">
+            Make your special occasion truly extraordinary with a celebration on the water. 
+            Our luxury vessels provide the perfect setting for birthdays, anniversaries, 
+            bachelor/bachelorette parties, corporate events, and more. With stunning waterfront views 
+            and professional crew, we'll help you create an event that your guests will remember for years to come.
           </p>
-        </section>
-      </div>
+        </div>
+        
+        {/* Key Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {benefits.map((benefit, index) => (
+            <div 
+              key={index} 
+              className="group animate-fade-in-up"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full text-center">
+                <div className="bg-gold/10 p-4 rounded-lg w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <div className="text-gold">
+                    {benefit.icon}
+                  </div>
+                </div>
+                <h3 className="font-medium text-primary mb-2">{benefit.title}</h3>
+                <p className="text-sm text-gray-600 font-light leading-relaxed">{benefit.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* What's Included Section */}
+      <section className="mb-16">
+        <div className="text-center mb-12 animate-fade-in-up">
+          <span className="text-primary font-medium text-sm tracking-wide uppercase">Event Services</span>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary">
+            Our Celebration Services
+          </h2>
+          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
+            We provide comprehensive event services to ensure your celebration is perfect from start to finish.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[
+            "Professional event planning assistance",
+            "Flexible catering options and bar packages",
+            "Entertainment and music systems",
+            "Custom decoration arrangements",
+            "Photography and videography services",
+            "Multiple destination options",
+            "Weather contingency planning",
+            "Special amenities for guest(s) of honor"
+          ].map((item, index) => (
+            <div key={index} className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 flex items-start">
+              <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5 mr-3" />
+              <span className="text-gray-700 font-light">{item}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+      
+      {/* Celebration Types Section */}
+      <section className="mb-16">
+        <div className="text-center mb-12 animate-fade-in-up">
+          <span className="text-primary font-medium text-sm tracking-wide uppercase">Event Types</span>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary">
+            Celebration Types
+          </h2>
+          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
+            From intimate gatherings to grand celebrations, we specialize in creating memorable events for every occasion.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {celebrationTypes.map((celebration, index) => (
+            <div 
+              key={index} 
+              className={`bg-white rounded-lg border-2 transition-all duration-300 hover:shadow-lg overflow-hidden ${
+                celebration.popular 
+                  ? 'border-primary shadow-lg relative' 
+                  : 'border-gray-100 hover:border-primary/30'
+              }`}
+            >
+              {celebration.popular && (
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
+                  <span className="bg-primary text-white text-sm font-medium px-4 py-1 rounded-full">
+                    Most Popular
+                  </span>
+                </div>
+              )}
+              
+              <div className="relative h-48">
+                <Image
+                  src={celebration.image}
+                  alt={celebration.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+              </div>
+              
+              <div className="p-6">
+                <h3 className="text-xl font-medium text-primary mb-3">{celebration.title}</h3>
+                <p className="text-gray-600 font-light leading-relaxed mb-4">{celebration.description}</p>
+                
+                <div className="space-y-2 mb-6">
+                  {celebration.features.map((feature, idx) => (
+                    <div key={idx} className="flex items-center">
+                      <CheckCircle2 className="h-4 w-4 text-primary mr-2" />
+                      <span className="text-sm text-gray-600 font-light">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+                
+                <Button 
+                  className={`w-full ${
+                    celebration.popular 
+                      ? 'bg-primary hover:bg-primary/90 text-white' 
+                      : 'bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white'
+                  }`}
+                  asChild
+                >
+                  <Link href="/contact">
+                    Plan Event
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </ExperienceLayout>
   );
 } 

@@ -41,13 +41,13 @@ const mobileDropdownMenus = {
       {
         title: "Locations",
         links: [
-          { href: "/locations/miami", label: "Miami" },
-          { href: "/locations/fort-lauderdale", label: "Fort Lauderdale" },
-          { href: "/locations/naples", label: "Naples" },
-          { href: "/locations/west-palm-beach", label: "West Palm Beach" },
-          { href: "/locations/connecticut", label: "Connecticut" },
-          { href: "/locations/bahamas", label: "Bahamas" },
-          { href: "/locations/dominican-republic", label: "Dominican Republic" },
+            { href: "/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=25.85578602396197&ne_lng=-80.13217904641093&sw_lat=25.7090419531335&sw_lng=-80.31860792381018&zoom_level=13&map_toggle=on", label: "Miami" },
+            { href: "/boats/search?near=Fort+Lauderdale%2C+FL%2C+USA&ne_lat=26.3409054020211&ne_lng=-79.96155203202743&sw_lat=25.843256360518946&sw_lng=-80.29869497636336&zoom_level=11&map_toggle=on&center_lat=26.092345480536487&center_lng=-80.1301235041954&page=1", label: "Fort Lauderdale" },
+            { href: "/boats/search?near=Naples%2C+FL%2C+USA&ne_lat=26.2112380492215&ne_lng=-81.766661003186&sw_lat=26.07891108467754&sw_lng=-81.82036397203399&zoom_level=13&map_toggle=on", label: "Naples" },
+            { href: "/boats/search?near=West+Palm+Beach%2C+FL%2C+USA&ne_lat=27.22490351163897&ne_lng=-79.80718021289641&sw_lat=26.235107843921803&sw_lng=-80.48146610156829&zoom_level=10&map_toggle=on&center_lat=26.73108210125018&center_lng=-80.14432315723235&page=1", label: "West Palm Beach" },
+            { href: "/boats/search?near=Connecticut%2C+USA&ne_lat=42.05051096606773&ne_lng=-71.78723902917415&sw_lat=40.95094295977581&sw_lng=-73.7277749818916&zoom_level=13&map_toggle=on", label: "Connecticut" },
+            { href: "/boats/search?near=The+Bahamas&ne_lat=26.590274469914576&ne_lng=-76.65761869261429&sw_lat=22.560024925745196&sw_lng=-79.35476224730179&zoom_level=8&map_toggle=on&center_lat=24.591364629076335&center_lng=-78.00619046995804&page=1", label: "Bahamas" },
+            { href: "/boats/search?near=Dominican+Republic&ne_lat=27.00077435235987&ne_lng=-65.31237564053237&sw_lat=10.272085808139986&sw_lng=-76.10094985928237&zoom_level=6&map_toggle=on&center_lat=18.844302328127366&center_lng=-70.70666274990737&page=1", label: "Dominican Republic" }
         ]
       },
       {

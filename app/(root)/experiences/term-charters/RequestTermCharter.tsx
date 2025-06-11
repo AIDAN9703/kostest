@@ -153,18 +153,10 @@ Term Charter Inquiry:
 
   return (
     <div className="max-w-6xl mx-auto">
-      {/* Section Header */}
-      <div className="text-center mb-8 pt-8 px-6">
-        <h2 className="text-3xl font-bold text-primary mb-2">
-          Request a Term Charter Quote
-        </h2>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          Complete the form below to receive a personalized term charter proposal from our specialists
-        </p>
-      </div>
+     
 
       {/* Form Section */}
-      <div className="px-6 pb-8">
+      <div className="p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -9,12 +9,12 @@ import { Input } from '@/components/ui/input';
 
 // Setup footer sections for better organization
 const quickLinks = [
-  { label: "About Us", href: "/about" },
-  { label: "Our Fleet", href: "/boats" },
-  { label: "KOS Yacht Club", href: "/destinations" },
-  { label: "FAQ", href: "/guide" },
-  { label: "Store", href: "/contact" },
-  { label: "News", href: "/contact" }
+  { label: "About Us", href: "/about-us" },
+  { label: "Our Fleet", href: "/boats/search" },
+  { label: "KOS Yacht Club", href: "/kos-yacht-club" },
+  { label: "FAQ", href: "/faq" },
+  { label: "Store", href: "https://kosyachts.myshopify.com/" },
+  { label: "News", href: "/news" }
 ];
 
 const locations = [
@@ -267,10 +267,13 @@ export default function Footer() {
               © 2024 KOS Yachts. All rights reserved.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
+              <Link href="https://docs.google.com/document/d/1lSf1BI9-N8XEN_X5JaO4r1rKjz0WtrLlEaiqSbM0S-w/edit?tab=t.0#heading=h.vzszhdiggrxy" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">
+              Cancellation Policy
+              </Link>
               <Link href="/privacy" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">
+              <Link href="/terms-of-service" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">
                 Terms of Service
               </Link>
               <Link href="/cookies" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">

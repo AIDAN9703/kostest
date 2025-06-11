@@ -1,11 +1,12 @@
 import { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Boat Experiences | KOSyachts",
-  description: "Discover unforgettable boating experiences in top destinations.",
+  title: "Yacht Experiences | KOSyachts",
+  description: "Discover unforgettable luxury yacht experiences in premium destinations. From fishing charters to celebration cruises.",
 };
 
 // Define all experience types with their details
@@ -13,148 +14,208 @@ const experiences = [
   {
     id: "fishing",
     title: "Fishing Charters",
-    description: "Experience the thrill of deep-sea fishing with professional guides.",
+    description: "Experience the thrill of deep-sea fishing with professional guides and premium equipment.",
     image: "/images/experiences/fishing.jpg",
-    imageAlt: "Fishing boat with anglers",
+    imageAlt: "Deep sea fishing charter",
     href: "/experiences/fishing",
+    category: "Adventure"
   },
   {
     id: "watersports",
     title: "Water Sports Adventures",
-    description: "Get your adrenaline pumping with jet skis, wakeboarding, and more.",
-    image: "/images/experiences/watersports.jpg",
-    imageAlt: "People enjoying watersports behind a boat",
+    description: "Get your adrenaline pumping with jet skis, wakeboarding, and thrilling water activities.",
+    image: "/images/experiences/tiki.jpg",
+    imageAlt: "Water sports activities",
     href: "/experiences/watersports",
+    category: "Adventure"
   },
   {
     id: "sand-bar",
     title: "Sand Bar Excursions",
-    description: "Relax and enjoy pristine sandbar locations only accessible by boat.",
-    image: "/images/experiences/sandbar.jpg",
-    imageAlt: "Boats anchored at a beautiful sandbar",
+    description: "Relax and enjoy pristine sandbar locations only accessible by luxury yacht.",
+    image: "/images/experiences/hauloversandbar.jpeg",
+    imageAlt: "Beautiful sandbar destination",
     href: "/experiences/sand-bar",
+    category: "Relaxation"
   },
   {
     id: "celebrations",
     title: "Celebrations & Events",
-    description: "Host your special occasions on the water for unforgettable memories.",
-    image: "/images/experiences/celebrations.jpg",
-    imageAlt: "Group celebrating on a yacht",
+    description: "Host your special occasions on the water for truly unforgettable memories.",
+    image: "/images/experiences/birthday.png",
+    imageAlt: "Yacht celebration party",
     href: "/experiences/celebrations",
+    category: "Events"
   },
   {
     id: "term-charters",
     title: "Term Charters",
-    description: "Extended voyages with premium vessels and professional crews.",
-    image: "/images/experiences/term-charters.jpg",
-    imageAlt: "Luxury yacht for term charter",
+    description: "Extended luxury voyages with premium vessels and professional crews.",
+    image: "/images/experiences/termcharter.avif",
+    imageAlt: "Luxury term charter yacht",
     href: "/experiences/term-charters",
-  },
+    category: "Luxury"
+  }
 ];
 
 export default function ExperiencesPage() {
   return (
-    <div className="bg-white">
+    <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-[#1E293B]/70 to-[#1E293B]/40 z-10" />
-        <div 
-          className="h-[50vh] md:h-[60vh] bg-cover bg-center" 
-          style={{ backgroundImage: `url('/images/experiences/hero-bg.jpg')` }}
-        />
-        <div className="container absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 text-center text-white">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
-            Unforgettable Boating Experiences
-          </h1>
-          <p className="text-lg md:text-xl max-w-2xl mx-auto mb-8">
-            Discover unique adventures on the water customized for every occasion.
-          </p>
-          <Button 
-            size="lg" 
-            className="bg-primary hover:bg-primary/90 text-white rounded-full"
-            asChild
-          >
-            <Link href="#explore">
-              Explore Experiences
-            </Link>
-          </Button>
+      <section className="relative w-full h-[75vh] sm:h-[80vh] overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/images/experiences/sunset.jpg"
+            alt="Luxury yacht experiences"
+            fill
+            className="object-cover"
+            priority
+            quality={90}
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60" />
         </div>
-      </div>
 
-      {/* Experiences Grid */}
-      <div id="explore" className="container py-16 md:py-24">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-          Choose Your Perfect Experience
-        </h2>
-        
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {experiences.map((experience) => (
-            <Link 
-              key={experience.id}
-              href={experience.href}
-              className="group overflow-hidden rounded-2xl shadow-lg transition-all duration-300 hover:shadow-xl"
-            >
-              <div className="relative h-64 overflow-hidden">
-                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-all duration-300 z-10" />
-                <img
-                  src={experience.image}
-                  alt={experience.imageAlt}
-                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 z-20">
-                  <h3 className="text-2xl font-bold text-white mb-2">
-                    {experience.title}
-                  </h3>
-                </div>
+        {/* Hero Content */}
+        <div className="relative z-10 h-full flex flex-col justify-center px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto w-full">
+            <div className="max-w-3xl text-white">
+              <span className="inline-block text-white text-xs font-medium mb-2 tracking-wide uppercase animate-fade-in-up drop-shadow-md">
+                Luxury Experiences
+              </span>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-medium mb-4 leading-tight animate-fade-in-up [animation-delay:100ms] drop-shadow-lg">
+                Unforgettable Yacht Experiences
+              </h1>
+              <p className="text-white/90 text-base md:text-lg mb-5 leading-relaxed animate-fade-in-up [animation-delay:200ms] font-light drop-shadow-md max-w-2xl">
+                Discover unique luxury adventures on the water, perfectly crafted for every occasion and expertly tailored to create lasting memories.
+              </p>
+              <div className="flex flex-wrap gap-3 animate-fade-in-up [animation-delay:300ms]">
+                <Button 
+                  size="default" 
+                  variant="outline"
+                  className="text-white border-white/40 hover:bg-white/10 px-6 py-2.5 text-sm font-medium"
+                  asChild
+                >
+                  <Link href="#experiences">
+                    Explore Experiences
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
               </div>
-              <div className="p-6">
-                <p className="text-gray-600 mb-4">
-                  {experience.description}
-                </p>
-                <div className="flex items-center text-primary font-medium">
-                  <span>Learn more</span>
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </div>
-              </div>
-            </Link>
-          ))}
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* Experiences Section */}
+      <section id="experiences" className="py-16 md:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="text-center mb-12 animate-fade-in-up">
+            <span className="text-primary font-medium text-sm tracking-wide uppercase">Our Experiences</span>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
+              Choose Your Perfect Experience
+            </h2>
+            <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light leading-relaxed">
+              From thrilling adventures to peaceful escapes, our curated experiences offer something special for every taste and occasion.
+            </p>
+          </div>
+          
+          {/* Experiences Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {experiences.map((experience, index) => (
+              <Link 
+                key={experience.id}
+                href={experience.href}
+                className="group block"
+              >
+                <div className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full overflow-hidden">
+                  {/* Image */}
+                  <div className="relative h-[300px] md:h-[350px]">
+                    <Image
+                      src={experience.image}
+                      alt={experience.imageAlt}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      quality={90}
+                    />
+                    
+                    {/* Simple Logo Overlay */}
+                    <div className="absolute top-6 left-6">
+                      <Image
+                        src="/icons/kosupdatedlogo.webp"
+                        alt="KOS Logo"
+                        width={60}
+                        height={60}
+                        className="object-contain"
+                      />
+                    </div>
+
+                    {/* Category Badge */}
+                    <div className="absolute top-6 right-6">
+                      <span className="bg-white text-primary text-sm font-medium px-3 py-1 rounded-full shadow-sm">
+                        {experience.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6 md:p-8">
+                    <h3 className="text-2xl md:text-3xl font-medium text-primary mb-3 leading-tight">
+                      {experience.title}
+                    </h3>
+                    <p className="text-gray-600 font-light leading-relaxed text-sm md:text-base mb-4">
+                      {experience.description}
+                    </p>
+                    <div className="flex items-center text-primary font-medium group-hover:text-primary/80 transition-colors">
+                      <span className="text-sm">Learn More</span>
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* CTA Section */}
-      <div className="bg-[#F8FAFC] py-16 md:py-24">
-        <div className="container">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+      <section className="py-16 md:py-20 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-lg p-8 md:p-12 shadow-sm border border-gray-100 text-center">
+            <h2 className="text-3xl md:text-4xl font-medium text-primary mb-6">
               Ready for Your Next Adventure?
             </h2>
-            <p className="text-lg text-gray-600 mb-8">
-              Our experienced captains and premium vessels await to make your dream experience a reality.
+            <p className="text-gray-600 mb-8 text-lg font-light max-w-2xl mx-auto leading-relaxed">
+              Our experienced team and premium fleet await to make your dream yacht experience a reality.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-                className="bg-primary hover:bg-primary/90 text-white rounded-full"
+                className="bg-primary hover:bg-primary/90 text-white font-medium px-8 py-3"
                 asChild
               >
                 <Link href="/boats/search">
-                  Find a Boat
+                  Browse Our Fleet
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
               <Button 
                 size="lg" 
                 variant="outline"
-                className="rounded-full"
+                className="border-primary text-primary hover:bg-primary hover:text-white font-medium px-8 py-3"
                 asChild
               >
                 <Link href="/contact">
-                  Contact Us
+                  Contact Our Team
                 </Link>
               </Button>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 } 

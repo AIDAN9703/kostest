@@ -86,7 +86,7 @@ export default function TermChartersPage() {
         }
       ]}
       ctaText="Plan Your Extended Charter"
-      ctaLink="/contact?service=term-charters"
+      ctaLink="/experiences/term-charters#request-quote"
     />
   )
 } 
