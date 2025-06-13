@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Boat } from "@/lib/types/types";
@@ -76,67 +76,52 @@ const BoatCard = ({
     // Here you would typically call an API to save the favorite status
   };
 
-  // ====== VARIANT-SPECIFIC STYLING ======
-  // Easily modify styles for each variant here
-  const variantStyles = useMemo(() => {
-    // Default styles
-    const defaultStyles = {
-      card: "rounded-md sm:rounded-lg md:rounded-xl hover:scale-[1.02]",
-      content: "p-2 sm:p-2 md:p-3",
-      title: "text-md sm:text-lg md:text-xl font-medium mb-1",
-      location: "flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2 w-full overflow-hidden",
-      guests: "flex items-center gap-1 sm:gap-2",
-      rating: "flex items-center",
-      priceTag: "bottom-3 right-3 sm:bottom-4 sm:right-4",
-      featuredTag: "top-2 sm:top-4"
-    };
-
-    // Variant-specific style overrides
+  // Simple variant-based classes
+  const getVariantClasses = () => {
     switch (variant) {
       case 'search':
         return {
           card: "rounded-xl hover:scale-[1.01]",
-          content: "p-2 sm:p-3", // Reduced padding for search variant
+          content: "p-2 sm:p-3", 
           title: "text-md sm:text-lg font-medium mb-1",
-          location: "flex items-center gap-1 mb-1 w-full overflow-hidden",
-          guests: "flex items-center gap-1",
-          rating: "flex items-center",
+          details: "text-xs sm:text-sm gap-1",
           priceTag: "bottom-2 right-2 sm:bottom-3 sm:right-3",
-          featuredTag: "top-2 sm:top-4"
         };
       case 'featured':
         return {
           card: "rounded-2xl hover:scale-[1.03] shadow-md",
-          content: "p-3 sm:p-4 md:p-5", // More padding for featured variant
-          title: "text-lg sm:text-xl md:text-2xl font-semibold mb-2 sm:mb-3",
-          location: "flex items-center gap-2 mb-2 w-full overflow-hidden",
-          guests: "flex items-center gap-2",
-          rating: "flex items-center",
+          content: "p-3 sm:p-4 md:p-5",
+          title: "text-lg sm:text-xl md:text-2xl font-semibold mb-2",
+          details: "text-sm gap-2",
           priceTag: "bottom-4 right-4",
-          featuredTag: "top-2 sm:top-4"
         };
       case 'compact':
         return {
           card: "rounded-lg hover:scale-[1.01]",
-          content: "p-1 sm:p-2", // Minimal padding for compact variant
+          content: "p-1 sm:p-2",
           title: "text-sm sm:text-md font-medium mb-0.5",
-          location: "flex items-center gap-1 mb-0.5 text-xs w-full overflow-hidden",
-          guests: "flex items-center gap-1 text-xs",
-          rating: "flex items-center",
+          details: "text-xs gap-1",
           priceTag: "bottom-1 right-1 sm:bottom-2 sm:right-2 text-xs",
-          featuredTag: "top-1 sm:top-2 text-xs"
         };
       default:
-        return defaultStyles;
+        return {
+          card: "rounded-md sm:rounded-lg md:rounded-xl hover:scale-[1.02]",
+          content: "p-2 sm:p-2 md:p-3",
+          title: "text-md sm:text-lg md:text-xl font-medium mb-1",
+          details: "text-xs sm:text-sm gap-1 sm:gap-2",
+          priceTag: "bottom-3 right-3 sm:bottom-4 sm:right-4",
+        };
     }
-  }, [variant]);
+  };
+
+  const styles = getVariantClasses();
 
   return (
     <Link href={`/boats/${boat.id}`} className="block">
       <Card 
         className={cn(
           "group relative overflow-hidden font-poppins bg-white flex flex-col h-full transition-all duration-500 cursor-pointer",
-          variantStyles.card,
+          styles.card,
           className
         )}
         onMouseEnter={() => setIsHovered(true)}
@@ -238,7 +223,7 @@ const BoatCard = ({
             {showPrice && (
               <div className={cn(
                 "absolute bg-white/95 backdrop-blur-sm px-2 py-1 rounded-lg shadow-md",
-                variantStyles.priceTag
+                styles.priceTag
               )}>
                 <span className="text-sm sm:text-base font-medium text-[#1E293B]">
                   {formatCurrency(getBoatDefaultPrice(boat))}
@@ -247,15 +232,12 @@ const BoatCard = ({
               </div>
             )}
             
-            {/* Featured tag */}
+            {/* Featured tag - Corner flag */}
             {boat.featured && highlightFeatured && (
-              <div className={cn(
-                "absolute bg-emerald-400 px-1.5 py-0.5 shadow-md flex items-center justify-center",
-                variantStyles.featuredTag
-              )}>
-                <span className="text-xs sm:text-sm font-poppins text-white leading-tight">
+              <div className="absolute top-0 left-0 z-20">
+                <div className="bg-gradient-to-r from-emerald-400 to-emerald-500 text-white px-2 py-1 font-medium text-xs uppercase tracking-wide shadow-lg rounded-br-lg">
                   Featured
-                </span>
+                </div>
               </div>
             )}
           </AspectRatio>
@@ -265,7 +247,7 @@ const BoatCard = ({
         {showDetails && (
           <CardContent className={cn(
             "flex-1 flex flex-col",
-            variantStyles.content
+            styles.content
           )}>
             <div className="flex items-start justify-between gap-3 sm:gap-6">
               <div className="flex-1 min-w-0 overflow-hidden">
@@ -273,7 +255,7 @@ const BoatCard = ({
                 <div className="flex items-center gap-2">
                   <h3 className={cn(
                     "text-[#1E293B] group-hover:text-primary transition-colors truncate",
-                    variantStyles.title
+                    styles.title
                   )}>
                     {boat.displayTitle || boat.name}
                   </h3>
@@ -292,30 +274,27 @@ const BoatCard = ({
                 {/* Location */}
                 {showLocation && boat.locationLabel && boat.locationLabel !== 'N/A' && (
                   <div className={cn(
-                    "text-gray-600",
-                    variantStyles.location
+                    "flex items-center mb-1 sm:mb-2 w-full overflow-hidden text-gray-600",
+                    styles.details
                   )}>
                     <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
-                    <span className="text-xs sm:text-sm font-light tracking-wide truncate overflow-hidden">{boat.locationLabel}</span>
+                    <span className="font-light tracking-wide truncate overflow-hidden">{boat.locationLabel}</span>
                   </div>
                 )}
                 
                 {/* Guest capacity */}
                 <div className={cn(
-                  "text-gray-600",
-                  variantStyles.guests
+                  "flex items-center text-gray-600",
+                  styles.details
                 )}>
                   <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="text-xs sm:text-sm font-light tracking-wide">{boat.capacity || boat.numOfPassengers} Guests</span>
+                  <span className="font-light tracking-wide">{boat.capacity || boat.numOfPassengers} Guests</span>
                 </div>
               </div>
               
               {/* Rating */}
               {showRating && (
-                <div className={cn(
-                  "text-[#1E293B] flex items-center",
-                  variantStyles.rating
-                )}>
+                <div className="text-[#1E293B] flex items-center">
                   <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-emerald-500 text-emerald-500 inline-block mr-1" />
                   <span className="text-xs sm:text-sm font-medium">
                     {boat.averageRating ? Number(boat.averageRating).toFixed(1) : '4.9'} 

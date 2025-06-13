@@ -13,6 +13,7 @@ import {
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
+  type CarouselApi,
 } from "@/components/ui/carousel";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useReducedMotion } from 'framer-motion';
@@ -30,12 +31,16 @@ const fadeInUpAnimation = {
 // Server component for the overall section
 const FeaturedFleet = ({ boats }: { boats: Boat[] }) => {
   const prefersReducedMotion = useReducedMotion();
+  const [api, setApi] = React.useState<CarouselApi>();
 
-  // Optimize button animations for performance
-  const buttonVariants = {
-    hover: prefersReducedMotion ? {} : { scale: 1.05 },
-    tap: prefersReducedMotion ? {} : { scale: 0.95 }
-  };
+  // Simple navigation functions
+  const scrollPrev = React.useCallback(() => {
+    api?.scrollPrev();
+  }, [api]);
+
+  const scrollNext = React.useCallback(() => {
+    api?.scrollNext();
+  }, [api]);
 
   return (
     <section className="py-2 sm:py-4 relative overflow-hidden">
@@ -50,6 +55,7 @@ const FeaturedFleet = ({ boats }: { boats: Boat[] }) => {
         </motion.div>
 
         <Carousel
+          setApi={setApi}
           opts={{
             align: "start",
             loop: true,
@@ -65,45 +71,29 @@ const FeaturedFleet = ({ boats }: { boats: Boat[] }) => {
                   viewport={{ once: true, margin: "-50px" }}
                   transition={{ delay: Math.min(idx * 0.1, 0.3), duration: 0.5 }}
                 >
-                  <BoatCard boat={boat} index={idx} />
+                  <BoatCard boat={boat} index={idx}/>
                 </motion.div>
               </CarouselItem>
             ))}
           </CarouselContent>
+          
+          {/* Simplified Navigation Buttons */}
           {boats.length > 2 && (
             <>
-              <motion.button
-                variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
-                onClick={() => {
-                  const carousel = document.querySelector('[data-carousel]');
-                  if (carousel) {
-                    const prevButton = carousel.querySelector('[data-carousel-prev]');
-                    if (prevButton instanceof HTMLElement) prevButton.click();
-                  }
-                }}
-                className="absolute left-1 sm:left-4 lg:-left-12 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-sm hover:shadow transition-all duration-300 border border-slate-200"
+              <button
+                onClick={scrollPrev}
+                className="absolute left-1 sm:left-4 lg:-left-12 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-200 z-10"
                 aria-label="Previous boats"
               >
                 <ChevronLeft className="w-5 h-5 text-slate-700" />
-              </motion.button>
-              <motion.button
-                variants={buttonVariants}
-                whileHover="hover"
-                whileTap="tap"
-                onClick={() => {
-                  const carousel = document.querySelector('[data-carousel]');
-                  if (carousel) {
-                    const nextButton = carousel.querySelector('[data-carousel-next]');
-                    if (nextButton instanceof HTMLElement) nextButton.click();
-                  }
-                }}
-                className="absolute right-1 sm:right-4 lg:-right-12 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-sm hover:shadow transition-all duration-300 border border-slate-200"
+              </button>
+              <button
+                onClick={scrollNext}
+                className="absolute right-1 sm:right-4 lg:-right-12 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-200 z-10"
                 aria-label="Next boats"
               >
                 <ChevronRight className="w-5 h-5 text-slate-700" />
-              </motion.button>
+              </button>
             </>
           )}
         </Carousel>

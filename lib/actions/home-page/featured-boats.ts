@@ -1,30 +1,62 @@
 import { db } from "@/database/db";
-import { boats } from "@/database/schema";
-import { eq } from "drizzle-orm";
-import { ActionResponse } from "@/lib/types/types";
+import { boats, boatPricingTiers } from "@/database/schema";
+import { eq, and, inArray } from "drizzle-orm";
+import { ActionResponse, Boat } from "@/lib/types/types";
 import { cachedFetch } from '@/lib/utils/general-utils';
-import type { InferSelectModel } from "drizzle-orm";
 
-// Use Drizzle's inferred type instead of a custom Boat type
-type DrizzleBoat = InferSelectModel<typeof boats>;
-
-export async function getFeaturedBoats(): Promise<ActionResponse<DrizzleBoat[]>> {
+export async function getFeaturedBoats(): Promise<ActionResponse<Boat[]>> {
   "use server";
   
-  return cachedFetch<ActionResponse<DrizzleBoat[]>>(
+  return cachedFetch<ActionResponse<Boat[]>>(
     'featured-boats',
     async () => {
       try {
         console.log("Attempting to fetch featured boats...");
+        
+        // First, get the featured boats
         const featuredBoats = await db
           .select()
           .from(boats)
           .where(eq(boats.featured, true));
         
         console.log(`Successfully fetched ${featuredBoats.length} featured boats`);
+        
+        if (featuredBoats.length === 0) {
+          return {
+            success: true,
+            data: []
+          };
+        }
+        
+        // Get all boat IDs for the pricing tiers query
+        const boatIds = featuredBoats.map(boat => boat.id);
+        
+        // Get pricing tiers for all featured boats in a single query
+        const pricingTiersResults = await db
+          .select()
+          .from(boatPricingTiers)
+          .where(and(
+            eq(boatPricingTiers.isActive, true),
+            inArray(boatPricingTiers.boatId, boatIds)
+          ));
+
+        // Group tiers by boat ID
+        const tiersByBoatId = pricingTiersResults.reduce((acc, tier) => {
+          if (!acc[tier.boatId]) acc[tier.boatId] = [];
+          acc[tier.boatId].push(tier);
+          return acc;
+        }, {} as Record<string, typeof boatPricingTiers.$inferSelect[]>);
+        
+        // Combine boat data with their pricing tiers
+        const boatsWithPricingTiers = featuredBoats.map(boat => ({
+          ...boat,
+          pricingTiers: tiersByBoatId[boat.id] || []
+        }));
+        
+        console.log(`Added pricing tiers to featured boats`);
         return {
           success: true,
-          data: featuredBoats
+          data: boatsWithPricingTiers
         };
       } catch (error) {
         console.error("Error fetching featured boats:", error);

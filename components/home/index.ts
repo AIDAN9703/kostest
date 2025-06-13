@@ -1,7 +1,6 @@
 export { default as HeroSection } from './HeroSection';
 export { default as TestimonialsSection } from './TestimonialsSection';
 export { default as BrandsCarousel } from './BrandsCarousel';
-export { default as BackToTop } from './BackToTop';
 export { default as FeaturedFleet } from './FeaturedFleet';
 export { default as ExperienceSection } from './ExperienceSection'; 
 export { default as WhyChooseUs } from './WhyChooseUs';

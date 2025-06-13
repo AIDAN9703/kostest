@@ -5,10 +5,6 @@ import { unstable_cache } from 'next/cache'
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
-export const DEFAULT_US_BOUNDS = {
-  ne: { lat: 50.423, lng: -69.750 }, // Northeast corner (Maine)
-  sw: { lat: 24.396, lng: -127.406 }  // Southwest corner (Southern California)
-};
 
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {

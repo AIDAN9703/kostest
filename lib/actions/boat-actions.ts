@@ -5,7 +5,7 @@ import { boats, boatCategoryEnum, boatPricingTiers } from "@/database/schema";
 import { Boat, BoatLocation, SearchParamsType, SearchResults } from "@/lib/types/types";
 import { and, asc, desc, eq, gte, ilike, inArray, lte, or, sql } from "drizzle-orm";
 import { cache } from "react";
-import { parseArrayParam, parseNumberParam } from "@/lib/utils/search-params-utils";
+import { parseArrayParam, parseNumberParam, parseStringParam } from "@/lib/utils/search-params-utils";
 
 /**
  * Get boats with filtering, sorting, and pagination
@@ -24,10 +24,8 @@ export const getBoats = cache(async ({
     // Build query conditions based on search params
     const conditions = [eq(boats.active, true)];
     
-    // Extract and process search parameters
-    const exclude = Array.isArray(searchParams.exclude) 
-      ? searchParams.exclude[0] 
-      : searchParams.exclude;
+    // Extract and process search parameters using standardized parsing
+    const exclude = parseStringParam(searchParams.exclude);
       
     if (exclude) {
       conditions.push(sql`${boats.id} != ${exclude}`);
@@ -101,28 +99,8 @@ export const getBoats = cache(async ({
     
     // Note: cabins and bathrooms filters are skipped as they're not in our schema
     
-    // Handle location filter (point-based search)
-    const location = Array.isArray(searchParams.location) 
-      ? searchParams.location[0] 
-      : searchParams.location;
-      
-    if (location && location.trim()) {
-      try {
-        const [lat, lng] = location.split(',').map(Number);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          const distanceInMeters = 50000; // 50km radius
-          conditions.push(
-            sql`ST_DWithin(
-              ${boats.location}::geography,
-              ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)::geography,
-              ${distanceInMeters}
-            )`
-          );
-        }
-      } catch (error) {
-        console.error("Error parsing location coordinates:", error);
-      }
-    }
+    // Note: Location filtering is handled via bounding box parameters (ne_lat, sw_lat, etc.)
+    // The 'near' parameter is preserved in URL for display purposes but not used for filtering
     
     // Handle bounding box search with standardized number parsing
     const ne_lat = parseNumberParam(searchParams.ne_lat);
@@ -159,7 +137,7 @@ export const getBoats = cache(async ({
     // Handle sorting - professional approach for sorting by related table values
     let orderBy: any[] = [desc(boats.featured)];
     
-    const sort = Array.isArray(searchParams.sort) ? searchParams.sort[0] : searchParams.sort;
+    const sort = parseStringParam(searchParams.sort);
     if (sort) {
       switch (sort) {
         case 'price_asc':

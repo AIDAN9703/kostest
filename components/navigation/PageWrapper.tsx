@@ -10,7 +10,7 @@ export default function PageWrapper({ children }: { children: React.ReactNode })
     return (
         <div className={cn(
             "w-full",
-            !isHomePage && "mt-[64px]" // Only add padding on non-home pages
+            !isHomePage && "mt-[80px]" // Only add padding on non-home pages
         )}>
             {children}
         </div>

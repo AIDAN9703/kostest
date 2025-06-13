@@ -26,7 +26,6 @@ import { getBoatCategories } from "@/lib/actions/boat-actions";
 import { useSearchURL } from "@/hooks/useSearchURL";
 import { 
   parseNumberParam, 
-  parseBooleanParam, 
   parseStringParam,
   parseArrayParam
 } from "@/lib/utils/search-params-utils";
@@ -111,14 +110,6 @@ export default function FilterModal({ isOpen, onClose }: FilterModalProps) {
   // Location state using 'near' parameter
   const [location, setLocation] = useState(parseStringParam(searchParams.get('near')) || DEFAULT_FILTERS.location);
   
-  // Bounding box coordinates for map view
-  const [neLat, setNeLat] = useState(getInitialNumberParam('ne_lat', 0));
-  const [neLng, setNeLng] = useState(getInitialNumberParam('ne_lng', 0));
-  const [swLat, setSwLat] = useState(getInitialNumberParam('sw_lat', 0));
-  const [swLng, setSwLng] = useState(getInitialNumberParam('sw_lng', 0));
-  const [zoomLevel, setZoomLevel] = useState(getInitialNumberParam('zoom_level', 13));
-  const [mapToggle, setMapToggle] = useState(parseBooleanParam(searchParams.get('map_toggle')));
-  
   // Categories - use our unified array parser
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => {
     return parseArrayParam(searchParams.get('category'));
@@ -193,13 +184,6 @@ export default function FilterModal({ isOpen, onClose }: FilterModalProps) {
       minYear: yearBuilt[0] > DEFAULT_FILTERS.yearBuilt[0] ? yearBuilt[0] : null,
       maxYear: yearBuilt[1] < DEFAULT_FILTERS.yearBuilt[1] ? yearBuilt[1] : null,
       near: location || null,
-      // Preserve bounding box coordinates if they exist
-      ne_lat: neLat || null,
-      ne_lng: neLng || null,
-      sw_lat: swLat || null,
-      sw_lng: swLng || null,
-      zoom_level: zoomLevel || null,
-      map_toggle: mapToggle,
       category: selectedCategories.length > 0 ? selectedCategories.join(',') : null,
       features: selectedFeatures.length > 0 ? selectedFeatures.join(',') : null,
       page: 1, // Reset to first page when filters change
@@ -208,10 +192,10 @@ export default function FilterModal({ isOpen, onClose }: FilterModalProps) {
   }, [
     updateSearchParams, date, priceRange, lengthRange,
     yearBuilt, guests, cabins, bathrooms, location, selectedCategories, selectedFeatures,
-    neLat, neLng, swLat, swLng, zoomLevel, mapToggle, onClose
+    onClose
   ]);
   
-  // Reset all filters but optionally preserve location/map parameters
+  // Reset all filters
   const resetFilters = useCallback(() => {
     setDate(undefined);
     setPriceRange(DEFAULT_FILTERS.priceRange);
@@ -223,17 +207,8 @@ export default function FilterModal({ isOpen, onClose }: FilterModalProps) {
     setSelectedCategories([]);
     setSelectedFeatures([]);
     
-    // Reset filters but preserve location-related parameters
+    // Clear all filter parameters by setting them to null
     updateSearchParams({
-      // Keep only location-related parameters
-      near: location || null,
-      ne_lat: neLat || null,
-      ne_lng: neLng || null,
-      sw_lat: swLat || null,
-      sw_lng: swLng || null,
-      zoom_level: zoomLevel || null,
-      map_toggle: mapToggle,
-      // Reset all other filters
       date: null,
       minPrice: null,
       maxPrice: null,
@@ -246,11 +221,10 @@ export default function FilterModal({ isOpen, onClose }: FilterModalProps) {
       maxYear: null,
       category: null,
       features: null,
+      near: null,
       page: 1
     });
-  }, [
-    updateSearchParams, location, neLat, neLng, swLat, swLng, zoomLevel, mapToggle
-  ]);
+  }, [updateSearchParams]);
   
   // Handle feature toggle
   const toggleFeature = useCallback((featureId: string) => {

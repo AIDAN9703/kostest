@@ -1,5 +1,5 @@
 import React from 'react';
-import { HeroSection, TestimonialsSection, BrandsCarousel, BackToTop, FeaturedFleet, PopularExperiences, RequestToBook, ClientsShowcase, LocationsSection } from "@/components/home";
+import { HeroSection, TestimonialsSection, BrandsCarousel, FeaturedFleet, PopularExperiences, RequestToBook, ClientsShowcase, LocationsSection } from "@/components/home";
 import { getFeaturedBoats, getTestimonials } from "@/lib/actions/home-page";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
@@ -59,7 +59,6 @@ export default function Home() {
       >
         <HomeContent />
       </Suspense>
-      <BackToTop />
     </main>
   );
 }
