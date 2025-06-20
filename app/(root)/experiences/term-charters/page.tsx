@@ -1,36 +1,95 @@
-import { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
-import { Calendar, Users, Navigation, Shield, Anchor, Clock, MapPin, Star, CheckCircle } from "lucide-react";
-import ExperienceLayout from "@/components/experiences/ExperienceLayout";
-import { db } from "@/database/db";
-import { boats } from "@/database/schema";
-import { eq, and } from "drizzle-orm";
-import { Boat } from "@/lib/types/types";
-import BoatCard from "@/components/ui/boat-card";
-import { Button } from "@/components/ui/button";
-import RequestTermCharter from "./RequestTermCharter";
+import { Metadata } from 'next'
+import Image from 'next/image'
+import { Calendar, Users, MapPin, Shield, CheckCircle, Star, Clock, Anchor } from 'lucide-react'
+import ExperienceLayout from '@/components/experiences/ExperienceLayout'
+import { Button } from '@/components/ui/button'
+import RequestTermCharter from './RequestTermCharter'
+import { db } from "@/database/db"
+import { boats } from "@/database/schema"
+import { eq, and } from "drizzle-orm"
+import { Boat } from "@/lib/types/types"
+import BoatCard from "@/components/ui/boat-card"
 
 export const metadata: Metadata = {
-  title: "Term Charters | KOSyachts",
-  description: "Experience extended luxury voyages with our premium term charters.",
-};
+  title: 'Term Charter Adventures | KOS',
+  description: 'Experience extended luxury voyages with our premium term charter services - from weekend getaways to month-long adventures.',
+}
 
-// FAQs - reduced to just most important ones
+// FAQs
 const faqs = [
   {
     question: "What is a term charter?",
-    answer: "A term charter is an extended boat rental, typically ranging from several days to weeks or even months. Unlike day charters, term charters include overnight accommodations and allow for exploration of multiple destinations."
+    answer: "A term charter is an extended boat rental, typically ranging from several days to weeks or months. Unlike day charters, term charters include overnight accommodations and allow for exploration of multiple destinations with professional crew."
   },
   {
     question: "What's included in a term charter?",
-    answer: "Our term charters include the vessel, professional crew (captain and additional crew depending on vessel size), onboard accommodations, insurance, standard equipment, and basic amenities. Food, beverages, fuel, dockage fees, and special requests are typically additional but can be included in custom packages."
+    answer: "Our term charters include the vessel, professional crew, onboard accommodations, insurance, and standard equipment. Food, beverages, fuel, and dockage can be included in all-inclusive packages or arranged separately based on your preferences."
   },
   {
-    question: "Do I need boating experience for a term charter?",
-    answer: "No experience is necessary as our term charters include professional crew who handle all aspects of vessel operation. You can be as involved or hands-off as you prefer."
+    question: "Do I need boating experience?",
+    answer: "No experience is necessary as our term charters include professional crew who handle all aspects of vessel operation. You can be as involved or hands-off as you prefer - it's your adventure."
+  },
+  {
+    question: "What destinations are available?",
+    answer: "Popular destinations include the Bahamas, Caribbean islands, Florida Keys, and Mediterranean (seasonal). We can customize itineraries based on your interests, time available, and seasonal considerations."
+  },
+  {
+    question: "How far in advance should I book?",
+    answer: "We recommend booking 2-3 months in advance for most charters, and 6+ months for peak season or special occasions. Popular destinations and dates book quickly, especially during winter months."
   }
-];
+]
+
+// Benefits 
+const benefits = [
+  {
+    icon: <Anchor className="h-5 w-5 lg:h-6 lg:w-6" />,
+    title: "Epic Multi-Day Adventures",
+    description: "From weekend escapes to month-long expeditions across paradise"
+  },
+  {
+    icon: <Users className="h-5 w-5 lg:h-6 lg:w-6" />,
+    title: "Pro Crew Included",
+    description: "Skilled captains who know every secret spot and hidden gem"
+  },
+  {
+    icon: <MapPin className="h-5 w-5 lg:h-6 lg:w-6" />,
+    title: "Island Hop in Style", 
+    description: "Explore multiple destinations with luxury as your base"
+  },
+  {
+    icon: <Shield className="h-5 w-5 lg:h-6 lg:w-6" />,
+    title: "All-Inclusive Luxury",
+    description: "Premium packages with gourmet dining and top-shelf service"
+  }
+]
+
+// Destination highlights
+const destinations = [
+  {
+    name: "🏝️ Bahamas Paradise",
+    description: "Crystal waters, swimming pigs, and rum punches at sunset",
+    duration: "3-14 days",
+    highlight: "Most Popular",
+    image: "/images/experiences/sunset.jpg",
+    features: ["Exuma Cays", "Swimming Pigs", "Thunderball Grotto", "Private Beaches"]
+  },
+  {
+    name: "🌺 Caribbean Islands", 
+    description: "Exotic cultures, turquoise lagoons, and endless summer vibes",
+    duration: "7-30 days",
+    highlight: "Epic Adventure",
+    image: "/images/experiences/sunset.jpg",
+    features: ["Multiple Islands", "Cultural Immersion", "World-Class Diving", "Luxury Resorts"]
+  },
+  {
+    name: "🎣 Florida Keys",
+    description: "America's Caribbean with world-class fishing and Key West parties",
+    duration: "2-7 days",
+    highlight: "Easy Access",
+    image: "/images/experiences/sunset.jpg",
+    features: ["Key West", "Sport Fishing", "Coral Reefs", "Sunset Celebrations"]
+  }
+]
 
 // Function to get term charter boats
 async function getTermCharterBoats(): Promise<Boat[]> {
@@ -39,224 +98,110 @@ async function getTermCharterBoats(): Promise<Boat[]> {
       .select()
       .from(boats)
       .where(and(eq(boats.termCharter, true), eq(boats.active, true)))
-      .limit(6);
+      .limit(9)
     
-    return results as unknown as Boat[];
+    return results as unknown as Boat[]
   } catch (error) {
-    console.error("Error fetching term charter boats:", error);
-    return [];
+    console.error("Error fetching term charter boats:", error)
+    return []
   }
 }
 
 export default async function TermChartersPage() {
-  // Fetch term charter boats
-  const termCharterBoats = await getTermCharterBoats();
+  const termCharterBoats = await getTermCharterBoats()
 
   return (
     <ExperienceLayout
-      title="Term Charters"
-      description="Experience extended voyages with premium vessels and professional crews. Discover multiple destinations in ultimate comfort and luxury."
-      heroImage="/images/experiences/termcharter.avif"
-      buttonText="Get Started"
+      title="Term Charter Adventures"
+      description="Escape the ordinary with extended luxury voyages. From weekend getaways to month-long adventures, discover the freedom of the open water."
+      heroImage="/images/experiences/yacht-ppl-swim.jpg"
+      buttonText="Plan Your Adventure"
       buttonLink="#request-quote"
       faqs={faqs}
-      relatedExperiences={[]}
     >
-      {/* Benefits Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">Why Choose Term Charters</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
-            Extended Luxury on the Water
+      {/* Term Charter Services Section */}
+      <section className="py-10 md:py-14 bg-white">
+        <div className="text-left mb-8 animate-fade-in-up">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4 text-primary leading-tight">
+            Term Charter Services
           </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
-            Discover the freedom of multi-day adventures with our premium term charter experiences
+          <p className="text-gray-600 max-w-3xl text-lg font-light leading-relaxed">
+            When you choose our term charter services, you're choosing excellence at every step
+            with extended luxury voyages and professional crew support.
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 text-center hover:shadow-md transition-all duration-300">
-            <div className="bg-gold/10 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <Calendar className="h-8 w-8 text-gold" />
+        {/* Services Grid - Mobile: 2 columns minimum */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 auto-rows-fr">
+          {benefits.map((benefit, index) => (
+            <div 
+              key={index} 
+              className="group animate-fade-in-up h-full"
+              style={{ animationDelay: `${index * 100}ms` }}
+            >
+              <div className="bg-white rounded-lg p-3 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
+                <div className="bg-gold/10 p-2 lg:p-3 rounded-lg w-8 h-8 lg:w-12 lg:h-12 mb-2 lg:mb-4 flex items-center justify-center">
+                  <div className="text-gold">
+                    {benefit.icon}
+                  </div>
+                </div>
+                <h3 className="text-sm lg:text-xl font-medium text-primary mb-1 lg:mb-3 leading-tight">{benefit.title}</h3>
+                <p className="text-xs lg:text-base text-gray-600 leading-snug lg:leading-relaxed font-light flex-grow line-clamp-2">{benefit.description}</p>
+              </div>
             </div>
-            <h3 className="text-xl font-medium text-primary mb-2">Extended Adventures</h3>
-            <p className="text-gray-600 font-light">Multi-day journeys from weekend getaways to month-long expeditions</p>
-          </div>
-          
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 text-center hover:shadow-md transition-all duration-300">
-            <div className="bg-gold/10 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <Users className="h-8 w-8 text-gold" />
-            </div>
-            <h3 className="text-xl font-medium text-primary mb-2">Professional Crew</h3>
-            <p className="text-gray-600 font-light">Experienced captains and crew handle all navigation and service</p>
-          </div>
-          
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 text-center hover:shadow-md transition-all duration-300">
-            <div className="bg-gold/10 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <MapPin className="h-8 w-8 text-gold" />
-            </div>
-            <h3 className="text-xl font-medium text-primary mb-2">Multiple Destinations</h3>
-            <p className="text-gray-600 font-light">Explore different ports, islands, and coastal destinations</p>
-          </div>
-          
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 text-center hover:shadow-md transition-all duration-300">
-            <div className="bg-gold/10 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <Shield className="h-8 w-8 text-gold" />
-            </div>
-            <h3 className="text-xl font-medium text-primary mb-2">All-Inclusive Options</h3>
-            <p className="text-gray-600 font-light">Comprehensive packages including meals, beverages, and activities</p>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* Popular Destinations */}
-      <section className="mb-16">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">Popular Destinations</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
-            Where Will You Go?
-          </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
-            Explore stunning destinations with our extended charter experiences
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300">
-            <div className="relative h-48">
-              <Image
-                src="/images/experiences/sunset.jpg"
-                alt="Bahamas Waters"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-              <div className="absolute top-4 left-4">
-                <Image
-                  src="/icons/kosupdatedlogo.webp"
-                  alt="KOS Logo"
-                  width={50}
-                  height={50}
-                  className="object-contain"
-                />
-              </div>
-            </div>
-            <div className="p-6">
-              <h3 className="text-xl font-medium text-primary mb-2">Bahamas</h3>
-              <p className="text-gray-600 font-light mb-4">Crystal clear waters, pristine beaches, and vibrant marine life in this tropical paradise.</p>
-              <div className="flex items-center text-sm text-gray-500">
-                <Clock className="h-4 w-4 mr-2" />
-                <span>3-14 days recommended</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300">
-            <div className="relative h-48">
-              <Image
-                src="/images/experiences/family.jpg"
-                alt="Florida Keys"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-              <div className="absolute top-4 left-4">
-                <Image
-                  src="/icons/kosupdatedlogo.webp"
-                  alt="KOS Logo"
-                  width={50}
-                  height={50}
-                  className="object-contain"
-                />
-              </div>
-            </div>
-            <div className="p-6">
-              <h3 className="text-xl font-medium text-primary mb-2">Florida Keys</h3>
-              <p className="text-gray-600 font-light mb-4">Island-hopping adventures through America's Caribbean with world-class fishing and diving.</p>
-              <div className="flex items-center text-sm text-gray-500">
-                <Clock className="h-4 w-4 mr-2" />
-                <span>2-7 days recommended</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-all duration-300">
-            <div className="relative h-48">
-              <Image
-                src="/images/experiences/yachtparty.jpg"
-                alt="Caribbean Waters"
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
-              <div className="absolute top-4 left-4">
-                <Image
-                  src="/icons/kosupdatedlogo.webp"
-                  alt="KOS Logo"
-                  width={50}
-                  height={50}
-                  className="object-contain"
-                />
-              </div>
-            </div>
-            <div className="p-6">
-              <h3 className="text-xl font-medium text-primary mb-2">Caribbean</h3>
-              <p className="text-gray-600 font-light mb-4">Exotic islands, turquoise waters, and endless summer in the world's premier yachting destination.</p>
-              <div className="flex items-center text-sm text-gray-500">
-                <Clock className="h-4 w-4 mr-2" />
-                <span>7-30 days recommended</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* What's Included Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">What's Included</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
+      <section className="py-10 md:py-14 bg-white">
+        <div className="text-right mb-8 animate-fade-in-up">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4 text-primary">
             Everything You Need
           </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
-            Our term charters include comprehensive services for a worry-free experience
+          <p className="text-gray-600 max-w-2xl ml-auto text-lg font-light">
+            Our term charters provide everything you need for a successful and memorable extended journey.
           </p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
-            <h3 className="text-2xl font-medium text-primary mb-6">Standard Inclusions</h3>
-            <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4 lg:gap-8">
+          {/* Included Items */}
+          <div className="bg-white rounded-lg p-4 lg:p-8 shadow-sm border border-gray-100">
+            <h3 className="text-sm lg:text-xl font-medium text-primary mb-4 lg:mb-6">Included in Every Charter</h3>
+            <div className="space-y-2 lg:space-y-4">
               {[
                 "Luxury yacht with full accommodations",
                 "Professional captain and crew",
                 "All safety equipment and insurance",
-                "Basic utilities (water, power, Wi-Fi)",
-                "Standard deck equipment and water toys",
-                "Initial provisioning and setup"
+                "Premium utilities (Wi-Fi, power, water)",
+                "Water toys and deck equipment",
+                "Welcome provisions and setup"
               ].map((item, index) => (
-                <div key={index} className="flex items-center">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
-                  <span className="text-gray-600 font-light">{item}</span>
+                <div key={index} className="flex items-start">
+                  <CheckCircle className="h-3 w-3 lg:h-5 lg:w-5 text-primary shrink-0 mt-0.5 mr-2 lg:mr-3" />
+                  <span className="text-gray-700 font-light text-xs lg:text-base">{item}</span>
                 </div>
               ))}
             </div>
           </div>
-          
-          <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
-            <h3 className="text-2xl font-medium text-primary mb-6">Optional Add-ons</h3>
-            <div className="space-y-4">
+
+          {/* Premium Add-ons */}
+          <div className="bg-white rounded-lg p-4 lg:p-8 shadow-sm border border-gray-100">
+            <h3 className="text-sm lg:text-xl font-medium text-primary mb-4 lg:mb-6">Premium Add-ons</h3>
+            <div className="space-y-2 lg:space-y-4">
               {[
-                "Gourmet chef and custom meal service",
+                "Gourmet chef and custom meals",
                 "Premium bar and beverage packages",
-                "Water sports equipment and instruction",
-                "Spa services and wellness programs",
-                "Shore excursions and guided tours",
-                "Special event planning and coordination"
+                "Water sports and instruction",
+                "Spa services and wellness",
+                "Shore excursions and tours",
+                "Special event coordination"
               ].map((item, index) => (
-                <div key={index} className="flex items-center">
-                  <Star className="h-5 w-5 text-gold mr-3 flex-shrink-0" />
-                  <span className="text-gray-600 font-light">{item}</span>
+                <div key={index} className="flex items-start">
+                  <CheckCircle className="h-3 w-3 lg:h-5 lg:w-5 text-gold shrink-0 mt-0.5 mr-2 lg:mr-3" />
+                  <span className="text-gray-700 font-light text-xs lg:text-base">{item}</span>
                 </div>
               ))}
             </div>
@@ -264,62 +209,45 @@ export default async function TermChartersPage() {
         </div>
       </section>
 
-      {/* Process Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">How It Works</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
-            Simple Planning Process
-          </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
-            From initial consultation to departure, we handle every detail of your extended voyage
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="text-center">
-            <div className="bg-primary/10 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <span className="text-primary font-semibold text-xl">1</span>
-            </div>
-            <h3 className="text-lg font-medium text-primary mb-2">Consultation</h3>
-            <p className="text-gray-600 font-light text-sm">Discuss your vision, preferences, and requirements with our specialists</p>
+      {/* Available Fleet */}
+      {termCharterBoats.length > 0 && (
+        <section className="py-10 md:py-14 bg-white">
+          <div className="text-center mb-8 animate-fade-in-up">
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4 text-primary">
+              Term Charter Vessels
+            </h2>
+            <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
+              Premium yachts ready for your extended journey
+            </p>
           </div>
           
-          <div className="text-center">
-            <div className="bg-primary/10 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <span className="text-primary font-semibold text-xl">2</span>
-            </div>
-            <h3 className="text-lg font-medium text-primary mb-2">Custom Proposal</h3>
-            <p className="text-gray-600 font-light text-sm">Receive a detailed proposal with vessel options, itinerary, and pricing</p>
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+            {termCharterBoats.map((boat, index) => (
+              <div 
+                key={boat.id}
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <BoatCard 
+                  boat={boat}
+                  showPrice={false}
+                  showRating={false}
+                  className="text-xs"
+                />
+              </div>
+            ))}
           </div>
-          
-          <div className="text-center">
-            <div className="bg-primary/10 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <span className="text-primary font-semibold text-xl">3</span>
-            </div>
-            <h3 className="text-lg font-medium text-primary mb-2">Planning & Booking</h3>
-            <p className="text-gray-600 font-light text-sm">Finalize details, complete contracts, and coordinate all arrangements</p>
-          </div>
-          
-          <div className="text-center">
-            <div className="bg-primary/10 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-              <span className="text-primary font-semibold text-xl">4</span>
-            </div>
-            <h3 className="text-lg font-medium text-primary mb-2">Departure</h3>
-            <p className="text-gray-600 font-light text-sm">Board your vessel and begin your unforgettable extended adventure</p>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Request Form */}
-      <section id="request-quote">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">Request Quote</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
+      <section id="request-quote" className="py-10 md:py-14 bg-white">
+        <div className="text-left mb-8 animate-fade-in-up">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4 text-primary leading-tight">
             Plan Your Extended Voyage
           </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
-            Share your vision and we'll create a custom term charter experience perfectly tailored to your needs.
+          <p className="text-gray-600 max-w-2xl text-lg font-light leading-relaxed">
+            Share your vision and our specialists will create a custom adventure tailored to your preferences.
           </p>
         </div>
         
@@ -327,31 +255,6 @@ export default async function TermChartersPage() {
           <RequestTermCharter />
         </div>
       </section>
-      
-      {/* Available Boats Section */}
-      {termCharterBoats.length > 0 && (
-        <section className="mb-16">
-          <div className="text-center mb-12 animate-fade-in-up">
-            <span className="text-primary font-medium text-sm tracking-wide uppercase">Our Fleet</span>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
-              Available Vessels
-            </h2>
-            <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
-              Browse our selection of premier vessels available for extended journeys
-            </p>
-          </div>
-          
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {termCharterBoats.map(boat => (
-              <BoatCard 
-                key={boat.id} 
-                boat={boat}
-                showPrice={false}
-              />
-            ))}
-          </div>
-        </section>
-      )}
     </ExperienceLayout>
-  );
+  )
 } 

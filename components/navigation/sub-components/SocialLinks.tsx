@@ -36,7 +36,7 @@ const SocialLinks: React.FC<SocialLinksProps> = ({
                 <span className="sr-only">Instagram</span>
             </a>
             <a 
-                href="https://tiktok.com" 
+                href="https://www.tiktok.com/@kosyachts" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className={socialLinkStyle}
@@ -45,7 +45,7 @@ const SocialLinks: React.FC<SocialLinksProps> = ({
                 <span className="sr-only">TikTok</span>
             </a>
             <a 
-                href="https://youtube.com" 
+                href="https://www.youtube.com/@Kosyachts" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className={socialLinkStyle}

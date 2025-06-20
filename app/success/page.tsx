@@ -52,7 +52,7 @@ export default function SuccessPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/70" />
         <div className="absolute inset-0">
           <Image
-            src="/images/boats/success-bg.jpg"
+            src="/images/koshero.jpg"
             alt="Success Background"
             fill
             className="object-cover mix-blend-overlay"

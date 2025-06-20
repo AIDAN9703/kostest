@@ -460,28 +460,23 @@ export const bookings = pgTable("booking", {
   isMultiDay: boolean("is_multi_day").notNull(),
   needsCaptain: boolean("needs_captain").default(false),
   
-  // Dates and Times
+  // Dates and Times (simplified for day rentals)
   startDate: timestamp("start_date", { mode: "date" }).notNull(),
   endDate: timestamp("end_date", { mode: "date" }), // Nullable for single-day bookings
   startTime: text("start_time").notNull(), // Store as HH:mm in 24h format
   endTime: text("end_time").notNull(), // Store as HH:mm in 24h format
-  numberOfHours: integer("number_of_hours"), // Only for single-day bookings
   numberOfPassengers: integer("number_of_passengers").notNull(),
   
   // Location Details
   pickupLocation: text("pickup_location"),
-  pickupCoordinates: geometry('pickup_coordinates', { type: 'point', srid: 4326 }),
   dropoffLocation: text("dropoff_location"),
-  dropoffCoordinates: geometry('dropoff_coordinates', { type: 'point', srid: 4326 }),
-  destinationDetails: text("destination_details"),
   
   // Pricing
-  basePrice: doublePrecision("base_price").notNull(),
   captainFee: doublePrecision("captain_fee"),
   cleaningFee: doublePrecision("cleaning_fee"),
   serviceFee: doublePrecision("service_fee"),
   taxAmount: doublePrecision("tax_amount"),
-  totalAmount: doublePrecision("total_amount").notNull(), // Renamed from totalPrice
+  totalAmount: doublePrecision("total_amount").notNull(),
   depositAmount: doublePrecision("deposit_amount"),
   currency: text("currency").default("USD").notNull(),
   
@@ -497,15 +492,13 @@ export const bookings = pgTable("booking", {
   stripeCustomerId: text("stripe_customer_id"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
   stripePaymentLinkId: text("stripe_payment_link_id"),
-  stripePaymentLinkUrl: text("stripe_payment_link_url"),
-  stripePaymentLinkExpiresAt: timestamp("stripe_payment_link_expires_at", { mode: "date" }),
   
   // Special Requests & Add-ons
   specialRequests: text("special_requests"),
   occasionType: text("occasion_type"),
   addOns: json("add_ons"),
   
-  // Status Management
+  // Status Management (keep minimal admin fields)
   reviewedBy: uuid("reviewed_by").references(() => users.id),
   reviewedAt: timestamp("reviewed_at", { mode: "date" }),
   reviewNotes: text("review_notes"),
@@ -515,22 +508,10 @@ export const bookings = pgTable("booking", {
   cancellationReason: text("cancellation_reason"),
   cancelledBy: uuid("cancelled_by").references(() => users.id),
   
-  // Communication
-  messageThreadId: uuid("message_thread_id"),
-  lastMessageAt: timestamp("last_message_at", { mode: "date", withTimezone: true }),
-  
-  // Reviews
-  renterReviewId: uuid("renter_review_id"),
-  ownerReviewId: uuid("owner_review_id"),
-  
   // Timestamps
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
   expiresAt: timestamp("expires_at", { mode: "date" }), // When a request or payment link expires
-  
-  // Soft delete
-  isDeleted: boolean("is_deleted").default(false).notNull(),
-  deletedAt: timestamp("deleted_at", { mode: "date", withTimezone: true }),
 }, (table) => [
   // Indexes for common queries
   index("booking_type_idx").on(table.bookingType),
@@ -539,8 +520,6 @@ export const bookings = pgTable("booking", {
   index("booking_boat_idx").on(table.boatId),
   index("booking_captain_idx").on(table.captainId),
   index("booking_date_idx").on(table.startDate, table.endDate),
-  index("booking_pickup_idx").using("gist", table.pickupCoordinates),
-  index("booking_dropoff_idx").using("gist", table.dropoffCoordinates),
   // Search-specific indexes
   index("booking_search_customer_idx").on(table.customerName, table.customerEmail),
 ]);

@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { db } from '@/database/db'
-import { bookings } from '@/database/schema'
-import { and, count, eq, desc, or, like, gte, lte } from 'drizzle-orm'
+import { bookings, boats, users } from '@/database/schema'
+import { and, count, eq, desc, or, like, gte, lte, sql } from 'drizzle-orm'
 
 // Helper to validate UUID format
 function isValidUUID(uuid: string) {
@@ -12,70 +12,66 @@ function isValidUUID(uuid: string) {
 }
 
 /**
- * Get all bookings with pagination, filtering, and sorting
+ * Get all bookings with pagination and joined data
  */
 export async function getBookings(options: {
   page?: number;
   limit?: number;
-  userId?: string;
-  boatId?: string;
-  status?: string;
-  startDate?: Date;
-  endDate?: Date;
-}) {
+} = {}) {
   const { 
     page = 1, 
-    limit = 10,
-    userId,
-    boatId,
-    status,
-    startDate,
-    endDate
+    limit = 10
   } = options;
   
   const offset = (page - 1) * limit;
-  const whereConditions = [];
   
-  if (userId) {
-    if (isValidUUID(userId)) {
-      whereConditions.push(eq(bookings.userId, userId));
-    } else {
-      throw new Error(`Invalid user UUID: ${userId}`);
-    }
-  }
-  
-  if (boatId) {
-    if (isValidUUID(boatId)) {
-      whereConditions.push(eq(bookings.boatId, boatId));
-    } else {
-      throw new Error(`Invalid boat UUID: ${boatId}`);
-    }
-  }
-  
-  if (status) {
-    whereConditions.push(eq(bookings.bookingStatus, status as any));
-  }
-  
-  if (startDate) {
-    whereConditions.push(gte(bookings.startDate, startDate));
-  }
-  
-  if (endDate) {
-    whereConditions.push(lte(bookings.startDate, endDate));
-  }
-  
+  // Select booking data with joined boat and user information
   const bookingsData = await db
-    .select()
+    .select({
+      // Booking fields
+      id: bookings.id,
+      bookingType: bookings.bookingType,
+      bookingStatus: bookings.bookingStatus,
+      customerName: bookings.customerName,
+      customerEmail: bookings.customerEmail,
+      customerPhone: bookings.customerPhone,
+      startDate: bookings.startDate,
+      endDate: bookings.endDate,
+      startTime: bookings.startTime,
+      endTime: bookings.endTime,
+      numberOfPassengers: bookings.numberOfPassengers,
+      totalAmount: bookings.totalAmount,
+      paymentStatus: bookings.paymentStatus,
+      paymentMethod: bookings.paymentMethod,
+      needsCaptain: bookings.needsCaptain,
+      specialRequests: bookings.specialRequests,
+      createdAt: bookings.createdAt,
+      updatedAt: bookings.updatedAt,
+      
+      // Boat information
+      boatId: bookings.boatId,
+      boatName: boats.name,
+      boatCategory: boats.category,
+      boatMainImage: boats.mainImage,
+      
+      // User information (if booking has userId)
+      userId: bookings.userId,
+      userFirstName: users.firstName,
+      userLastName: users.lastName,
+      userEmail: users.email,
+      userProfileImage: users.profileImage,
+    })
     .from(bookings)
-    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+    .leftJoin(boats, eq(bookings.boatId, boats.id))
+    .leftJoin(users, eq(bookings.userId, users.id))
     .limit(limit)
     .offset(offset)
     .orderBy(desc(bookings.createdAt));
   
+  // Get total count for pagination
   const [{ value: totalCount }] = await db
     .select({ value: count() })
-    .from(bookings)
-    .where(whereConditions.length > 0 ? and(...whereConditions) : undefined);
+    .from(bookings);
   
   return {
     bookings: bookingsData,
@@ -87,20 +83,61 @@ export async function getBookings(options: {
 }
 
 /**
- * Get a single booking by ID
+ * Get a single booking by ID with full details
  */
 export async function getBookingById(id: string) {
   if (!id || !isValidUUID(id)) {
     throw new Error(`Invalid UUID format: ${id}`);
   }
 
-  const bookingData = await db
-    .select()
+  const [bookingData] = await db
+    .select({
+      // All booking fields
+      id: bookings.id,
+      bookingType: bookings.bookingType,
+      bookingStatus: bookings.bookingStatus,
+      customerName: bookings.customerName,
+      customerEmail: bookings.customerEmail,
+      customerPhone: bookings.customerPhone,
+      startDate: bookings.startDate,
+      endDate: bookings.endDate,
+      startTime: bookings.startTime,
+      endTime: bookings.endTime,
+      numberOfPassengers: bookings.numberOfPassengers,
+      totalAmount: bookings.totalAmount,
+      captainFee: bookings.captainFee,
+      cleaningFee: bookings.cleaningFee,
+      serviceFee: bookings.serviceFee,
+      taxAmount: bookings.taxAmount,
+      paymentStatus: bookings.paymentStatus,
+      paymentMethod: bookings.paymentMethod,
+      needsCaptain: bookings.needsCaptain,
+      specialRequests: bookings.specialRequests,
+      createdAt: bookings.createdAt,
+      updatedAt: bookings.updatedAt,
+      expiresAt: bookings.expiresAt,
+      
+      // Boat information
+      boatId: bookings.boatId,
+      boatName: boats.name,
+      boatCategory: boats.category,
+      boatMainImage: boats.mainImage,
+      boatCapacity: boats.capacity,
+      
+      // User information
+      userId: bookings.userId,
+      userFirstName: users.firstName,
+      userLastName: users.lastName,
+      userEmail: users.email,
+      userProfileImage: users.profileImage,
+    })
     .from(bookings)
+    .leftJoin(boats, eq(bookings.boatId, boats.id))
+    .leftJoin(users, eq(bookings.userId, users.id))
     .where(eq(bookings.id, id))
     .limit(1);
   
-  return bookingData[0] || null;
+  return bookingData || null;
 }
 
 /**
@@ -127,7 +164,10 @@ export async function updateBooking(id: string, data: any) {
 
   const result = await db
     .update(bookings)
-    .set(data)
+    .set({
+      ...data,
+      updatedAt: new Date()
+    })
     .where(eq(bookings.id, id))
     .returning();
   

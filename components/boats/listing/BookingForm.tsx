@@ -1,25 +1,21 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Boat, BookingRequest, InitialBookingDetails } from "@/lib/types/types";
+import { Boat } from "@/lib/types/types";
 import { User } from "next-auth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { cn } from "@/lib/utils/general-utils";
+import { generateTimeOptions, calculateEndTime, formatEndTime } from "@/lib/utils/booking-utils";
 import { format } from "date-fns";
-import { CalendarIcon, MessageCircle, Zap, ChevronLeft } from "lucide-react";
+import { CalendarIcon, MessageCircle, Zap, Clock, Users, Anchor } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { bookingRequestSchema, initialBookingDetailsSchema } from "@/lib/validation/validations";
-import { finalizeBooking } from "@/lib/actions/booking/orchestrator";
+import { bookingRequestSchema, BookingRequest } from "@/lib/validation/validations";
+import { createBookingRequest } from "@/lib/actions/booking/request";
+import { createInstantBooking } from "@/lib/actions/booking/instant";
 import {
   Form,
   FormControl,
@@ -35,20 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import PhoneVerificationForm from "./sub-components/PhoneVerificationForm";
-import CompleteAccountModal from "./sub-components/CompleteAccountModal";
-import { completeUserAccountAfterVerification } from "@/lib/actions/auth/auth";
-
-// Simplified response type that covers all cases
-interface BookingActionResponse {
-  success: boolean;
-  message?: string;
-  error?: string;
-  errorType?: string;
-  fieldErrors?: Record<string, string[]>;
-  booking?: { id: string; [key: string]: any };
-  paymentUrl?: string;
-}
 
 interface BookingFormProps {
   variant: "REQUEST" | "INSTANT";
@@ -56,55 +38,78 @@ interface BookingFormProps {
   user: User | undefined;
 }
 
-type BookingStep = 
-  | "initialDetails"    // Step 1: Date, Time, Passengers, Duration
-  | "phoneInput"        // Step 2: Phone verification
-  | "fullForm"          // Step 3: Complete booking details
-  | "submitting";       // Final state when form is submitting
+// Define the result types for better type safety
+type BookingRequestResult = {
+  success: boolean;
+  error?: string;
+  errorType?: string;
+  fieldErrors?: Record<string, string[]>;
+  booking?: { id: string; [key: string]: any };
+  message?: string;
+};
+
+type InstantBookingResult = {
+  success: boolean;
+  error?: string;
+  errorType?: string;
+  fieldErrors?: Record<string, string[]>;
+  paymentUrl?: string;
+  booking?: { id: string; [key: string]: any };
+  message?: string;
+};
 
 export default function BookingForm({ variant, boat, user }: BookingFormProps) {
   const router = useRouter();
   const isRequest = variant === "REQUEST";
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // New state for multi-step form
-  const [currentStep, setCurrentStep] = useState<BookingStep>("initialDetails");
-  const [verifiedUser, setVerifiedUser] = useState<User | undefined>(user);
-  const [initialDetails, setInitialDetails] = useState<Partial<InitialBookingDetails>>({});
-  const [showCompleteAccountModal, setShowCompleteAccountModal] = useState(false);
 
-  // Time options (9 AM to 5 PM)
-  const timeOptions = Array.from({ length: 9 }, (_, i) => ({
-    value: `${(i + 9).toString().padStart(2, "0")}:00`,
-    label: format(new Date().setHours(i + 9, 0), "h:mm a"),
-  }));
+  // Generate time options (9 AM to 5 PM)
+  const timeOptions = generateTimeOptions();
 
-  // Hour options - using boat.minRentalHours if available
-  const defaultHours = 2;
-  const hourOptions = defaultHours ? 
-    [defaultHours, 3, 4, 6, 8].filter((h, i, arr) => arr.indexOf(h) === i).sort((a, b) => a - b) : 
-    [2, 3, 4, 6, 8];
-  
-  // Initial details form
-  const initialForm = useForm<InitialBookingDetails>({
-    resolver: zodResolver(initialBookingDetailsSchema),
-    defaultValues: {
-      startDate: undefined as unknown as Date,
-      startTime: "",
-      numberOfHours: defaultHours,
-      numberOfPassengers: 1,
-    },
-    mode: "onChange"
-  });
-  
-  // Final booking form
-  const fullForm = useForm<BookingRequest>({
+  // Check if user is signed in
+  if (!user) {
+    return (
+      <div className="text-center py-6">
+        <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-navy-600 flex items-center justify-center">
+          <Anchor className="h-5 w-5 text-white" />
+        </div>
+        <h3 className="font-semibold text-navy-900 mb-2">Sign in required</h3>
+        <p className="text-gray-600 text-sm mb-4">You must be signed in to book this boat</p>
+        <Button 
+          onClick={() => router.push('/sign-in')}
+          className="bg-navy-600 hover:bg-navy-700 text-white px-6 py-2 rounded-lg"
+        >
+          Sign In to Book
+        </Button>
+      </div>
+    );
+  }
+
+  // Check if boat has pricing tiers
+  if (!boat.pricingTiers || boat.pricingTiers.length === 0) {
+    return (
+      <div className="text-center py-6">
+        <div className="w-10 h-10 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+          <CalendarIcon className="h-5 w-5 text-gray-400" />
+        </div>
+        <h3 className="font-semibold text-navy-900 mb-2">No pricing available</h3>
+        <p className="text-gray-600 text-sm">No pricing options available for this boat</p>
+      </div>
+    );
+  }
+
+  // Filter active pricing tiers and sort by hours
+  const activePricingTiers = boat.pricingTiers
+    .filter(tier => tier.isActive)
+    .sort((a, b) => a.hours - b.hours);
+
+  // Booking form
+  const form = useForm<BookingRequest>({
     resolver: zodResolver(bookingRequestSchema),
     defaultValues: {
       startDate: undefined as unknown as Date,
       startTime: "",
-      endTime: "",
-      numberOfHours: defaultHours,
+      pricingTierId: "",
       numberOfPassengers: 1,
       needsCaptain: boat.crewRequired,
       specialRequests: "",
@@ -112,167 +117,89 @@ export default function BookingForm({ variant, boat, user }: BookingFormProps) {
     mode: "onChange"
   });
   
-  // Watch for changes to update endTime
-  useEffect(() => {
-    const startTime = fullForm.watch("startTime");
-    const hours = fullForm.watch("numberOfHours");
-    
-    if (startTime && hours) {
-      try {
-        const [startHour, startMinute] = startTime.split(":").map(Number);
-        const endHour = startHour + hours;
-        
-        // Check if end time exceeds 24 hours
-        if (endHour >= 24) {
-          fullForm.setError("numberOfHours", {
-            type: "manual",
-            message: "End time cannot be after midnight"
-          });
-        } else {
-          fullForm.clearErrors("numberOfHours");
-          const endTime = `${endHour.toString().padStart(2, "0")}:${startMinute.toString().padStart(2, "0")}`;
-          fullForm.setValue("endTime", endTime);
-        }
-      } catch (error) {
-        console.error("Error calculating end time:", error);
-      }
-    }
-  }, [fullForm.watch("startTime"), fullForm.watch("numberOfHours")]);
+  // Watch for pricing tier changes to show selected tier info
+  const selectedPricingTierId = form.watch("pricingTierId");
+  const selectedStartTime = form.watch("startTime");
+  const selectedDate = form.watch("startDate");
+  
+  const selectedPricingTier = activePricingTiers.find(tier => tier.id === selectedPricingTierId);
 
-  // Transfer data from initial form to full form
-  useEffect(() => {
-    if (initialDetails.startDate) {
-      fullForm.setValue("startDate", initialDetails.startDate);
-    }
-    if (initialDetails.startTime) {
-      fullForm.setValue("startTime", initialDetails.startTime);
-    }
-    if (initialDetails.numberOfHours) {
-      fullForm.setValue("numberOfHours", initialDetails.numberOfHours);
-    }
-    if (initialDetails.numberOfPassengers) {
-      fullForm.setValue("numberOfPassengers", initialDetails.numberOfPassengers);
-    }
-  }, [initialDetails, fullForm]);
+  // Calculate end time when start time and pricing tier change
+  const endTime = selectedStartTime && selectedPricingTier 
+    ? calculateEndTime(selectedStartTime, selectedPricingTier.hours)
+    : "";
 
-  // Calculate price based on pricing tiers
-  const calculatePrice = () => {
-    const hours = fullForm.watch("numberOfHours") || initialForm.watch("numberOfHours") || 0;
+  // Calculate total price
+  const calculateTotalPrice = () => {
+    if (!selectedPricingTier) return 0;
     
-    // Return 0 if there are no pricing tiers
-    if (!boat.pricingTiers || boat.pricingTiers.length === 0) return 0;
+    const basePrice = selectedPricingTier.price;
+    const captainFee = (form.watch("needsCaptain") || boat.crewRequired) ? 100 : 0;
+    const cleaningFee = boat.cleaningFee || 0;
+    const serviceFee = basePrice * 0.10; // 10% service fee
+    const subtotal = basePrice + captainFee + cleaningFee + serviceFee;
+    const taxAmount = subtotal * 0.08; // 8% tax
     
-    // Find an exact match for the number of hours
-    const exactTier = boat.pricingTiers.find(tier => tier.hours === hours && tier.isActive);
-    if (exactTier) return exactTier.price;
-    
-    // If no exact match, find the closest tier (prefer higher tier)
-    const sortedTiers = [...boat.pricingTiers]
-      .filter(tier => tier.isActive)
-      .sort((a, b) => a.hours - b.hours);
-    
-    // Find the closest tier that covers the requested hours
-    const closestTier = sortedTiers.find(tier => tier.hours >= hours);
-    if (closestTier) return closestTier.price;
-    
-    // If no higher tier is found, use the highest available tier
-    return sortedTiers.length > 0 ? sortedTiers[sortedTiers.length - 1].price : 0;
+    return subtotal + taxAmount;
   };
 
-  // Handle initial details submission (Step 1)
-  async function onInitialSubmit(data: InitialBookingDetails) {
-    setIsSubmitting(true);
-    
-    try {
-      // Save the initial details
-      setInitialDetails(data);
-      
-      // If user is already logged in, skip directly to final booking step
-      if (user) {
-        // Set the user as verified and move to final step
-        setVerifiedUser(user);
-        setCurrentStep("fullForm");
-        return;
-      }
-      
-      // For guest users, proceed to phone verification
-      setCurrentStep("phoneInput");
-    } catch (error) {
-      console.error("Error processing initial details:", error);
+  // Handle form submission
+  async function onSubmit(data: BookingRequest) {
+    if (!selectedPricingTier) {
       toast({
         title: "Error",
-        description: "There was a problem with your reservation request",
+        description: "Please select a duration option",
         variant: "destructive",
       });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-  
-  // Handle phone verification completion (Step 2)
-  function onPhoneVerificationComplete(verifiedUserData: any) {
-    // Set the user data
-    setVerifiedUser(verifiedUserData);
-    
-    // Check if this is a new minimal account that needs more details
-    const needsMoreDetails = !verifiedUserData.email || 
-                           !verifiedUserData.firstName || 
-                           !verifiedUserData.lastName;
-    
-    if (needsMoreDetails) {
-      // Show the complete account modal for new users
-      setShowCompleteAccountModal(true);
-    } else {
-      // If user is complete, move to final booking form
-      setCurrentStep("fullForm");
-    }
-  }
-
-  // Handle final form submission (Step 3)
-  async function onFinalSubmit(data: BookingRequest) {
-    if (!verifiedUser) {
-      toast({
-        title: "Authentication required",
-        description: "Please verify your phone number to complete the booking",
-        variant: "destructive",
-      });
-      setCurrentStep("phoneInput");
       return;
     }
     
     setIsSubmitting(true);
-    setCurrentStep("submitting");
-    
+
     try {
-      // Finalize the booking
-      const result = await finalizeBooking(data, variant, boat.id) as BookingActionResponse;
+      const bookingData = {
+        ...data,
+        boatId: boat.id,
+      };
+
+      if (isRequest) {
+        const result = await createBookingRequest(bookingData) as BookingRequestResult;
       
       if (result.success) {
-        // Show success message
         toast({
-          title: isRequest ? "Booking request submitted" : "Booking created",
-          description: result.message || `Your ${isRequest ? "request" : "booking"} has been received`,
-        });
-        
-        // Handle different redirects for different booking types
-        if (result.paymentUrl) {
-          // For instant bookings with payment URL, direct to Stripe checkout
-          window.location.href = result.paymentUrl;
-        } else if (result.booking?.id) {
-          // For requests with booking ID, go to confirmation page
-          router.push(`/profile/bookings/`);
-        } else {
+            title: "Booking request submitted",
+            description: result.message || "Your request has been submitted successfully",
+          });
           router.refresh();
+        } else {
+          toast({
+            title: "Booking failed",
+            description: result.error || "Please try again",
+            variant: "destructive",
+          });
         }
       } else {
-        // Show error message
+        const result = await createInstantBooking(bookingData) as InstantBookingResult;
+        
+        if (result.success) {
+          toast({
+            title: "Redirecting to payment",
+            description: result.message || "Taking you to the payment page",
+          });
+          
+          if (result.paymentUrl) {
+            window.location.href = result.paymentUrl;
+          } else {
+            // Fallback if no payment URL is provided
+            router.refresh();
+          }
+        } else {
         toast({
           title: "Booking failed",
           description: result.error || "Please try again",
           variant: "destructive",
         });
-        
-        setCurrentStep("fullForm");
+        }
       }
     } catch (error) {
       console.error("Error submitting booking:", error);
@@ -281,140 +208,82 @@ export default function BookingForm({ variant, boat, user }: BookingFormProps) {
         description: "Please try again later",
         variant: "destructive",
       });
-      setCurrentStep("fullForm");
     } finally {
       setIsSubmitting(false);
     }
   }
   
-  // Go back to previous step
-  function goBack() {
-    if (currentStep === "phoneInput") {
-      setCurrentStep("initialDetails");
-    } else if (currentStep === "fullForm") {
-      // If user is already logged in, go back to initial details
-      // Otherwise, go back to phone verification
-      if (user) {
-        setCurrentStep("initialDetails");
-      } else {
-        setCurrentStep("phoneInput");
-      }
-    }
-  }
-
-  // Add onComplete handler for CompleteAccountModal
-  async function handleCompleteAccount(data: { firstName: string; lastName: string; email: string; password: string }): Promise<void> {
-    try {
-      // Call the server action to complete the account
-      if (!verifiedUser?.phoneNumber) {
-        toast({
-          title: "Error",
-          description: "No phone number available",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      const result = await completeUserAccountAfterVerification(
-        verifiedUser.phoneNumber,
-        data
-      );
-      
-      if (result.success && result.data?.user) {
-        // Update the verified user with the new user data
-        setVerifiedUser(result.data.user);
-        setShowCompleteAccountModal(false);
-        setCurrentStep("fullForm");
-        
-        toast({
-          title: "Account created",
-          description: "Your account has been created successfully",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to create account",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Error in handleCompleteAccount:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    }
-  }
-
-  // Render different steps based on current step
   return (
-    <div className="space-y-4">
-      {/* Complete Account Modal for new users */}
-      {showCompleteAccountModal && (
-        <CompleteAccountModal
-          isOpen={showCompleteAccountModal}
-          onClose={() => setShowCompleteAccountModal(false)}
-          onComplete={handleCompleteAccount}
-        />
-      )}
-    
-      {/* Initial Step: Date, Time, Duration, Passengers */}
-      {currentStep === "initialDetails" && (
-        <Form {...initialForm}>
-          <form onSubmit={initialForm.handleSubmit(onInitialSubmit)} className="space-y-4">
+    <div className="space-y-3">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+          {/* Date & Time */}
+          <div className="bg-white rounded-lg p-3 border border-gray-200">
+            <div className="space-y-3">
             {/* Date Picker */}
             <FormField
-              control={initialForm.control}
+                control={form.control}
               name="startDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Date</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn("w-full justify-start text-left", !field.value && "text-gray-500")}
-                          aria-label="Select date"
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "MMM d, yyyy") : "Select date"}
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                    <FormLabel className="text-sm font-medium text-navy-800 flex items-center gap-2">
+                      <CalendarIcon className="h-4 w-4 text-navy-600" />
+                      Date
+                    </FormLabel>
+                  <FormControl>
+                    <input
+                      type="date"
+                      value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          field.onChange(new Date(e.target.value));
+                        } else {
+                          field.onChange(undefined);
+                        }
+                      }}
+                      min={format(new Date(), "yyyy-MM-dd")}
+                      className={cn(
+                        "w-full h-9 px-3 text-sm border border-gray-300 rounded-lg bg-white",
+                        "focus:border-navy-400 focus:ring-1 focus:ring-navy-400 focus:outline-none",
+                        "text-gray-900 placeholder:text-gray-500",
+                        // iOS specific fixes
+                        "appearance-none -webkit-appearance-none",
+                        "font-medium leading-normal",
+                        "flex items-center justify-start",
+                        field.value && "border-navy-400 bg-navy-50"
+                      )}
+                      style={{
+                        minHeight: '36px',
+                        lineHeight: '36px',
+                        WebkitAppearance: 'none',
+                        MozAppearance: 'textfield'
+                      }}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              {/* Start Time */}
+              {/* Time & Duration Grid */}
+              <div className="grid grid-cols-2 gap-3">
               <FormField
-                control={initialForm.control}
+                  control={form.control}
                 name="startTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Start Time</FormLabel>
+                      <FormLabel className="text-sm font-medium text-navy-800">Time</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger aria-label="Select start time">
-                          <SelectValue placeholder="Select time" />
+                          <SelectTrigger className="h-9 border-gray-300 text-sm">
+                            <SelectValue placeholder="Start time" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         {timeOptions.map(option => (
-                          <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -423,25 +292,23 @@ export default function BookingForm({ variant, boat, user }: BookingFormProps) {
                 )}
               />
 
-              {/* Duration */}
               <FormField
-                control={initialForm.control}
-                name="numberOfHours"
+                  control={form.control}
+                  name="pricingTierId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Duration</FormLabel>
-                    <Select 
-                      onValueChange={v => field.onChange(parseInt(v))} 
-                      value={field.value?.toString()}
-                    >
+                      <FormLabel className="text-sm font-medium text-navy-800">Duration</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger aria-label="Select duration">
-                          <SelectValue placeholder="Select hours" />
+                          <SelectTrigger className="h-9 border-gray-300 text-sm">
+                            <SelectValue placeholder="Hours" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {hourOptions.map(hours => (
-                          <SelectItem key={hours} value={hours.toString()}>{hours} hour{hours !== 1 && 's'}</SelectItem>
+                          {activePricingTiers.map(tier => (
+                            <SelectItem key={tier.id} value={tier.id}>
+                              {tier.hours}hr - ${tier.price}
+                            </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -451,16 +318,31 @@ export default function BookingForm({ variant, boat, user }: BookingFormProps) {
               />
             </div>
 
+              {/* End time display */}
+              {endTime && (
+                <div className="text-xs text-coral-600 bg-coral-50 px-3 py-2 rounded-lg border border-coral-200">
+                  Charter ends at {formatEndTime(endTime)}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Passengers & Captain */}
+          <div className="bg-white rounded-lg p-3 border border-gray-200">
+            <div className="space-y-3">
             {/* Passengers */}
             <FormField
-              control={initialForm.control}
+                control={form.control}
               name="numberOfPassengers"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Passengers</FormLabel>
+                    <FormLabel className="text-sm font-medium text-navy-800 flex items-center gap-2">
+                      <Users className="h-4 w-4 text-navy-600" />
+                      Passengers
+                    </FormLabel>
                   <Select onValueChange={v => field.onChange(parseInt(v))} value={field.value?.toString()}>
                     <FormControl>
-                      <SelectTrigger aria-label="Select number of passengers">
+                        <SelectTrigger className="h-9 border-gray-300 text-sm">
                         <SelectValue placeholder="Number of passengers" />
                       </SelectTrigger>
                     </FormControl>
@@ -477,108 +359,40 @@ export default function BookingForm({ variant, boat, user }: BookingFormProps) {
               )}
             />
 
-            {/* Initial Price Preview */}
-            <div className="rounded-lg bg-blue-50 p-3.5 border border-blue-100">
-              <div className="flex justify-between">
-                <span>Estimated total</span>
-                <span className="font-medium">${calculatePrice().toFixed(2)}</span>
-              </div>
-            </div>
-
-            {/* Continue Button */}
-            <Button 
-              type="submit" 
-              className="w-full text-white"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Processing..." : user ? "Continue to Book" : "Continue"}
-            </Button>
-          </form>
-        </Form>
-      )}
-
-      {/* Phone Verification Step - Only show for non-logged in users */}
-      {!user && (currentStep === "phoneInput") && (
-        <PhoneVerificationForm 
-          onComplete={onPhoneVerificationComplete}
-          onBack={goBack}
-        />
-      )}
-
-      {/* Full Booking Form Step */}
-      {currentStep === "fullForm" && (
-        <Form {...fullForm}>
-          <form onSubmit={fullForm.handleSubmit(onFinalSubmit)} className="space-y-4">
-            {/* Back button */}
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={goBack}
-              className="pl-0 text-primary"
-              size="sm"
-            >
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              Back
-            </Button>
-            
-            {/* Booking Summary */}
-            <div className="rounded-lg border p-3.5 mb-4">
-              <h4 className="font-medium mb-2">Booking Summary</h4>
-              <div className="space-y-1 text-sm">
-                <div className="flex justify-between">
-                  <span>Date</span>
-                  <span>{fullForm.watch("startDate") ? format(fullForm.watch("startDate"), "MMM d, yyyy") : "Not selected"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Time</span>
-                  <span>{fullForm.watch("startTime") ? format(new Date().setHours(parseInt(fullForm.watch("startTime")), 0), "h:mm a") : "Not selected"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Duration</span>
-                  <span>{fullForm.watch("numberOfHours")} hours</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Passengers</span>
-                  <span>{fullForm.watch("numberOfPassengers")}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Captain option - only if not required */}
+              {/* Captain option */}
             {!boat.crewRequired && (
               <FormField
-                control={fullForm.control}
+                  control={form.control}
                 name="needsCaptain"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Captain</FormLabel>
-                    <div className="flex h-9 rounded-md overflow-hidden border" role="radiogroup">
+                      <FormLabel className="text-sm font-medium text-navy-800">Captain</FormLabel>
+                      <div className="grid grid-cols-2 gap-2">
                       <Button
                         type="button"
                         onClick={() => field.onChange(false)}
                         className={cn(
-                          "flex-1 rounded-none",
-                          !field.value ? "bg-primary text-white" : "bg-white"
-                        )}
-                        variant="ghost"
-                        aria-checked={!field.value}
-                        role="radio"
+                            "h-9 text-sm transition-all",
+                            !field.value 
+                              ? "bg-navy-600 text-white border-navy-600" 
+                              : "bg-white text-gray-700 border-gray-300"
+                          )}
+                          variant="outline"
                       >
                         Self-Drive
                       </Button>
-                      <div className="w-px bg-gray-200"></div>
                       <Button
                         type="button"
                         onClick={() => field.onChange(true)}
                         className={cn(
-                          "flex-1 rounded-none",
-                          field.value ? "bg-primary text-white" : "bg-white"
-                        )}
-                        variant="ghost"
-                        aria-checked={field.value}
-                        role="radio"
-                      >
-                        With Captain
+                            "h-9 text-sm transition-all",
+                            field.value 
+                              ? "bg-coral-500 text-white border-coral-500" 
+                              : "bg-white text-gray-700 border-gray-300"
+                          )}
+                          variant="outline"
+                        >
+                          + Captain ($100)
                       </Button>
                     </div>
                     <FormMessage />
@@ -586,20 +400,21 @@ export default function BookingForm({ variant, boat, user }: BookingFormProps) {
                 )}
               />
             )}
+            </div>
+          </div>
 
             {/* Special Requests */}
             <FormField
-              control={fullForm.control}
+            control={form.control}
               name="specialRequests"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Special Requests</FormLabel>
+                <FormLabel className="text-sm font-medium text-navy-800">Special Requests</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Any special requests for the captain?"
-                      className="h-20 resize-none"
+                    placeholder="Any special occasions or requests?"
+                    className="h-14 resize-none border-gray-300 text-sm rounded-lg"
                       {...field}
-                      aria-label="Special requests"
                     />
                   </FormControl>
                   <FormMessage />
@@ -608,43 +423,64 @@ export default function BookingForm({ variant, boat, user }: BookingFormProps) {
             />
             
             {/* Price Summary */}
-            <div className="rounded-lg bg-blue-50 p-3.5 border border-blue-100">
-              <h4 className="font-medium mb-2">Price Summary</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span>Total for booking</span>
-                  <span className="font-medium">${calculatePrice().toFixed(2)}</span>
+          {selectedPricingTier && (
+            <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-700">{selectedPricingTier.hours}hr Charter</span>
+                  <span className="font-medium text-gray-900">${selectedPricingTier.price}</span>
                 </div>
-                {boat.depositAmount && boat.depositAmount > 0 && (
-                  <div className="flex justify-between">
-                    <span>Security deposit</span>
-                    <span className="font-medium">${boat.depositAmount.toFixed(2)}</span>
+                {(form.watch("needsCaptain") || boat.crewRequired) && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-700">Captain</span>
+                    <span className="font-medium text-gray-900">$100</span>
                   </div>
                 )}
+                {boat.cleaningFee && boat.cleaningFee > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-700">Cleaning</span>
+                    <span className="font-medium text-gray-900">${boat.cleaningFee}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-700">Service + Tax</span>
+                  <span className="font-medium text-gray-900">${(calculateTotalPrice() - selectedPricingTier.price - (form.watch("needsCaptain") || boat.crewRequired ? 100 : 0) - (boat.cleaningFee || 0)).toFixed(2)}</span>
+                </div>
+                <div className="border-t border-gray-300 pt-2 mt-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold text-navy-900">Total</span>
+                    <span className="text-lg font-bold text-gold-600">${calculateTotalPrice().toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
             </div>
+          )}
 
             {/* Submit Button */}
             <Button 
               type="submit" 
-              className="w-full gap-2 text-white"
-              disabled={isSubmitting}
+            className={cn(
+              "w-full h-10 text-white font-semibold transition-all duration-200",
+              isRequest 
+                ? "bg-navy-600 hover:bg-navy-700" 
+                : "bg-coral-500 hover:bg-coral-600"
+            )}
+            disabled={isSubmitting || !selectedPricingTier}
             >
               {isSubmitting ? (
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                  {isRequest ? "Submitting Request..." : "Processing Booking..."}
+                {isRequest ? "Submitting..." : "Processing..."}
                 </div>
               ) : (
-                <>
-                  {isRequest ? <MessageCircle className="h-5 w-5" /> : <Zap className="h-5 w-5" />}
-                  {isRequest ? "Request to Book" : "Instant Book"}
-                </>
+              <div className="flex items-center gap-2">
+                {isRequest ? <MessageCircle className="h-4 w-4" /> : <Zap className="h-4 w-4" />}
+                {isRequest ? "Request to Book" : "Book & Pay Now"}
+              </div>
               )}
             </Button>
           </form>
         </Form>
-      )}
     </div>
   );
 } 

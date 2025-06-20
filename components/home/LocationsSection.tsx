@@ -22,32 +22,32 @@ const locations = [
   {
     name: 'Fort Lauderdale',
     image: '/images/locations/fort-lauderdale.png',
-    href: '/locations/fort-lauderdale',
+    href: 'http://localhost:3000/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=26.342075651857815&ne_lng=-79.94274801289657&sw_lat=25.85493658661458&sw_lng=-80.27851766621689&zoom_level=13&map_toggle=on&page=1',
   },
   {
     name: 'Naples',
     image: '/images/locations/naples.jpg',
-    href: '/locations/naples',
+    href: 'http://localhost:3000/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=26.78162320580448&ne_lng=-81.53055713088251&sw_lat=25.80900322954124&sw_lng=-82.20209643752314&zoom_level=13&map_toggle=on&page=1',
   },
   {
     name: 'West Palm Beach',
     image: '/images/locations/west-palm.jpg',
-    href: '/locations/west-palm-beach',
+    href: 'http://localhost:3000/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=27.20361325071068&ne_lng=-79.67871662569503&sw_lat=26.234574624628717&sw_lng=-80.35025593233566&zoom_level=13&map_toggle=on&page=1',
   },
   {
     name: 'Connecticut',
     image: '/images/locations/conneticut.jpg',
-    href: '/locations/connecticut',
+    href: 'http://localhost:3000/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=42.52785484619885&ne_lng=-71.37854485044119&sw_lat=39.24828154025446&sw_lng=-74.06470207700369&zoom_level=13&map_toggle=on&page=1',
   },
   {
     name: 'Bahamas',
     image: '/images/locations/bahamas.jpg',
-    href: '/locations/bahamas',
+    href: '/boats/search?near=The+Bahamas&ne_lat=26.590274469914576&ne_lng=-76.65761869261429&sw_lat=22.560024925745196&sw_lng=-79.35476224730179&zoom_level=8&map_toggle=on&center_lat=24.591364629076335&center_lng=-78.00619046995804&page=1',
   },
   {
     name: 'Dominican Republic',
     image: '/images/locations/dominican-republic.jpg',
-    href: '/locations/dominican-republic',
+    href: '/boats/search?near=Dominican+Republic&ne_lat=27.00077435235987&ne_lng=-65.31237564053237&sw_lat=10.272085808139986&sw_lng=-76.10094985928237&zoom_level=6&map_toggle=on&center_lat=18.844302328127366&center_lng=-70.70666274990737&page=1',
   }
 ];
 

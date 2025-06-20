@@ -21,7 +21,7 @@ const dropdownMenus = {
           { href: "/experiences/fishing", label: "Fishing" },
           { href: "/experiences/watersports", label: "Water Sports" },
           { href: "/experiences/sand-bar", label: "Sand Bar" },
-          { href: "/experiences/celebrations", label: "Celebrations" },
+          { href: "/experiences/special-events", label: "Special Events" },
           { href: "/experiences", label: "All Experiences" }
         ]
       },

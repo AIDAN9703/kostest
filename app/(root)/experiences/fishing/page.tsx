@@ -105,159 +105,101 @@ const charterOptions = [
 export default function FishingPage() {
   return (
     <ExperienceLayout
-      title="Deep Sea Fishing Charters"
+      title="Fishing Charters"
       description="Experience world-class fishing with our professional guides and premium vessels, perfect for both novice and experienced anglers seeking the ultimate catch."
-      heroImage="/images/experiences/deepseafishing.jpg"
+      heroImage="/images/experiences/fish3.jpg"
       faqs={faqs}
       relatedExperiences={relatedExperiences}
       buttonText="Book Your Charter"
       buttonLink="/boats/search"
     >
-      {/* Introduction Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">About Fishing Charters</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
-            The Ultimate Fishing Adventure
+      {/* Fishing Services Section */}
+      <section className="py-10 md:py-14 bg-white">
+        <div className="text-left mb-8 animate-fade-in-up">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4 text-primary leading-tight">
+            Fishing Charter Services
           </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light leading-relaxed">
-            Whether you're an experienced angler looking for your next trophy catch or a beginner 
-            wanting to learn the ropes, our fishing charters provide unforgettable experiences on 
-            Miami's pristine waters with expert captains and premium vessels.
+          <p className="text-gray-600 max-w-3xl text-lg font-light leading-relaxed">
+            Whether you're an experienced angler or a beginner, our fishing charters provide unforgettable 
+            experiences with expert captains and premium vessels on Miami's pristine waters.
           </p>
         </div>
         
-        {/* Key Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Services Grid - Mobile: 2 columns minimum */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 auto-rows-fr">
           {features.map((feature, index) => (
             <div 
               key={index} 
-              className="group animate-fade-in-up"
+              className="group animate-fade-in-up h-full"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full text-center">
-                <div className="bg-gold/10 p-4 rounded-lg w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <div className="bg-white rounded-lg p-3 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
+                <div className="bg-gold/10 p-2 lg:p-3 rounded-lg w-8 h-8 lg:w-12 lg:h-12 mb-2 lg:mb-4 flex items-center justify-center">
                   <div className="text-gold">
                     {feature.icon}
                   </div>
                 </div>
-                <h3 className="font-medium text-primary mb-2">{feature.title}</h3>
-                <p className="text-sm text-gray-600 font-light leading-relaxed">{feature.description}</p>
+                <h3 className="text-sm lg:text-xl font-medium text-primary mb-1 lg:mb-3 leading-tight">{feature.title}</h3>
+                <p className="text-xs lg:text-base text-gray-600 leading-snug lg:leading-relaxed font-light flex-grow line-clamp-2">{feature.description}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* What's Included Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">Charter Inclusions</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary">
-            Everything You Need Included
-          </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
-            Our fishing charters provide everything you need for a successful and memorable day on the water.
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Included Items */}
-          <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
-            <h3 className="text-xl font-medium text-primary mb-6">Included in Every Charter</h3>
-            <div className="space-y-4">
-              {[
-                "Professional fishing captain and crew",
-                "Premium fishing equipment and tackle",
-                "Fishing licenses for all guests",
-                "Fresh bait and lures for target species",
-                "Fish cleaning and filleting service",
-                "Ice and coolers for your catch",
-                "Safety equipment and briefing",
-                "Comfortable vessel with shade areas"
-              ].map((item, index) => (
-                <div key={index} className="flex items-start">
-                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5 mr-3" />
-                  <span className="text-gray-700 font-light">{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Target Species */}
-          <div className="bg-white rounded-lg p-8 shadow-sm border border-gray-100">
-            <h3 className="text-xl font-medium text-primary mb-6">Target Species</h3>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                "Mahi-Mahi", "Sailfish", "Marlin", "Tuna",
-                "Wahoo", "Snapper", "Grouper", "King Mackerel"
-              ].map((species, index) => (
-                <div key={index} className="flex items-center">
-                  <Fish className="h-4 w-4 text-primary mr-2" />
-                  <span className="text-gray-700 font-light">{species}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600 font-light">
-                Species availability varies by season and weather conditions. Our experienced captains will target the best opportunities for your trip.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
       
       {/* Charter Options Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">Charter Options</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary">
+      <section className="py-10 md:py-14 bg-white">
+        <div className="text-right mb-8 animate-fade-in-up">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4 text-primary">
             Choose Your Charter Experience
           </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
+          <p className="text-gray-600 max-w-2xl ml-auto text-lg font-light">
             Select from our range of charter options designed to suit your schedule and fishing preferences.
           </p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-8">
           {charterOptions.map((option, index) => (
             <div 
               key={index} 
-              className={`bg-white rounded-lg p-8 border-2 transition-all duration-300 hover:shadow-lg ${
+              className={`bg-white rounded-lg border transition-all duration-300 hover:shadow-lg overflow-hidden flex flex-col h-full ${
                 option.popular 
-                  ? 'border-primary shadow-lg relative' 
-                  : 'border-gray-100 hover:border-primary/30'
+                  ? 'border-gold shadow-md relative' 
+                  : 'border-gray-200 hover:border-primary/30'
               }`}
             >
               {option.popular && (
-                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-primary text-white text-sm font-medium px-4 py-1 rounded-full">
-                    Most Popular
+                <div className="absolute top-0 left-0 rounded-br-md z-10">
+                  <span className="bg-gold text-white text-xs lg:text-sm font-medium py-1 px-2 rounded-br-lg">
+                    Popular
                   </span>
                 </div>
               )}
               
-              <div className="text-center">
-                <h3 className="text-xl font-medium text-primary mb-2">{option.title}</h3>
-                <p className="text-primary/70 font-medium mb-4">{option.duration}</p>
-                <p className="text-gray-600 font-light leading-relaxed mb-6">{option.description}</p>
+              <div className="p-3 lg:p-6 flex flex-col flex-grow">
+                <h3 className="text-sm sm:text-base lg:text-xl font-medium text-primary mb-2 lg:mb-3">{option.title}</h3>
+                <p className="text-primary/70 font-medium mb-2 text-xs lg:text-sm">{option.duration}</p>
+                <p className="text-gray-600 font-light leading-relaxed mb-3 lg:mb-4 flex-grow text-xs sm:text-sm lg:text-base">{option.description}</p>
                 
-                <div className="space-y-2 mb-6">
+                <div className="space-y-1 lg:space-y-2 mb-3 lg:mb-6">
                   {option.highlights.map((highlight, idx) => (
-                    <div key={idx} className="flex items-center justify-center">
-                      <CheckCircle2 className="h-4 w-4 text-primary mr-2" />
-                      <span className="text-sm text-gray-600 font-light">{highlight}</span>
+                    <div key={idx} className="flex items-center">
+                      <CheckCircle2 className="h-3 w-3 lg:h-4 lg:w-4 text-primary mr-2 flex-shrink-0" />
+                      <span className="text-xs lg:text-sm text-gray-600 font-light">{highlight}</span>
                     </div>
                   ))}
                 </div>
                 
-                <div className="border-t border-gray-100 pt-6">
-                  <p className="text-lg font-medium text-primary mb-4">{option.price}</p>
+                <div className="border-t border-gray-100 pt-3 lg:pt-6 mt-auto">
+                  <p className="text-sm lg:text-lg font-medium text-primary mb-3 lg:mb-4">{option.price}</p>
                   <Button 
-                    className={`w-full ${
+                    variant={null}
+                    className={`w-full h-7 sm:h-8 lg:h-10 px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 lg:py-2 rounded-lg lg:rounded-xl font-medium transition-all duration-300 inline-flex items-center justify-center text-xs lg:text-sm ${
                       option.popular 
-                        ? 'bg-primary hover:bg-primary/90 text-white' 
-                        : 'bg-white border-2 border-primary text-primary hover:bg-primary hover:text-white'
+                        ?  'text-gold border border-gold hover:bg-gold hover:text-white' 
+                        : 'bg-white text-primary border border-primary hover:bg-primary hover:text-white'
                     }`}
                     asChild
                   >

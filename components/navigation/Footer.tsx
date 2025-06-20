@@ -267,7 +267,7 @@ export default function Footer() {
               © 2024 KOS Yachts. All rights reserved.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
-              <Link href="https://docs.google.com/document/d/1lSf1BI9-N8XEN_X5JaO4r1rKjz0WtrLlEaiqSbM0S-w/edit?tab=t.0#heading=h.vzszhdiggrxy" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">
+              <Link href="/cancellation-policy" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">
               Cancellation Policy
               </Link>
               <Link href="/privacy" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">

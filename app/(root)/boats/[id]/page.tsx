@@ -1,5 +1,5 @@
 import { db } from "@/database/db";
-import { boats } from "@/database/schema";
+import { boats, boatPricingTiers } from "@/database/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
@@ -14,19 +14,31 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
   const session = await auth();
 
   try {
-    // Fetch boat details
-    const dbResult = await db
-      .select()
-      .from(boats)
-      .where(eq(boats.id, id))
-      .limit(1);
+    // Fetch boat details with pricing tiers in a single optimized query
+    const [boatResult, pricingTiers] = await Promise.all([
+      // Get boat data
+      db
+        .select()
+        .from(boats)
+        .where(eq(boats.id, id))
+        .limit(1),
+      
+      // Get pricing tiers for this boat
+      db
+        .select()
+        .from(boatPricingTiers)
+        .where(eq(boatPricingTiers.boatId, id))
+    ]);
 
-    if (!dbResult.length) {
+    if (!boatResult.length) {
       notFound();
     }
 
-    // Convert DB result to application type
-    const boat = dbResult[0] as Boat;
+    // Combine boat data with pricing tiers
+    const boat: Boat = {
+      ...boatResult[0],
+      pricingTiers: pricingTiers
+    } as Boat;
 
     return (
       <main className="min-h-screen bg-white sm:pt-6 pb-16 lg:pb-0">
@@ -47,8 +59,8 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
             </div>
 
             {/* Desktop booking form - hidden on mobile, shown on lg+ screens */}
-            <aside className="lg:col-span-4 hidden lg:block">
-              <div className="sticky top-20">
+            <aside className="lg:col-span-4 hidden md:block">
+              <div className="sticky top-24">
                 <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
                   <BookingFormToggle 
                     boat={boat}
@@ -61,7 +73,7 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
         </div>
 
         {/* Mobile booking bar - shown on mobile, hidden on lg+ screens */}
-        <div className="lg:hidden">
+        <div className="md:hidden">
           <MobileBookingBar boat={boat} user={session?.user} />
         </div>
       </main>

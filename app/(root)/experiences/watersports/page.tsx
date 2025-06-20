@@ -81,38 +81,32 @@ const activities = [
   {
     name: "Jet Skiing",
     description: "Experience the thrill of riding across the water at high speeds on our premium jet skis.",
-    image: "/images/experiences/tiki.jpg",
-    beginnerFriendly: true,
+    image: "/images/experiences/jetski.webp",
   },
   {
     name: "Wakeboarding",
     description: "Ride the wake behind the boat while performing exciting jumps and tricks on a wakeboard.",
-    image: "/images/experiences/tiki.jpg",
-    beginnerFriendly: true,
+    image: "/images/experiences/wakeboarding.jpg",
   },
   {
     name: "Water Skiing",
     description: "A classic water sport that provides excitement and challenge for all skill levels.",
-    image: "/images/experiences/tiki.jpg",
-    beginnerFriendly: true,
+    image: "/images/experiences/waterski.jpg",
   },
   {
     name: "Tubing",
     description: "Hold on tight as you're pulled behind the boat on an inflatable tube - fun for all ages!",
-    image: "/images/experiences/tiki.jpg",
-    beginnerFriendly: true,
+    image: "/images/experiences/watertubing.jpeg",
   },
   {
     name: "Paddleboarding",
     description: "Explore calm waters at your own pace on a stand-up paddleboard.",
-    image: "/images/experiences/tiki.jpg",
-    beginnerFriendly: true,
+    image: "/images/experiences/paddleboarding.jpg",
   },
   {
     name: "Snorkeling",
     description: "Discover the underwater world and marine life in crystal clear waters.",
-    image: "/images/experiences/tiki.jpg",
-    beginnerFriendly: true,
+    image: "/images/experiences/snorkling.jpg",
   }
 ];
 
@@ -121,88 +115,55 @@ export default function WatersportsPage() {
     <ExperienceLayout
       title="Water Sports Adventures"
       description="Get your adrenaline pumping with exciting water sports activities. From jet skis to wakeboarding, there's something for everyone."
-      heroImage="/images/experiences/tiki.jpg"
+      heroImage="/images/experiences/wakeboarding.jpg"
       faqs={faqs}
       relatedExperiences={relatedExperiences}
       buttonText="Book Now"
       buttonLink="/contact"
     >
-      {/* Introduction Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">Water Sports</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
-            Thrilling Water Sports Experiences
+      {/* Water Sports Services Section */}
+      <section className="py-10 md:py-14 bg-white">
+        <div className="text-left mb-8 animate-fade-in-up">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4 text-primary leading-tight">
+            Water Sports Services
           </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light leading-relaxed">
+          <p className="text-gray-600 max-w-3xl text-lg font-light leading-relaxed">
             Whether you're seeking an adrenaline rush or a fun family activity, our water sports 
-            charters offer something for everyone. With professional instructors and premium equipment, 
-            you'll enjoy safe and exciting adventures on the water. Our experienced captains know the best 
-            locations for each activity, ensuring optimal conditions and scenery for your chosen water sports.
+            charters offer something for everyone with professional instructors and premium equipment.
           </p>
         </div>
         
-        {/* Key Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Services Grid - Mobile: 2 columns minimum */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 auto-rows-fr">
           {benefits.map((benefit, index) => (
             <div 
               key={index} 
-              className="group animate-fade-in-up"
+              className="group animate-fade-in-up h-full"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full text-center">
-                <div className="bg-gold/10 p-4 rounded-lg w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <div className="bg-white rounded-lg p-3 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
+                <div className="bg-gold/10 p-2 lg:p-3 rounded-lg w-8 h-8 lg:w-12 lg:h-12 mb-2 lg:mb-4 flex items-center justify-center">
                   <div className="text-gold">
                     {benefit.icon}
                   </div>
                 </div>
-                <h3 className="font-medium text-primary mb-2">{benefit.title}</h3>
-                <p className="text-sm text-gray-600 font-light leading-relaxed">{benefit.description}</p>
+                <h3 className="text-sm lg:text-xl font-medium text-primary mb-1 lg:mb-3 leading-tight">{benefit.title}</h3>
+                <p className="text-xs lg:text-base text-gray-600 leading-snug lg:leading-relaxed font-light flex-grow line-clamp-2">{benefit.description}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* What's Included Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">What's Included</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary">
-            Everything You Need Included
-          </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
-            Our water sports charters come with everything you need for an exciting day on the water.
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            "Professional water sports instructors",
-            "Premium water sports equipment",
-            "Safety gear and instruction",
-            "Towable toys and inflatables",
-            "Fuel and boat operation",
-            "Cooler with ice and bottled water",
-            "Fresh towels and basic amenities",
-            "GoPro camera rental (additional fee)"
-          ].map((item, index) => (
-            <div key={index} className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 flex items-start">
-              <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5 mr-3" />
-              <span className="text-gray-700 font-light">{item}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+
       
       {/* Popular Activities Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">Activities</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary">
+      <section className="py-10 md:py-14 bg-white">
+        <div className="text-right mb-8 animate-fade-in-up">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4 text-primary">
             Popular Activities
           </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
+          <p className="text-gray-600 max-w-2xl ml-auto text-lg font-light">
             Choose from our wide range of exciting water sports activities for all skill levels.
           </p>
         </div>
@@ -229,15 +190,6 @@ export default function WatersportsPage() {
                     className="object-contain"
                   />
                 </div>
-
-                {/* Beginner Friendly Badge */}
-                {activity.beginnerFriendly && (
-                  <div className="absolute top-4 right-4">
-                    <span className="bg-white text-primary text-sm font-medium px-3 py-1 rounded-full shadow-sm">
-                      Beginner Friendly
-                    </span>
-                  </div>
-                )}
               </div>
               
               <div className="p-6">

@@ -155,7 +155,7 @@ const ServicePageTemplate: React.FC<ServicePageProps> = ({
                 </div>
               </div>
               
-              <Link href="/contact" onClick={scrollToContact}>
+              <Link href="https://api.leadconnectorhq.com/widget/bookings/kos-calendars">
                 <Button variant="outline" className="group border-primary text-primary hover:bg-primary hover:text-white px-6 py-3 font-medium relative overflow-hidden">
                   <span className="relative z-10">Book a Meeting</span>
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 relative z-10" />
@@ -163,7 +163,7 @@ const ServicePageTemplate: React.FC<ServicePageProps> = ({
                   <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/90 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out" />
                 </Button>
               </Link>
-            </div>
+           </div>
             
             <div className="order-1 lg:order-2 relative animate-fade-in-right">
               <div className="relative h-[400px] md:h-[500px] rounded-lg overflow-hidden shadow-lg">

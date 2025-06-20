@@ -15,6 +15,13 @@
       "when": 1746597440200,
       "tag": "0001_elite_mandarin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1750200146829,
+      "tag": "0002_eminent_sway",
+      "breakpoints": true
     }
   ]
 }

@@ -113,88 +113,55 @@ export default function SandBarPage() {
     <ExperienceLayout
       title="Sand Bar Excursions"
       description="Discover paradise on our sandbar excursions, where pristine white sands meet crystal clear waters, accessible only by boat."
-      heroImage="/images/experiences/peanutisland.webp"
+      heroImage="/images/experiences/whaleharbor.jpg"
       faqs={faqs}
       relatedExperiences={relatedExperiences}
       buttonText="Book Now"
       buttonLink="/contact"
     >
-      {/* Introduction Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">Sand Bar Adventures</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
-            Island Paradise Experience
+      {/* Sand Bar Services Section */}
+      <section className="py-10 md:py-14 bg-white">
+        <div className="text-left mb-8 animate-fade-in-up">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4 text-primary leading-tight">
+            Sand Bar Excursion Services
           </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light leading-relaxed">
+          <p className="text-gray-600 max-w-3xl text-lg font-light leading-relaxed">
             Discover the magic of Florida's hidden sandbars - natural white sand islands that emerge 
-            in the shallow waters, creating perfect oases for relaxation and fun. These pristine 
-            spots are only accessible by boat, offering a truly exclusive experience where you can wade in 
-            knee-deep crystal clear water, collect seashells, play beach games, or simply relax in paradise.
+            in shallow waters, creating perfect oases for relaxation and fun accessible only by boat.
           </p>
         </div>
         
-        {/* Key Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Services Grid - Mobile: 2 columns minimum */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-6 auto-rows-fr">
           {benefits.map((benefit, index) => (
             <div 
               key={index} 
-              className="group animate-fade-in-up"
+              className="group animate-fade-in-up h-full"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full text-center">
-                <div className="bg-gold/10 p-4 rounded-lg w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <div className="bg-white rounded-lg p-3 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
+                <div className="bg-gold/10 p-2 lg:p-3 rounded-lg w-8 h-8 lg:w-12 lg:h-12 mb-2 lg:mb-4 flex items-center justify-center">
                   <div className="text-gold">
                     {benefit.icon}
                   </div>
                 </div>
-                <h3 className="font-medium text-primary mb-2">{benefit.title}</h3>
-                <p className="text-sm text-gray-600 font-light leading-relaxed">{benefit.description}</p>
+                <h3 className="text-sm lg:text-xl font-medium text-primary mb-1 lg:mb-3 leading-tight">{benefit.title}</h3>
+                <p className="text-xs lg:text-base text-gray-600 leading-snug lg:leading-relaxed font-light flex-grow line-clamp-2">{benefit.description}</p>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* What's Included Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">What's Included</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary">
-            Everything You Need Included
-          </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
-            Our sandbar excursions come with everything you need for an amazing day on the water.
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[
-            "Professional captain and crew",
-            "Coolers with ice",
-            "Fresh water and soft drinks",
-            "Beach games and toys",
-            "Floating mats and loungers",
-            "Bluetooth sound system",
-            "Snorkeling equipment",
-            "Beach umbrellas and chairs"
-          ].map((item, index) => (
-            <div key={index} className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 flex items-start">
-              <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5 mr-3" />
-              <span className="text-gray-700 font-light">{item}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+
       
       {/* Popular Sandbars Section */}
-      <section className="mb-16">
-        <div className="text-center mb-12 animate-fade-in-up">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase">Destinations</span>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary">
+      <section className="py-10 md:py-14 bg-white">
+        <div className="text-right mb-8 animate-fade-in-up">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-4 text-primary">
             Popular Sandbars
           </h2>
-          <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
+          <p className="text-gray-600 max-w-2xl ml-auto text-lg font-light">
             Explore these stunning sandbar locations, each offering its own unique experience and natural beauty.
           </p>
         </div>

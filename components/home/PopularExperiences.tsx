@@ -12,42 +12,42 @@ const experiences = [
     image: "/images/experiences/daycharters4.png",
     description: "Perfect for a day of fun on the water with friends",
     color: "from-blue-500/20 to-cyan-500/60",
-    link: "/experiences/day-charters"
+    link: "/experiences/special-events"
   },
   {
     title: "Term Charters",
     image: "/images/experiences/termcharter.avif",
     description: "Extended luxury experiences for your perfect getaway",
     color: "from-emerald-500/20 to-teal-500/60",
-    link: "/experiences/term-charters"
+    link: "/experiences/special-events"
   },
   {
     title: "Corporate Events",
     image: "/images/experiences/corporateevents.webp",
     description: "Impress new clients and reward your team in style",
     color: "from-indigo-500/20 to-blue-500/60",
-    link: "/experiences/corporate"
+    link: "/experiences/special-events"
   },
   {
     title: "Bachelor/Bachelorette",
     image: "/images/experiences/bachellorette2.png",
     description: "Celebrate your special day in unforgettable style",
     color: "from-purple-500/20 to-pink-500/60",
-    link: "/experiences/bachelor"
+    link: "/experiences/special-events"
   },
   {
     title: "Sunset Cruise",
     image: "/images/experiences/sunset.jpg",
     description: "Experience breathtaking sunsets while on the water",
     color: "from-orange-500/20 to-rose-500/60",
-    link: "/experiences/sunset-cruise"
+    link: "/experiences/special-events"
   },
   {
     title: "High Capacity",
     image: "/images/experiences/highcapacity.png",
     description: "Perfect for large groups and special celebrations",
     color: "from-red-500/20 to-orange-500/60",
-    link: "/experiences/high-capacity"
+    link: "/experiences/special-events"
   }
 ];
 

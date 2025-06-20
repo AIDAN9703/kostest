@@ -1,12 +1,11 @@
 "use server";
 
 import { db } from "@/database/db";
-import { boats, bookings, bookingTypeEnum, bookingStatusEnum, boatPricingTiers } from "@/database/schema";
+import { boats, bookings, boatPricingTiers } from "@/database/schema";
 import { auth } from "@/auth";
-import { bookingRequestSchema } from "@/lib/validation/validations";
-import { redirect } from "next/navigation";
+import { bookingRequestSchema, BookingRequest } from "@/lib/validation/validations";
 import { z } from "zod";
-import { calculateBookingFees } from "../booking";
+import { calculateEndTime } from "@/lib/utils/booking-utils";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 
@@ -16,10 +15,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
 });
 
 /**
- * Creates a Stripe Checkout session for instant booking without creating a booking record yet
+ * Creates a Stripe Checkout session for instant booking using pricing tiers
  * The actual booking will be created after payment success via webhook
  */
-export async function createInstantBooking(data: z.infer<typeof bookingRequestSchema> & { boatId: string }) {
+export async function createInstantBooking(data: BookingRequest & { boatId: string }) {
   // Check for authentication
   const session = await auth();
   if (!session?.user) {
@@ -34,7 +33,22 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
     // Validate the booking data
     const validatedData = bookingRequestSchema.parse(data);
     
-    // Get boat details to calculate pricing
+    // Get the pricing tier details
+    const pricingTierResults = await db
+      .select()
+      .from(boatPricingTiers)
+      .where(eq(boatPricingTiers.id, validatedData.pricingTierId));
+    
+    if (pricingTierResults.length === 0) {
+      return { 
+        success: false, 
+        error: "Invalid pricing tier selected" 
+      };
+    }
+    
+    const pricingTier = pricingTierResults[0];
+    
+    // Get boat details
     const boatResults = await db
       .select({
         id: boats.id,
@@ -44,6 +58,7 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
         ownerId: boats.ownerId,
         instantBook: boats.instantBook,
         mainImage: boats.mainImage,
+        crewRequired: boats.crewRequired,
       })
       .from(boats)
       .where(eq(boats.id, data.boatId));
@@ -55,19 +70,7 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
       };
     }
     
-    // Get pricing tiers in separate query - professional pattern for relational data
-    const pricingTiers = await db
-      .select()
-      .from(boatPricingTiers)
-      .where(eq(boatPricingTiers.boatId, data.boatId));
-    
-    // Create a combined boat object with pricing tiers - this is how we handle relations
-    const boat = {
-      ...boatResults[0],
-      pricingTiers: pricingTiers,
-      // Add default tax rate since it's not in the schema
-      taxRate: 0.08 // 8% default tax rate
-    };
+    const boat = boatResults[0];
     
     // Verify boat allows instant booking
     if (!boat.instantBook) {
@@ -77,19 +80,19 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
       };
     }
     
-    // Calculate base price using pricing tiers
-    const basePrice = calculatePriceFromTiers(boat, data.numberOfHours);
+    // Calculate end time using the pricing tier hours
+    const endTime = calculateEndTime(validatedData.startTime, pricingTier.hours);
     
-    // Calculate fees
-    const fees = calculateBookingFees({
-      basePrice,
-      needsCaptain: data.needsCaptain,
-      cleaningFee: boat.cleaningFee || 0,
-    });
+    // Calculate all fees
+    const basePrice = pricingTier.price;
+    const captainFee = (validatedData.needsCaptain || boat.crewRequired) ? 100 : 0; // Fixed captain fee
+    const cleaningFee = boat.cleaningFee || 0;
+    const serviceFee = basePrice * 0.10; // 10% service fee
+    const subtotal = basePrice + captainFee + cleaningFee + serviceFee;
+    const taxAmount = subtotal * 0.08; // 8% tax
+    const totalAmount = subtotal + taxAmount;
     
     // Create a Stripe Checkout Session
-    // Instead of creating a booking record now, we'll store booking data in metadata
-    // and create the actual booking record after successful payment via webhook
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -97,11 +100,11 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `${boat.name} - ${data.numberOfHours}hr Charter`,
+              name: `${boat.name} - ${pricingTier.name || `${pricingTier.hours}hr Charter`}`,
               images: [boat.mainImage || "https://via.placeholder.com/800x600.png?text=Boat+Image"],
-              description: `${data.needsCaptain ? "With Captain" : "Self-Drive"} - ${new Date(data.startDate).toLocaleDateString()} at ${data.startTime}`
+              description: `${validatedData.needsCaptain || boat.crewRequired ? "With Captain" : "Self-Drive"} - ${new Date(validatedData.startDate).toLocaleDateString()} at ${validatedData.startTime}`
             },
-            unit_amount: Math.round(fees.totalAmount * 100), // Convert to cents
+            unit_amount: Math.round(totalAmount * 100), // Convert to cents
           },
           quantity: 1,
         },
@@ -115,21 +118,20 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
         customerEmail: session.user.email || "",
         customerPhone: session.user.phoneNumber || "",
         isMultiDay: "false",
-        needsCaptain: data.needsCaptain.toString(),
-        startDate: data.startDate.toISOString(),
-        startTime: data.startTime,
-        endTime: data.endTime,
-        numberOfHours: data.numberOfHours.toString(),
-        numberOfPassengers: data.numberOfPassengers.toString(),
-        specialRequests: data.specialRequests || "",
-        basePrice: fees.basePrice.toString(),
-        captainFee: fees.captainFee.toString(),
-        cleaningFee: fees.cleaningFee.toString(),
-        serviceFee: fees.serviceFee.toString(),
-        taxAmount: fees.taxAmount.toString(),
-        totalAmount: fees.totalAmount.toString(),
+        needsCaptain: (validatedData.needsCaptain || boat.crewRequired).toString(),
+        startDate: validatedData.startDate.toISOString(),
+        startTime: validatedData.startTime,
+        endTime: endTime,
+        pricingTierId: validatedData.pricingTierId,
+        numberOfPassengers: validatedData.numberOfPassengers.toString(),
+        specialRequests: validatedData.specialRequests || "",
+        basePrice: basePrice.toString(),
+        captainFee: captainFee.toString(),
+        cleaningFee: cleaningFee.toString(),
+        serviceFee: serviceFee.toString(),
+        taxAmount: taxAmount.toString(),
+        totalAmount: totalAmount.toString(),
         depositAmount: (boat.depositAmount || 0).toString(),
-        // Add timestamp for consistency
         createdAt: new Date().toISOString(),
       },
       mode: 'payment',
@@ -137,15 +139,16 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/boats/${boat.id}?canceled=true`,
     } as any);
     
-    // Additionally, we can create a temporary booking record with pending status
-    // This will be updated by the webhook after payment
+    // Create a temporary booking record with pending status
+    let bookingRecord = null;
     try {
       const now = new Date();
-      await db.insert(bookings).values({
+      const result = await db.insert(bookings).values({
         bookingType: "INSTANT_BOOK",
         bookingStatus: "AWAITING_PAYMENT",
         userId: session.user.id,
         boatId: boat.id,
+        pricingTierId: validatedData.pricingTierId,
         
         // Customer information
         customerName: session.user.name || "",
@@ -154,21 +157,19 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
         
         // Booking details
         isMultiDay: false,
-        needsCaptain: data.needsCaptain,
-        startDate: data.startDate,
-        startTime: data.startTime,
-        endTime: data.endTime,
-        numberOfHours: data.numberOfHours,
-        numberOfPassengers: data.numberOfPassengers,
-        specialRequests: data.specialRequests || "",
+        needsCaptain: validatedData.needsCaptain || boat.crewRequired,
+        startDate: validatedData.startDate,
+        startTime: validatedData.startTime,
+        endTime: endTime,
+        numberOfPassengers: validatedData.numberOfPassengers,
+        specialRequests: validatedData.specialRequests || "",
         
         // Pricing
-        basePrice: fees.basePrice,
-        captainFee: fees.captainFee,
-        cleaningFee: fees.cleaningFee,
-        serviceFee: fees.serviceFee,
-        taxAmount: fees.taxAmount,
-        totalAmount: fees.totalAmount,
+        captainFee: captainFee,
+        cleaningFee: cleaningFee,
+        serviceFee: serviceFee,
+        taxAmount: taxAmount,
+        totalAmount: totalAmount,
         depositAmount: boat.depositAmount || 0,
         currency: "USD",
         
@@ -181,8 +182,9 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
         createdAt: now,
         updatedAt: now,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Expires in 24 hours
-      });
+      }).returning();
 
+      bookingRecord = result[0];
       console.log("Created pending booking for session:", checkoutSession.id);
     } catch (error) {
       console.error("Error creating pending booking:", error);
@@ -192,6 +194,7 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
     return { 
       success: true,
       paymentUrl: checkoutSession.url,
+      booking: bookingRecord,
       message: "Redirecting to payment page."
     };
   } catch (error) {
@@ -214,54 +217,19 @@ export async function createInstantBooking(data: z.infer<typeof bookingRequestSc
 }
 
 /**
- * Creates a Stripe checkout session and returns the result
- * This action is meant to be used by server components (form action)
+ * Server action for form submissions
  */
 export async function createInstantBookingAction(formData: FormData) {
-  // Auth check with redirect
-  const session = await auth();
-  if (!session?.user) {
-    // Return response instead of redirecting
-    return {
-      success: false,
-      error: "You must be signed in to book",
-      errorType: "AUTH"
-    };
-  }
-
   // Parse form data
   const data = {
     boatId: formData.get("boatId") as string,
     startDate: new Date(formData.get("startDate") as string),
     startTime: formData.get("startTime") as string,
-    endTime: formData.get("endTime") as string,
-    numberOfHours: parseInt(formData.get("numberOfHours") as string),
+    pricingTierId: formData.get("pricingTierId") as string,
     numberOfPassengers: parseInt(formData.get("numberOfPassengers") as string),
     needsCaptain: formData.get("needsCaptain") === "true",
     specialRequests: formData.get("specialRequests") as string,
   };
 
-  // Let the component handle the redirect based on the returned data
   return await createInstantBooking(data);
-}
-
-// Helper function to calculate price from tiers
-function calculatePriceFromTiers(boat: any, hours: number) {
-  if (!boat.pricingTiers || boat.pricingTiers.length === 0) return 0;
-  
-  // Find an exact match for the number of hours
-  const exactTier = boat.pricingTiers.find((tier: any) => tier.hours === hours && tier.isActive);
-  if (exactTier) return exactTier.price;
-  
-  // If no exact match, find the closest tier (prefer higher tier)
-  const sortedTiers = [...boat.pricingTiers]
-    .filter((tier: any) => tier.isActive)
-    .sort((a: any, b: any) => a.hours - b.hours);
-  
-  // Find the closest tier that covers the requested hours
-  const closestTier = sortedTiers.find((tier: any) => tier.hours >= hours);
-  if (closestTier) return closestTier.price;
-  
-  // If no higher tier is found, use the highest available tier
-  return sortedTiers.length > 0 ? sortedTiers[sortedTiers.length - 1].price : 0;
 } 

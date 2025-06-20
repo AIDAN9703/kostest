@@ -10,7 +10,7 @@ interface Brand {
 
 const brands: Brand[] = [
   { name: 'Miami Vice', logo: '/images/brands/miamivice.png' },
-  { name: 'Bucketlisters', logo: '/images/brands/bucketlisters.blob' },
+  { name: 'Bucketlisters', logo: '/images/brands/bucketlisters.png' },
   { name: 'Happy Dad', logo: '/images/brands/happydad.png' },
   { name: 'Ramp', logo: '/images/brands/ramp.png' },
   { name: 'Lobels', logo: '/images/brands/lobels.webp' },

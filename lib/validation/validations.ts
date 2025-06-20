@@ -32,27 +32,6 @@ export const signInSchema = z.object({
 });
 
 /**
- * Booking Schemas for Multi-Step Flow
- */
-// Step 1: Initial booking details
-export const initialBookingDetailsSchema = z.object({
-  startDate: z.date({ required_error: "Date is required" }),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
-  numberOfHours: z.number().min(1, "Number of hours is required"),
-  numberOfPassengers: z.number().min(1, "At least one passenger is required"),
-});
-
-// Step 2: Phone number input
-export const phoneNumberSchema = z.object({
-  phoneNumber: z.string().min(10, "Phone number must be at least 10 digits"),
-});
-
-// Step 3: OTP verification
-export const otpSchema = z.object({
-  otp: z.string().length(6, "Verification code must be 6 digits"),
-});
-
-/**
  * Profile Update Schema
  */
 export const profileUpdateSchema = z.object({
@@ -78,35 +57,17 @@ export const profileUpdateSchema = z.object({
 });
 
 /**
- * Booking Request Schema
- * Simplified for day rentals only
+ * Simplified Booking Schema using Pricing Tiers
+ * Users select from exact pricing tiers instead of arbitrary hours
  */
 export const bookingRequestSchema = z.object({
-  // Basic booking details
+  // Core booking data
+  startDate: z.date({ required_error: "Date is required" }),
+  startTime: z.string().min(1, "Start time is required"),
+  pricingTierId: z.string().min(1, "Please select a duration option"),
   numberOfPassengers: z.number().min(1, "At least one passenger is required"),
   needsCaptain: z.boolean(),
   specialRequests: z.string().optional(),
-  
-  // Date and time
-  startDate: z.date({ required_error: "Date is required" }),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, "Invalid time format"),
-  numberOfHours: z.number().min(1, "Number of hours is required"),
-}).superRefine((data, ctx) => {
-  // Time validation
-  const [startHour, startMinute] = data.startTime.split(":").map(Number);
-  const [endHour, endMinute] = data.endTime.split(":").map(Number);
-  const startMinutes = startHour * 60 + startMinute;
-  const endMinutes = endHour * 60 + endMinute;
-  
-  // Ensure end time is after start time
-  if (endMinutes <= startMinutes) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "End time must be after start time",
-      path: ["endTime"],
-    });
-  }
 });
 
 // Export type for use in components
@@ -117,7 +78,4 @@ export type SignUpData = z.infer<typeof signUpSchema>;
 export type SignInData = z.infer<typeof signInSchema>;
 export type PhoneVerificationData = z.infer<typeof phoneVerificationSchema>;
 
-// Export types for the new schemas
-export type InitialBookingDetails = z.infer<typeof initialBookingDetailsSchema>;
-export type PhoneNumberInput = z.infer<typeof phoneNumberSchema>;
-export type OtpInput = z.infer<typeof otpSchema>;
+

@@ -15,6 +15,21 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
+/**
+ * Convert 24-hour time format to 12-hour format for display
+ * @param time24 Time in HH:mm format (e.g., "14:30")
+ * @returns Time in 12-hour format (e.g., "2:30 PM")
+ */
+export function formatTime12Hour(time24: string): string {
+  if (!time24) return "";
+  
+  const [hours24, minutes] = time24.split(':').map(Number);
+  const isPM = hours24 >= 12;
+  const hours12 = hours24 === 0 ? 12 : hours24 > 12 ? hours24 - 12 : hours24;
+  
+  return `${hours12}:${minutes.toString().padStart(2, '0')} ${isPM ? 'PM' : 'AM'}`;
+}
+
 export async function cachedFetch<T>(
   key: string,
   fetchFn: () => Promise<T>,

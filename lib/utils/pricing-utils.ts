@@ -1,5 +1,5 @@
 import { Boat, PricingTier } from "../types/types";
-import { formatCurrency as formatCurrencyFn } from "./general-utils";
+import { formatCurrency } from "./general-utils";
 
 /**
  * Gets the default or best pricing tier for a boat
@@ -23,7 +23,8 @@ export function getDefaultPricingTier(boat: Boat): PricingTier | null {
 }
 
 /**
- * Gets the default price for a boat
+ * Gets the default price for a boat for display purposes only
+ * This should only be used for showing a "starting from" price
  */
 export function getBoatDefaultPrice(boat: Boat): number {
   // Try from pricing tiers first
@@ -36,45 +37,11 @@ export function getBoatDefaultPrice(boat: Boat): number {
 
 /**
  * Gets the display hours for a boat's default pricing tier
+ * This should only be used for showing a "starting from" duration
  */
 export function getBoatDefaultHours(boat: Boat): string {
   const defaultTier = getDefaultPricingTier(boat);
   if (defaultTier) return `${defaultTier.hours}hr`;
   
   return "hr";
-}
-
-/**
- * Format boat price for display with proper hour unit
- */
-export function formatBoatPrice(boat: Boat, formatCurrency = formatCurrencyFn): string {
-  const price = getBoatDefaultPrice(boat);
-  const hours = getBoatDefaultHours(boat);
-  return `${formatCurrency(price)}/${hours}`;
-}
-
-/**
- * Calculate the price for a specific duration from pricing tiers
- */
-export function calculatePriceFromTiers(
-  pricingTiers: PricingTier[] | undefined, 
-  hours: number
-): number {
-  if (!pricingTiers || pricingTiers.length === 0) return 0;
-  
-  // Find an exact match for the number of hours
-  const exactTier = pricingTiers.find(tier => tier.hours === hours && tier.isActive);
-  if (exactTier) return exactTier.price;
-  
-  // If no exact match, find the closest tier (prefer higher tier)
-  const sortedTiers = [...pricingTiers]
-    .filter(tier => tier.isActive)
-    .sort((a, b) => a.hours - b.hours);
-  
-  // Find the closest tier that covers the requested hours
-  const closestTier = sortedTiers.find(tier => tier.hours >= hours);
-  if (closestTier) return closestTier.price;
-  
-  // If no higher tier is found, use the highest available tier
-  return sortedTiers.length > 0 ? sortedTiers[sortedTiers.length - 1].price : 0;
 } 

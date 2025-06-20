@@ -150,6 +150,7 @@ async function handleInstantBookingPayment(session: Stripe.Checkout.Session) {
       bookingStatus: "CONFIRMED",
       userId: metadata.userId,
       boatId: metadata.boatId,
+      pricingTierId: metadata.pricingTierId,
       
       // Customer information
       customerName: metadata.customerName || "",
@@ -162,12 +163,10 @@ async function handleInstantBookingPayment(session: Stripe.Checkout.Session) {
       startDate: new Date(metadata.startDate),
       startTime: metadata.startTime,
       endTime: metadata.endTime,
-      numberOfHours: parseInt(metadata.numberOfHours || "0"),
       numberOfPassengers: parseInt(metadata.numberOfPassengers || "1"),
       specialRequests: metadata.specialRequests || "",
       
       // Pricing
-      basePrice: parseFloat(metadata.basePrice || "0"),
       captainFee: parseFloat(metadata.captainFee || "0"),
       cleaningFee: parseFloat(metadata.cleaningFee || "0"),
       serviceFee: parseFloat(metadata.serviceFee || "0"),

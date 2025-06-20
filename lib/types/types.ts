@@ -1,6 +1,5 @@
 import { boatCategoryEnum } from "@/database/schema";
 import { z } from "zod";
-import { ProfileFormValues } from "@/lib/validation/validations";
 import { LucideIcon } from 'lucide-react';
 
 // User profile types
@@ -253,15 +252,6 @@ export type ActionResponse<T> = {
   data?: T;
   error?: string;
 };
-
-// Re-export booking types for convenience
-export type { 
-  BookingRequest, 
-  ProfileFormValues,
-  InitialBookingDetails,
-  PhoneNumberInput,
-  OtpInput
-} from "../validation/validations"; 
 
 // Navigation types
 export interface NavigationItem {
