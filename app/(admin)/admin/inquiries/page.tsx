@@ -1,7 +1,7 @@
 import { Suspense } from "react";
-import { getBookings } from "@/lib/actions/admin/bookings";
-import { BookingsTable } from "@/components/admin/bookings/BookingsTable";
-import { BookingsTableSkeleton } from "@/components/admin/bookings/BookingsTableSkeleton";
+import { getInquiries } from "@/lib/actions/admin/inquiries";
+import { InquiriesTable } from "@/components/admin/inquiries/InquiriesTable";
+import { InquiriesTableSkeleton } from "@/components/admin/inquiries/InquiriesTableSkeleton";
 import { DataTablePagination } from "@/components/admin/DataTablePagination";
 
 // Constants
@@ -11,12 +11,14 @@ const ITEMS_PER_PAGE = 10;
 interface SearchParams {
   page?: string;
   limit?: string;
+  search?: string;
+  status?: string;
 }
 
 // This enables automatic revalidation every 30 seconds
 export const revalidate = 30;
 
-export default async function BookingsPage({
+export default async function InquiriesPage({
   searchParams,
 }: {
   searchParams: Promise<SearchParams>;
@@ -27,37 +29,49 @@ export default async function BookingsPage({
   // Parse and validate page number and limit
   const currentPage = resolvedParams.page ? Math.max(1, parseInt(resolvedParams.page)) : 1;
   const limit = resolvedParams.limit ? Math.max(10, Math.min(100, parseInt(resolvedParams.limit))) : ITEMS_PER_PAGE;
+  
+  // Get filter parameters
+  const search = resolvedParams.search;
+  const status = resolvedParams.status;
 
   return (
     <div className="space-y-5">
-      {/* Bookings Table with Suspense for progressive loading */}
-      <Suspense fallback={<BookingsTableSkeleton />}>
-        <BookingTableWithData 
+      {/* Inquiries Table with Suspense for progressive loading */}
+      <Suspense fallback={<InquiriesTableSkeleton />}>
+        <InquiryTableWithData 
           page={currentPage}
           limit={limit}
+          search={search}
+          status={status}
         />
       </Suspense>
     </div>
   );
 }
 
-// Separate component for bookings data fetching to enable Suspense
-async function BookingTableWithData({
+// Separate component for data fetching to enable Suspense
+async function InquiryTableWithData({
   page,
   limit,
+  search,
+  status
 }: {
   page: number;
   limit: number;
+  search?: string;
+  status?: string;
 }) {
-  const { bookings, totalCount, totalPages } = await getBookings({
+  const { inquiries, totalCount, totalPages } = await getInquiries({
     page,
-    limit
+    limit,
+    status,
+    search,
   });
 
   return (
     <>
-      {/* Bookings List */}
-      <BookingsTable bookings={bookings} />
+      {/* Inquiries List */}
+      <InquiriesTable inquiries={inquiries} />
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -66,9 +80,9 @@ async function BookingTableWithData({
           totalPages={totalPages}
           totalCount={totalCount}
           itemsPerPage={limit}
-          searchParams={{}}
-          baseUrl="/admin/bookings"
-          itemName="bookings"
+          searchParams={{ search, status }}
+          baseUrl="/admin/inquiries"
+          itemName="inquiries"
         />
       )}
     </>

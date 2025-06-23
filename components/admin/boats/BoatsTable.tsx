@@ -18,8 +18,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DeleteBoatButton } from "@/components/admin/boats/DeleteBoatButton";
-import { Badge } from "@/components/ui/badge";
+
 import { formatCurrency } from "@/lib/utils/general-utils";
+import { FieldDropdown } from "@/components/admin/common/FieldDropdown";
 
 // Types
 type Boat = {
@@ -55,37 +56,37 @@ export function BoatsTable({ boats }: BoatsTableProps) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-100 bg-gray-50/70 text-left text-xs uppercase tracking-wider text-gray-500">
-            <th className="px-5 py-4 font-medium">Boat</th>
-            <th className="px-5 py-4 font-medium w-[12%]">Category</th>
-            <th className="px-5 py-4 font-medium w-[12%]">Status</th>
-            <th className="px-5 py-4 font-medium w-[15%]">Price</th>
-            <th className="px-5 py-4 font-medium w-[12%]">Capacity</th>
-            <th className="px-5 py-4 font-medium text-right w-[8%]">Actions</th>
+            <th className="px-3 py-2 font-medium">Boat</th>
+            <th className="px-3 py-2 font-medium w-[12%]">Category</th>
+            <th className="px-3 py-2 font-medium w-[12%]">Status</th>
+            <th className="px-3 py-2 font-medium w-[15%]">Price</th>
+            <th className="px-3 py-2 font-medium w-[12%]">Capacity</th>
+            <th className="px-3 py-2 font-medium text-right w-[8%]">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
           {boats.map((boat) => (
             <tr key={boat.id} className="hover:bg-gray-50/50 transition-colors">
-              <td className="px-5 py-4">
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-md bg-gray-100 overflow-hidden flex items-center justify-center shadow-sm border border-gray-200">
+              <td className="px-3 py-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-md bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
                     {boat.mainImage ? (
                       <Image
                         src={boat.mainImage}
                         alt={boat.name}
-                        width={40}
-                        height={40}
+                        width={32}
+                        height={32}
                         className="object-cover w-full h-full"
                       />
                     ) : (
                       <div className="flex items-center justify-center w-full h-full bg-blue-50">
-                        <Anchor className="h-5 w-5 text-blue-600" />
+                        <Anchor className="h-4 w-4 text-blue-600" />
                       </div>
                     )}
                   </div>
-                  <div>
-                    <div className="font-medium text-gray-900">{boat.name}</div>
-                    <div className="text-xs text-gray-500">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-gray-900 text-sm truncate">{boat.name}</div>
+                    <div className="text-xs text-gray-500 truncate">
                       {boat.make && boat.model
                         ? `${boat.make} ${boat.model}`
                         : boat.make || boat.model || "No make/model"}
@@ -93,26 +94,36 @@ export function BoatsTable({ boats }: BoatsTableProps) {
                   </div>
                 </div>
               </td>
-              <td className="px-5 py-4">
-                <span className="inline-flex items-center justify-center rounded-full bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                  {boat.category.replace('_', ' ')}
-                </span>
+              <td className="px-3 py-2">
+                <FieldDropdown
+                  entity="boat"
+                  id={boat.id}
+                  field="category"
+                  currentValue={boat.category}
+                  size="sm"
+                />
               </td>
-              <td className="px-5 py-4">
-                <div className="flex flex-col gap-1">
-                  <Badge variant={boat.active ? "success" : "secondary"} className="w-fit">
-                    {boat.active ? "Active" : "Inactive"}
-                  </Badge>
-                  {boat.featured && (
-                    <Badge variant="warning" className="w-fit">
-                      Featured
-                    </Badge>
-                  )}
+              <td className="px-3 py-2">
+                <div className="flex flex-col gap-0.5">
+                  <FieldDropdown
+                    entity="boat"
+                    id={boat.id}
+                    field="active"
+                    currentValue={boat.active}
+                    size="sm"
+                  />
+                  <FieldDropdown
+                    entity="boat"
+                    id={boat.id}
+                    field="featured"
+                    currentValue={boat.featured}
+                    size="sm"
+                  />
                 </div>
               </td>
-              <td className="px-5 py-4">
-                <div className="flex items-center text-gray-600">
-                  <DollarSign className="mr-1.5 h-3.5 w-3.5 text-gray-400" />
+              <td className="px-3 py-2">
+                <div className="flex items-center text-gray-600 text-sm">
+                  <DollarSign className="mr-1 h-3 w-3 text-gray-400" />
                   {boat.basePrice ? (
                     <span>{formatCurrency(boat.basePrice)}</span>
                   ) : (
@@ -120,48 +131,46 @@ export function BoatsTable({ boats }: BoatsTableProps) {
                   )}
                 </div>
               </td>
-              <td className="px-5 py-4 text-gray-600">
+              <td className="px-3 py-2 text-gray-600 text-sm">
                 <div className="flex items-center gap-1">
-                  <Flag className="mr-1.5 h-3.5 w-3.5 text-gray-400" />
+                  <Flag className="mr-1 h-3 w-3 text-gray-400" />
                   <span>{boat.capacity} people</span>
                 </div>
               </td>
-              <td className="px-5 py-4 text-right">
-                <div className="flex items-center justify-end">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-[160px]">
-                      <DropdownMenuItem asChild>
-                        <Link href={`/admin/boats/${boat.id}`} className="cursor-pointer flex items-center">
-                          <Eye className="mr-2 h-4 w-4" />
-                          <span>View</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/admin/boats/${boat.id}/edit`} className="cursor-pointer flex items-center">
-                          <Edit className="mr-2 h-4 w-4" />
-                          <span>Edit</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DeleteBoatButton
-                        boatId={boat.id}
-                        boatName={boat.name}
-                      />
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+              <td className="px-3 py-2 text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-gray-100 rounded-full">
+                      <MoreHorizontal className="h-4 w-4" />
+                      <span className="sr-only">Open menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-[160px]">
+                    <DropdownMenuItem asChild>
+                      <Link href={`/admin/boats/${boat.id}`} className="cursor-pointer flex items-center">
+                        <Eye className="mr-2 h-4 w-4" />
+                        <span>View</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/admin/boats/${boat.id}/edit`} className="cursor-pointer flex items-center">
+                        <Edit className="mr-2 h-4 w-4" />
+                        <span>Edit</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DeleteBoatButton
+                      boatId={boat.id}
+                      boatName={boat.name}
+                    />
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </td>
             </tr>
           ))}
           
           {boats.length === 0 && (
             <tr>
-              <td colSpan={6} className="px-5 py-8 text-center text-gray-500">
+              <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
                 No boats found. <Link href="/admin/boats/create" className="text-primary hover:underline">Add a new boat</Link>
               </td>
             </tr>

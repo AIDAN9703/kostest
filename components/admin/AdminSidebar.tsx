@@ -46,6 +46,11 @@ const navItems: NavItem[] = [
     icon: <CalendarDays className="h-5 w-5" />
   },
   {
+    label: "Inquiries",
+    href: "/admin/inquiries",
+    icon: <MessageSquare className="h-5 w-5" />
+  },
+  {
     label: "Quote Manager",
     href: "/admin/quotes",
     icon: <FileText className="h-5 w-5" />

@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { CalendarCheck, Check, Clock3, CreditCard, MoreHorizontal, Phone, Mail, X } from "lucide-react";
+import { CalendarCheck, MoreHorizontal, Mail } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { formatCurrency, formatDate, formatTime12Hour } from "@/lib/utils/general-utils";
-import { cn } from "@/lib/utils/general-utils";
 import {
   Table,
   TableBody,
@@ -23,8 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FieldDropdown } from "@/components/admin/common/FieldDropdown";
 
 // Type for booking with joined data
 type BookingWithDetails = {
@@ -65,154 +62,42 @@ interface BookingsTableProps {
   bookings: BookingWithDetails[];
 }
 
-// Status Badge Components
-function StatusBadge({ status }: { status: string }) {
-  const statusConfig = {
-    CONFIRMED: { 
-      className: "bg-green-100 text-green-800 hover:bg-green-100",
-      icon: Check,
-      label: "Confirmed"
-    },
-    PENDING: { 
-      className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
-      icon: Clock3,
-      label: "Pending"
-    },
-    AWAITING_PAYMENT: { 
-      className: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-      icon: CreditCard,
-      label: "Awaiting Payment"
-    },
-    APPROVED: { 
-      className: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-      icon: Check,
-      label: "Approved"
-    },
-    CANCELLED: { 
-      className: "bg-red-100 text-red-800 hover:bg-red-100",
-      icon: X,
-      label: "Cancelled"
-    },
-    COMPLETED: { 
-      className: "bg-purple-100 text-purple-800 hover:bg-purple-100",
-      icon: Check,
-      label: "Completed"
-    },
-    DENIED: { 
-      className: "bg-red-100 text-red-800 hover:bg-red-100",
-      icon: X,
-      label: "Denied"
-    },
-    EXPIRED: { 
-      className: "bg-gray-100 text-gray-800 hover:bg-gray-100",
-      icon: Clock3,
-      label: "Expired"
-    }
-  };
 
-  const config = statusConfig[status as keyof typeof statusConfig] || {
-    className: "bg-gray-100 text-gray-800 hover:bg-gray-100",
-    icon: Clock3,
-    label: status
-  };
-
-  const IconComponent = config.icon;
-
-  return (
-    <Badge className={config.className}>
-      <IconComponent className="h-3 w-3 mr-1" />
-      {config.label}
-    </Badge>
-  );
-}
-
-function PaymentStatusBadge({ status }: { status: string | null }) {
-  const statusConfig = {
-    PAID: { 
-      className: "bg-green-100 text-green-800 hover:bg-green-100",
-      icon: Check,
-      label: "Paid"
-    },
-    PENDING: { 
-      className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-100",
-      icon: Clock3,
-      label: "Pending"
-    },
-    FAILED: { 
-      className: "bg-red-100 text-red-800 hover:bg-red-100",
-      icon: X,
-      label: "Failed"
-    },
-    REFUNDED: { 
-      className: "bg-blue-100 text-blue-800 hover:bg-blue-100",
-      icon: CreditCard,
-      label: "Refunded"
-    }
-  };
-
-  if (!status) {
-    return (
-      <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">
-        <Clock3 className="h-3 w-3 mr-1" />
-        N/A
-      </Badge>
-    );
-  }
-
-  const config = statusConfig[status as keyof typeof statusConfig] || {
-    className: "bg-gray-100 text-gray-800 hover:bg-gray-100",
-    icon: Clock3,
-    label: status
-  };
-
-  const IconComponent = config.icon;
-
-  return (
-    <Badge className={config.className}>
-      <IconComponent className="h-3 w-3 mr-1" />
-      {config.label}
-    </Badge>
-  );
-}
 
 export function BookingsTable({ bookings }: BookingsTableProps) {
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="px-6 py-4 bg-gray-50 border-b">
-        <CardTitle className="text-lg">All Bookings</CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Boat</TableHead>
-              <TableHead>Dates</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Payment</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <Table>
+        <TableHeader>
+          <TableRow className="border-b border-gray-100 bg-gray-50/70">
+            <TableHead className="px-3 py-2 text-xs uppercase tracking-wider text-gray-500 font-medium w-[8%]">ID</TableHead>
+            <TableHead className="px-3 py-2 text-xs uppercase tracking-wider text-gray-500 font-medium">Customer</TableHead>
+            <TableHead className="px-3 py-2 text-xs uppercase tracking-wider text-gray-500 font-medium">Boat</TableHead>
+            <TableHead className="px-3 py-2 text-xs uppercase tracking-wider text-gray-500 font-medium w-[15%]">Dates</TableHead>
+            <TableHead className="px-3 py-2 text-xs uppercase tracking-wider text-gray-500 font-medium w-[12%]">Status</TableHead>
+            <TableHead className="px-3 py-2 text-xs uppercase tracking-wider text-gray-500 font-medium w-[12%]">Amount</TableHead>
+            <TableHead className="px-3 py-2 text-xs uppercase tracking-wider text-gray-500 font-medium w-[12%]">Payment</TableHead>
+            <TableHead className="px-3 py-2 text-xs uppercase tracking-wider text-gray-500 font-medium text-right w-[8%]">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody className="divide-y divide-gray-100">
             {bookings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
+                <TableCell colSpan={8} className="px-3 py-6 text-center text-gray-500">
                   No bookings found.
                 </TableCell>
               </TableRow>
             ) : (
               bookings.map((booking) => (
-                <TableRow key={booking.id}>
-                  <TableCell className="font-medium">
-                    <span className="font-mono text-xs">
+                <TableRow key={booking.id} className="hover:bg-gray-50/50 transition-colors">
+                  <TableCell className="px-3 py-2">
+                    <span className="font-mono text-xs text-gray-600">
                       {booking.id.slice(0, 8)}...
                     </span>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="px-3 py-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden flex-shrink-0">
+                      <div className="h-8 w-8 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
                         {booking.userProfileImage ? (
                           <Image
                             src={booking.userProfileImage}
@@ -222,90 +107,95 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
                             className="object-cover w-full h-full"
                           />
                         ) : (
-                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                            <span className="text-xs font-medium text-gray-600">
-                              {booking.customerName.charAt(0).toUpperCase()}
-                            </span>
+                          <div className="flex items-center justify-center w-full h-full bg-blue-600 text-white text-xs font-medium">
+                            {booking.customerName.charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
-                      <div>
-                        <div className="font-medium">{booking.customerName}</div>
-                        <div className="text-xs text-gray-500">{booking.customerEmail}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-gray-900 text-sm truncate">{booking.customerName}</div>
+                        <div className="text-xs text-gray-500 truncate">{booking.customerEmail}</div>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="px-3 py-2">
                     <div className="flex items-center gap-2">
-                      {booking.boatMainImage && (
-                        <div className="w-10 h-8 rounded overflow-hidden flex-shrink-0">
+                      <div className="h-8 w-8 rounded-md bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        {booking.boatMainImage ? (
                           <Image
                             src={booking.boatMainImage}
                             alt={booking.boatName || "Boat"}
-                            width={40}
+                            width={32}
                             height={32}
                             className="object-cover w-full h-full"
                           />
-                        </div>
-                      )}
-                      <div>
-                        <div className="font-medium">{booking.boatName || "Unknown Boat"}</div>
-                        <div className="text-xs text-gray-500 capitalize">
-                          {booking.boatCategory?.toLowerCase().replace('_', ' ') || ''}
+                        ) : (
+                          <div className="flex items-center justify-center w-full h-full bg-blue-50">
+                            <CalendarCheck className="h-4 w-4 text-blue-600" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium text-gray-900 text-sm truncate">{booking.boatName || "Unknown Boat"}</div>
+                        <div className="text-xs text-gray-500 capitalize truncate">
+                          {booking.boatCategory?.toLowerCase().replace('_', ' ') || 'No category'}
                         </div>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <CalendarCheck className="h-3 w-3 text-gray-500" />
-                      <div className="text-sm">
-                        <div>{formatDate(booking.startDate)}</div>
-                        <div className="text-xs text-gray-500">
-                          {formatTime12Hour(booking.startTime)} - {formatTime12Hour(booking.endTime)}
-                        </div>
+                  <TableCell className="px-3 py-2">
+                    <div className="text-sm">
+                      <div className="text-gray-900 font-medium">{formatDate(booking.startDate)}</div>
+                      <div className="text-xs text-gray-500">
+                        {formatTime12Hour(booking.startTime)} - {formatTime12Hour(booking.endTime)}
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <StatusBadge status={booking.bookingStatus} />
+                  <TableCell className="px-3 py-2">
+                    <FieldDropdown
+                      entity="booking"
+                      id={booking.id}
+                      field="bookingStatus"
+                      currentValue={booking.bookingStatus}
+                      size="sm"
+                    />
                   </TableCell>
-                  <TableCell>
-                    <div className="font-medium">
+                  <TableCell className="px-3 py-2">
+                    <div className="font-medium text-gray-900 text-sm">
                       {formatCurrency(booking.totalAmount)}
                     </div>
                     <div className="text-xs text-gray-500">
                       {booking.numberOfPassengers} guest{booking.numberOfPassengers !== 1 ? 's' : ''}
-                      {booking.needsCaptain && <span className="ml-2">• Captain</span>}
+                      {booking.needsCaptain && <span className="ml-1">• Captain</span>}
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <PaymentStatusBadge status={booking.paymentStatus} />
+                  <TableCell className="px-3 py-2">
+                    <FieldDropdown
+                      entity="booking"
+                      id={booking.id}
+                      field="paymentStatus"
+                      currentValue={booking.paymentStatus || "PENDING"}
+                      size="sm"
+                    />
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="px-3 py-2 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
+                        <Button variant="ghost" size="sm" className="h-7 w-7 p-0 hover:bg-gray-100 rounded-full">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Actions</span>
+                          <span className="sr-only">Open menu</span>
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
+                      <DropdownMenuContent align="end" className="w-[160px]">
                         <DropdownMenuItem asChild>
-                          <Link href={`/admin/bookings/${booking.id}`}>
-                            View Details
+                          <Link href={`/admin/bookings/${booking.id}`} className="cursor-pointer flex items-center">
+                            <CalendarCheck className="mr-2 h-4 w-4" />
+                            <span>View Details</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>
-                          <Mail className="h-4 w-4 mr-2" />
-                          Contact Customer
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>Update Status</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
-                          Cancel Booking
+                          <Mail className="mr-2 h-4 w-4" />
+                          <span>Contact Customer</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -315,7 +205,6 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
             )}
           </TableBody>
         </Table>
-      </CardContent>
-    </Card>
+      </div>
   );
 } 

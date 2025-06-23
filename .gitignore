@@ -44,4 +44,7 @@ next-env.d.ts
 
 /images/hero-video.mp4
 
+# Temporary files for MVP
+.tmp/
+
 .vercel
