@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { formatCurrency } from "@/lib/utils/general-utils";
 import { getBoatDefaultPrice, getBoatDefaultHours } from "@/lib/utils/pricing-utils";
 import { useState } from "react";
-import BookingFormToggle from "./booking-form";
+import { RequestBookingForm, InstantBookingForm } from "./booking-form";
 import { User } from "next-auth";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
@@ -75,8 +75,12 @@ export function MobileBookingBar({ boat, user }: MobileBookingBarProps) {
           </div>
 
           {/* Form Content */}
-          <div className="p-0">
-            <BookingFormToggle boat={boat} user={user} />
+          <div className="p-4">
+            {boat.instantBook ? (
+              <InstantBookingForm boat={boat} user={user} />
+            ) : (
+              <RequestBookingForm boat={boat} user={user} />
+            )}
           </div>
         </DialogContent>
       </Dialog>

@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import BoatDetails from "@/components/boats/listing/BoatDetails";
-import BookingFormToggle from "@/components/boats/listing/booking-form";
+import { RequestBookingForm, InstantBookingForm } from "@/components/boats/listing/booking-form";
 import { MobileBookingBar } from "@/components/boats/listing/MobileBookingBar";
 import { Boat } from "@/lib/types/types";
 import { ImageGallery } from "@/components/boats/listing/sub-components/ImageGallery";
@@ -61,11 +61,12 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
             {/* Desktop booking form - hidden on mobile, shown on lg+ screens */}
             <aside className="lg:col-span-4 hidden md:block">
               <div className="sticky top-24">
-                <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
-                  <BookingFormToggle 
-                    boat={boat}
-                    user={session?.user}
-                  />
+                <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                  {boat.instantBook ? (
+                    <InstantBookingForm boat={boat} user={session?.user} />
+                  ) : (
+                    <RequestBookingForm boat={boat} user={session?.user} />
+                  )}
                 </div>
               </div>
             </aside>

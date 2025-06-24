@@ -1,0 +1,32 @@
+"use client";
+
+import { FormField, FormItem, FormLabel, FormMessage, FormControl } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { Control } from "react-hook-form";
+import { BookingRequest } from "@/lib/validation/validations";
+
+interface SpecialRequestsProps {
+  control: Control<BookingRequest>;
+}
+
+export function SpecialRequests({ control }: SpecialRequestsProps) {
+  return (
+    <FormField
+      control={control}
+      name="specialRequests"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel className="text-sm font-semibold text-gray-900">Special Requests (Optional)</FormLabel>
+          <FormControl>
+            <Textarea
+              placeholder="Any special occasions, dietary restrictions, or requests?"
+              className="h-16 resize-none border-gray-300 text-sm rounded-lg focus:border-coral-500 focus:ring-2 focus:ring-coral-500/20 focus:outline-none bg-white mt-1"
+              {...field}
+            />
+          </FormControl>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+} 

@@ -17,6 +17,7 @@ const VerifyPage = () => {
   const searchParams = useSearchParams();
   const phoneParam = searchParams.get("phone") || "";
   const email = searchParams.get("email") || "";
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
   const router = useRouter();
   const { data: session, status } = useSession();
   const [isResending, setIsResending] = useState(false);
@@ -43,9 +44,9 @@ const VerifyPage = () => {
   // Redirect if user is already verified and signed in
   useEffect(() => {
     if (session?.user?.phoneVerified && status === "authenticated") {
-      router.push("/");
+      router.push(callbackUrl);
     }
-  }, [session, router, status]);
+  }, [session, router, status, callbackUrl]);
 
   const handleResendCode = async () => {
     if (!email) {
@@ -60,18 +61,17 @@ const VerifyPage = () => {
     setIsResending(true);
     
     try {
-      // Use the updated resendVerificationCode action without token
       const result = await resendVerificationCode(email);
       
       if (result.success) {
         toast({
-          title: "Success",
-          description: "A verification code has been sent to your phone.",
+          title: "Code sent",
+          description: result.data?.message || "A new verification code has been sent to your phone.",
         });
       } else {
         toast({
-          title: "Error",
-          description: result.error || "Failed to send verification code.",
+          title: "Failed to resend",
+          description: result.error || "Please try again.",
           variant: "destructive",
         });
       }
@@ -111,8 +111,8 @@ const VerifyPage = () => {
           description: result.data?.message || "Your phone number has been verified successfully.",
         });
         
-        // Redirect to the provided URL or home page
-        router.push(result.data?.redirectUrl || "/");
+        // Redirect to the callbackUrl
+        router.push(callbackUrl);
       } else {
         toast({
           title: "Verification failed",
@@ -228,24 +228,14 @@ const VerifyPage = () => {
           </form>
         </Form>
 
-        <div className="mt-8">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center">
-              <p className="text-center text-sm text-gray-600 bg-white px-4">
-                Having trouble? 
-                <button 
-                  onClick={() => router.push("/")}
-                  className="ml-1 font-medium text-primary hover:text-primary/80 transition-colors"
-                >
-                  Skip for now
-                </button>
-              </p>
-            </div>
+        {/* Small helper text for booking flow */}
+        {callbackUrl !== "/" && (
+          <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-700 text-center">
+              After verification, you'll return to complete your booking.
+            </p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

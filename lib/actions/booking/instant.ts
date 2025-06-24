@@ -83,12 +83,11 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
     // Calculate end time using the pricing tier hours
     const endTime = calculateEndTime(validatedData.startTime, pricingTier.hours);
     
-    // Calculate all fees
+    // Calculate all fees - captain service is included in base price
     const basePrice = pricingTier.price;
-    const captainFee = (validatedData.needsCaptain || boat.crewRequired) ? 100 : 0; // Fixed captain fee
+    const captainFee = 0; // Captain service is included in base price
     const cleaningFee = boat.cleaningFee || 0;
-    const serviceFee = basePrice * 0.10; // 10% service fee
-    const subtotal = basePrice + captainFee + cleaningFee + serviceFee;
+    const subtotal = basePrice + captainFee + cleaningFee;
     const taxAmount = subtotal * 0.08; // 8% tax
     const totalAmount = subtotal + taxAmount;
     
@@ -128,7 +127,7 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
         basePrice: basePrice.toString(),
         captainFee: captainFee.toString(),
         cleaningFee: cleaningFee.toString(),
-        serviceFee: serviceFee.toString(),
+        serviceFee: "0",
         taxAmount: taxAmount.toString(),
         totalAmount: totalAmount.toString(),
         depositAmount: (boat.depositAmount || 0).toString(),
@@ -167,7 +166,7 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
         // Pricing
         captainFee: captainFee,
         cleaningFee: cleaningFee,
-        serviceFee: serviceFee,
+        serviceFee: 0,
         taxAmount: taxAmount,
         totalAmount: totalAmount,
         depositAmount: boat.depositAmount || 0,

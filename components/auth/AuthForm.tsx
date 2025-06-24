@@ -24,7 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { FIELD_NAMES, FIELD_TYPES } from "@/lib/constants";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { toast } from "@/hooks/use-toast";
 import { googleSignIn } from "@/lib/actions/auth/google-auth";
@@ -44,8 +44,12 @@ const AuthForm = <T extends FieldValues>({
   onSubmit,
 }: Props<T>) => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isSignIn = type === "SIGN_IN";
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Get the callbackUrl from NextAuth standard approach
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   const form: UseFormReturn<T> = useForm({
     resolver: zodResolver(schema),
@@ -65,20 +69,31 @@ const AuthForm = <T extends FieldValues>({
             : "You have successfully signed up."),
         });
 
-        // Check if there's a redirectUrl in the response
+        // Use callbackUrl for successful auth, or action's redirectUrl for verification
         if (result.data?.redirectUrl) {
-          router.push(result.data.redirectUrl);
+          // Auth action has specific redirect (like verification page) - pass along callbackUrl
+          const verifyUrl = new URL(result.data.redirectUrl, window.location.origin);
+          if (callbackUrl !== "/") {
+            verifyUrl.searchParams.set("callbackUrl", callbackUrl);
+          }
+          router.push(verifyUrl.toString());
         } else {
-          router.push("/");
+          // Normal success - redirect to callbackUrl
+          router.push(callbackUrl);
         }
       } else {
-        // Check if there's a redirectUrl in the error response
+        // Check if there's a redirectUrl in the error response (verification required)
         if (result.data?.redirectUrl) {
           toast({
             title: "Action Required",
             description: result.data.message || result.error || "Additional action required.",
           });
-          router.push(result.data.redirectUrl);
+          // Pass callbackUrl to verification page
+          const verifyUrl = new URL(result.data.redirectUrl, window.location.origin);
+          if (callbackUrl !== "/") {
+            verifyUrl.searchParams.set("callbackUrl", callbackUrl);
+          }
+          router.push(verifyUrl.toString());
         } else {
           toast({
             title: `Error ${isSignIn ? "signing in" : "signing up"}`,
@@ -195,7 +210,7 @@ const AuthForm = <T extends FieldValues>({
             <p className="text-sm text-gray-600">
               {isSignIn ? "New to KOS Yachts? " : "Already have an account? "}
               <Link
-                href={isSignIn ? "/sign-up" : "/sign-in"}
+                href={isSignIn ? `/sign-up${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}` : `/sign-in${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
                 className="font-medium text-primary hover:text-primary/80 transition-colors"
               >
                 {isSignIn ? "Create an account" : "Sign in"}

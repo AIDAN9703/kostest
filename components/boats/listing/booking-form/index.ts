@@ -1,14 +1,14 @@
 // Main components
-export { default as BookingForm } from "./BookingForm";
-export { default as BookingFormToggle } from "./BookingFormToggle";
+export { default as RequestBookingForm } from "./RequestBookingForm";
+export { default as InstantBookingForm } from "./InstantBookingForm";
 
-// Sub-components
-export { PricingDisplay } from "./PricingDisplay";
-export { BookingDetails } from "./BookingDetails";
-export { CaptainSelection } from "./CaptainSelection";
-export { SpecialRequests } from "./SpecialRequests";
-export { PriceSummary } from "./PriceSummary";
-export { AuthModal } from "./AuthModal";
+// Hooks
+export { usePriceCalculation, useActivePricingTiers } from "./hooks/usePriceCalculation";
+export { useSimpleFormPersistence } from "./hooks/useSimpleFormPersistence";
 
-// Default export for easy importing
-export { default } from "./BookingFormToggle"; 
+// Shared components
+export { PricingDisplay } from "./shared/PricingDisplay";
+export { BookingDetails } from "./shared/BookingDetails";
+export { CaptainSelection } from "./shared/CaptainSelection";
+export { SpecialRequests } from "./shared/SpecialRequests";
+export { PriceSummary } from "./shared/PriceSummary"; 
