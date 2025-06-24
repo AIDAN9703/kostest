@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { formatCurrency } from "@/lib/utils/general-utils";
 import { getBoatDefaultPrice, getBoatDefaultHours } from "@/lib/utils/pricing-utils";
 import { useState } from "react";
-import BookingFormToggle from "./BookingFormToggle";
+import BookingFormToggle from "./booking-form";
 import { User } from "next-auth";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";

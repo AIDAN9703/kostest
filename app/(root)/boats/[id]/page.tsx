@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import BoatDetails from "@/components/boats/listing/BoatDetails";
-import BookingFormToggle from "@/components/boats/listing/BookingFormToggle";
+import BookingFormToggle from "@/components/boats/listing/booking-form";
 import { MobileBookingBar } from "@/components/boats/listing/MobileBookingBar";
 import { Boat } from "@/lib/types/types";
 import { ImageGallery } from "@/components/boats/listing/sub-components/ImageGallery";
