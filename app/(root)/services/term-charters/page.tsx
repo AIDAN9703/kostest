@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   description: 'Extended yacht and boat charters for weeks or months with premium vessels and personalized service.',
 }
 
+// Force static generation - this page has no dynamic content
+export const dynamic = 'force-static';
+
 export default function TermChartersPage() {
   return (
     <ServicePageTemplate 

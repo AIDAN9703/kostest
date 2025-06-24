@@ -1,9 +1,10 @@
-'use client'
-
 import React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Mail, Phone, Globe, Shield, Eye, Lock, Users, MessageCircle } from 'lucide-react'
+
+// Force static generation - this policy page has no dynamic content
+export const dynamic = 'force-static';
 
 export default function PrivacyPage() {
   return (

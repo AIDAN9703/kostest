@@ -1,10 +1,11 @@
-'use client'
-
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Calendar, User, ArrowRight, Instagram, ExternalLink } from 'lucide-react'
+
+// Force static generation - this news page has no dynamic content (using static news items)
+export const dynamic = 'force-static';
 
 // Sample news/blog posts - replace with real content management system later
 const newsItems = [

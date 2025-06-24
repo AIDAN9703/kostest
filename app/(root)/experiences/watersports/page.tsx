@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   description: "Experience thrilling water sports activities with our premium charter boats and professional guides.",
 };
 
+// Force static generation - this page has no dynamic content
+export const dynamic = 'force-static';
+
 // Related experiences
 const relatedExperiences = [
   {

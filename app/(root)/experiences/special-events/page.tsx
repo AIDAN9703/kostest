@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: "Host unforgettable special events and celebrations on our luxury charter boats.",
 };
 
+// Force static generation - this page has no dynamic content
+export const dynamic = 'force-static';
 
 // FAQs
 const faqs = [

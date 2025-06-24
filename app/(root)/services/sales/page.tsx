@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   description: 'Professional boat and yacht sales and purchase services with industry experts to guide you through every step.',
 }
 
+// Force static generation - this page has no dynamic content
+export const dynamic = 'force-static';
+
 export default function SalesPage() {
   return (
     <ServicePageTemplate 

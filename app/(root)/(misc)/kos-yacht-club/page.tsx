@@ -1,10 +1,11 @@
-'use client'
-
 import React from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Mail, ArrowRight } from 'lucide-react'
+
+// Force static generation - this coming soon page has no dynamic content
+export const dynamic = 'force-static';
 
 export default function KOSYachtClubPage() {
   return (

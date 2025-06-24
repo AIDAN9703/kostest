@@ -1,9 +1,10 @@
-'use client'
-
 import React from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowRight, Mail, Phone, MessageCircle } from 'lucide-react'
+
+// Force static generation - this FAQ page has no dynamic content
+export const dynamic = 'force-static';
 
 const faqItems = [
   {

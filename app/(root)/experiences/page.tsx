@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   description: "Discover unforgettable luxury yacht experiences in premium destinations. From fishing charters to celebration cruises.",
 };
 
+// Force static generation - this page has no dynamic content
+export const dynamic = 'force-static';
+
 // Define all experience types with their details
 const experiences = [
   {
@@ -39,12 +42,12 @@ const experiences = [
     category: "Relaxation"
   },
   {
-    id: "celebrations",
-    title: "Celebrations & Events",
+    id: "special-events",
+    title: "Special Events & Celebrations",
     description: "Host your special occasions on the water for truly unforgettable memories.",
     image: "/images/experiences/birthday.png",
     imageAlt: "Yacht celebration party",
-    href: "/experiences/celebrations",
+    href: "/experiences/special-events",
     category: "Events"
   },
   {

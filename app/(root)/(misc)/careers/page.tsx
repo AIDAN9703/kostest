@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description: 'Join the KOS team and help us deliver exceptional yacht and boating experiences. Explore career opportunities in the marine industry.',
 }
 
+// Force static generation - this careers page has no dynamic content
+export const dynamic = 'force-static';
+
 export default function CareersPage() {
   return (
     <div className="w-full">

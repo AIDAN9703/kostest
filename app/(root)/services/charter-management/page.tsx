@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   description: 'Professional charter management services for boat and yacht owners looking to maximize their investment.',
 }
 
+// Force static generation - this page has no dynamic content
+export const dynamic = 'force-static';
+
 export default function CharterManagementPage() {
   return (
     <ServicePageTemplate 

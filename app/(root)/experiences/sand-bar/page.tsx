@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   description: "Explore pristine sandbars and shallow water paradises with our luxury boat charters.",
 };
 
+// Force static generation - this page has no dynamic content
+export const dynamic = 'force-static';
+
 // Related experiences
 const relatedExperiences = [
   {

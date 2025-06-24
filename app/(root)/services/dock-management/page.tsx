@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   description: 'Professional dock and marina management services for property owners and associations.',
 }
 
+// Force static generation - this page has no dynamic content
+export const dynamic = 'force-static';
+
 export default function DockManagementPage() {
   return (
     <ServicePageTemplate 

@@ -48,3 +48,6 @@ next-env.d.ts
 .tmp/
 
 .vercel
+
+# TODO files (local development notes)
+TODO-AUTH-MODERNIZATION.md

@@ -9,6 +9,9 @@ import Google from "next-auth/providers/google"
 // Debug log for environment
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // Required for build-time static generation to prevent UntrustedHost errors
+  // Vercel automatically sets AUTH_TRUST_HOST=true in production for security
+  trustHost: true,
   session: {
     strategy: "jwt",
     maxAge: 24 * 60 * 60, // 24 hours (1 day)

@@ -10,6 +10,9 @@ export const metadata: Metadata = {
   description: "Experience world-class deep sea fishing with professional guides, premium equipment, and luxury vessels in Miami's best fishing grounds.",
 };
 
+// Force static generation - this page has no dynamic content
+export const dynamic = 'force-static';
+
 // Related experiences
 const relatedExperiences = [
   {

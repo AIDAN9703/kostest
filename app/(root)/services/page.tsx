@@ -1,238 +1,269 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, CheckCircle, Shield, Award } from 'lucide-react'
+import { ArrowRight, CheckCircle, Shield, Award, Anchor, Users, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export const metadata: Metadata = {
-  title: 'Our Services | KOS',
-  description: 'Comprehensive boating and yacht services including charter management, yacht management, sales, term charters, and dock management.',
+  title: 'Professional Marine Services | KOSyachts',
+  description: 'Comprehensive yacht and boat services including charter management, yacht management, sales, term charters, and dock management in Miami.',
 }
 
-interface ServiceCardProps {
-  title: string
-  description: string
-  image: string
-  href: string
-  index: number
-}
+// Force static generation - this page has no dynamic content
+export const dynamic = 'force-static';
 
-const ServiceCard = ({ title, description, image, href, index }: ServiceCardProps) => (
-  <div 
-    className="group relative h-[400px] rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 animate-fade-in-up"
-    style={{ animationDelay: `${index * 100}ms` }}
-  >
-    <Image 
-      src={image} 
-      alt={title}
-      fill
-      className="object-cover transition-transform duration-700 group-hover:scale-110"
-    />
-    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
-    <div className="absolute inset-0 flex flex-col justify-end p-8">
-      <h3 className="text-2xl font-medium text-white mb-3 font-poppins">{title}</h3>
-      <p className="text-white/90 mb-6 leading-relaxed">{description}</p>
-      <Link href={href}>
-        <Button variant="outline" className="text-white border-white/50 hover:bg-white hover:text-primary group/btn">
-          Learn More
-          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
-        </Button>
-      </Link>
-    </div>
-  </div>
-)
+// Define all services with their details
+const services = [
+  {
+    id: "charter-management",
+    title: "Charter Management",
+    description: "Turn your vessel into a revenue-generating asset with our comprehensive charter management services.",
+    image: "/images/services/charter-management.jpg",
+    href: "/services/charter-management",
+    category: "Management"
+  },
+  {
+    id: "yacht-management", 
+    title: "Yacht Management",
+    description: "Complete yacht care and maintenance solutions for owners seeking peace of mind.",
+    image: "/images/services/yacht-management.jpg",
+    href: "/services/yacht-management",
+    category: "Management"
+  },
+  {
+    id: "sales",
+    title: "Sales & Brokerage",
+    description: "Expert guidance for buying or selling vessels with professional representation.",
+    image: "/images/services/sales.jpg",
+    href: "/services/sales",
+    category: "Sales"
+  },
+  {
+    id: "term-charters",
+    title: "Term Charters",
+    description: "Extended luxury voyages with premium vessels and professional crews.",
+    image: "/images/services/term-charters.jpg",
+    href: "/services/term-charters",
+    category: "Charter"
+  },
+  {
+    id: "dock-management",
+    title: "Dock Management",
+    description: "Professional management services for private docks and marina facilities.",
+    image: "/images/services/dock-management.jpg",
+    href: "/services/dock-management",
+    category: "Management"
+  }
+];
 
 export default function ServicesPage() {
-  const services = [
-    {
-      title: "Charter Management",
-      description: "Turn your vessel into a revenue-generating asset with our comprehensive charter management services.",
-      image: "/images/herooption4.jpg",
-      href: "/services/charter-management"
-    },
-    {
-      title: "Yacht Management",
-      description: "Comprehensive yacht management solutions for owners seeking peace of mind and pristine vessel condition.",
-      image: "/images/herooption13.jpeg",
-      href: "/services/yacht-management"
-    },
-    {
-      title: "Sales & Purchase",
-      description: "Expert guidance for buying or selling your vessel with professional representation at every step.",
-      image: "/images/herooption6.png",
-      href: "/services/sales"
-    },
-    {
-      title: "Term Charters",
-      description: "Experience extended time on the water with our premium term charter options for weeks or months.",
-      image: "/images/heroaerial1.jpeg",
-      href: "/services/term-charters"
-    },
-    {
-      title: "Dock Management",
-      description: "Professional management services for private docks, marinas, and waterfront properties.",
-      image: "/images/herooption16.jpeg",
-      href: "/services/dock-management"
-    }
-  ]
-  
   return (
-    <div className="w-full">
-      {/* Hero Section - Matching new template style */}
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
       <section className="relative w-full h-[75vh] sm:h-[80vh] overflow-hidden">
+        {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
-            src="/images/herooption9.png"
-            alt="KOS Services"
+            src="/images/services/services-hero.jpg"
+            alt="Professional marine services"
             fill
             className="object-cover"
             priority
             quality={90}
+            sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/80 opacity-50" />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60" />
         </div>
-        
-        <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-4xl mx-auto font-poppins text-white">
-            <span className="inline-block text-white/90 text-sm font-medium mb-4 tracking-wide uppercase animate-fade-in-up">
-              Professional Marine Services
-            </span>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold mb-6 leading-tight animate-fade-in-up [animation-delay:200ms]">
-              Our Services
-            </h1>
-            <p className="text-white/90 max-w-2xl mx-auto text-lg md:text-xl lg:text-2xl mb-8 leading-relaxed animate-fade-in-up [animation-delay:400ms]">
-              Comprehensive boating services tailored to enhance your maritime experience.
-            </p>
-            <div className="animate-fade-in-up [animation-delay:600ms]">
-              <Link href="#services">
-                <Button className="bg-gradient-to-r from-sky-400 to-emerald-400 hover:from-sky-500 hover:to-emerald-500 text-white border-0 group">
-                  Explore Services
-                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+
+        {/* Hero Content */}
+        <div className="relative z-10 h-full flex flex-col justify-center px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto w-full">
+            <div className="max-w-3xl text-white">
+              <span className="inline-block text-white text-xs font-medium mb-2 tracking-wide uppercase animate-fade-in-up drop-shadow-md">
+                Professional Marine Services
+              </span>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-medium mb-4 leading-tight animate-fade-in-up [animation-delay:100ms] drop-shadow-lg">
+                Complete Service Portfolio
+              </h1>
+              <p className="text-white/90 text-base md:text-lg mb-5 leading-relaxed animate-fade-in-up [animation-delay:200ms] font-light drop-shadow-md max-w-2xl">
+                From yacht management to charter services, we provide comprehensive marine solutions tailored to enhance your boating experience.
+              </p>
+              <div className="flex flex-wrap gap-3 animate-fade-in-up [animation-delay:300ms]">
+                <Button 
+                  size="default" 
+                  variant="outline"
+                  className="text-white border-white/40 hover:bg-white/10 px-6 py-2.5 text-sm font-medium"
+                  asChild
+                >
+                  <Link href="#services">
+                    Explore Services
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
                 </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Services Grid - Enhanced Design */}
-      <section id="services" className="py-16 md:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16 animate-fade-in-up">
-            <span className="text-primary font-medium text-sm tracking-wide uppercase">How We Can Help</span>
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary font-poppins">
-              Complete Service Portfolio
-            </h2>
-            <p className="text-gray-600 max-w-3xl mx-auto text-lg">
-              From yacht management to sales and charters, we offer a complete range of premium marine services.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {services.slice(0, 2).map((service, index) => (
-              <ServiceCard 
-                key={index}
-                title={service.title}
-                description={service.description}
-                image={service.image}
-                href={service.href}
-                index={index}
-              />
-            ))}
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {services.slice(2).map((service, index) => (
-              <ServiceCard 
-                key={index + 2}
-                title={service.title}
-                description={service.description}
-                image={service.image}
-                href={service.href}
-                index={index + 2}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Why Choose KOS - Redesigned */}
-      <section className="py-16 md:py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="animate-fade-in-left">
-              <span className="text-primary font-medium text-sm tracking-wide uppercase">The KOS Difference</span>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-8 text-primary font-poppins leading-tight">
-                Why Choose Our Services
-              </h2>
-              
-              <div className="space-y-6">
-                {[
-                  {
-                    icon: Shield,
-                    title: "Industry Expertise",
-                    description: "Our team brings decades of combined experience in the marine industry, ensuring exceptional service quality."
-                  },
-                  {
-                    icon: Award,
-                    title: "Premium Quality",
-                    description: "We never compromise on quality, delivering excellence in every aspect of our service offerings."
-                  },
-                  {
-                    icon: CheckCircle,
-                    title: "Detail-Oriented",
-                    description: "Our meticulous attention to detail ensures your needs are met with precision and care."
-                  }
-                ].map((feature, index) => (
-                  <div 
-                    key={index}
-                    className="flex gap-4 animate-fade-in-up"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <div className="w-12 h-12 flex-shrink-0 bg-gradient-to-r from-sky-100 to-emerald-100 rounded-full flex items-center justify-center">
-                      <feature.icon className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-medium mb-2 text-primary font-poppins">{feature.title}</h3>
-                      <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
-            
-            <div className="relative h-[500px] md:h-[600px] rounded-2xl overflow-hidden shadow-xl animate-fade-in-right">
-              <Image
-                src="/images/boats/beach.jpg"
-                alt="Premium yacht services"
-                fill
-                className="object-cover"
-                quality={90}
-              />
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Call to Action */}
-      <section className="py-16 md:py-24 bg-primary text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/90"></div>
-        
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 animate-fade-in-up">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 font-poppins">Ready to Get Started?</h2>
-          <p className="text-white/85 max-w-2xl mx-auto mb-10 text-lg leading-relaxed">
-            Contact our team today to discuss how our services can enhance your boating experience.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link href="/contact">
-              <Button variant="secondary" className="group bg-white text-primary hover:bg-gray-100">
-                Contact Us Today
-                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+      {/* Services Section */}
+      <section id="services" className="py-16 md:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Section Header */}
+          <div className="text-center mb-12 animate-fade-in-up">
+            <span className="text-primary font-medium text-sm tracking-wide uppercase">Our Services</span>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
+              Professional Marine Solutions
+            </h2>
+            <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light leading-relaxed">
+              We offer a comprehensive range of professional marine services designed to meet every aspect of your boating needs.
+            </p>
+          </div>
+          
+          {/* Services Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {services.map((service, index) => (
+              <Link 
+                key={service.id}
+                href={service.href}
+                className="group block"
+              >
+                <div className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full overflow-hidden">
+                  {/* Image */}
+                  <div className="relative h-[300px] md:h-[350px]">
+                    <Image
+                      src={service.image}
+                      alt={service.title}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      quality={90}
+                    />
+                    
+                    {/* Simple Logo Overlay */}
+                    <div className="absolute top-6 left-6">
+                      <Image
+                        src="/icons/kosupdatedlogo.webp"
+                        alt="KOS Logo"
+                        width={60}
+                        height={60}
+                        className="object-contain"
+                      />
+                    </div>
+
+                    {/* Category Badge */}
+                    <div className="absolute top-6 right-6">
+                      <span className="bg-white text-primary text-sm font-medium px-3 py-1 rounded-full shadow-sm">
+                        {service.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6 md:p-8">
+                    <h3 className="text-2xl md:text-3xl font-medium text-primary mb-3 leading-tight">
+                      {service.title}
+                    </h3>
+                    <p className="text-gray-600 font-light leading-relaxed text-sm md:text-base mb-4">
+                      {service.description}
+                    </p>
+                    <div className="flex items-center text-primary font-medium group-hover:text-primary/80 transition-colors">
+                      <span className="text-sm">Learn More</span>
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose KOS Section */}
+      <section className="py-16 md:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 animate-fade-in-up">
+            <span className="text-primary font-medium text-sm tracking-wide uppercase">Why Choose KOS</span>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
+              The KOS Difference
+            </h2>
+            <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light leading-relaxed">
+              Our commitment to excellence and attention to detail sets us apart in the marine services industry.
+            </p>
+          </div>
+          
+          {/* Benefits Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: <Shield className="h-6 w-6" />,
+                title: "Industry Expertise",
+                description: "Decades of combined experience in marine services and yacht management"
+              },
+              {
+                icon: <Star className="h-6 w-6" />,
+                title: "Premium Quality", 
+                description: "Uncompromising standards in every aspect of our service delivery"
+              },
+              {
+                icon: <Users className="h-6 w-6" />,
+                title: "Personalized Service",
+                description: "Tailored solutions designed to meet your specific needs and preferences"
+              }
+            ].map((benefit, index) => (
+              <div 
+                key={index} 
+                className="text-center animate-fade-in-up"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <div className="bg-primary/5 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                  <div className="text-primary">
+                    {benefit.icon}
+                  </div>
+                </div>
+                <h3 className="text-xl font-medium text-primary mb-3">{benefit.title}</h3>
+                <p className="text-gray-600 font-light leading-relaxed">{benefit.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 md:py-20 bg-white">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-lg p-8 md:p-12 shadow-sm border border-gray-100 text-center">
+            <h2 className="text-3xl md:text-4xl font-medium text-primary mb-6">
+              Ready to Experience Premium Service?
+            </h2>
+            <p className="text-gray-600 mb-8 text-lg font-light max-w-2xl mx-auto leading-relaxed">
+              Contact our experienced team to discuss how our professional marine services can enhance your boating lifestyle.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg" 
+                className="bg-primary hover:bg-primary/90 text-white font-medium px-8 py-3"
+                asChild
+              >
+                <Link href="/contact">
+                  Contact Our Team
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
               </Button>
-            </Link>
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="border-primary text-primary hover:bg-primary hover:text-white font-medium px-8 py-3"
+                asChild
+              >
+                <Link href="/boats/search">
+                  Browse Our Fleet
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
     </div>
-  )
+  );
 } 
