@@ -1,13 +1,59 @@
 import { auth } from "@/auth";
 import { db } from "@/database/db";
-import { users } from "@/database/schema";
-import { eq } from "drizzle-orm";
+import { users, bookings, boats } from "@/database/schema";
+import { eq, desc, and, gte, lt } from "drizzle-orm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookingCard, Booking } from "@/components/profile/BookingCard";
 import { CalendarDays, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+
+// Transform database booking to BookingCard format
+function transformBooking(dbBooking: any): Booking {
+  return {
+    id: dbBooking.id,
+    boatName: dbBooking.boatName || 'Unknown Boat',
+    boatType: dbBooking.boatCategory || 'Yacht',
+    date: new Date(dbBooking.startDate).toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    }),
+    duration: calculateDuration(dbBooking.startTime, dbBooking.endTime),
+    location: dbBooking.pickupLocation || 'Marina',
+    guests: dbBooking.numberOfPassengers,
+    captain: dbBooking.needsCaptain,
+    price: dbBooking.totalAmount || 0,
+    status: getBookingDisplayStatus(dbBooking.bookingStatus),
+    image: dbBooking.boatMainImage || '/images/boats/yacht1.jpg'
+  };
+}
+
+// Calculate duration in hours from start and end time
+function calculateDuration(startTime: string, endTime: string): number {
+  const start = new Date(`2000-01-01 ${startTime}`);
+  const end = new Date(`2000-01-01 ${endTime}`);
+  const diffMs = end.getTime() - start.getTime();
+  return Math.round(diffMs / (1000 * 60 * 60)); // Convert to hours
+}
+
+// Map database status to display status
+function getBookingDisplayStatus(dbStatus: string): string {
+  const statusMap: Record<string, string> = {
+    'PENDING': 'pending',
+    'APPROVED': 'confirmed',
+    'AWAITING_PAYMENT': 'pending',
+    'CONFIRMED': 'confirmed',
+    'DENIED': 'cancelled',
+    'EXPIRED': 'cancelled',
+    'CANCELLED': 'cancelled',
+    'COMPLETED': 'completed',
+    'REFUNDED': 'cancelled'
+  };
+  return statusMap[dbStatus] || 'pending';
+}
 
 export default async function BookingsPage() {
   const session = await auth();
@@ -25,10 +71,48 @@ export default async function BookingsPage() {
 
   const user = userData[0] || null;
 
-  // Empty bookings array
-  const bookings: Booking[] = [];
-  const upcomingBookings: Booking[] = [];
-  const pastBookings: Booking[] = [];
+  // Fetch all bookings for the user with boat information
+  const userBookingsData = await db
+    .select({
+      // Booking fields
+      id: bookings.id,
+      bookingStatus: bookings.bookingStatus,
+      startDate: bookings.startDate,
+      endDate: bookings.endDate,
+      startTime: bookings.startTime,
+      endTime: bookings.endTime,
+      numberOfPassengers: bookings.numberOfPassengers,
+      needsCaptain: bookings.needsCaptain,
+      totalAmount: bookings.totalAmount,
+      pickupLocation: bookings.pickupLocation,
+      createdAt: bookings.createdAt,
+      
+      // Boat information
+      boatName: boats.name,
+      boatCategory: boats.category,
+      boatMainImage: boats.mainImage,
+    })
+    .from(bookings)
+    .leftJoin(boats, eq(bookings.boatId, boats.id))
+    .where(eq(bookings.userId, session.user.id))
+    .orderBy(desc(bookings.startDate));
+
+  // Transform bookings to match BookingCard interface
+  const allBookings: Booking[] = userBookingsData.map(transformBooking);
+
+  // Categorize bookings
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const upcomingBookings = allBookings.filter(booking => {
+    const bookingDate = new Date(booking.date);
+    return bookingDate >= today && ['confirmed', 'pending'].includes(booking.status);
+  });
+
+  const pastBookings = allBookings.filter(booking => {
+    const bookingDate = new Date(booking.date);
+    return bookingDate < today || booking.status === 'completed';
+  });
 
   return (
     <div className="p-4 pt-16 md:p-6 lg:pt-6 space-y-6 animate-fadeIn">  
@@ -41,65 +125,89 @@ export default async function BookingsPage() {
             Past ({pastBookings.length})
           </TabsTrigger>
           <TabsTrigger value="all" className="text-xs sm:text-sm">
-            All ({bookings.length})
+            All ({allBookings.length})
           </TabsTrigger>
         </TabsList>
         
         <TabsContent value="upcoming" className="animate-fadeIn">
-          <Card className="border-dashed border-gray-200 bg-white">
-            <CardContent className="py-8 flex flex-col items-center justify-center text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
-                <CalendarDays className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-base font-medium text-gray-900">No upcoming bookings</h3>
-              <p className="text-sm text-gray-500 max-w-md mt-1 mb-4">
-                You don't have any upcoming boat reservations. Browse boats and book your next adventure!
-              </p>
-              <Button className="bg-primary text-white" size="sm" asChild>
-                <Link href="/boats">
-                  Browse Boats
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          {upcomingBookings.length > 0 ? (
+            <div className="space-y-4">
+              {upcomingBookings.map((booking) => (
+                <BookingCard key={booking.id} booking={booking} />
+              ))}
+            </div>
+          ) : (
+            <Card className="border-dashed border-gray-200 bg-white">
+              <CardContent className="py-8 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                  <CalendarDays className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-base font-medium text-gray-900">No upcoming bookings</h3>
+                <p className="text-sm text-gray-500 max-w-md mt-1 mb-4">
+                  You don't have any upcoming boat reservations. Browse boats and book your next adventure!
+                </p>
+                <Button className="bg-primary text-white" size="sm" asChild>
+                  <Link href="/boats">
+                    Browse Boats
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
         
         <TabsContent value="past" className="animate-fadeIn">
-          <Card className="border-dashed border-gray-200 bg-white">
-            <CardContent className="py-8 flex flex-col items-center justify-center text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
-                <CalendarDays className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-base font-medium text-gray-900">No past bookings</h3>
-              <p className="text-sm text-gray-500 max-w-md mt-1 mb-4">
-                You don't have any past boat reservations. Book your first boat adventure!
-              </p>
-              <Button className="bg-primary text-white" size="sm" asChild>
-                <Link href="/boats">
-                  Browse Boats
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          {pastBookings.length > 0 ? (
+            <div className="space-y-4">
+              {pastBookings.map((booking) => (
+                <BookingCard key={booking.id} booking={booking} />
+              ))}
+            </div>
+          ) : (
+            <Card className="border-dashed border-gray-200 bg-white">
+              <CardContent className="py-8 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                  <CalendarDays className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-base font-medium text-gray-900">No past bookings</h3>
+                <p className="text-sm text-gray-500 max-w-md mt-1 mb-4">
+                  You don't have any past boat reservations. Book your first boat adventure!
+                </p>
+                <Button className="bg-primary text-white" size="sm" asChild>
+                  <Link href="/boats">
+                    Browse Boats
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
         
         <TabsContent value="all" className="animate-fadeIn">
-          <Card className="border-dashed border-gray-200 bg-white">
-            <CardContent className="py-8 flex flex-col items-center justify-center text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
-                <CalendarDays className="h-6 w-6 text-primary" />
-              </div>
-              <h3 className="text-base font-medium text-gray-900">No bookings found</h3>
-              <p className="text-sm text-gray-500 max-w-md mt-1 mb-4">
-                You haven't made any boat reservations yet. Start exploring available boats!
-              </p>
-              <Button className="bg-primary text-white" size="sm" asChild>
-                <Link href="/boats">
-                  Browse Boats
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          {allBookings.length > 0 ? (
+            <div className="space-y-4">
+              {allBookings.map((booking) => (
+                <BookingCard key={booking.id} booking={booking} />
+              ))}
+            </div>
+          ) : (
+            <Card className="border-dashed border-gray-200 bg-white">
+              <CardContent className="py-8 flex flex-col items-center justify-center text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                  <CalendarDays className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-base font-medium text-gray-900">No bookings found</h3>
+                <p className="text-sm text-gray-500 max-w-md mt-1 mb-4">
+                  You haven't made any boat reservations yet. Start exploring available boats!
+                </p>
+                <Button className="bg-primary text-white" size="sm" asChild>
+                  <Link href="/boats">
+                    Browse Boats
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>

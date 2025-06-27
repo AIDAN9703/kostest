@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn, throttle } from '@/lib/utils/general-utils'
 import Image from 'next/image'
-import { Session } from 'next-auth'
+import { useSession } from 'next-auth/react'
 import { useSearchStore } from '@/store/useSearchStore'
 import { AnimatePresence } from 'framer-motion'
 
@@ -19,7 +19,8 @@ import SearchBar from '@/components/navigation/sub-components/SearchBar'
 // Move navigation data to a separate file
 import { navigationData, quickLinks, featuredItems } from '@/lib/constants/navigation-data'
 
-const Navigation = ({ session }: { session: Session | null }) => {
+const Navigation = () => {
+    const { data: session } = useSession()
     const pathname = usePathname()
     const router = useRouter()
     const [scrolled, setScrolled] = useState(false)

@@ -233,7 +233,7 @@ const DashboardSkeleton = () => (
 
 export default async function ProfilePage() {
   const session = await auth();
-  
+
   if (!session?.user?.id) {
     return null;
   }
@@ -242,7 +242,7 @@ export default async function ProfilePage() {
   const userData = await db
     .select()
     .from(users)
-    .where(eq(users.id, session.user.id))
+    .where(eq(users.id, session?.user?.id || ''))
     .limit(1);
 
   const user = userData[0] || null;

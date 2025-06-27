@@ -28,16 +28,10 @@ export default async function ProfileLayout({
   children: ReactNode;
 }) {
   try {
-    const session = await auth();
-
-    // Redirect to sign-in if not authenticated
-    if (!session?.user) {
-      redirect("/sign-in");
-    }
 
     return (
       <>
-        <Navigation session={session} />
+        <Navigation />
         <div className="min-h-screen pt-20 pb-8 max-w-6xl mx-auto px-4 sm:px-6">
           <BackToDashboard />
           <main className="min-h-screen mt-4">

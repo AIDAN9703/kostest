@@ -13,7 +13,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 
 // Component Imports
-import BookingTimer from "./BookingTimer";
 import BoatSummary from "./BoatSummary";
 import BookingAuthFlow from "./BookingAuthFlow";
 import PricingSummary from "./PricingSummary";
@@ -237,16 +236,12 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       <div className="max-w-md mx-auto px-4 py-6">
         <div className="space-y-6">
-          {/* Timer Component */}
-          {bookingState.timeLeft > 0 && (
-            <BookingTimer timeLeft={bookingState.timeLeft} />
-          )}
-
-          {/* Boat Summary Component */}
+          {/* Boat Summary Component with integrated timer */}
           <BoatSummary 
             boat={boat}
             bookingData={data}
             selectedTier={selectedTier}
+            timeLeft={bookingState.timeLeft}
           />
 
           {/* Authentication Flow Component */}
@@ -277,7 +272,7 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
 
           {/* Communication Preferences */}
           {isAuthenticated && (
-            <div className="py-4 px-6 bg-white/60 backdrop-blur-sm rounded-xl">
+            <div className=" bg-white/60 backdrop-blur-sm rounded-xl">
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Checkbox

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -10,9 +10,9 @@ import { toast } from "@/hooks/use-toast";
 import { signIn } from "next-auth/react";
 import { Loader2, Phone, CheckCircle, User } from "lucide-react";
 import Image from "next/image";
+import { z } from "zod";
 
-// Import existing server actions and schemas
-import { phoneVerificationSchema, signUpSchema, signInSchema } from "@/lib/validation/validations";
+// Import existing server actions
 import { sendOtpToPhoneNumber } from "@/lib/actions/auth/verification";
 import { handlePhoneAndOtpForBooking, completeUserAccountAfterVerification, signInAction } from "@/lib/actions/auth/auth";
 import { googleSignIn } from "@/lib/actions/auth/google-auth";
@@ -23,50 +23,42 @@ interface BookingAuthFlowProps {
   onAuthComplete: (user: any) => void;
 }
 
-interface PhoneFormData {
-  phoneNumber: string;
-}
+// Simple schemas for each step
+const phoneSchema = z.object({
+  phoneNumber: z.string().min(10, "Phone number must be at least 10 digits")
+});
 
-interface VerificationFormData {
-  phoneNumber: string;
-  verificationCode: string;
-}
+const verificationSchema = z.object({
+  verificationCode: z.string().length(6, "Verification code must be 6 digits")
+});
 
-interface UserDetailsFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  birthday: string;
-}
+const userDetailsSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  birthday: z.string().min(1, "Birthday is required")
+});
 
-interface SignInFormData {
-  email: string;
-  password: string;
-}
+const signInSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(1, "Password is required")
+});
 
 export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps) {
   const [authStep, setAuthStep] = useState<AuthStep>('choice');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasExistingAccount, setHasExistingAccount] = useState(false);
 
-  // Phone number form
-  const phoneForm = useForm<PhoneFormData>({
-    resolver: zodResolver(phoneVerificationSchema.pick({ phoneNumber: true })),
+  // Separate forms for each step
+  const phoneForm = useForm({
+    resolver: zodResolver(phoneSchema),
     defaultValues: { phoneNumber: '' }
   });
 
-  // Verification form  
-  const verificationForm = useForm<VerificationFormData>({
-    resolver: zodResolver(phoneVerificationSchema),
-    defaultValues: { phoneNumber: '', verificationCode: '' },
-    mode: "onChange"
-  });
-
-  // User details form (sign up)
-  const userDetailsForm = useForm<UserDetailsFormData>({
-    resolver: zodResolver(signUpSchema.omit({ phoneNumber: true, rememberMe: true })),
+  const userDetailsForm = useForm({
+    resolver: zodResolver(userDetailsSchema),
     defaultValues: {
       firstName: '',
       lastName: '',
@@ -76,22 +68,10 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
     }
   });
 
-  // Sign in form
-  const signInForm = useForm<SignInFormData>({
-    resolver: zodResolver(signInSchema.omit({ rememberMe: true })),
+  const signInForm = useForm({
+    resolver: zodResolver(signInSchema),
     defaultValues: { email: '', password: '' }
   });
-
-  // Ensure verification code field is clean when entering verify step
-  useEffect(() => {
-    if (authStep === 'verify') {
-      // Small delay to ensure form is ready
-      setTimeout(() => {
-        verificationForm.setValue('verificationCode', '');
-        verificationForm.clearErrors('verificationCode');
-      }, 100);
-    }
-  }, [authStep, verificationForm]);
 
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
@@ -111,20 +91,15 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
     }
   };
 
-  const handlePhoneSubmit = async (data: PhoneFormData) => {
+  const handlePhoneSubmit = async (data: { phoneNumber: string }) => {
     setIsSubmitting(true);
     try {
       setPhoneNumber(data.phoneNumber);
       
-      // Use existing server action to send verification code
       const result = await sendOtpToPhoneNumber(data.phoneNumber);
       
       if (result.success) {
-        // Reset the verification form completely and set only the phone number
-        verificationForm.reset({
-          phoneNumber: data.phoneNumber,
-          verificationCode: ''
-        });
+        setVerificationCode(''); // Clear verification code state
         setAuthStep('verify');
         toast({
           title: "Code sent",
@@ -149,11 +124,12 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
     }
   };
 
-  const handleVerificationSubmit = async (data: VerificationFormData) => {
+  const handleVerificationSubmit = async () => {
+    if (verificationCode.length !== 6) return;
+    
     setIsSubmitting(true);
     try {
-      // Use existing server action to verify OTP
-      const result = await handlePhoneAndOtpForBooking(data.phoneNumber, data.verificationCode);
+      const result = await handlePhoneAndOtpForBooking(phoneNumber, verificationCode);
       
       if (result.success) {
         if (result.data?.existingUser) {
@@ -191,10 +167,9 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
     }
   };
 
-  const handleUserDetailsSubmit = async (data: UserDetailsFormData) => {
+  const handleUserDetailsSubmit = async (data: z.infer<typeof userDetailsSchema>) => {
     setIsSubmitting(true);
     try {
-      // Use existing function to complete user account after phone verification
       const result = await completeUserAccountAfterVerification(phoneNumber, data);
       
       if (result.success) {
@@ -205,9 +180,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
           description: "Your account has been created successfully",
         });
       } else {
-        // Handle case where user might already exist
         if (result.error?.includes("already exists")) {
-          setHasExistingAccount(true);
           setAuthStep('sign-in');
           toast({
             title: "Account exists",
@@ -233,34 +206,24 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
     }
   };
 
-  const handleSignInSubmit = async (data: SignInFormData) => {
+  const handleSignInSubmit = async (data: z.infer<typeof signInSchema>) => {
     setIsSubmitting(true);
     try {
       const result = await signInAction(data);
       
       if (result.success) {
         setAuthStep('complete');
-        // For sign in, we don't get the user object directly, but the session is established
-        // We'll pass a basic user object to indicate success
         onAuthComplete({ authenticated: true });
         toast({
           title: "Welcome back!",
           description: "You have been successfully signed in",
         });
       } else {
-        if (result.data?.redirectUrl) {
-          toast({
-            title: "Verification required",
-            description: result.data.message || "Please verify your phone number",
-          });
-          // Could redirect to verification page or handle inline
-        } else {
-          toast({
-            title: "Sign in failed",
-            description: result.error || "Please check your credentials",
-            variant: "destructive"
-          });
-        }
+        toast({
+          title: "Sign in failed",
+          description: result.error || "Please check your credentials",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Sign in error:', error);
@@ -274,7 +237,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
     }
   };
 
-  // Choice Step - Google or Phone
+  // Choice Step
   if (authStep === 'choice') {
     return (
       <div className="py-4">
@@ -388,7 +351,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
     );
   }
 
-  // Verification Step
+  // Verification Step - Simple input box, no form
   if (authStep === 'verify') {
     return (
       <div className="py-4">
@@ -398,82 +361,64 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
           <p className="text-sm font-medium text-gray-900">{phoneNumber}</p>
         </div>
         
-        <Form {...verificationForm}>
-          <form onSubmit={verificationForm.handleSubmit(handleVerificationSubmit)} className="space-y-4">
-            <FormField
-              control={verificationForm.control}
-              name="verificationCode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium text-gray-700">Verification Code</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Enter 6-digit code"
-                      className="h-12 text-center text-lg tracking-widest bg-white/80 backdrop-blur-sm"
-                      maxLength={6}
-                      autoFocus
-                      autoComplete="one-time-code"
-                      value={field.value}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                        field.onChange(value);
-                      }}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-gray-700 block mb-2">Verification Code</label>
+            <Input
+              type="text"
+              placeholder="Enter 6-digit code"
+              className="h-12 text-center text-lg tracking-widest bg-white/80 backdrop-blur-sm"
+              maxLength={6}
+              autoFocus
+              autoComplete="one-time-code"
+              value={verificationCode}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                setVerificationCode(value);
+              }}
             />
-            
-            <Button
-              type="submit"
-              disabled={isSubmitting || verificationForm.watch('verificationCode').length !== 6}
-              className="w-full h-12"
-            >
-              {isSubmitting ? (
-                <div className="flex items-center space-x-2">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Verifying...</span>
-                </div>
-              ) : (
-                "Verify code"
-              )}
-            </Button>
-
-            <div className="text-center space-y-2">
-              <button
-                type="button"
-                onClick={() => handlePhoneSubmit({ phoneNumber })}
-                className="text-sm text-primary hover:text-primary/80 font-medium"
-              >
-                Didn't receive a code? Resend
-              </button>
-              <div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    verificationForm.reset({
-                      phoneNumber: '',
-                      verificationCode: ''
-                    });
-                    setAuthStep('phone');
-                  }}
-                  className="text-sm text-gray-500 hover:text-gray-700"
-                >
-                  ← Back to phone number
-                </button>
+          </div>
+          
+          <Button
+            onClick={handleVerificationSubmit}
+            disabled={isSubmitting || verificationCode.length !== 6}
+            className="w-full h-12"
+          >
+            {isSubmitting ? (
+              <div className="flex items-center space-x-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Verifying...</span>
               </div>
-            </div>
-          </form>
-        </Form>
+            ) : (
+              "Verify code"
+            )}
+          </Button>
+
+          <div className="flex justify-between text-sm">
+            <button
+              type="button"
+              onClick={() => handlePhoneSubmit({ phoneNumber })}
+              className="text-primary hover:text-primary/80 font-medium"
+            >
+              Didn't receive a code? Resend
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAuthStep('phone');
+                phoneForm.setValue('phoneNumber', phoneNumber);
+              }}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              ← Change number
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // User Details Step (for new users)
+  // User Details Step
   if (authStep === 'user-details') {
     return (
       <div className="py-4">
@@ -493,7 +438,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                     <FormLabel className="text-sm font-medium text-gray-700">First Name</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="John"
+                        placeholder="First name"
                         className="h-12 bg-white/80 backdrop-blur-sm"
                         {...field}
                       />
@@ -511,7 +456,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                     <FormLabel className="text-sm font-medium text-gray-700">Last Name</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Doe"
+                        placeholder="Last name"
                         className="h-12 bg-white/80 backdrop-blur-sm"
                         {...field}
                       />
@@ -531,7 +476,26 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                   <FormControl>
                     <Input
                       type="email"
-                      placeholder="john@example.com"
+                      placeholder="Enter your email"
+                      className="h-12 bg-white/80 backdrop-blur-sm"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={userDetailsForm.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium text-gray-700">Password</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="password"
+                      placeholder="Create a password"
                       className="h-12 bg-white/80 backdrop-blur-sm"
                       {...field}
                     />
@@ -558,25 +522,6 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={userDetailsForm.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium text-gray-700">Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="Create a secure password"
-                      className="h-12 bg-white/80 backdrop-blur-sm"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             
             <Button
               type="submit"
@@ -595,30 +540,19 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                 </div>
               )}
             </Button>
-
-            {hasExistingAccount && (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setAuthStep('sign-in')}
-                className="w-full h-12"
-              >
-                Already have an account? Sign in
-              </Button>
-            )}
           </form>
         </Form>
       </div>
     );
   }
 
-  // Sign In Step (for existing users)
+  // Sign In Step
   if (authStep === 'sign-in') {
     return (
       <div className="py-4">
         <div className="text-center mb-6">
-          <p className="text-lg font-semibold text-gray-900 mb-1">Welcome back!</p>
-          <p className="text-sm text-gray-600">Sign in to your existing account</p>
+          <p className="text-lg font-semibold text-gray-900 mb-1">Sign in to continue</p>
+          <p className="text-sm text-gray-600">Use your existing account credentials</p>
         </div>
         
         <Form {...signInForm}>
@@ -679,10 +613,10 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
             <Button
               type="button"
               variant="ghost"
-              onClick={() => setAuthStep('user-details')}
+              onClick={() => setAuthStep('choice')}
               className="w-full text-sm text-gray-500 hover:text-gray-700"
             >
-              Need to create an account?
+              ← Back to options
             </Button>
           </form>
         </Form>
@@ -690,15 +624,13 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
     );
   }
 
-  // Complete Step - Show success state
+  // Complete Step
   if (authStep === 'complete') {
     return (
-      <div className="flex items-center space-x-3 py-4 px-4 bg-emerald-50/50 backdrop-blur-sm rounded-xl">
-        <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900">Account verified</p>
-          <p className="text-xs text-gray-600 truncate">Ready to complete your booking</p>
-        </div>
+      <div className="py-4 text-center">
+        <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
+        <p className="text-lg font-semibold text-gray-900 mb-2">Account verified!</p>
+        <p className="text-sm text-gray-600">You can now complete your booking</p>
       </div>
     );
   }

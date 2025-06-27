@@ -1,4 +1,4 @@
-import { Zap } from "lucide-react";
+import { Zap, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { formatTime12Hour } from "@/lib/utils/general-utils";
@@ -23,13 +23,36 @@ interface BoatSummaryProps {
   boat: SafeBoatData;
   bookingData: BookingData;
   selectedTier: PricingTier;
+  timeLeft?: number;
 }
 
-export default function BoatSummary({ boat, bookingData, selectedTier }: BoatSummaryProps) {
+export default function BoatSummary({ boat, bookingData, selectedTier, timeLeft }: BoatSummaryProps) {
   const endTime = calculateEndTime(bookingData.startTime, selectedTier.hours);
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const isUrgent = timeLeft && timeLeft < 120; // Less than 2 minutes
 
   return (
     <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-4">
+      {/* Subtle countdown header */}
+      {timeLeft && timeLeft > 0 && (
+        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/50">
+          <div className="flex items-center space-x-2">
+            <Clock className="w-3.5 h-3.5 text-gray-500" />
+            <span className="text-xs text-gray-600">Hold expires in</span>
+            <span className={`text-xs font-medium ${isUrgent ? 'text-red-600' : 'text-primary'}`}>
+              {formatTime(timeLeft)}
+            </span>
+          </div>
+          <div className={`w-1.5 h-1.5 rounded-full ${isUrgent ? 'bg-red-500 animate-pulse' : 'bg-primary'}`} />
+        </div>
+      )}
+
       <div className="flex items-start space-x-4">
         <div className="relative flex-shrink-0">
           <img

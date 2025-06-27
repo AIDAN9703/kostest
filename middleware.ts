@@ -29,6 +29,11 @@ export default auth(async function middleware(req) {
     if (pathname.startsWith('/payments') && !session.user.phoneVerified) {
       return NextResponse.redirect(new URL('/verify', req.url));
     }
+
+    // Profile routes require verified phone
+    if (pathname.startsWith('/profile') && !session) {
+      return NextResponse.redirect(new URL('/sign-in', req.url));
+    }
   }
   
   // Default behavior handled by Auth.js

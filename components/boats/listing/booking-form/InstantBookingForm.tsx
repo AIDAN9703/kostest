@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Boat } from "@/lib/types/types";
-import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useRouter } from "next/navigation";
@@ -20,6 +19,7 @@ import { BookingDetails } from "./shared/BookingDetails";
 import { CaptainSelection } from "./shared/CaptainSelection";
 import { SpecialRequests } from "./shared/SpecialRequests";
 import { PriceSummary } from "./shared/PriceSummary";
+import { useSession } from "next-auth/react";
 
 interface InstantBookingFormProps {
   boat: Boat;

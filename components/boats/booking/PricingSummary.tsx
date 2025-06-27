@@ -22,11 +22,13 @@ interface PricingSummaryProps {
 }
 
 export default function PricingSummary({ boat, selectedTier, bookingData }: PricingSummaryProps) {
+  // Use the same pricing logic as the listing page
   const basePrice = selectedTier.price;
+  const captainFee = 0; // Captain service is included in base price
   const cleaningFee = boat.cleaningFee || 0;
-  const captainFee = bookingData.needsCaptain ? 500 : 0; // Standard captain fee
-  const tax = Math.round((basePrice + cleaningFee + captainFee) * 0.08875); // 8.875% NYC tax
-  const total = basePrice + cleaningFee + captainFee + tax;
+  const subtotal = basePrice + captainFee + cleaningFee;
+  const taxAmount = subtotal * 0.08; // 8% tax to match listing page
+  const total = subtotal + taxAmount;
 
   const priceItems = [
     {
@@ -34,20 +36,23 @@ export default function PricingSummary({ boat, selectedTier, bookingData }: Pric
       amount: basePrice,
       description: `Charter package`
     },
+    {
+      label: "Captain service",
+      amount: 0,
+      description: "Professional licensed captain",
+      isIncluded: true
+    },
     ...(cleaningFee > 0 ? [{
       label: "Cleaning fee",
       amount: cleaningFee,
-      description: "One-time cleaning charge"
-    }] : []),
-    ...(bookingData.needsCaptain ? [{
-      label: "Captain service",
-      amount: captainFee,
-      description: "Professional licensed captain"
+      description: "One-time cleaning charge",
+      isIncluded: false
     }] : []),
     {
       label: "Taxes & fees",
-      amount: tax,
-      description: "NYC sales tax (8.875%)"
+      amount: taxAmount,
+      description: "Sales tax (8%)",
+      isIncluded: false
     }
   ];
 
@@ -60,8 +65,12 @@ export default function PricingSummary({ boat, selectedTier, bookingData }: Pric
               <p className="text-sm font-medium text-gray-900">{item.label}</p>
               <p className="text-xs text-gray-500">{item.description}</p>
             </div>
-            <p className="text-sm font-semibold text-gray-900 ml-3">
-              {formatCurrency(item.amount)}
+            <p className="text-sm font-semibold ml-3">
+              {item.isIncluded ? (
+                <span className="text-emerald-600">Included</span>
+              ) : (
+                <span className="text-gray-900">{formatCurrency(item.amount)}</span>
+              )}
             </p>
           </div>
         ))}
