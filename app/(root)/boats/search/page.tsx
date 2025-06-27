@@ -16,8 +16,23 @@ export const metadata: Metadata = {
   description: "Search for luxury yachts and boats available for charter.",
 };
 
-export const dynamic = 'force-dynamic'; 
-export const revalidate = 0;
+// ISR configuration for search page
+// Shorter revalidation since search results change more frequently
+export const revalidate = 1800; // 30 minutes
+
+// Generate static params for common search patterns at build time
+export async function generateStaticParams() {
+  // Pre-generate common search combinations
+  const commonSearches = [
+    {}, // Default search (no filters)
+    { category: 'yacht' },
+    { category: 'sportfish' },
+    { category: 'sailboat' },
+    // Add more common search patterns based on your analytics
+  ];
+
+  return commonSearches.map((searchParams) => searchParams);
+}
 
 // Clean search page layout component
 function SearchPageContent({ 
@@ -79,7 +94,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
   // Extract bounding box for desktop map
   const boundingBox = extractBoundingBox(normalizedParams);
   
-  // Single data fetch for all components
+  // Single data fetch for all components 
   const data = await getBoats({
     searchParams: normalizedParams,
     limit: 12,

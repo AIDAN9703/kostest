@@ -1,44 +1,28 @@
-import { db } from "@/database/db";
-import { boats, boatPricingTiers } from "@/database/schema";
-import { eq } from "drizzle-orm";
+import { getBoatById } from "@/lib/actions/boat-actions";
+
 import { notFound } from "next/navigation";
-import { auth } from "@/auth";
 import BoatDetails from "@/components/boats/listing/BoatDetails";
 import { RequestBookingForm, InstantBookingForm } from "@/components/boats/listing/booking-form";
-import { MobileBookingBar } from "@/components/boats/listing/MobileBookingBar";
+import { MobileBookingBar } from "@/components/boats/listing/booking-form/MobileBookingBar";
 import { Boat } from "@/lib/types/types";
 import { ImageGallery } from "@/components/boats/listing/sub-components/ImageGallery";
 
+// ISR configuration for boat pages
+// Revalidate every 6 hours since boat details don't change frequently
+export const revalidate = 21600; // 6 hours in seconds
+
+// Using on-demand ISR generation - no pre-building at build time
+// Pages will be generated and cached when first visited
+
 export default async function BoatPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const session = await auth();
-
   try {
-    // Fetch boat details with pricing tiers in a single optimized query
-    const [boatResult, pricingTiers] = await Promise.all([
-      // Get boat data
-      db
-        .select()
-        .from(boats)
-        .where(eq(boats.id, id))
-        .limit(1),
-      
-      // Get pricing tiers for this boat
-      db
-        .select()
-        .from(boatPricingTiers)
-        .where(eq(boatPricingTiers.boatId, id))
-    ]);
+    // Fetch boat details
+    const boat = await getBoatById(id);
 
-    if (!boatResult.length) {
+    if (!boat) {
       notFound();
     }
-
-    // Combine boat data with pricing tiers
-    const boat: Boat = {
-      ...boatResult[0],
-      pricingTiers: pricingTiers
-    } as Boat;
 
     return (
       <main className="min-h-screen bg-white sm:pt-6 pb-16 lg:pb-0">
@@ -63,9 +47,9 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
               <div className="sticky top-24">
                 <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
                   {boat.instantBook ? (
-                    <InstantBookingForm boat={boat} user={session?.user} />
+                    <InstantBookingForm boat={boat} />
                   ) : (
-                    <RequestBookingForm boat={boat} user={session?.user} />
+                    <RequestBookingForm boat={boat} />
                   )}
                 </div>
               </div>
@@ -75,7 +59,7 @@ export default async function BoatPage({ params }: { params: Promise<{ id: strin
 
         {/* Mobile booking bar - shown on mobile, hidden on lg+ screens */}
         <div className="md:hidden">
-          <MobileBookingBar boat={boat} user={session?.user} />
+          <MobileBookingBar boat={boat} />
         </div>
       </main>
     );

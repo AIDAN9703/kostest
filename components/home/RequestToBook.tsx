@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { motion, useReducedMotion } from 'framer-motion';
 import { CalendarDays, Users, DollarSign, Timer, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import ReCAPTCHA from 'react-google-recaptcha';
+
 import {
   Form,
   FormControl,
@@ -37,7 +37,10 @@ const formSchema = z.object({
   termsAgreed: z.boolean().refine(val => val === true, {
     message: 'You must agree to the terms and conditions',
   }),
-  captcha: z.string().min(1, 'Please complete the CAPTCHA verification')
+  smsConsent: z.boolean().refine(val => val === true, {
+    message: 'You must agree to receive SMS messages to submit this form',
+  }),
+
 });
 
 // Reusable animation variants for consistency with other components
@@ -50,10 +53,12 @@ const fadeInUpAnimation = {
   })
 };
 
+// GHL Webhook URL
+const GHL_WEBHOOK_URL = "https://services.leadconnectorhq.com/hooks/uk2U6vqDpNjnOPwiTM8g/webhook-trigger/a807016d-cf25-4284-8d83-b7fb0129fa68";
+
 export default function RequestToBook() {
   const prefersReducedMotion = useReducedMotion();
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
-  const [captchaError, setCaptchaError] = useState("");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize form with validation
@@ -69,31 +74,59 @@ export default function RequestToBook() {
       guests: '',
       message: '',
       termsAgreed: false,
-      captcha: '',
+      smsConsent: false,
+
     },
   });
+
+  // Function to trigger GHL webhook
+  const triggerGHLWebhook = async (formData: z.infer<typeof formSchema>) => {
+    try {
+      // Prepare webhook payload
+      const webhookPayload = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        date: formData.date || '',
+        time: formData.time || '',
+        budget: formData.budget || '',
+        guests: formData.guests || '',
+        message: formData.message || '',
+        sms_consent: formData.smsConsent || false,
+        source: 'KOS Yacht Club - Request to Book Form',
+        lead_type: 'Charter Inquiry',
+        submitted_at: new Date().toISOString()
+      };
+
+      const response = await fetch(GHL_WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(webhookPayload)
+      });
+
+      if (!response.ok) {
+        console.warn('GHL webhook failed:', response.status, response.statusText);
+        // Don't throw error - we don't want to fail the whole form if webhook fails
+      } else {
+        console.log('GHL webhook triggered successfully');
+      }
+    } catch (error) {
+      console.warn('GHL webhook error:', error);
+      // Don't throw error - we don't want to fail the whole form if webhook fails
+    }
+  };
 
   // Form submission handler
   const onSubmit = useCallback(async (values: z.infer<typeof formSchema>) => {
     try {
       setIsSubmitting(true);
       
-      // Verify the captcha token server-side 
-      const captchaResponse = await fetch('/api/verify-captcha', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: values.captcha })
-      });
-      
-      const captchaResult = await captchaResponse.json();
-      
-      if (!captchaResult.success) {
-        setCaptchaError("CAPTCHA verification failed. Please try again.");
-        setIsSubmitting(false);
-        return;
-      }
+
       
       // Call the server action with our form data
+      // termsAccepted is true only if both boxes are checked
       const result = await createGeneralInquiry({
         name: values.name,
         email: values.email,
@@ -103,21 +136,19 @@ export default function RequestToBook() {
         budget: values.budget,
         guests: values.guests,
         message: values.message,
-        termsAccepted: values.termsAgreed
+        termsAccepted: values.termsAgreed && (values.smsConsent || false)
       });
       
       if (result.success) {
+        // Trigger GHL webhook after successful form submission
+        await triggerGHLWebhook(values);
+        
         toast({
           title: "Request Submitted",
           description: result.message || "Your inquiry has been submitted. We'll contact you soon!",
         });
         
         form.reset();
-        setCaptchaError("");
-        
-        if (recaptchaRef.current) {
-          recaptchaRef.current.reset();
-        }
       } else {
         toast({
           title: "Error",
@@ -137,16 +168,7 @@ export default function RequestToBook() {
     }
   }, [form]);
 
-  // Handle CAPTCHA change
-  const handleCaptchaChange = useCallback((token: string | null) => {
-    if (token) {
-      form.setValue('captcha', token);
-      setCaptchaError("");
-    } else {
-      form.setValue('captcha', '');
-      setCaptchaError("CAPTCHA verification failed. Please try again.");
-    }
-  }, [form]);
+
 
   return (
     <section className="py-10 sm:py-16 md:py-20 relative overflow-hidden">
@@ -333,62 +355,58 @@ export default function RequestToBook() {
                   )}
                 />
                 
-                {/* Terms and CAPTCHA Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Terms and Services Checkbox */}
-                  <FormField
-                    control={form.control}
-                    name="termsAgreed"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-1">
-                        <FormControl>
-                          <Checkbox
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                            className="border-gray-300"
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel className="text-sm font-normal text-gray-700">
-                            I agree to the{' '}
-                            <Link href="/terms" className="text-primary hover:underline">
-                              Terms of Service
-                            </Link>
-                            {' '}and{' '}
-                            <Link href="/privacy" className="text-primary hover:underline">
-                              Privacy Policy
-                            </Link>
-                          </FormLabel>
-                          <FormMessage className="text-xs" />
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                  
-                  {/* CAPTCHA */}
-                  <FormField
-                    control={form.control}
-                    name="captcha"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-col items-start">
-                        <FormControl>
-                          <ReCAPTCHA
-                            ref={recaptchaRef}
-                            sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
-                            onChange={(token) => {
-                              handleCaptchaChange(token);
-                              field.onChange(token || '');
-                            }}
-                          />
-                        </FormControl>
-                        {captchaError && (
-                          <p className="text-red-500 text-xs mt-1">{captchaError}</p>
-                        )}
+                {/* Terms and Conditions */}
+                <FormField
+                  control={form.control}
+                  name="termsAgreed"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-1">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="border-gray-300"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-normal text-gray-700">
+                          I agree to the{' '}
+                          <Link href="/terms" className="text-primary hover:underline">
+                            Terms of Service
+                          </Link>
+                          {' '}and{' '}
+                          <Link href="/privacy" className="text-primary hover:underline">
+                            Privacy Policy
+                          </Link>
+                        </FormLabel>
                         <FormMessage className="text-xs" />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {/* SMS Consent */}
+                <FormField
+                  control={form.control}
+                  name="smsConsent"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md p-1">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                          className="border-gray-300"
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-sm font-normal text-gray-700">
+                          By checking this box, you agree to receive recurring SMS messages from KOS Yachts about bookings, promotions, and events. Message & data rates may apply. Text STOP to unsubscribe, HELP for help.
+                        </FormLabel>
+                        <FormMessage className="text-xs" />
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
                 <motion.div
                   whileHover={prefersReducedMotion ? {} : { scale: 1.02 }}

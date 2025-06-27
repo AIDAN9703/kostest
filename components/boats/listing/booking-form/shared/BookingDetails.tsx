@@ -2,14 +2,18 @@
 
 import { useState } from "react";
 import { Boat } from "@/lib/types/types";
-import { FormField, FormItem, FormMessage, FormControl } from "@/components/ui/form";
+import { FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Control, UseFormSetValue, useWatch } from "react-hook-form";
 import { BookingRequest } from "@/lib/validation/validations";
 import { generateTimeOptions, formatEndTime } from "@/lib/utils/booking-utils";
 import { format } from "date-fns";
-import { cn, formatTime12Hour } from "@/lib/utils/general-utils";
-import { Plus, Minus, Calendar, Clock, Users, ChevronDown } from "lucide-react";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { formatTime12Hour } from "@/lib/utils/general-utils";
+import { Plus, Minus, Calendar as CalendarIcon, Clock, Users, ChevronDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils/general-utils";
 
 interface BookingDetailsProps {
   boat: Boat;
@@ -19,11 +23,12 @@ interface BookingDetailsProps {
 }
 
 export function BookingDetails({ boat, control, setValue, endTime }: BookingDetailsProps) {
-  const [dateModalOpen, setDateModalOpen] = useState(false);
-  const [timeModalOpen, setTimeModalOpen] = useState(false);
+  const [dateOpen, setDateOpen] = useState(false);
+  
+  // Generate time options once
   const timeOptions = generateTimeOptions();
-
-  // Use useWatch for optimal performance - only re-renders when this specific field changes
+  
+  // Only watch passenger count to minimize re-renders
   const numberOfPassengers = useWatch({
     control,
     name: "numberOfPassengers",
@@ -38,50 +43,62 @@ export function BookingDetails({ boat, control, setValue, endTime }: BookingDeta
         name="startDate"
         render={({ field }) => (
           <FormItem>
-            <button
-              type="button"
-              onClick={() => setDateModalOpen(true)}
-              className="w-full bg-white border border-gray-300 rounded-lg p-3 hover:border-coral-400 focus:border-coral-500 focus:ring-2 focus:ring-coral-500/20 transition-all duration-200"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Calendar className="h-5 w-5 text-coral-500" />
-                  <div className="text-left">
-                    <div className="text-sm font-semibold text-gray-900">
-                      {field.value ? format(field.value, "MMMM d, yyyy") : "Select Date"}
+            <Popover open={dateOpen} onOpenChange={setDateOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal bg-white border border-gray-300 rounded-lg p-3 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors h-auto"
+                >
+                  <div className="flex items-center gap-3 w-full">
+                    <CalendarIcon className="h-5 w-5 text-primary" />
+                    <div className="flex-1 text-left">
+                      <div className="text-sm font-semibold text-gray-900">
+                        {field.value ? format(field.value, "MMMM d, yyyy") : "Select Date"}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {field.value ? format(field.value, "EEEE") : "Choose your charter date"}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {field.value ? format(field.value, "EEEE") : "Choose your charter date"}
-                    </div>
+                    <ChevronDown className={cn(
+                      "h-4 w-4 text-gray-400 transition-transform",
+                      dateOpen && "rotate-180"
+                    )} />
                   </div>
-                </div>
-                <ChevronDown className="h-4 w-4 text-gray-400" />
-              </div>
-            </button>
-
-            <Dialog open={dateModalOpen} onOpenChange={setDateModalOpen}>
-              <DialogContent className="sm:max-w-md">
-                <DialogTitle className="text-lg font-semibold text-gray-900 mb-4">
-                  Select Charter Date
-                </DialogTitle>
-                <FormControl>
-                  <input
-                    type="date"
-                    value={field.value ? format(field.value, "yyyy-MM-dd") : ""}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        field.onChange(new Date(e.target.value));
-                        setDateModalOpen(false);
-                      } else {
-                        field.onChange(undefined);
-                      }
-                    }}
-                    min={format(new Date(), "yyyy-MM-dd")}
-                    className="w-full h-12 px-4 text-sm border border-gray-300 rounded-lg focus:border-coral-500 focus:ring-2 focus:ring-coral-500/20 focus:outline-none bg-white"
-                  />
-                </FormControl>
-              </DialogContent>
-            </Dialog>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent 
+                className="w-auto p-0" 
+                align="start"
+                side="bottom"
+                sideOffset={8}
+              >
+                <Calendar
+                  mode="single"
+                  selected={field.value}
+                  onSelect={(date) => {
+                    field.onChange(date);
+                    setDateOpen(false);
+                  }}
+                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                  className="p-4"
+                  classNames={{
+                    month: "space-y-4",
+                    caption: "flex justify-center pt-1 relative items-center mb-4",
+                    caption_label: "text-base font-semibold",
+                    nav_button: "h-8 w-8",
+                    nav_button_previous: "absolute left-1",
+                    nav_button_next: "absolute right-1",
+                    head_cell: "text-gray-500 w-10 h-8 font-medium text-xs flex items-center justify-center",
+                    day: "h-10 w-10 rounded-md hover:bg-gray-100 transition-colors",
+                    day_selected: "bg-primary text-white",
+                    day_today: "text-gold font-semibold",
+                    day_outside: "text-gray-300 opacity-50",
+                    day_disabled: "text-gray-300 opacity-30 cursor-not-allowed hover:bg-transparent",
+                  }}
+                />
+              </PopoverContent>
+            </Popover>
             <FormMessage />
           </FormItem>
         )}
@@ -93,15 +110,11 @@ export function BookingDetails({ boat, control, setValue, endTime }: BookingDeta
         name="startTime"
         render={({ field }) => (
           <FormItem>
-            <button
-              type="button"
-              onClick={() => setTimeModalOpen(true)}
-              className="w-full bg-white border border-gray-300 rounded-lg p-3 hover:border-coral-400 focus:border-coral-500 focus:ring-2 focus:ring-coral-500/20 transition-all duration-200"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Clock className="h-5 w-5 text-coral-500" />
-                  <div className="text-left">
+            <Select onValueChange={field.onChange} value={field.value}>
+              <SelectTrigger className="w-full bg-white border border-gray-300 rounded-lg p-3 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors h-auto">
+                <div className="flex items-center gap-3 w-full">
+                                      <Clock className="h-5 w-5 text-primary" />
+                  <div className="flex-1 text-left">
                     <div className="text-sm font-semibold text-gray-900">
                       {field.value ? formatTime12Hour(field.value) : "Select Start Time"}
                     </div>
@@ -110,48 +123,26 @@ export function BookingDetails({ boat, control, setValue, endTime }: BookingDeta
                     </div>
                   </div>
                 </div>
-                <ChevronDown className="h-4 w-4 text-gray-400" />
-              </div>
-            </button>
-
-            <Dialog open={timeModalOpen} onOpenChange={setTimeModalOpen}>
-              <DialogContent className="sm:max-w-md">
-                <DialogTitle className="text-lg font-semibold text-gray-900 mb-4">
-                  Select Start Time
-                </DialogTitle>
-                <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-                  {timeOptions.map(option => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => {
-                        field.onChange(option.value);
-                        setTimeModalOpen(false);
-                      }}
-                      className={cn(
-                        "p-3 rounded-lg border text-center transition-all duration-200",
-                        field.value === option.value
-                          ? "border-coral-500 bg-coral-50"
-                          : "border-gray-200 hover:border-coral-300 hover:bg-gray-50"
-                      )}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </DialogContent>
-            </Dialog>
+              </SelectTrigger>
+              <SelectContent className="max-h-64">
+                {timeOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <FormMessage />
           </FormItem>
         )}
       />
 
-      {/* Passengers Counter - Optimized with useWatch */}
+      {/* Passengers Counter */}
       <div className="bg-white border border-gray-300 rounded-lg p-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Users className="h-5 w-5 text-coral-500" />
-            <div className="text-left">
+            <Users className="h-5 w-5 text-primary" />
+            <div>
               <div className="text-sm font-semibold text-gray-900">
                 {numberOfPassengers} {numberOfPassengers === 1 ? "Passenger" : "Passengers"}
               </div>
@@ -163,10 +154,8 @@ export function BookingDetails({ boat, control, setValue, endTime }: BookingDeta
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => {
-                if (numberOfPassengers > 1) setValue("numberOfPassengers", numberOfPassengers - 1);
-              }}
-              className="w-8 h-8 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center hover:bg-gray-200 text-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={() => setValue("numberOfPassengers", Math.max(1, numberOfPassengers - 1))}
+              className="w-8 h-8 rounded-full bg-gray-100 border border-gray-300 flex items-center justify-center hover:bg-gray-200 text-gray-600 transition-colors disabled:opacity-50"
               disabled={numberOfPassengers <= 1}
             >
               <Minus className="h-4 w-4" />

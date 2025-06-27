@@ -10,16 +10,12 @@ interface PriceSummaryProps {
   isRequest?: boolean;
 }
 
-export function PriceSummary({ boat, selectedPricingTier, needsCaptain, totalPrice, isRequest = false }: PriceSummaryProps) {
-  if (!selectedPricingTier) {
-    return null;
-  }
+export function PriceSummary({ boat, selectedPricingTier, totalPrice, isRequest = false }: PriceSummaryProps) {
+  if (!selectedPricingTier) return null;
 
-  // Calculate individual fees - captain service is now included in base price
   const basePrice = selectedPricingTier.price;
-  const captainFee = 0; // Captain service included in base price
   const cleaningFee = boat.cleaningFee || 0;
-  const subtotal = basePrice + captainFee + cleaningFee;
+  const subtotal = basePrice + cleaningFee;
   const taxAmount = subtotal * 0.08; // 8% tax
 
   return (
@@ -66,7 +62,7 @@ export function PriceSummary({ boat, selectedPricingTier, needsCaptain, totalPri
         <div className="border-t border-gray-200 pt-2 mt-2">
           <div className="flex justify-between items-center">
             <span className="font-semibold text-gray-900">Total Amount</span>
-            <span className="text-xl font-bold text-coral-600">${totalPrice.toFixed(2)}</span>
+            <span className="text-xl font-bold text-primary">${totalPrice.toFixed(2)}</span>
           </div>
         </div>
       </div>

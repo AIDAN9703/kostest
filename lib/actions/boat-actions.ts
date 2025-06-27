@@ -9,7 +9,7 @@ import { parseArrayParam, parseNumberParam, parseStringParam } from "@/lib/utils
 
 /**
  * Get boats with filtering, sorting, and pagination
- * This is a cached server action for efficient data fetching
+ * Enhanced with multiple caching layers for optimal performance
  */
 export const getBoats = cache(async ({
   searchParams,
@@ -270,6 +270,7 @@ export const getBoats = cache(async ({
   }
 });
 
+// Removed getCachedBoats - redundant with ISR page caching
 
 /**
  * Get boat categories with counts
@@ -294,21 +295,31 @@ export const getBoatCategories = cache(async (): Promise<{category: string; coun
 });
 
 /**
- * Get boat by ID
+ * Get boat by ID with pricing tiers
  */
 export const getBoatById = cache(async (id: string): Promise<Boat | null> => {
   try {
-    const results = await db
-      .select()
-      .from(boats)
-      .where(eq(boats.id, id))
-      .limit(1);
-    
-    return results.length > 0 ? results[0] as unknown as Boat : null;
+    const [boatResult, pricingTiers] = await Promise.all([
+      db.select().from(boats).where(eq(boats.id, id)).limit(1),
+      db.select().from(boatPricingTiers).where(eq(boatPricingTiers.boatId, id))
+    ]);
+
+    if (!boatResult.length) {
+      return null;
+    }
+
+    return {
+      ...boatResult[0],
+      pricingTiers: pricingTiers
+    } as Boat;
   } catch (error) {
     console.error(`Error fetching boat with ID ${id}:`, error);
     return null;
   }
 });
+
+// Removed getCachedBoat - functionality moved to enhanced getBoatById
+
+// Cache invalidation functions removed - no longer needed with ISR-only approach
 
  

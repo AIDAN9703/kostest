@@ -17,7 +17,6 @@ const VerifyPage = () => {
   const searchParams = useSearchParams();
   const phoneParam = searchParams.get("phone") || "";
   const email = searchParams.get("email") || "";
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
   const router = useRouter();
   const { data: session, status } = useSession();
   const [isResending, setIsResending] = useState(false);
@@ -44,9 +43,9 @@ const VerifyPage = () => {
   // Redirect if user is already verified and signed in
   useEffect(() => {
     if (session?.user?.phoneVerified && status === "authenticated") {
-      router.push(callbackUrl);
+      router.push("/");
     }
-  }, [session, router, status, callbackUrl]);
+  }, [session, router, status]);
 
   const handleResendCode = async () => {
     if (!email) {
@@ -111,8 +110,8 @@ const VerifyPage = () => {
           description: result.data?.message || "Your phone number has been verified successfully.",
         });
         
-        // Redirect to the callbackUrl
-        router.push(callbackUrl);
+        // Redirect to home after successful verification
+        router.push("/");
       } else {
         toast({
           title: "Verification failed",
@@ -227,15 +226,6 @@ const VerifyPage = () => {
             </div>
           </form>
         </Form>
-
-        {/* Small helper text for booking flow */}
-        {callbackUrl !== "/" && (
-          <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-700 text-center">
-              After verification, you'll return to complete your booking.
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -13,9 +13,7 @@ interface CaptainSelectionProps {
 
 export function CaptainSelection({ boat, control }: CaptainSelectionProps) {
   // Don't show if crew is required (captain included)
-  if (boat.crewRequired) {
-    return null;
-  }
+  if (boat.crewRequired) return null;
 
   return (
     <FormField
@@ -29,9 +27,9 @@ export function CaptainSelection({ boat, control }: CaptainSelectionProps) {
               type="button"
               onClick={() => field.onChange(false)}
               className={cn(
-                "h-10 text-sm font-medium rounded-lg transition-all duration-200 border-2",
+                "h-10 text-sm font-medium rounded-lg transition-colors border-2",
                 !field.value 
-                  ? "bg-gold-50 text-gold-700 border-gold-300 shadow-sm" 
+                  ? "bg-gold-50 text-gold-700 border-gold-300" 
                   : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
               )}
             >
@@ -41,9 +39,9 @@ export function CaptainSelection({ boat, control }: CaptainSelectionProps) {
               type="button"
               onClick={() => field.onChange(true)}
               className={cn(
-                "h-10 text-sm font-medium rounded-lg transition-all duration-200 border-2",
+                "h-10 text-sm font-medium rounded-lg transition-colors border-2",
                 field.value 
-                  ? "bg-coral-50 text-coral-700 border-coral-300 shadow-sm" 
+                  ? "bg-primary/5 text-primary border-primary/30" 
                   : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
               )}
             >

@@ -6,17 +6,17 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { formatCurrency } from "@/lib/utils/general-utils";
 import { getBoatDefaultPrice, getBoatDefaultHours } from "@/lib/utils/pricing-utils";
 import { useState } from "react";
-import { RequestBookingForm, InstantBookingForm } from "./booking-form";
-import { User } from "next-auth";
+import { RequestBookingForm, InstantBookingForm } from ".";
+import { useSession } from "next-auth/react";
 import { Sparkles } from "lucide-react";
 import Image from "next/image";
 
 interface MobileBookingBarProps {
   boat: Boat;
-  user?: User;
 }
 
-export function MobileBookingBar({ boat, user }: MobileBookingBarProps) {
+export function MobileBookingBar({ boat }: MobileBookingBarProps) {
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
 
   // Get pricing display using utility functions
@@ -77,9 +77,9 @@ export function MobileBookingBar({ boat, user }: MobileBookingBarProps) {
           {/* Form Content */}
           <div className="p-4">
             {boat.instantBook ? (
-              <InstantBookingForm boat={boat} user={user} />
+              <InstantBookingForm boat={boat} />
             ) : (
-              <RequestBookingForm boat={boat} user={user} />
+              <RequestBookingForm boat={boat} />
             )}
           </div>
         </DialogContent>

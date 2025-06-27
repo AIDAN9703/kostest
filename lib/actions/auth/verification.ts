@@ -356,4 +356,41 @@ export const sendOtpToPhoneNumber = async (
       error: "Failed to send verification code" 
     };
   }
+};
+
+/**
+ * Verifies a phone code for guest users (without userId)
+ * This is used for the booking flow when a user is not logged in
+ */
+export const verifyGuestPhoneCode = async (
+  phoneNumber: string,
+  code: string
+): Promise<ActionResponse<{ message: string }>> => {
+  try {
+    // Format the phone number to E.164 format
+    const formattedPhoneNumber = formatPhoneNumberE164(phoneNumber);
+    
+    // Call Twilio Verify API to check the code
+    const twilioResponse = await checkVerification(formattedPhoneNumber, code);
+    
+    if (!twilioResponse.success) {
+      return { 
+        success: false, 
+        error: twilioResponse.error || "Invalid verification code" 
+      };
+    }
+    
+    return { 
+      success: true, 
+      data: { 
+        message: "Phone number verified successfully" 
+      } 
+    };
+  } catch (error) {
+    console.error("Error verifying guest phone:", error);
+    return { 
+      success: false, 
+      error: "Failed to verify phone number" 
+    };
+  }
 }; 

@@ -54,16 +54,6 @@ const bebasNeue = localFont({
   variable: "--bebas-neue",
 });
 
-const seasons = localFont({
-  src: [
-    { path: "/fonts/Fontspring-DEMO-theseasons-bd.otf", weight: "700", style: "normal" },
-    { path: "/fonts/Fontspring-DEMO-theseasons-bdit.otf", weight: "700", style: "italic" },
-    { path: "/fonts/Fontspring-DEMO-theseasons-it.otf", weight: "400", style: "italic" },
-    { path: "/fonts/Fontspring-DEMO-theseasons-lt.otf", weight: "300", style: "normal" },
-    { path: "/fonts/Fontspring-DEMO-theseasons-ltit.otf", weight: "300", style: "italic" },
-  ],
-  variable: "--font-seasons",
-});
 
 export const metadata: Metadata = {
   title: "KOS Yachts",
@@ -86,7 +76,7 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
         <GoogleMapsScript />
       </head>
       <SessionProvider session={session}>
-        <body className={`${ibmPlexSans.className} ${bebasNeue.variable} ${seasons.variable} ${openSans.variable} ${poppins.variable} antialiased`}>
+        <body className={`${ibmPlexSans.className} ${bebasNeue.variable} ${openSans.variable} ${poppins.variable} antialiased`}>
           <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || ''}>
             {children}
             <Toaster />

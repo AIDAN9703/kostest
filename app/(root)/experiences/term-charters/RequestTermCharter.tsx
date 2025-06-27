@@ -7,7 +7,7 @@ import * as z from 'zod';
 import Link from 'next/link';
 import { CalendarDays, Users, DollarSign, Timer, ArrowRight, Globe, Anchor } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import ReCAPTCHA from 'react-google-recaptcha';
+
 import {
   Form,
   FormControl,
@@ -39,12 +39,11 @@ const formSchema = z.object({
   termsAgreed: z.boolean().refine(val => val === true, {
     message: 'You must agree to the terms and conditions',
   }),
-  captcha: z.string().min(1, 'Please complete the CAPTCHA verification')
+
 });
 
 export default function RequestTermCharter() {
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
-  const [captchaError, setCaptchaError] = useState("");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Initialize form with validation
@@ -62,7 +61,7 @@ export default function RequestTermCharter() {
       accommodations: '',
       message: '',
       termsAgreed: false,
-      captcha: '',
+
     },
   });
 
@@ -71,20 +70,7 @@ export default function RequestTermCharter() {
     try {
       setIsSubmitting(true);
       
-      // Verify the captcha token server-side 
-      const captchaResponse = await fetch('/api/verify-captcha', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: values.captcha })
-      });
-      
-      const captchaResult = await captchaResponse.json();
-      
-      if (!captchaResult.success) {
-        setCaptchaError("CAPTCHA verification failed. Please try again.");
-        setIsSubmitting(false);
-        return;
-      }
+
       
       // Format the message to include term charter specific fields
       const formattedMessage = `
@@ -116,11 +102,6 @@ Term Charter Inquiry:
         });
         
         form.reset();
-        setCaptchaError("");
-        
-        if (recaptchaRef.current) {
-          recaptchaRef.current.reset();
-        }
       } else {
         toast({
           title: "Error",
@@ -140,16 +121,7 @@ Term Charter Inquiry:
     }
   }, [form]);
 
-  // Handle CAPTCHA change
-  const handleCaptchaChange = useCallback((token: string | null) => {
-    if (token) {
-      form.setValue('captcha', token);
-      setCaptchaError("");
-    } else {
-      form.setValue('captcha', '');
-      setCaptchaError("CAPTCHA verification failed. Please try again.");
-    }
-  }, [form]);
+
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -434,29 +406,7 @@ Term Charter Inquiry:
               )}
             />
             
-            {/* CAPTCHA */}
-            <FormField
-              control={form.control}
-              name="captcha"
-              render={({ field }) => (
-                <FormItem className="flex flex-col items-start">
-                  <FormControl>
-                    <ReCAPTCHA
-                      ref={recaptchaRef}
-                      sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" // Replace with real key in production
-                      onChange={(token) => {
-                        handleCaptchaChange(token);
-                        field.onChange(token || '');
-                      }}
-                    />
-                  </FormControl>
-                  {captchaError && (
-                    <p className="text-red-500 text-xs mt-1">{captchaError}</p>
-                  )}
-                  <FormMessage className="text-xs" />
-                </FormItem>
-              )}
-            />
+
 
             <Button 
               type="submit"

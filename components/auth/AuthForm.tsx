@@ -36,7 +36,6 @@ interface Props<T extends FieldValues> {
   type: "SIGN_IN" | "SIGN_UP";
 }
 
-
 const AuthForm = <T extends FieldValues>({
   type,
   schema,
@@ -48,7 +47,7 @@ const AuthForm = <T extends FieldValues>({
   const isSignIn = type === "SIGN_IN";
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Get the callbackUrl from NextAuth standard approach
+  // Basic callbackUrl support for NextAuth (keep this for general auth flows)
   const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   const form: UseFormReturn<T> = useForm({
@@ -69,31 +68,20 @@ const AuthForm = <T extends FieldValues>({
             : "You have successfully signed up."),
         });
 
-        // Use callbackUrl for successful auth, or action's redirectUrl for verification
+        // Simplified redirect logic
         if (result.data?.redirectUrl) {
-          // Auth action has specific redirect (like verification page) - pass along callbackUrl
-          const verifyUrl = new URL(result.data.redirectUrl, window.location.origin);
-          if (callbackUrl !== "/") {
-            verifyUrl.searchParams.set("callbackUrl", callbackUrl);
-          }
-          router.push(verifyUrl.toString());
+          router.push(result.data.redirectUrl);
         } else {
-          // Normal success - redirect to callbackUrl
           router.push(callbackUrl);
         }
       } else {
-        // Check if there's a redirectUrl in the error response (verification required)
+        // Simplified error handling
         if (result.data?.redirectUrl) {
           toast({
             title: "Action Required",
             description: result.data.message || result.error || "Additional action required.",
           });
-          // Pass callbackUrl to verification page
-          const verifyUrl = new URL(result.data.redirectUrl, window.location.origin);
-          if (callbackUrl !== "/") {
-            verifyUrl.searchParams.set("callbackUrl", callbackUrl);
-          }
-          router.push(verifyUrl.toString());
+          router.push(result.data.redirectUrl);
         } else {
           toast({
             title: `Error ${isSignIn ? "signing in" : "signing up"}`,
@@ -210,7 +198,7 @@ const AuthForm = <T extends FieldValues>({
             <p className="text-sm text-gray-600">
               {isSignIn ? "New to KOS Yachts? " : "Already have an account? "}
               <Link
-                href={isSignIn ? `/sign-up${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}` : `/sign-in${callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`}
+                href={isSignIn ? "/sign-up" : "/sign-in"}
                 className="font-medium text-primary hover:text-primary/80 transition-colors"
               >
                 {isSignIn ? "Create an account" : "Sign in"}
