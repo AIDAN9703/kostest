@@ -78,6 +78,25 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
     const bookingDataParam = searchParams.get('data');
     
     if (!bookingDataParam) {
+      // Try to restore from localStorage if available
+      const savedBookingData = localStorage.getItem('booking-data-backup');
+      if (savedBookingData) {
+        try {
+          const parsedData = JSON.parse(savedBookingData);
+          setBookingState(prev => ({
+            ...prev,
+            data: parsedData,
+            isLoading: false,
+            error: null
+          }));
+          localStorage.removeItem('booking-data-backup'); // Clean up after restore
+          return;
+        } catch (error) {
+          console.error('Failed to restore booking data from localStorage:', error);
+          localStorage.removeItem('booking-data-backup'); // Clean up invalid data
+        }
+      }
+      
       router.push('/');
       return;
     }
@@ -95,6 +114,9 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
         isLoading: false,
         error: null
       }));
+      
+      // Backup to localStorage for Google sign-in protection
+      localStorage.setItem('booking-data-backup', JSON.stringify(parsedData));
       
     } catch (error) {
       console.error('Failed to initialize booking data:', error);
@@ -195,7 +217,7 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
   // Loading state
   if (bookingState.isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="min-h-screen">
         <div className="max-w-md mx-auto px-4 py-6">
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -208,7 +230,7 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
   // Error state
   if (bookingState.error) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+      <div className="min-h-screen">
         <div className="max-w-md mx-auto px-4 py-6">
           <div className="text-center py-20">
             <Anchor className="w-12 h-12 mx-auto mb-4 text-gray-400" />
@@ -233,9 +255,9 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
   const { boat, selectedTier } = data;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen">
       <div className="max-w-md mx-auto px-4 py-6">
-        <div className="space-y-6">
+        <div className="space-y-8">
           {/* Boat Summary Component with integrated timer */}
           <BoatSummary 
             boat={boat}
@@ -246,11 +268,11 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
 
           {/* Authentication Flow Component */}
           {!isAuthenticated ? (
-            <div className="py-4 px-6 bg-white/60 backdrop-blur-sm rounded-xl">
+            <div>
               <BookingAuthFlow onAuthComplete={handleAuthComplete} />
             </div>
           ) : (
-            <div className="flex items-center space-x-3 py-2 px-4 bg-emerald-50/50 backdrop-blur-sm rounded-xl">
+            <div className="flex items-center space-x-3 py-2">
               <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900">Account verified</p>
@@ -272,8 +294,8 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
 
           {/* Communication Preferences */}
           {isAuthenticated && (
-            <div className=" bg-white/60 backdrop-blur-sm rounded-xl">
-              <div className="space-y-2">
+            <div>
+              <div className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="emailOffers"

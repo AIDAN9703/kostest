@@ -7,19 +7,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Plus, Edit, Trash2, Ship, Calendar, DollarSign, Eye } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { Suspense } from "react";
-
-// Loading skeleton component
-const BoatsSkeleton = () => (
-  <div className="space-y-6">
-    <div className="h-10 w-48 bg-gray-200 animate-pulse rounded-md"></div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {[...Array(3)].map((_, i) => (
-        <div key={i} className="h-80 bg-gray-200 animate-pulse rounded-lg"></div>
-      ))}
-    </div>
-  </div>
-);
 
 // Empty state component
 const EmptyBoatsState = () => (
@@ -72,7 +59,7 @@ const BoatCard = ({ boat }: { boat: any }) => (
     <CardHeader className="pb-2">
       <CardTitle className="text-lg">{boat.name}</CardTitle>
       <CardDescription>
-        {boat.location?.city}, {boat.location?.state}
+        {boat.locationLabel || 'No location specified'}
       </CardDescription>
     </CardHeader>
     
@@ -80,11 +67,13 @@ const BoatCard = ({ boat }: { boat: any }) => (
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div className="flex items-center">
           <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-          <span>{boat.bookings || 0} bookings</span>
+          <span>0 bookings</span>
         </div>
         <div className="flex items-center">
           <DollarSign className="h-4 w-4 mr-2 text-gray-500" />
-          <span>${boat.pricePerDay}/day</span>
+          <span>
+            {boat.pricingTiers?.[0]?.price ? `$${boat.pricingTiers[0].price}` : 'Price TBD'}
+          </span>
         </div>
       </div>
     </CardContent>
@@ -104,19 +93,19 @@ const BoatCard = ({ boat }: { boat: any }) => (
   </Card>
 );
 
-// Main content component
-const MyBoatsContent = async () => {
+export default async function MyBoatsPage() {
+  // Auth is handled by layout, just get session for user data
   const session = await auth();
   
-  if (!session?.user?.id) {
-    return null;
-  }
+  // Session is guaranteed to exist due to protected layout
+  const userId = session?.user?.id;
+  if (!userId) return null;
   
   // Fetch user's boats from database
   const userBoats = await db
     .select()
     .from(boats)
-    .where(eq(boats.ownerId, session.user.id));
+    .where(eq(boats.ownerId, userId));
   
   return (
     <div className="p-4 pt-16 md:p-6 lg:pt-6 space-y-6 animate-fadeIn">
@@ -140,13 +129,5 @@ const MyBoatsContent = async () => {
         </div>
       )}
     </div>
-  );
-};
-
-export default function MyBoatsPage() {
-  return (
-    <Suspense fallback={<BoatsSkeleton />}>
-      <MyBoatsContent />
-    </Suspense>
   );
 } 

@@ -39,6 +39,8 @@ export default async function BoatEditPage({ params }: BoatEditPageProps) {
     category: boatData.category,
     active: boatData.active ?? false,
     featured: boatData.featured ?? false,
+    featuredOrder: boatData.featuredOrder || null,
+    searchRankingScore: boatData.searchRankingScore || null,
     
     // Owner Information
     ownerId: boatData.ownerId,

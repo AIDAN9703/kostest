@@ -50,7 +50,7 @@ export default function BookingSubmit({ boat, isSubmitting, isAuthenticated, onS
       {isAuthenticated && (
         <>
           {boat.instantBook ? (
-            <div className="mt-4 p-4 bg-blue-50 rounded-xl">
+            <div className="mt-4">
               <div className="flex items-start space-x-3">
                 <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                   <Zap className="w-3 h-3 text-blue-600" />
@@ -64,7 +64,7 @@ export default function BookingSubmit({ boat, isSubmitting, isAuthenticated, onS
               </div>
             </div>
           ) : (
-            <div className="mt-4 p-4 bg-amber-50 rounded-xl">
+            <div className="mt-4">
               <div className="flex items-start space-x-3">
                 <div className="w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
                   <MessageSquare className="w-3 h-3 text-amber-600" />

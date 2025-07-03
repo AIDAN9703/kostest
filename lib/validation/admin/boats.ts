@@ -18,7 +18,7 @@ export const pricingTierSchema = z.object({
 export type PricingTierInput = z.infer<typeof pricingTierSchema>;
 
 // Common boat schema for shared fields between create and update
-const boatBaseSchema = z.object({
+export const boatBaseSchema = z.object({
   // Core Information
   name: z.string().min(2, "Boat name is required"),
   displayTitle: z.string().optional().nullable(),
@@ -26,6 +26,8 @@ const boatBaseSchema = z.object({
   category: z.enum(boatCategoryEnum.enumValues),
   active: z.boolean().default(false),
   featured: z.boolean().default(false),
+  featuredOrder: z.number().int().nonnegative().optional().nullable(),
+  searchRankingScore: z.number().nonnegative().optional().nullable(),
   
   // Owner Information
   ownerId: z.string().uuid("Invalid owner ID format"),
@@ -118,17 +120,19 @@ export const createBoatSchema = boatBaseSchema;
 // Schema for updating a boat - all fields are optional
 export const updateBoatSchema = boatBaseSchema.partial();
 
-// Boat filter/search schema
+// Boat filter/search schema for URL params
 export const boatFilterSchema = z.object({
   page: z.coerce.number().optional(),
   limit: z.coerce.number().max(100).optional(),
   search: z.string().optional(),
   category: z.enum(boatCategoryEnum.enumValues).optional(),
-  featured: z.boolean().optional(),
-  active: z.boolean().optional(),
+  featured: z.coerce.boolean().optional(),
+  active: z.coerce.boolean().optional(),
   ownerId: z.string().uuid("Invalid owner ID").optional(),
 });
 
+// Inferred types from validation schemas - keep validation as source of truth
+export type BaseBoat = z.infer<typeof boatBaseSchema>;
 export type CreateBoatInput = z.infer<typeof createBoatSchema>;
 export type UpdateBoatInput = z.infer<typeof updateBoatSchema>;
 export type BoatFilterInput = z.infer<typeof boatFilterSchema>; 

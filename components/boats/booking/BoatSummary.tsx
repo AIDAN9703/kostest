@@ -38,18 +38,29 @@ export default function BoatSummary({ boat, bookingData, selectedTier, timeLeft 
   const isUrgent = timeLeft && timeLeft < 120; // Less than 2 minutes
 
   return (
-    <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-4">
-      {/* Subtle countdown header */}
+    <div>
+      {/* Enhanced countdown header */}
       {timeLeft && timeLeft > 0 && (
-        <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-200/50">
-          <div className="flex items-center space-x-2">
-            <Clock className="w-3.5 h-3.5 text-gray-500" />
-            <span className="text-xs text-gray-600">Hold expires in</span>
-            <span className={`text-xs font-medium ${isUrgent ? 'text-red-600' : 'text-primary'}`}>
-              {formatTime(timeLeft)}
-            </span>
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className={`relative p-1.5 rounded-full ${isUrgent ? 'bg-red-50' : 'bg-primary/10'}`}>
+                <Clock className={`w-4 h-4 ${isUrgent ? 'text-red-600' : 'text-primary'}`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Hold expires in</p>
+                <p className={`text-lg font-bold ${isUrgent ? 'text-red-600' : 'text-primary'}`}>
+                  {formatTime(timeLeft)}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end space-y-1">
+              <div className={`w-2 h-2 rounded-full ${isUrgent ? 'bg-red-500 animate-pulse' : 'bg-primary animate-pulse'}`} />
+              <span className="text-xs text-gray-500 font-medium">
+                {isUrgent ? 'Almost expired!' : 'Time remaining'}
+              </span>
+            </div>
           </div>
-          <div className={`w-1.5 h-1.5 rounded-full ${isUrgent ? 'bg-red-500 animate-pulse' : 'bg-primary'}`} />
         </div>
       )}
 

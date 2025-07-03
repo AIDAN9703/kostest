@@ -1,10 +1,10 @@
 import { auth } from "@/auth";
 import { db } from "@/database/db";
-import { users, bookings, boats } from "@/database/schema";
-import { eq, desc, and, gte, lt } from "drizzle-orm";
+import { bookings, boats } from "@/database/schema";
+import { eq, desc } from "drizzle-orm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookingCard, Booking } from "@/components/profile/BookingCard";
-import { CalendarDays, ArrowRight } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -33,6 +33,7 @@ function transformBooking(dbBooking: any): Booking {
 
 // Calculate duration in hours from start and end time
 function calculateDuration(startTime: string, endTime: string): number {
+  if (!startTime || !endTime) return 0;
   const start = new Date(`2000-01-01 ${startTime}`);
   const end = new Date(`2000-01-01 ${endTime}`);
   const diffMs = end.getTime() - start.getTime();
@@ -55,21 +56,29 @@ function getBookingDisplayStatus(dbStatus: string): string {
   return statusMap[dbStatus] || 'pending';
 }
 
+// Empty state component
+const EmptyBookingsState = ({ message, actionText }: { message: string; actionText: string }) => (
+  <Card className="border-dashed border-gray-200 bg-white">
+    <CardContent className="py-8 flex flex-col items-center justify-center text-center">
+      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+        <CalendarDays className="h-6 w-6 text-primary" />
+      </div>
+      <h3 className="text-base font-medium text-gray-900">{actionText}</h3>
+      <p className="text-sm text-gray-500 max-w-md mt-1 mb-4">{message}</p>
+      <Button className="bg-primary text-white" size="sm" asChild>
+        <Link href="/boats">Browse Boats</Link>
+      </Button>
+    </CardContent>
+  </Card>
+);
+
 export default async function BookingsPage() {
+  // Auth is handled by layout, just get session for user data
   const session = await auth();
   
-  if (!session?.user?.id) {
-    return null;
-  }
-
-  // Fetch user data from database to get complete profile
-  const userData = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, session.user.id))
-    .limit(1);
-
-  const user = userData[0] || null;
+  // Session is guaranteed to exist due to protected layout
+  const userId = session?.user?.id;
+  if (!userId) return null;
 
   // Fetch all bookings for the user with boat information
   const userBookingsData = await db
@@ -94,7 +103,7 @@ export default async function BookingsPage() {
     })
     .from(bookings)
     .leftJoin(boats, eq(bookings.boatId, boats.id))
-    .where(eq(bookings.userId, session.user.id))
+    .where(eq(bookings.userId, userId))
     .orderBy(desc(bookings.startDate));
 
   // Transform bookings to match BookingCard interface
@@ -137,22 +146,10 @@ export default async function BookingsPage() {
               ))}
             </div>
           ) : (
-            <Card className="border-dashed border-gray-200 bg-white">
-              <CardContent className="py-8 flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
-                  <CalendarDays className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-base font-medium text-gray-900">No upcoming bookings</h3>
-                <p className="text-sm text-gray-500 max-w-md mt-1 mb-4">
-                  You don't have any upcoming boat reservations. Browse boats and book your next adventure!
-                </p>
-                <Button className="bg-primary text-white" size="sm" asChild>
-                  <Link href="/boats">
-                    Browse Boats
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <EmptyBookingsState 
+              actionText="No upcoming bookings"
+              message="You don't have any upcoming boat reservations. Browse boats and book your next adventure!"
+            />
           )}
         </TabsContent>
         
@@ -164,22 +161,10 @@ export default async function BookingsPage() {
               ))}
             </div>
           ) : (
-            <Card className="border-dashed border-gray-200 bg-white">
-              <CardContent className="py-8 flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
-                  <CalendarDays className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-base font-medium text-gray-900">No past bookings</h3>
-                <p className="text-sm text-gray-500 max-w-md mt-1 mb-4">
-                  You don't have any past boat reservations. Book your first boat adventure!
-                </p>
-                <Button className="bg-primary text-white" size="sm" asChild>
-                  <Link href="/boats">
-                    Browse Boats
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <EmptyBookingsState 
+              actionText="No past bookings"
+              message="You don't have any past boat reservations. Book your first boat adventure!"
+            />
           )}
         </TabsContent>
         
@@ -191,22 +176,10 @@ export default async function BookingsPage() {
               ))}
             </div>
           ) : (
-            <Card className="border-dashed border-gray-200 bg-white">
-              <CardContent className="py-8 flex flex-col items-center justify-center text-center">
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
-                  <CalendarDays className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-base font-medium text-gray-900">No bookings found</h3>
-                <p className="text-sm text-gray-500 max-w-md mt-1 mb-4">
-                  You haven't made any boat reservations yet. Start exploring available boats!
-                </p>
-                <Button className="bg-primary text-white" size="sm" asChild>
-                  <Link href="/boats">
-                    Browse Boats
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <EmptyBookingsState 
+              actionText="No bookings found"
+              message="You haven't made any boat reservations yet. Start exploring available boats!"
+            />
           )}
         </TabsContent>
       </Tabs>

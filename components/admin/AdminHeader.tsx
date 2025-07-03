@@ -13,16 +13,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils/general-utils";
 import { GlobalSearch } from "@/components/admin/GlobalSearch";
+import { Session } from "next-auth";
 
-interface AdminHeaderProps {
-  user: {
-    name?: string | null;
-    email?: string | null;
-    profileImage?: string | null;
-  };
-}
-
-export default function AdminHeader({ user }: AdminHeaderProps) {
+export default function AdminHeader({ session }: { session: Session }) {
   const [showDropdown, setShowDropdown] = useState(false);
   
   return (
@@ -45,10 +38,10 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
             onClick={() => setShowDropdown(!showDropdown)}
           >
             <div className="flex-shrink-0 h-9 w-9 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-              {user.profileImage ? (
+              {session?.user?.profileImage ? (
                 <Image 
-                  src={user.profileImage} 
-                  alt={user.name || "Admin"} 
+                  src={session.user.profileImage} 
+                  alt={session.user.name || "Admin"} 
                   width={36} 
                   height={36} 
                   className="h-full w-full object-cover"
@@ -59,10 +52,10 @@ export default function AdminHeader({ user }: AdminHeaderProps) {
             </div>
             <div className="hidden md:block text-left">
               <div className="text-sm font-medium text-gray-900">
-                {user.name || "Admin User"}
+                {session?.user?.name || "Admin User"}
               </div>
               <div className="text-xs text-gray-500">
-                {user.email || "admin@example.com"}
+                {session?.user?.email || "admin@example.com"}
               </div>
             </div>
             <ChevronDown className="h-4 w-4 text-gray-600" />

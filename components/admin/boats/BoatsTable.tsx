@@ -21,30 +21,7 @@ import { DeleteBoatButton } from "@/components/admin/boats/DeleteBoatButton";
 
 import { formatCurrency } from "@/lib/utils/general-utils";
 import { FieldDropdown } from "@/components/admin/common/FieldDropdown";
-
-// Types
-type Boat = {
-  id: string;
-  name: string;
-  category: string;
-  capacity: number;
-  active: boolean;
-  featured: boolean;
-  mainImage?: string | null;
-  make?: string | null;
-  model?: string | null;
-  ownerName?: string | null;
-  basePrice?: number | null;
-  lengthFt?: number | null;
-  ownerId?: string | null;
-  pricingTiers?: Array<{
-    id: string;
-    name?: string | null;
-    price: number;
-    hours: number;
-    isDefault: boolean;
-  }>;
-};
+import type { Boat } from "@/lib/types/types";
 
 interface BoatsTableProps {
   boats: Boat[];
@@ -99,7 +76,7 @@ export function BoatsTable({ boats }: BoatsTableProps) {
                   entity="boat"
                   id={boat.id}
                   field="category"
-                  currentValue={boat.category}
+                  currentValue={boat.category ?? null}
                   size="sm"
                 />
               </td>
@@ -116,7 +93,7 @@ export function BoatsTable({ boats }: BoatsTableProps) {
                     entity="boat"
                     id={boat.id}
                     field="featured"
-                    currentValue={boat.featured}
+                    currentValue={boat.featured ?? null}
                     size="sm"
                   />
                 </div>

@@ -87,7 +87,7 @@ export default function PricingSummary({ boat, selectedTier, bookingData }: Pric
       </div>
 
       {boat.instantBook && (
-        <div className="mt-4 p-4 bg-emerald-50 rounded-xl">
+        <div className="mt-4">
           <div className="flex items-center space-x-2 mb-1">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
             <p className="text-sm font-medium text-emerald-800">Instant booking</p>

@@ -13,8 +13,9 @@ import {
   type CreateBoatInput,
   type UpdateBoatInput,
   type BoatFilterInput,
-  type PricingTierInput
+  type PricingTierInput,
 } from "@/lib/validation/admin/boats";
+import type { Boat } from '@/lib/types/types'
 import { z } from "zod";
 
 // Original Drizzle inferred type for insert
@@ -50,7 +51,13 @@ export async function getBoatPricingTiers(boatId: string) {
 /**
  * Get all boats with pagination, filtering, and sorting
  */
-export async function getAllBoats(options: BoatFilterInput = {}) {
+export async function getAllBoats(options: BoatFilterInput = {}): Promise<{
+  boats: Boat[];
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}> {
   try {
     // Validate input
     const validatedOptions = boatFilterSchema.parse(options);
@@ -136,7 +143,7 @@ export async function getAllBoats(options: BoatFilterInput = {}) {
     const totalCount = countResult[0].value;
     
     return {
-      boats: boatsData,
+      boats: boatsData as Boat[],
       totalCount,
       page,
       limit,
@@ -240,26 +247,71 @@ async function createBoatPricingTiers(boatId: string, tiers: PricingTierInput[])
 
 /**
  * Update pricing tiers for a boat
+ * Only modifies what actually changed - much more efficient!
  */
 async function updateBoatPricingTiers(boatId: string, tiers: PricingTierInput[]) {
   try {
-    // Get existing pricing tiers for the boat
     const existingTiers = await getBoatPricingTiers(boatId);
-    
-    // Delete all existing tiers first
-    if (existingTiers.length > 0) {
-      await db.delete(boatPricingTiers)
-        .where(eq(boatPricingTiers.boatId, boatId));
+    const incomingTiers = tiers || [];
+
+    const existingTierMap = new Map(existingTiers.map(t => [t.id, t]));
+    const incomingTiersWithIds = new Set(incomingTiers.map(t => t.id).filter(Boolean));
+
+    // --- Step 1: Handle incoming tiers (Update or Create) ---
+    for (const incomingTier of incomingTiers) {
+      // Case A: This is an existing tier that needs to be updated.
+      if (incomingTier.id) {
+        await db
+          .update(boatPricingTiers)
+          .set({
+            hours: incomingTier.hours,
+            price: incomingTier.price,
+            name: incomingTier.name,
+            description: incomingTier.description,
+            isActive: incomingTier.isActive,
+            isDefault: incomingTier.isDefault,
+            updatedAt: new Date(),
+          })
+          .where(eq(boatPricingTiers.id, incomingTier.id));
+      } 
+      // Case B: This is a new tier that needs to be created.
+      else {
+        await db.insert(boatPricingTiers).values({
+          ...incomingTier,
+          boatId: boatId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        });
+      }
     }
-    
-    // If there are new tiers to create, create them
-    if (tiers && tiers.length > 0) {
-      return await createBoatPricingTiers(boatId, tiers);
+
+    // --- Step 2: Handle deletions ---
+    // Find any tier that existed before but is not present in the incoming list.
+    const tiersToDelete = existingTiers.filter(
+      (existing) => !incomingTiersWithIds.has(existing.id)
+    );
+
+    for (const tierToDelete of tiersToDelete) {
+      try {
+        await db.delete(boatPricingTiers).where(eq(boatPricingTiers.id, tierToDelete.id));
+      } catch (error: any) {
+        if (error?.code === '23503') { // foreign_key_violation
+          await db
+            .update(boatPricingTiers)
+            .set({ isActive: false, updatedAt: new Date() })
+            .where(eq(boatPricingTiers.id, tierToDelete.id));
+          console.warn(`Soft-deleted pricing tier ${tierToDelete.id} as it is in use by a booking.`);
+        } else {
+          console.error(`Failed to delete pricing tier ${tierToDelete.id}:`, error);
+          throw error;
+        }
+      }
     }
-    
-    return [];
+
+    return await getBoatPricingTiers(boatId);
   } catch (error) {
-    console.error("Error updating boat pricing tiers:", error);
+    console.error("Error in updateBoatPricingTiers:", error);
+    // Re-throw the original error to preserve the stack trace and specific message
     throw error;
   }
 }

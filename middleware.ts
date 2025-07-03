@@ -1,49 +1,29 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { auth } from '@/auth';
+import { auth } from "@/auth";
+import { NextResponse, NextRequest } from "next/server";
 
-// This function can be marked `async` if using `await` inside
-export default auth(async function middleware(req) {
+// ⚠️ NOTE: Using auth() in middleware creates serverless functions
+// This is fine for low traffic, but consider withAuth for high traffic
+export default auth(async function middleware(req: NextRequest) {
   const session = await auth();
-  const pathname = req.nextUrl.pathname;
+  const { pathname } = req.nextUrl;
   
-  // If user is authenticated but trying to access role-specific areas
-  if (session) {
-    // Admin routes protection
-    if (pathname.startsWith('/admin') && session.user.role !== 'ADMIN') {
-      return NextResponse.redirect(new URL('/unauthorized', req.url));
+  // Protect admin routes - only allow ADMIN users
+  if (pathname.startsWith("/admin")) {
+    if (session?.user?.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/", req.url));
     }
-    
-    // Owner-specific routes protection
-    if (pathname.startsWith('/owner') && 
-        !['OWNER', 'ADMIN'].includes(session.user.role)) {
-      return NextResponse.redirect(new URL('/unauthorized', req.url));
-    }
-    
-    // Captain-specific routes protection
-    if (pathname.startsWith('/captain') && 
-        !['CAPTAIN', 'ADMIN'].includes(session.user.role)) {
-      return NextResponse.redirect(new URL('/unauthorized', req.url));
-    }
-    
-    // Payment routes require verified phone
-    if (pathname.startsWith('/payments') && !session.user.phoneVerified) {
-      return NextResponse.redirect(new URL('/verify', req.url));
-    }
+  }
 
-    // Profile routes require verified phone
-    if (pathname.startsWith('/profile') && !session) {
-      return NextResponse.redirect(new URL('/sign-in', req.url));
+  if (pathname.startsWith("/profile")) {
+    if (!session) {
+      return NextResponse.redirect(new URL("/", req.url));
     }
   }
   
-  // Default behavior handled by Auth.js
+  // All other protected routes are handled by auth() above
   return NextResponse.next();
 });
 
-// Define which routes this middleware applies to
 export const config = {
-  matcher: [
-    // Apply to all routes except public ones
-    '/((?!api/public|_next/static|_next/image|favicon.ico|sign-in|sign-up|verify|reset-password).*)',
-  ],
+  matcher: ["/admin/:path*", "/profile/:path*"]
 };

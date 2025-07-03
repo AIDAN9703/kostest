@@ -10,7 +10,10 @@ interface BookingDetailsProps {
 
 export function BookingDetails({ boat }: BookingDetailsProps) {
   // Default cancellation policy if the boat doesn't have one
-  const defaultCancellationPolicy = "50% refund up to 48 hours before charter. Inside 24 hours no refund.";
+  const defaultCancellationPolicy = 
+  `- 7+ Days Notice: Full refund (excluding holidays or special cases).
+- 48 Hours – 7 Days: 50% refund of deposit.
+- Less Than 48 Hours: We'll do our best to reschedule or offer a partial refund.`;
 
   return (
     <div className="space-y-6">
@@ -50,7 +53,7 @@ export function BookingDetails({ boat }: BookingDetailsProps) {
           <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
           <div>
             <h3 className="font-medium text-gray-900 mb-1">Cancellation Policy</h3>
-            <p className="text-gray-700">{boat.cancellationPolicy || defaultCancellationPolicy}</p>
+            <p className="text-gray-700 whitespace-pre-line">{boat.cancellationPolicy || defaultCancellationPolicy}</p>
             <p className="text-gray-500 text-sm italic mt-2">Please contact KOS for any assistance. Our team will always work with you!</p>
           </div>
         </div>

@@ -284,6 +284,7 @@ Term Charter Inquiry:
                                 <SelectValue placeholder="Select range" />
                               </SelectTrigger>
                               <SelectContent>
+                                <SelectItem value="$0-$10,000">$0-$10,000</SelectItem>
                                 <SelectItem value="$10,000-$25,000">$10,000-$25,000</SelectItem>
                                 <SelectItem value="$25,000-$50,000">$25,000-$50,000</SelectItem>
                                 <SelectItem value="$50,000-$100,000">$50,000-$100,000</SelectItem>

@@ -51,7 +51,7 @@ export const quickLinks: QuickLink[] = [
     {
         icon: Clock,
         label: "Business Hours",
-        value: "9:00 AM - 6:00 PM EST",
+        value: "9:00 AM - 6:00 PM EST\n24/7 by Phone",
         href: "/contact"
     }
 ];

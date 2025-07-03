@@ -18,7 +18,7 @@ export const signInAction = async (
   const { email, password } = params;
 
   try {
-    // Check if the user exists and if their phone is verified
+    // Get all user data in a single query
     const userRecord = await db
       .select({
         id: users.id,
@@ -29,23 +29,7 @@ export const signInAction = async (
       .where(eq(users.email, email))
       .limit(1);
     
-    // If user doesn't exist or password is incorrect, attempt sign in which will fail with appropriate error
-    if (userRecord.length === 0) {
-      const result = await signIn("credentials", { email, password, redirect: false });
-      return { success: false, error: result?.error || "Invalid email or password" };
-    }
-    
-    // Check if the password is correct before proceeding
-    const user = await db
-      .select({ password: users.password })
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-      
-    const isPasswordValid = await compare(password, user[0].password);
-    if (!isPasswordValid) {
-      return { success: false, error: "Invalid email or password" };
-    }
+   
     
     // If the user exists but their phone is not verified, don't sign them in, redirect to verification
     if (!userRecord[0].phoneVerified) {

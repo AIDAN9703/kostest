@@ -130,6 +130,8 @@ export function BoatForm({ boat, boatId }: BoatFormProps = {}) {
       // Boolean fields
       active: false,
       featured: false,
+      featuredOrder: undefined,
+      searchRankingScore: undefined,
       crewRequired: true,
       crewIncluded: true,
       dayCharter: true,
@@ -365,6 +367,58 @@ export function BoatForm({ boat, boatId }: BoatFormProps = {}) {
                 )}
               />
             </div>
+            
+            {/* Featured Order and Search Ranking */}
+            {form.watch("featured") && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+                <FormField
+                  control={form.control}
+                  name="featuredOrder"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Featured Order</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number"
+                          {...field}
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || undefined)}
+                          placeholder="1 (appears first)" 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Lower numbers appear first in featured fleet (1 = highest priority)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="searchRankingScore"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Search Ranking Score</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number"
+                          step="0.1"
+                          {...field}
+                          value={field.value || ""}
+                          onChange={(e) => field.onChange(e.target.valueAsNumber || undefined)}
+                          placeholder="0.0" 
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Higher scores rank better in search results
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 

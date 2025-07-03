@@ -18,7 +18,7 @@ interface FieldDropdownProps {
   entity: "booking" | "inquiry" | "boat" | "user";
   id: string;
   field: string;
-  currentValue: string | boolean;
+  currentValue: string | boolean | null;
   disabled?: boolean;
   size?: "sm" | "md";
 }

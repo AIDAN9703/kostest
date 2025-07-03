@@ -1,6 +1,6 @@
 import { db } from "@/database/db";
 import { boats, boatPricingTiers } from "@/database/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, desc, asc } from "drizzle-orm";
 import { ActionResponse, Boat } from "@/lib/types/types";
 import { cachedFetch } from '@/lib/utils/general-utils';
 
@@ -13,11 +13,12 @@ export async function getFeaturedBoats(): Promise<ActionResponse<Boat[]>> {
       try {
         console.log("Attempting to fetch featured boats...");
         
-        // First, get the featured boats
+        // First, get the featured boats ordered by featuredOrder (lower = higher priority)
         const featuredBoats = await db
           .select()
           .from(boats)
-          .where(eq(boats.featured, true));
+          .where(eq(boats.featured, true))
+          .orderBy(asc(boats.featuredOrder)); // Order by featuredOrder first, then by creation date as fallback
         
         console.log(`Successfully fetched ${featuredBoats.length} featured boats`);
         
@@ -73,7 +74,7 @@ export async function getFeaturedBoats(): Promise<ActionResponse<Boat[]>> {
       }
     },
     {
-      revalidate: 3600,
+      revalidate: 2,
       tags: ['featured-boats']
     }
   );

@@ -1,5 +1,3 @@
-"use client";
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,11 +9,7 @@ interface ProfileHeaderProps {
   user: any;
 }
 
-export default function ProfileHeader({ user }: ProfileHeaderProps) {
-  // Debug: Check what database user data we have
-  console.log('ProfileHeader database user:', user);
-  console.log('Database profileImage:', user?.profileImage);
-
+export default function SimpleProfileHeader({ user }: ProfileHeaderProps) {
   const getInitials = (firstName?: string, lastName?: string) => {
     return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase() || 'U';
   };
@@ -68,7 +62,7 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
         <div className="flex flex-col sm:flex-row sm:items-end gap-6">
           {/* Avatar */}
           <Avatar className="h-24 w-24 border-4 border-white shadow-lg flex-shrink-0">
-            <AvatarImage src={user?.profileImage || undefined} alt={getDisplayName()} />
+            <AvatarImage src={user?.profileImage} alt={getDisplayName()} />
             <AvatarFallback className="text-2xl bg-primary text-white">
               {getInitials(user?.firstName, user?.lastName)}
             </AvatarFallback>

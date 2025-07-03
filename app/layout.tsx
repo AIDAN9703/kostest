@@ -3,11 +3,8 @@ import "./globals.css";
 import { ReactNode } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import localFont from "next/font/local";
-import { auth } from "@/auth";
 import { SessionProvider } from "next-auth/react";
-import NewsletterProvider from "@/components/newsletter/NewsletterProvider";
 import GoogleMapsScript from "@/components/providers/GoogleMapsScript";
-import Navigation from "@/components/navigation/Navigation";
 import { ImageKitProvider } from "@imagekit/next";
 
 const openSans = localFont({
@@ -54,10 +51,9 @@ const bebasNeue = localFont({
   variable: "--bebas-neue",
 });
 
-
 export const metadata: Metadata = {
   title: "KOS Yachts",
-  description: "KOS Yachts is the leading yacht charter experience in the South Florida area.",
+  description: "KOS Yachts is the leading yacht charter experience in the South Florida area. We offer a wide range of yachts for rent, from small to large, for any occasion. Check out our new locations in Connecticut and New York.",
 };
 
 export const viewport: Viewport = {
@@ -68,23 +64,22 @@ export const viewport: Viewport = {
 };
 
 const RootLayout = async ({ children }: { children: ReactNode }) => {
-  const session = await auth();
-
   return (
     <html lang="en">
       <head>
         <GoogleMapsScript />
       </head>
-      <SessionProvider session={session}>
-        <body className={`${ibmPlexSans.className} ${bebasNeue.variable} ${openSans.variable} ${poppins.variable} antialiased`}>
-          <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || ''}>
+      <body className={`${ibmPlexSans.className} ${bebasNeue.variable} ${openSans.variable} ${poppins.variable} antialiased`}>
+        <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || ''}>
+          <SessionProvider>
             {children}
             <Toaster />
-          </ImageKitProvider>
-        </body>
-      </SessionProvider>
+          </SessionProvider>
+        </ImageKitProvider>
+      </body>
     </html>
   );
 }
+
 export default RootLayout;
 

@@ -351,6 +351,8 @@ export const boats = pgTable("boat",{
     capacity: integer("capacity").notNull(), // Renamed from numOfPassengers
     active: boolean("active").default(false).notNull(),
     featured: boolean("featured").default(false),
+    featuredOrder: integer("featured_order"), // Order for featured fleet display (lower = higher priority)
+    searchRankingScore: doublePrecision("search_ranking_score").default(0), // For advanced search algorithms
     
     // Owner Information
     ownerId: uuid("owner_id").notNull().references(() => users.id),
@@ -432,6 +434,8 @@ export const boats = pgTable("boat",{
     index("boat_captain_idx").on(table.primaryCaptainId),
     index("boat_category_idx").on(table.category),
     index("boat_spatial_idx").using("gist", table.location),
+    index("boat_featured_idx").on(table.featured, table.featuredOrder), // For featured fleet queries
+    index("boat_ranking_idx").on(table.searchRankingScore), // For search ranking queries
     // Search-specific indexes
     index("boat_search_name_idx").on(table.name),
     index("boat_search_make_model_idx").on(table.make, table.model),

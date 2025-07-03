@@ -32,7 +32,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             }
 
             const user = await db
-            .select()
+            .select({
+                id: users.id,
+                email: users.email,
+                firstName: users.firstName,
+                lastName: users.lastName,
+                role: users.role,
+                phoneNumber: users.phoneNumber,
+                phoneVerified: users.phoneVerified,
+                profileImage: users.profileImage,
+                password: users.password,
+            })
             .from(users)
             .where(eq(users.email, credentials.email.toString()))
             .limit(1);
@@ -43,20 +53,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
             const isPasswordValid = await compare(credentials.password.toString(), user[0].password);
 
-            if (!isPasswordValid) {
-                return null;
-            }
+        if (!isPasswordValid) {
+          return null;
+        }
 
-            return {
-                id: user[0].id.toString(),
-                email: user[0].email,
-                name: user[0].firstName + " " + user[0].lastName,
-                role: user[0].role,
-                phoneNumber: user[0].phoneNumber || "",
-                phoneVerified: user[0].phoneVerified || false,
-                profileImage: user[0].profileImage || "",
-            } as User;
-        },
+        // No phone verification check here - middleware handles it!
+        return {
+          id: user[0].id.toString(),
+          email: user[0].email,
+          name: user[0].firstName + " " + user[0].lastName,
+          role: user[0].role,
+          phoneNumber: user[0].phoneNumber || "",
+          phoneVerified: user[0].phoneVerified || false,
+          profileImage: user[0].profileImage || "",
+        } as User;
+      },
     }),
     CredentialsProvider({
         id: "credentials-token",
@@ -150,6 +161,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               if (newUser?.id) {
                 token.id = newUser.id.toString();
               }
+              // For new users, use the Google image directly
+              token.profileImage = user.image || '';
             } catch (error) {
               console.error("Error creating user from OAuth:", error);
             }
@@ -159,6 +172,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.role = existingUser[0].role;
             token.phoneNumber = existingUser[0].phoneNumber;
             token.phoneVerified = existingUser[0].phoneVerified;
+            
+            // Use fresh Google image if available, otherwise fall back to database
+            token.profileImage = user.image || existingUser[0].profileImage;
           }
         }
       }

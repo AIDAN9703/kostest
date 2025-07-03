@@ -126,6 +126,7 @@ export interface Boat {
   active: boolean;
   featured?: boolean | null;
   featuredOrder?: number | null;
+  searchRankingScore?: number | null;
   crewRequired: boolean;
   crewIncluded: boolean;
   crewSize?: number | null;
@@ -164,6 +165,8 @@ export interface Boat {
   totalReviews?: number | null;
   // Booking options
   instantBook: boolean;
+  basePrice?: number | null;
+  ownerName?: string;
   
   // Location coordinates for map display - runtime property from SQL query
   locationCoordinates?: {

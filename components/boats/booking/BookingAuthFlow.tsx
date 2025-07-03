@@ -15,7 +15,6 @@ import { z } from "zod";
 // Import existing server actions
 import { sendOtpToPhoneNumber } from "@/lib/actions/auth/verification";
 import { handlePhoneAndOtpForBooking, completeUserAccountAfterVerification, signInAction } from "@/lib/actions/auth/auth";
-import { googleSignIn } from "@/lib/actions/auth/google-auth";
 
 type AuthStep = 'choice' | 'phone' | 'verify' | 'user-details' | 'sign-in' | 'complete';
 
@@ -76,8 +75,12 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
   const handleGoogleSignIn = async () => {
     setIsSubmitting(true);
     try {
+      // Preserve current URL with all query parameters for callback
+      const currentUrl = new URL(window.location.href);
+      const callbackUrl = currentUrl.toString();
+      
       await signIn("google", { 
-        callbackUrl: window.location.href,
+        callbackUrl: callbackUrl,
         redirect: true
       });
     } catch (error) {
@@ -243,28 +246,51 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
       <div className="py-4">
         <div className="text-center mb-6">
           <p className="text-lg font-semibold text-gray-900 mb-1">Complete your booking</p>
-          <p className="text-sm text-gray-600">Sign in or create an account to continue</p>
+          <p className="text-sm text-gray-600">We just need to verify your details to proceed</p>
         </div>
         
         <div className="space-y-4">
-          <form action={googleSignIn}>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full h-12 flex items-center justify-center gap-2 border border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm hover:bg-white transition-all duration-200 disabled:opacity-50"
-            >
-              {isSubmitting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <>
-                  <div className="relative w-5 h-5">
-                    <Image src="/icons/google.svg" alt="Google" fill className="object-contain" />
+          {/* Phone Number Input */}
+          <Form {...phoneForm}>
+            <form onSubmit={phoneForm.handleSubmit(handlePhoneSubmit)} className="space-y-3">
+              <FormField
+                control={phoneForm.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium text-gray-700">Continue with phone number</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="tel"
+                        placeholder="Enter your phone number"
+                        className="h-12"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <Button
+                type="submit"
+                disabled={isSubmitting || !phoneForm.watch('phoneNumber')}
+                className="w-full h-12"
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Sending code...</span>
                   </div>
-                  <span className="font-medium text-gray-700">Continue with Google</span>
-                </>
-              )}
-            </button>
-          </form>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Phone className="w-4 h-4" />
+                    <span>Send verification code</span>
+                  </div>
+                )}
+              </Button>
+            </form>
+          </Form>
 
           <div className="relative flex items-center gap-3">
             <div className="h-px flex-1 bg-gray-200"></div>
@@ -272,14 +298,23 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
             <div className="h-px flex-1 bg-gray-200"></div>
           </div>
 
-          <Button
-            onClick={() => setAuthStep('phone')}
-            variant="outline"
-            className="w-full h-12 bg-white/80 backdrop-blur-sm hover:bg-white"
+          <button
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={isSubmitting}
+            className="w-full h-12 flex items-center justify-center gap-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-200 disabled:opacity-50"
           >
-            <Phone className="w-4 h-4 mr-2" />
-            Continue with Phone
-          </Button>
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <div className="relative w-5 h-5">
+                  <Image src="/icons/google.svg" alt="Google" fill className="object-contain" />
+                </div>
+                <span className="font-medium text-gray-700">Continue with Google</span>
+              </>
+            )}
+          </button>
           
           <p className="text-center text-xs text-gray-500 mt-4">
             By continuing, you agree to our Terms of Service and Privacy Policy
@@ -294,8 +329,8 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
     return (
       <div className="py-4">
         <div className="text-center mb-6">
-          <p className="text-lg font-semibold text-gray-900 mb-1">Enter your phone number</p>
-          <p className="text-sm text-gray-600">We'll send you a verification code</p>
+          <p className="text-lg font-semibold text-gray-900 mb-1">Verify your phone number</p>
+          <p className="text-sm text-gray-600">We'll send a quick code to confirm it's you</p>
         </div>
         
         <Form {...phoneForm}>
@@ -310,7 +345,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                     <Input
                       type="tel"
                       placeholder="Enter your phone number"
-                      className="h-12 bg-white/80 backdrop-blur-sm"
+                      className="h-12"
                       {...field}
                     />
                   </FormControl>
@@ -356,8 +391,8 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
     return (
       <div className="py-4">
         <div className="text-center mb-6">
-          <p className="text-lg font-semibold text-gray-900 mb-1">Verify your phone</p>
-          <p className="text-sm text-gray-600 mb-1">Enter the code sent to</p>
+          <p className="text-lg font-semibold text-gray-900 mb-1">Enter verification code</p>
+          <p className="text-sm text-gray-600 mb-1">Code sent to</p>
           <p className="text-sm font-medium text-gray-900">{phoneNumber}</p>
         </div>
         
@@ -367,7 +402,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
             <Input
               type="text"
               placeholder="Enter 6-digit code"
-              className="h-12 text-center text-lg tracking-widest bg-white/80 backdrop-blur-sm"
+              className="h-12 text-center text-lg tracking-widest"
               maxLength={6}
               autoFocus
               autoComplete="one-time-code"
@@ -390,7 +425,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                 <span>Verifying...</span>
               </div>
             ) : (
-              "Verify code"
+              "Continue to booking"
             )}
           </Button>
 
@@ -423,8 +458,8 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
     return (
       <div className="py-4">
         <div className="text-center mb-6">
-          <p className="text-lg font-semibold text-gray-900 mb-1">Complete your account</p>
-          <p className="text-sm text-gray-600">Just a few more details to get started</p>
+          <p className="text-lg font-semibold text-gray-900 mb-1">Complete your details</p>
+          <p className="text-sm text-gray-600">We need a few details to finalize your booking</p>
         </div>
         
         <Form {...userDetailsForm}>
@@ -439,7 +474,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                     <FormControl>
                       <Input
                         placeholder="First name"
-                        className="h-12 bg-white/80 backdrop-blur-sm"
+                        className="h-12"
                         {...field}
                       />
                     </FormControl>
@@ -457,7 +492,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                     <FormControl>
                       <Input
                         placeholder="Last name"
-                        className="h-12 bg-white/80 backdrop-blur-sm"
+                        className="h-12"
                         {...field}
                       />
                     </FormControl>
@@ -477,7 +512,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                     <Input
                       type="email"
                       placeholder="Enter your email"
-                      className="h-12 bg-white/80 backdrop-blur-sm"
+                      className="h-12"
                       {...field}
                     />
                   </FormControl>
@@ -491,12 +526,12 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-medium text-gray-700">Password</FormLabel>
+                  <FormLabel className="text-sm font-medium text-gray-700">Create Password</FormLabel>
                   <FormControl>
                     <Input
                       type="password"
-                      placeholder="Create a password"
-                      className="h-12 bg-white/80 backdrop-blur-sm"
+                      placeholder="Choose a secure password"
+                      className="h-12"
                       {...field}
                     />
                   </FormControl>
@@ -514,7 +549,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                   <FormControl>
                     <Input
                       type="date"
-                      className="h-12 bg-white/80 backdrop-blur-sm"
+                      className="h-12"
                       {...field}
                     />
                   </FormControl>
@@ -531,12 +566,12 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
               {isSubmitting ? (
                 <div className="flex items-center space-x-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Creating account...</span>
+                  <span>Finalizing...</span>
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
                   <User className="w-4 h-4" />
-                  <span>Create account</span>
+                  <span>Complete booking setup</span>
                 </div>
               )}
             </Button>
@@ -551,8 +586,8 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
     return (
       <div className="py-4">
         <div className="text-center mb-6">
-          <p className="text-lg font-semibold text-gray-900 mb-1">Sign in to continue</p>
-          <p className="text-sm text-gray-600">Use your existing account credentials</p>
+          <p className="text-lg font-semibold text-gray-900 mb-1">Welcome back</p>
+          <p className="text-sm text-gray-600">Sign in to continue with your booking</p>
         </div>
         
         <Form {...signInForm}>
@@ -567,7 +602,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                     <Input
                       type="email"
                       placeholder="Enter your email"
-                      className="h-12 bg-white/80 backdrop-blur-sm"
+                      className="h-12"
                       {...field}
                     />
                   </FormControl>
@@ -586,7 +621,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                     <Input
                       type="password"
                       placeholder="Enter your password"
-                      className="h-12 bg-white/80 backdrop-blur-sm"
+                      className="h-12"
                       {...field}
                     />
                   </FormControl>
@@ -606,7 +641,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
                   <span>Signing in...</span>
                 </div>
               ) : (
-                "Sign in"
+                "Continue to booking"
               )}
             </Button>
 
@@ -629,7 +664,7 @@ export default function BookingAuthFlow({ onAuthComplete }: BookingAuthFlowProps
     return (
       <div className="py-4 text-center">
         <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-        <p className="text-lg font-semibold text-gray-900 mb-2">Account verified!</p>
+        <p className="text-lg font-semibold text-gray-900 mb-2">All set!</p>
         <p className="text-sm text-gray-600">You can now complete your booking</p>
       </div>
     );
