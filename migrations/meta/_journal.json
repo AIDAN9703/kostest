@@ -36,6 +36,20 @@
       "when": 1751431134111,
       "tag": "0004_striped_strong_guy",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1751596709118,
+      "tag": "0005_amusing_colonel_america",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1752002677351,
+      "tag": "0006_keen_swordsman",
+      "breakpoints": true
     }
   ]
 }

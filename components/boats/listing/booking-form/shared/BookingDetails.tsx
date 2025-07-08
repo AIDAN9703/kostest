@@ -43,62 +43,51 @@ export function BookingDetails({ boat, control, setValue, endTime }: BookingDeta
         name="startDate"
         render={({ field }) => (
           <FormItem>
-            <Popover open={dateOpen} onOpenChange={setDateOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal bg-white border border-gray-300 rounded-lg p-3 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors h-auto"
-                >
-                  <div className="flex items-center gap-3 w-full">
-                    <CalendarIcon className="h-5 w-5 text-primary" />
-                    <div className="flex-1 text-left">
-                      <div className="text-sm font-semibold text-gray-900">
-                        {field.value ? format(field.value, "MMMM d, yyyy") : "Select Date"}
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {field.value ? format(field.value, "EEEE") : "Choose your charter date"}
-                      </div>
-                    </div>
-                    <ChevronDown className={cn(
-                      "h-4 w-4 text-gray-400 transition-transform",
-                      dateOpen && "rotate-180"
-                    )} />
-                  </div>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent 
-                className="w-auto p-0" 
-                align="start"
-                side="bottom"
-                sideOffset={8}
+            <div className="relative">
+              <Button
+                type="button"
+                onClick={() => setDateOpen(!dateOpen)}
+                variant="outline"
+                className="w-full justify-start text-left font-normal bg-white border border-gray-300 rounded-lg p-3 hover:border-primary/40 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors h-auto"
               >
-                <Calendar
-                  mode="single"
-                  selected={field.value}
-                  onSelect={(date) => {
-                    field.onChange(date);
-                    setDateOpen(false);
-                  }}
-                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  className="p-4"
-                  classNames={{
-                    month: "space-y-4",
-                    caption: "flex justify-center pt-1 relative items-center mb-4",
-                    caption_label: "text-base font-semibold",
-                    nav_button: "h-8 w-8",
-                    nav_button_previous: "absolute left-1",
-                    nav_button_next: "absolute right-1",
-                    head_cell: "text-gray-500 w-10 h-8 font-medium text-xs flex items-center justify-center",
-                    day: "h-10 w-10 rounded-md hover:bg-gray-100 transition-colors",
-                    day_selected: "bg-primary text-white",
-                    day_today: "text-gold font-semibold",
-                    day_outside: "text-gray-300 opacity-50",
-                    day_disabled: "text-gray-300 opacity-30 cursor-not-allowed hover:bg-transparent",
-                  }}
-                />
-              </PopoverContent>
-            </Popover>
+                <div className="flex items-center gap-3 w-full">
+                  <CalendarIcon className="h-5 w-5 text-primary" />
+                  <div className="flex-1 text-left">
+                    <div className="text-sm font-semibold text-gray-900">
+                      {field.value ? format(field.value, "MMMM d, yyyy") : "Select Date"}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {field.value ? format(field.value, "EEEE") : "Choose your charter date"}
+                    </div>
+                  </div>
+                  <ChevronDown className={cn(
+                    "h-4 w-4 text-gray-400 transition-transform",
+                    dateOpen && "rotate-180"
+                  )} />
+                </div>
+              </Button>
+              
+              {dateOpen && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-50 justify-center flex">
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={(date) => {
+                      field.onChange(date);
+                      setDateOpen(false);
+                    }}
+                    disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                    className="p-3"
+                    classNames={{
+                      day: "h-8 w-8 rounded-md hover:bg-gray-100 transition-colors",
+                      day_selected: "bg-primary text-white",
+                      day_today: "text-gold font-semibold",
+                      day_disabled: "text-gray-300 opacity-30 cursor-not-allowed hover:bg-transparent",
+                    }}
+                  />
+                </div>
+              )}
+            </div>
             <FormMessage />
           </FormItem>
         )}

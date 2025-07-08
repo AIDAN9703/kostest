@@ -32,6 +32,12 @@ const menuItems = [
     href: "/admin/quotes/create",
     icon: <FileText className="h-5 w-5" />,
     bgColor: "bg-amber-500 hover:bg-amber-600"
+  },
+  {
+    label: "Create Blog Post",
+    href: "/admin/blog/create",
+    icon: <FileText className="h-5 w-5" />,
+    bgColor: "bg-teal-500 hover:bg-teal-600"
   }
 ];
 

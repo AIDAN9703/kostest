@@ -3,81 +3,41 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Calendar, User, ArrowRight, Instagram, ExternalLink } from 'lucide-react'
+import { getPublishedBlogPosts } from '@/lib/actions/admin/blog'
+import { formatDate } from '@/lib/utils/general-utils'
 
-// Force static generation - this news page has no dynamic content (using static news items)
-export const dynamic = 'force-static';
+// This page now uses dynamic data from the database
+export const dynamic = 'force-dynamic';
 
-// Sample news/blog posts - replace with real content management system later
-const newsItems = [
-  {
-    id: 1,
-    title: "New 65ft Luxury Yacht Added to KOS Fleet",
-    excerpt: "We're excited to announce the addition of our stunning new 65ft luxury yacht, featuring state-of-the-art amenities and accommodations for up to 13 guests.",
-    image: "/images/experiences/yachtparty.jpg",
-    date: "2024-01-15",
-    author: "KOS Team",
-    category: "Fleet News",
-    featured: true
-  },
-  {
-    id: 2,
-    title: "KOS Yachts Partners with Local Marine Conservation",
-    excerpt: "Learn about our new partnership with marine conservation groups to protect Miami's beautiful waters while providing unforgettable charter experiences.",
-    image: "/images/experiences/sunset.jpg",
-    date: "2024-01-10",
-    author: "KOS Team",
-    category: "Conservation"
-  },
-  {
-    id: 3,
-    title: "Peak Season Charter Tips: Book Early for Best Selection",
-    excerpt: "With peak season approaching, here are our top tips for securing the perfect yacht charter experience during Miami's busiest boating months.",
-    image: "/images/experiences/daycharter2.jpg",
-    date: "2024-01-05",
-    author: "Charter Team",
-    category: "Tips & Advice"
-  },
-  {
-    id: 4,
-    title: "Corporate Event Success: Tech Company Retreat",
-    excerpt: "Read about how we helped a major tech company create an unforgettable corporate retreat experience on the water with our premium charter services.",
-    image: "/images/experiences/corporateevents.webp",
-    date: "2023-12-28",
-    author: "Events Team",
-    category: "Case Study"
-  },
-  {
-    id: 5,
-    title: "Holiday Charter Season Recap: Record-Breaking Year",
-    excerpt: "2023 was our biggest year yet! See highlights from an incredible holiday charter season and what made it so special for our guests.",
-    image: "/images/experiences/birthday.png",
-    date: "2023-12-20",
-    author: "KOS Team",
-    category: "Company News"
-  },
-  {
-    id: 6,
-    title: "Safety First: Our Enhanced Safety Protocols",
-    excerpt: "Learn about KOS Yachts' comprehensive safety measures and protocols that ensure every charter experience is both thrilling and secure.",
-    image: "/images/experiences/family.jpg",
-    date: "2023-12-15",
-    author: "Safety Team",
-    category: "Safety"
-  }
-]
+// Category display names mapping
+const categoryLabels = {
+  FLEET_NEWS: 'Fleet News',
+  CONSERVATION: 'Conservation',
+  TIPS_ADVICE: 'Tips & Advice',
+  CASE_STUDY: 'Case Study',
+  COMPANY_NEWS: 'Company News',
+  SAFETY: 'Safety',
+  EVENTS: 'Events',
+} as const;
 
-export default function NewsPage() {
-  const featuredPost = newsItems.find(item => item.featured)
-  const regularPosts = newsItems.filter(item => !item.featured)
+
+
+export default async function NewsPage() {
+  // Fetch published blog posts from database
+  const blogPosts = await getPublishedBlogPosts({ limit: 20 });
+  
+  // Use fallback items if no blog posts exist
+  const newsItems = blogPosts;
+  
+  const featuredPost = newsItems.find(item => item.isFeatured);
+  const regularPosts = newsItems.filter(item => !item.isFeatured);
 
   return (
     <div className="w-full">
       {/* Hero Section */}
       <section className="py-10 md:py-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <span className="text-primary font-medium text-sm tracking-wide uppercase mb-2 block">
-            News & Updates
-          </span>
+
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-primary leading-tight mb-4">
             Latest from KOS Yachts
           </h1>
@@ -95,14 +55,14 @@ export default function NewsPage() {
               <div className="grid lg:grid-cols-2 gap-0">
                 <div className="relative h-64 lg:h-full">
                   <Image
-                    src={featuredPost.image}
+                    src={featuredPost.featuredImage || "/images/experiences/yachtparty.jpg"}
                     alt={featuredPost.title}
                     fill
                     className="object-cover"
                     sizes="(max-width: 1024px) 100vw, 50vw"
                   />
                   <div className="absolute top-4 left-4">
-                    <span className="bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">
+                    <span className="bg-gold text-white px-3 py-1 rounded-full text-sm font-medium">
                       Featured
                     </span>
                   </div>
@@ -111,14 +71,14 @@ export default function NewsPage() {
                   <div className="flex items-center gap-4 mb-4 text-sm text-gray-500">
                     <div className="flex items-center">
                       <Calendar className="h-4 w-4 mr-2" />
-                      <span>{new Date(featuredPost.date).toLocaleDateString()}</span>
+                      <span>{formatDate(featuredPost.publishedAt)}</span>
                     </div>
                     <div className="flex items-center">
                       <User className="h-4 w-4 mr-2" />
-                      <span>{featuredPost.author}</span>
+                      <span>{featuredPost.author || 'KOS Team'}</span>
                     </div>
                     <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-medium">
-                      {featuredPost.category}
+                      {categoryLabels[featuredPost.category]}
                     </span>
                   </div>
                   <h2 className="text-2xl md:text-3xl font-medium text-primary mb-4 leading-tight">
@@ -127,10 +87,12 @@ export default function NewsPage() {
                   <p className="text-gray-600 font-light leading-relaxed mb-6">
                     {featuredPost.excerpt}
                   </p>
-                  <Button className="bg-primary text-white hover:bg-primary/90 w-fit">
-                    Read More
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
+                  <Link href={`/news/${featuredPost.slug}`}>
+                    <Button className="bg-primary text-white hover:bg-primary/90 w-fit">
+                      Read More
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -143,14 +105,14 @@ export default function NewsPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {regularPosts.map((post, index) => (
-              <article 
-                key={post.id} 
-                className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-in-up"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
+              <Link key={post.id} href={`/news/${post.slug}`} className="group">
+                <article 
+                  className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 animate-fade-in-up"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
                 <div className="relative h-48">
                   <Image
-                    src={post.image}
+                    src={post.featuredImage || "/images/experiences/yachtparty.jpg"}
                     alt={post.title}
                     fill
                     className="object-cover transition-transform duration-300 hover:scale-105"
@@ -158,7 +120,7 @@ export default function NewsPage() {
                   />
                   <div className="absolute top-4 left-4">
                     <span className="bg-white/90 backdrop-blur text-primary px-2 py-1 rounded text-xs font-medium">
-                      {post.category}
+                      {categoryLabels[post.category]}
                     </span>
                   </div>
                 </div>
@@ -167,11 +129,11 @@ export default function NewsPage() {
                   <div className="flex items-center gap-4 mb-3 text-sm text-gray-500">
                     <div className="flex items-center">
                       <Calendar className="h-4 w-4 mr-1" />
-                      <span>{new Date(post.date).toLocaleDateString()}</span>
+                      <span>{formatDate(post.publishedAt)}</span>
                     </div>
                     <div className="flex items-center">
                       <User className="h-4 w-4 mr-1" />
-                      <span>{post.author}</span>
+                      <span>{post.author || 'KOS Team'}</span>
                     </div>
                   </div>
                   
@@ -183,12 +145,13 @@ export default function NewsPage() {
                     {post.excerpt}
                   </p>
                   
-                  <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white w-fit text-sm">
+                  <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white group-hover:bg-primary group-hover:text-white w-fit text-sm">
                     Read More
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </div>
               </article>
+            </Link>
             ))}
           </div>
         </div>
@@ -221,22 +184,13 @@ export default function NewsPage() {
       <section className="py-16 md:py-20">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-black mb-2">
+            <h2 className="text-4xl md:text-5xl font-bold text-primary mb-2">
               CONNECT.
             </h2>
             <p className="text-gray-600 text-lg font-light max-w-2xl mx-auto mb-8">
               Follow our journey and see the latest from our charters and fleet updates.
             </p>
             
-            <Link 
-              href="https://instagram.com/kosyachts" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center text-primary hover:text-primary/80 transition-colors font-medium text-xl mb-8"
-            >
-              @kosyachts
-              <ExternalLink className="ml-2 h-5 w-5" />
-            </Link>
           </div>
 
           {/* Instagram Posts Grid */}

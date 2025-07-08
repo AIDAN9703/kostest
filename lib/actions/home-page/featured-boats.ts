@@ -74,7 +74,7 @@ export async function getFeaturedBoats(): Promise<ActionResponse<Boat[]>> {
       }
     },
     {
-      revalidate: 2,
+      revalidate: 3600,
       tags: ['featured-boats']
     }
   );

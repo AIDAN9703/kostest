@@ -36,6 +36,12 @@ export default async function BoatDetailPage({ params }: BoatDetailPageProps) {
           <p className="text-gray-500">View boat information</p>
         </div>
         <Link
+          href={`/admin/boats/${boatId}/calendar`}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+        >
+          Calendar Settings
+        </Link>
+        <Link
           href={`/admin/boats/${boatId}/edit`}
           className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
         >

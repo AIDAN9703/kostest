@@ -13,7 +13,9 @@ import {
   ChevronLeft,
   LogOut,
   HelpCircle,
-  FileText
+  FileText,
+  PenTool,
+  Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils/general-utils";
 import Image from "next/image";
@@ -46,9 +48,19 @@ const navItems: NavItem[] = [
     icon: <CalendarDays className="h-5 w-5" />
   },
   {
+    label: "Calendar",
+    href: "/admin/calendar",
+    icon: <Calendar className="h-5 w-5" />
+  },
+  {
     label: "Inquiries",
     href: "/admin/inquiries",
     icon: <MessageSquare className="h-5 w-5" />
+  },
+  {
+    label: "Blog Posts",
+    href: "/admin/blog",
+    icon: <PenTool className="h-5 w-5" />
   },
   {
     label: "Quote Manager",

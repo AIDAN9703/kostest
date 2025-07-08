@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { imagekit } from '@/lib/services/imagekit';
 
-type UploadType = 'profile' | 'cover' | 'boat' | 'misc';
+type UploadType = 'profile' | 'cover' | 'boat' | 'misc' | 'blog';
 
 interface UploadOptions {
   type: UploadType;
@@ -66,6 +66,11 @@ export async function POST(request: Request) {
         break;
       case 'misc':
         folder = `/misc/${session.user.id}`;
+        tags.push(`user_${session.user.id}`);
+        break;
+      case 'blog':
+        folder = `/blog/${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        tags.push('blog_content');
         tags.push(`user_${session.user.id}`);
         break;
       default:
