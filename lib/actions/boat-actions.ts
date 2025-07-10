@@ -322,4 +322,33 @@ export const getBoatById = cache(async (id: string): Promise<Boat | null> => {
 
 // Cache invalidation functions removed - no longer needed with ISR-only approach
 
+/**
+ * Get all boat IDs for static generation
+ * Optimized query that only fetches IDs to minimize build-time overhead
+ */
+export async function getAllBoatIds(): Promise<string[]> {
+  "use server";
+  
+  try {
+    console.log('🔍 Fetching all boat IDs for static generation...');
+    
+    // Only select active boats for static generation
+    // This prevents generating pages for inactive/draft boats
+    const boatIds = await db
+      .select({ id: boats.id })
+      .from(boats)
+      .where(eq(boats.active, true));
+    
+    const ids = boatIds.map(boat => boat.id);
+    console.log(`📋 Found ${ids.length} active boats for static generation`);
+    
+    return ids;
+  } catch (error) {
+    console.error('❌ Error fetching boat IDs for static generation:', error);
+    // Return empty array to prevent build failure
+    // Static generation will fall back to on-demand ISR
+    return [];
+  }
+}
+
  

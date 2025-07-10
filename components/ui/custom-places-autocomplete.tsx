@@ -231,6 +231,13 @@ export function CustomPlacesAutocomplete({
     getPlaceDetails(prediction.place_id);
   }, [getPlaceDetails]);
 
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && isOpen && predictions.length > 0) {
+      e.preventDefault();
+      handlePredictionSelect(predictions[0]);
+    }
+  }, [isOpen, predictions, handlePredictionSelect]);
+
   if (!isReady) {
     return (
       <div className={containerClassName}>
@@ -258,6 +265,7 @@ export function CustomPlacesAutocomplete({
         onChange={handleInputChange}
         onFocus={onFocus}
         onBlur={onBlur}
+        onKeyDown={handleKeyDown}
       />
       
       {isLoading && inputValue.length > 0 && (

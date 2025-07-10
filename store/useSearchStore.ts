@@ -21,9 +21,7 @@ interface SearchStore {
   setSearchValue: (value: string) => void
   clearSearchValue: () => void
   
-  // Autocomplete reference for Google Places
-  autocompleteRef: React.RefObject<HTMLInputElement> | null
-  setAutocompleteRef: (ref: React.RefObject<HTMLInputElement> | null) => void
+
   
   // Selected place from Google Places
   selectedPlace: google.maps.places.PlaceResult | null
@@ -54,8 +52,7 @@ export const useSearchStore = create<SearchStore>((set) => ({
   // Google Places state
   selectedPlace: null,
   setSelectedPlace: (place) => set({ selectedPlace: place }),
-  autocompleteRef: null,
-  setAutocompleteRef: (ref) => set({ autocompleteRef: ref }),
+
   
   // Place details processing
   placeDetails: null,

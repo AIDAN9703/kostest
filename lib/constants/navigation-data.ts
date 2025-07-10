@@ -20,6 +20,7 @@ export const navigationData: {
         { href: "/careers", label: "Careers" },
         { href: "https://kosyachts.myshopify.com/", label: "Store" },
         { href: "/news", label: "News" },
+        { href: "/our-team", label: "Our Team" },
     ],
     user: [
         { href: "/profile/bookings", label: "My Bookings", icon: Calendar },

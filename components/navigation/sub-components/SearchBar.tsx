@@ -37,6 +37,7 @@ export default function SearchBar({ variant = 'hero' }: SearchBarProps) {
   const { 
     searchValue, 
     setSearchValue,
+    selectedPlace,
     setSelectedPlace,
     setPlaceDetails,
     placeDetails,
@@ -47,6 +48,24 @@ export default function SearchBar({ variant = 'hero' }: SearchBarProps) {
   const router = useRouter()
   const { toast } = useToast()
 
+  // Extract navigation logic to reusable function
+  const navigateToSearch = (place: google.maps.places.PlaceResult) => {
+    if (place.geometry?.viewport) {
+      const viewport = place.geometry.viewport;
+      const searchParams = new URLSearchParams({
+        near: place.formatted_address || '',
+        ne_lat: viewport.getNorthEast().lat().toString(),
+        ne_lng: viewport.getNorthEast().lng().toString(),
+        sw_lat: viewport.getSouthWest().lat().toString(),
+        sw_lng: viewport.getSouthWest().lng().toString(),
+        zoom_level: '13',
+        map_toggle: 'on'
+      });
+      
+      router.push(`/boats/search?${searchParams.toString()}`);
+    }
+  }
+
   const handlePlaceSelected = (locationData: LocationData) => {
     setSearchValue(locationData.formatted_address);
     setSelectedPlace(locationData.raw);
@@ -54,6 +73,8 @@ export default function SearchBar({ variant = 'hero' }: SearchBarProps) {
     // Store processed location data
     if (locationData.raw) {
       setPlaceDetails(locationData.raw);
+      // Immediately navigate after selection
+      navigateToSearch(locationData.raw);
     }
   }
 
@@ -65,11 +86,11 @@ export default function SearchBar({ variant = 'hero' }: SearchBarProps) {
     })
   }
 
-  // Handler for form submission (button click or Enter press)
+  // Handler for manual form submission (search button click)
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!placeDetails) {
+    if (!selectedPlace) {
       toast({
         title: "Invalid Location",
         description: "Please select a valid location from the suggestions",
@@ -78,23 +99,7 @@ export default function SearchBar({ variant = 'hero' }: SearchBarProps) {
       return
     }
     
-    // Get bounding box from selected location
-    const viewport = placeDetails.viewport
-    if (!viewport) return
-    
-    // Generate search URL parameters directly
-    const searchParams = new URLSearchParams({
-      near: placeDetails.formattedAddress,
-      ne_lat: viewport.ne.lat.toString(),
-      ne_lng: viewport.ne.lng.toString(),
-      sw_lat: viewport.sw.lat.toString(),
-      sw_lng: viewport.sw.lng.toString(),
-      zoom_level: '13',
-      map_toggle: 'on'
-    })
-    
-    // Navigate to search page with selected location parameters
-    router.push(`/boats/search?${searchParams.toString()}`)
+    navigateToSearch(selectedPlace)
   }
 
   return (
