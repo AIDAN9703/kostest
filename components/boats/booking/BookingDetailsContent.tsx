@@ -28,6 +28,7 @@ interface SafeBoatData {
   mainImage: string | null;
   instantBook: boolean;
   cleaningFee: number | null;
+  locationLabel: string | null;
 }
 
 interface BookingFormData extends BookingRequest {
@@ -283,14 +284,12 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
             </div>
           )}
 
-          {/* Pricing Summary Component */}
-          {isAuthenticated && (
-            <PricingSummary 
-              boat={boat}
-              selectedTier={selectedTier}
-              bookingData={data}
-            />
-          )}
+          {/* Pricing Summary Component - Always visible */}
+          <PricingSummary 
+            boat={boat}
+            selectedTier={selectedTier}
+            bookingData={data}
+          />
 
           {/* Communication Preferences */}
           {isAuthenticated && (

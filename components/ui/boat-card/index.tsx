@@ -297,9 +297,9 @@ const BoatCard = ({
                 <div className="text-[#1E293B] flex items-center">
                   <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-emerald-500 text-emerald-500 inline-block mr-1" />
                   <span className="text-xs sm:text-sm font-medium">
-                    {boat.averageRating ? Number(boat.averageRating).toFixed(1) : '4.9'} 
+                    {boat.averageRating || "--"} 
                     <span className="text-gray-500 font-normal ml-0.5">
-                      ({boat.totalReviews || 12} reviews)
+                      ({boat.totalReviews} {boat.totalReviews === 1 ? 'review' : 'reviews'})
                     </span>
                   </span>
                 </div>

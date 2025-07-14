@@ -127,7 +127,7 @@ export default function SearchBar({ variant = 'hero' }: SearchBarProps) {
         >
           <Search 
             size={variant === 'hero' ? 24 : 18} 
-            className="text-primary" 
+            className="text-slate-400" 
           />
         </button>
       </form>

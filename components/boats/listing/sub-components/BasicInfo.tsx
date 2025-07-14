@@ -38,15 +38,17 @@ export function BasicInfo({ boat }: BasicInfoProps) {
         {/* Rating */}
         <div className="flex items-center gap-1 text-sm shrink-0 sm:pt-2">
           <div className="flex">
-              <Star
-                key={boat.averageRating}
-                className="w-4 h-4 text-emerald-400"
-                fill="currentColor"
-              />
-    
+            <Star
+              className="w-4 h-4 text-emerald-400"
+              fill="currentColor"
+            />
           </div>
-          <span className="font-semibold text-gray-600">{boat.averageRating || "4.7"}</span>
-          <span className="text-gray-600">({boat.totalReviews || 111} bookings)</span>
+          <span className="font-semibold text-gray-600">
+            {boat.averageRating ? Number(boat.averageRating).toFixed(1) : "--"}
+          </span>
+          <span className="text-gray-600">
+            ({boat.totalReviews || 0} {boat.totalReviews === 1 ? 'review' : 'reviews'})
+          </span>
         </div>
       </div>
 

@@ -11,6 +11,7 @@ interface SafeBoatData {
   mainImage: string | null;
   instantBook: boolean;
   cleaningFee: number | null;
+  locationLabel: string | null;
 }
 import { formatCurrency } from "@/lib/utils/general-utils";
 import { Button } from "@/components/ui/button";

@@ -16,7 +16,7 @@ import { calculateEndTime } from "@/lib/utils/booking-utils";
 import { useSimpleFormPersistence } from "./hooks/useSimpleFormPersistence";
 import { usePriceCalculation, useActivePricingTiers } from "./hooks/usePriceCalculation";
 import { PricingDisplay } from "./shared/PricingDisplay";
-import { BookingDetails } from "./shared/BookingDetails";
+import { DateSelection, TimeSelection, PassengerSelection } from "./shared/BookingDetails";
 import { CaptainSelection } from "./shared/CaptainSelection";
 import { SpecialRequests } from "./shared/SpecialRequests";
 import { PriceSummary } from "./shared/PriceSummary";
@@ -95,7 +95,8 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
         name: boat.name,
         mainImage: boat.mainImage,
         instantBook: boat.instantBook,
-        cleaningFee: boat.cleaningFee
+        cleaningFee: boat.cleaningFee,
+        locationLabel: boat.locationLabel
       },
       selectedTier: priceBreakdown.selectedPricingTier
     };
@@ -114,17 +115,25 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
     <div className="p-4">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
+          <DateSelection 
+            control={form.control}
+          />
+
           <PricingDisplay 
             boat={boat} 
             control={form.control} 
             selectedPricingTier={priceBreakdown.selectedPricingTier}
           />
 
-          <BookingDetails 
+          <TimeSelection 
+            control={form.control}
+            endTime={endTime}
+          />
+
+          <PassengerSelection 
             boat={boat} 
             control={form.control}
             setValue={form.setValue}
-            endTime={endTime}
           />
 
           <CaptainSelection 

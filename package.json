@@ -11,7 +11,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
-    "db:seed-boats": "npx tsx database/seed-boats.ts"
+    "db:seed-boats": "npx tsx database/seed-boats.ts",
+    "db:seed-reviews": "npx tsx database/seed-reviews.ts",
+    "db:update-review-stats": "npx tsx database/calculate-review-stats.ts"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.18",

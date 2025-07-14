@@ -67,7 +67,7 @@ export default function HeroSection() {
         <div className="flex-1 flex flex-col items-center justify-center w-full font-poppins text-white text-center">
           {/* Main Heading with fixed height container */}
           <div className="mb-4 sm:mb-6">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold italic leading-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-tight">
               Find Your Perfect
               <br />
               {/* Fixed height container to prevent layout shifts */}
@@ -92,7 +92,7 @@ export default function HeroSection() {
           </div>
           
           {/* Subtitle */}
-          <p className="text-xs sm:text-sm md:text-base max-w-xs sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl text-white/70 italic mt-6 sm:mt-8 md:mt-10">
+          <p className="text-sm sm:text-base md:text-lg max-w-xs sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl text-white mt-2 sm:mt-4 md:mt-6">
             Discover unforgettable boat and yacht charters with experienced crew worldwide
           </p>
         </div>

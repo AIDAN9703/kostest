@@ -8,7 +8,7 @@ export { useSimpleFormPersistence } from "./hooks/useSimpleFormPersistence";
 
 // Shared components
 export { PricingDisplay } from "./shared/PricingDisplay";
-export { BookingDetails } from "./shared/BookingDetails";
+export { DateSelection, TimeSelection, PassengerSelection } from "./shared/BookingDetails";
 export { CaptainSelection } from "./shared/CaptainSelection";
 export { SpecialRequests } from "./shared/SpecialRequests";
 export { PriceSummary } from "./shared/PriceSummary"; 

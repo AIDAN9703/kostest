@@ -442,6 +442,9 @@ export const boats = pgTable("boat",{
     lastMaintenanceDate: timestamp("last_maintenance_date", { mode: "date" }),
     nextMaintenanceDate: timestamp("next_maintenance_date", { mode: "date" }),
     maintenanceNotes: text("maintenance_notes"), // Added maintenance notes
+
+    averageRating: doublePrecision("average_rating"),
+    totalReviews: integer("total_reviews").default(0),
     
     // Timestamps
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),

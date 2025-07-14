@@ -13,7 +13,7 @@ export default function ContactPage() {
       <section className="relative h-[75vh] flex items-center justify-center text-center text-white">
         <div className="absolute inset-0 z-0">
           <img
-            src="/images/herooption13.jpeg"
+            src="/images/herooption17.jpeg"
             alt="Luxury yacht background"
             className="w-full h-full object-cover"
           />

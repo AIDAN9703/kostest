@@ -11,6 +11,7 @@ interface SafeBoatData {
   mainImage: string | null;
   instantBook: boolean;
   cleaningFee: number | null;
+  locationLabel: string | null;
 }
 
 interface BookingData {
@@ -82,9 +83,15 @@ export default function BoatSummary({ boat, bookingData, selectedTier, timeLeft 
         </div>
         
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-semibold text-gray-900 mb-2">
+          <h1 className="text-lg font-semibold text-gray-900 mb-1">
             {boat.name}
           </h1>
+          
+          {boat.locationLabel && (
+            <p className="text-sm text-gray-600 mb-2">
+              📍 {boat.locationLabel}
+            </p>
+          )}
           
           <div className="space-y-1 text-sm">
             <p className="font-medium text-gray-900">

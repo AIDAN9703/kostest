@@ -49,7 +49,7 @@ const BOAT_FEATURES = [
 // Default filter values
 const DEFAULT_FILTERS = {
   date: undefined,
-  priceRange: [0, 1000] as [number, number],
+  priceRange: [0, 20000] as [number, number],
   lengthRange: [0, 100] as [number, number],
   yearBuilt: [1980, new Date().getFullYear()] as [number, number],
   guests: 1,
@@ -362,17 +362,17 @@ export default function FilterModal({ isOpen, onClose }: FilterModalProps) {
                   <div className="bg-gray-50 px-3 py-2 rounded-md border text-sm w-24 text-center">
                     ${priceRange[0]}
                   </div>
-                  <div className="text-gray-500 text-xs">per hour</div>
+                  <div className="text-gray-500 text-xs">charter price</div>
                   <div className="bg-gray-50 px-3 py-2 rounded-md border text-sm w-24 text-center">
-                    ${priceRange[1] === 1000 ? '1000+' : priceRange[1]}
+                    ${priceRange[1] === 20000 ? '20000+' : priceRange[1]}
                   </div>
                 </div>
                 <Slider
                   value={priceRange}
                   onValueChange={handlePriceRangeChange}
                   min={0}
-                  max={1000}
-                  step={50}
+                  max={20000}
+                  step={500}
                   className="my-6"
                 />
                 
@@ -380,35 +380,35 @@ export default function FilterModal({ isOpen, onClose }: FilterModalProps) {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => setPriceRange([0, 200])}
+                    onClick={() => setPriceRange([0, 1000])}
                     className={cn(
                       "h-10",
-                      priceRange[0] === 0 && priceRange[1] === 200 ? "bg-primary/10 border-primary" : ""
+                      priceRange[0] === 0 && priceRange[1] === 1000 ? "bg-primary/10 border-primary" : ""
                     )}
                   >
-                    $0-$200
+                    Under $1000
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => setPriceRange([200, 500])}
+                    onClick={() => setPriceRange([1000, 5000])}
                     className={cn(
                       "h-10",
-                      priceRange[0] === 200 && priceRange[1] === 500 ? "bg-primary/10 border-primary" : ""
+                      priceRange[0] === 1000 && priceRange[1] === 5000 ? "bg-primary/10 border-primary" : ""
                     )}
                   >
-                    $200-$500
+                    $1000-$5000
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => setPriceRange([500, 1000])}
+                    onClick={() => setPriceRange([5000, 20000])}
                     className={cn(
                       "h-10",
-                      priceRange[0] === 500 && priceRange[1] === 1000 ? "bg-primary/10 border-primary" : ""
+                      priceRange[0] === 5000 && priceRange[1] === 20000 ? "bg-primary/10 border-primary" : ""
                     )}
                   >
-                    $500+
+                    $5000+
                   </Button>
                 </div>
               </div>

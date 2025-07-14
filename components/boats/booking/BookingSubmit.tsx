@@ -7,6 +7,7 @@ interface SafeBoatData {
   mainImage: string | null;
   instantBook: boolean;
   cleaningFee: number | null;
+  locationLabel: string | null;
 }
 
 interface BookingSubmitProps {

@@ -40,7 +40,7 @@ export function PricingDisplay({ boat, control, selectedPricingTier }: PricingDi
       render={({ field }) => (
         <FormItem>
           <Select onValueChange={field.onChange} value={field.value}>
-            <SelectTrigger className="w-full border-none p-3 h-auto">
+            <SelectTrigger className="w-full border border-gray-300 rounded-lg p-3 h-auto">
               <div className="flex items-center gap-3 w-full">
                                   <Clock className="h-5 w-5 text-primary" />
                 <div className="flex-1 text-left">
