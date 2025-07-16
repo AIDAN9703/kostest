@@ -6,7 +6,6 @@ import localFont from "next/font/local";
 import { SessionProvider } from "next-auth/react";
 import GoogleMapsScript from "@/components/providers/GoogleMapsScript";
 import { ImageKitProvider } from "@imagekit/next";
-import LazyChatbot from "@/components/chatbot/LazyChatbot";
 
 const openSans = localFont({
   src: [
@@ -83,7 +82,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || ''}>
           <SessionProvider>
             {children}
-            <LazyChatbot />
             <Toaster />
           </SessionProvider>
         </ImageKitProvider>

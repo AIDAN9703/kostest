@@ -2,6 +2,7 @@ import Navigation from '@/components/navigation/Navigation';
 import PageWrapper from '@/components/navigation/PageWrapper';
 import { ReactNode } from 'react'
 import Footer from '@/components/navigation/Footer';
+import LazyChatbot from '@/components/chatbot/LazyChatbot';
 
 interface LayoutProps {
   children: ReactNode;
@@ -18,6 +19,7 @@ const Layout = ({ children }: LayoutProps) => {
           {children}
         </PageWrapper>
       </main>
+      <LazyChatbot />
       <Footer />
     </>
   );
