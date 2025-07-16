@@ -29,7 +29,7 @@ export function CustomPlacesAutocomplete({
   className = '',
   containerClassName = '',
   defaultValue = '',
-  countryRestriction = ['us', 'bs', 'pr'],
+  countryRestriction = ['us', 'bs', 'pr', 'do'],
   types = ['geocode', 'establishment'],
   variant = 'hero',
   isOpen = false,

@@ -149,6 +149,13 @@ body {
     background: linear-gradient(180deg, #232839 0%, #12141d 100%);
   }
 
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
 }
 
 @layer base {
