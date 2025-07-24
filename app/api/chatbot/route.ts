@@ -2,8 +2,8 @@ import { convertToCoreMessages, streamText, tool } from 'ai';
 import { xai } from '@ai-sdk/xai';
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
-import { getBoats } from '@/lib/actions/boat-actions';
-import { SearchParamsType } from '@/lib/types/types';
+import { searchBoats } from '@/features/search/actions/search-actions';
+import { SearchParamsType, Boat } from '@/shared/types/types';
 
 const apiKey = process.env.XAI_API_KEY;
 
@@ -132,8 +132,8 @@ export async function POST(req: NextRequest) {
                 searchParams.sort = 'newest';
               }
 
-              // Use the same getBoats function as your search page
-              const results = await getBoats({
+                  // Use the same searchBoats function as your search page
+    const results = await searchBoats({
                 searchParams,
                 limit: Math.min(limit, 12), // Cap at 12 for chat interface
                 page: 1
@@ -148,7 +148,7 @@ export async function POST(req: NextRequest) {
               }
 
               // Format results for conversational presentation
-              const boats = results.boats.map(boat => ({
+              const boats = results.boats.map((boat: Boat) => ({
                 id: boat.id,
                 name: boat.name,
                 category: boat.category,

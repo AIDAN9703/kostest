@@ -1,14 +1,14 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
 import { Calendar, Users, MapPin, Shield, CheckCircle, Star, Clock, Anchor } from 'lucide-react'
-import ExperienceLayout from '@/components/experiences/ExperienceLayout'
-import { Button } from '@/components/ui/button'
+import ExperienceLayout from '@/features/experiences-marketing/components/ExperienceLayout'
+import { Button } from '@/shared/components/ui/button'
 import RequestTermCharter from './RequestTermCharter'
 import { db } from "@/database/db"
 import { boats } from "@/database/schema"
 import { eq, and } from "drizzle-orm"
-import { Boat } from "@/lib/types/types"
-import BoatCard from "@/components/ui/boat-card"
+import { Boat } from "@/shared/types/types"
+import BoatCard from "@/shared/components/ui/boat-card"
 
 export const metadata: Metadata = {
   title: 'Term Charter Adventures | KOS',

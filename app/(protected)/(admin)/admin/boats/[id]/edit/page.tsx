@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getBoatById } from "@/lib/actions/admin/boats";
-import { BoatForm } from "@/components/admin/boats/BoatForm";
+import { getBoatById } from "@/features-admin/boats/actions/boats";
+import { BoatForm } from "@/features-admin/boats/components/BoatForm";
 import { notFound } from "next/navigation";
-import { CreateBoatInput, PricingTierInput } from "@/lib/validation/admin/boats";
+import { CreateBoatInput, PricingTierInput } from "@/features-admin/_validation/boats";
 
 interface BoatEditPageProps {
   params: Promise<{ id: string }>;

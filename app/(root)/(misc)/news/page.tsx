@@ -1,10 +1,10 @@
 import React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/shared/components/ui/button'
 import { Calendar, User, ArrowRight, Instagram, ExternalLink } from 'lucide-react'
-import { getPublishedBlogPosts } from '@/lib/actions/admin/blog'
-import { formatDate } from '@/lib/utils/general-utils'
+import { getPublishedBlogPosts } from '@/features-admin/blog/actions/admin-blog-actions'
+import { formatDate } from '@/shared/utils/general-utils'
 
 // This page now uses dynamic data from the database
 export const dynamic = 'force-dynamic';

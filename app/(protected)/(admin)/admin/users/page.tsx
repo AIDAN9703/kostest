@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { getAllUsers } from "@/lib/actions/admin/users";
-import { UsersTable } from "@/components/admin/users/UsersTable";
-import { UsersTableSkeleton } from "@/components/admin/users/UsersTableSkeleton";
-import { DataTablePagination } from "@/components/admin/DataTablePagination";
+import { getAllUsers } from "@/features-admin/users/actions/users";
+import { UsersTable } from "@/features-admin/users/components/UsersTable";
+import { UsersTableSkeleton } from "@/features-admin/users/components/UsersTableSkeleton";
+import { DataTablePagination } from "@/features-admin/_layout/DataTablePagination";
 
 // Constants
 const ITEMS_PER_PAGE = 10;

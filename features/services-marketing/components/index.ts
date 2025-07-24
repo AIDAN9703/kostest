@@ -1,0 +1,2 @@
+export { default as ServicePageTemplate } from '@/features/services-marketing/components/ServicePageTemplate'
+export type { ServiceFeature, ServicePageProps } from '@/features/services-marketing/components/ServicePageTemplate' 

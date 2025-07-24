@@ -69,38 +69,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         } as User;
       },
     }),
-    CredentialsProvider({
-        id: "credentials-token",
-        credentials: {
-            userId: { type: "text" },
-            email: { type: "text" },
-        },
-        async authorize(credentials) {
-            if (!credentials?.userId || !credentials?.email) {
-                return null;
-            }
 
-            const user = await db
-            .select()
-            .from(users)
-            .where(eq(users.id, credentials.userId.toString()))
-            .limit(1);
-
-            if (user.length === 0) {
-                return null;
-            }
-
-            return {
-                id: user[0].id.toString(),
-                email: user[0].email,
-                name: user[0].firstName + " " + user[0].lastName,
-                role: user[0].role,
-                phoneNumber: user[0].phoneNumber || "",
-                phoneVerified: user[0].phoneVerified || false,
-                profileImage: user[0].profileImage || "",
-            } as User;
-        },
-    }),
   ],
   pages: {
     signIn: "/sign-in",
@@ -152,7 +121,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                 firstName: user.name?.split(' ')[0] || '',
                 lastName: user.name?.split(' ').slice(1).join(' ') || '',
                 profileImage: user.image || '',
-                phoneVerified: false,
+                // phoneVerified defaults to false in schema
                 emailVerified: true,
                 authProvider: "GOOGLE",
                 providerAccountId: account.providerAccountId,
@@ -169,6 +138,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           } else {
             // Update token with data from our database
             token.id = existingUser[0].id.toString();
+            token.email = existingUser[0].email;
+            token.name = existingUser[0].firstName + " " + existingUser[0].lastName;
             token.role = existingUser[0].role;
             token.phoneNumber = existingUser[0].phoneNumber;
             token.phoneVerified = existingUser[0].phoneVerified;

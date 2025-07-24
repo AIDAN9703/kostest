@@ -1,8 +1,8 @@
 "use client";
 
-import AuthForm from "@/components/auth/AuthForm";
-import { signUpAction } from "@/lib/actions/auth/auth";
-import { signUpSchema } from "@/lib/validation/validations";
+import AuthForm from "@/features/auth/components/AuthForm";
+import { signUpAction } from "@/features/auth/actions/auth";
+import { signUpSchema } from "@/features/_validation/validations";
 
 const Page = () => (
   <AuthForm

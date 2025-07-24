@@ -1,21 +1,19 @@
 "use client";
 
 import React from "react";
-import AuthForm from "@/components/auth/AuthForm";
-import { signInSchema } from "@/lib/validation/validations";
-import { signInAction } from "@/lib/actions/auth/auth";
+import AuthForm from "@/features/auth/components/AuthForm";
+import { signInSchema } from "@/features/_validation/validations";
+import { signInAction } from "@/features/auth/actions/auth";
 import { useSearchParams } from "next/navigation";
 
 const Page = () => {
-  const searchParams = useSearchParams();
-  const email = searchParams.get("email") || "";
   
   return (
     <AuthForm
       type="SIGN_IN"
       schema={signInSchema}
       defaultValues={{
-        email: email,
+        email: "",
         password: "",
       }}
       onSubmit={signInAction}

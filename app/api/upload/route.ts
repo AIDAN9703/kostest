@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { imagekit } from '@/lib/services/imagekit';
+import { imagekit } from '@/shared/services/imagekit.service';
 
 type UploadType = 'profile' | 'cover' | 'boat' | 'misc' | 'blog';
 

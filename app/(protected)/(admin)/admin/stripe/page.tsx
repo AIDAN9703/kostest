@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 import { CreditCard, DollarSign, DownloadCloud, ExternalLink, Filter, HelpCircle, RefreshCw, Search, Settings } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Input } from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -11,9 +11,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import { formatCurrency } from "@/lib/utils/general-utils";
+} from "@/shared/components/ui/table";
+import { Badge } from "@/shared/components/ui/badge";
+import { formatCurrency } from "@/shared/utils/general-utils";
 
 export const metadata: Metadata = {
   title: "Stripe Integration | Admin Dashboard",

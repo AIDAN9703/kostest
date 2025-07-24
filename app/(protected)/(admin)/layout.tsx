@@ -1,8 +1,8 @@
 import { ReactNode } from "react";
 import { auth } from "@/auth";
-import AdminSidebar from "@/components/admin/AdminSidebar";
-import AdminHeader from "@/components/admin/AdminHeader";
-import { FloatingActionButton } from "@/components/admin/FloatingActionButton";
+import AdminSidebar from "@/features-admin/_layout/AdminSidebar";
+import AdminHeader from "@/features-admin/_layout/AdminHeader";
+import { FloatingActionButton } from "@/features-admin/_layout/FloatingActionButton";
 
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {

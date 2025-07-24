@@ -2,7 +2,7 @@ import { db } from './db';
 import { boats, reviews } from './schema';
 import { eq, and, sql } from 'drizzle-orm';
 
-async function calculateAndUpdateReviewStats() {
+export async function calculateAndUpdateReviewStats() {
   console.log("📊 Starting review statistics calculation...");
   
   try {

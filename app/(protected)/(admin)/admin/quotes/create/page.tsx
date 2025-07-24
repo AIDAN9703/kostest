@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { ArrowLeft, Save } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Input } from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
+import { Label } from "@/shared/components/ui/label";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { Checkbox } from "@/shared/components/ui/checkbox";
+import { Separator } from "@/shared/components/ui/separator";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { formatCurrency } from "@/lib/utils/general-utils";
+import { formatCurrency } from "@/shared/utils/general-utils";
 
 interface QuoteFormData {
   customerName: string;

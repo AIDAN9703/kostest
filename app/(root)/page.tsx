@@ -1,8 +1,9 @@
 import React from 'react';
-import { HeroSection, TestimonialsSection, BrandsCarousel, FeaturedFleet, PopularExperiences, RequestToBook, ClientsShowcase, LocationsSection } from "@/components/home";
-import { getFeaturedBoats, getTestimonials } from "@/lib/actions/home-page";
+import { HeroSection, TestimonialsSection, BrandsCarousel, FeaturedFleet, PopularExperiences, RequestToBook, ClientsShowcase, LocationsSection } from "@/features/home-page/components";
+import { getFeaturedBoats, getTestimonials } from "@/features/home-page/actions";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
+import LazyChatbot from '@/features/chatbot/LazyChatbot';
 
 // This component wraps all the content that needs data
 async function HomeContent() {
@@ -28,6 +29,7 @@ async function HomeContent() {
             <TestimonialsSection reviews={reviewsResponse.data} />
           )}
           <RequestToBook />
+          <LazyChatbot />
         </div>
       </>
     );

@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Link from 'next/link';
 import { CalendarDays, Users, DollarSign, Timer, ArrowRight, Globe, Anchor } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/shared/components/ui/button';
 
 import {
   Form,
@@ -16,13 +16,13 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createGeneralInquiry } from '@/lib/actions/booking/inquiry';
-import { toast } from '@/hooks/use-toast';
+} from '@/shared/components/ui/form';
+import { Input } from '@/shared/components/ui/input';
+import { Textarea } from '@/shared/components/ui/textarea';
+import { Checkbox } from '@/shared/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
+import { createGeneralInquiry } from '@/features/bookings/actions/inquiry';
+import { toast } from '@/shared/hooks/use-toast';
 
 // Form schema with validation rules for term charter inquiries
 const formSchema = z.object({

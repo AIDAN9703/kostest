@@ -1,5 +1,5 @@
 {
-  "name": "kostest",
+  "name": "kos-app",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -13,6 +13,8 @@
     "db:push": "drizzle-kit push",
     "db:seed-boats": "npx tsx database/seed-boats.ts",
     "db:seed-reviews": "npx tsx database/seed-reviews.ts",
+    "db:create-fake-reviews": "npx tsx database/seed-reviews.ts",
+    "db:setup-reviews": "npx tsx database/setup-reviews.ts",
     "db:update-review-stats": "npx tsx database/calculate-review-stats.ts"
   },
   "dependencies": {
@@ -81,6 +83,7 @@
     "react-hook-form": "^7.54.2",
     "react-icons": "^5.4.0",
     "react-type-animation": "^3.2.0",
+    "socket.io-client": "^4.8.1",
     "stripe": "^18.0.0",
     "swr": "^2.3.3",
     "tailwind-merge": "^2.6.0",

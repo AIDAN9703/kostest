@@ -1,12 +1,12 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getUserById } from "@/lib/actions/admin/users";
-import { UserProfileHeader } from "@/components/admin/users/UserProfileHeader";
-import { UserDetails } from "@/components/admin/users/UserDetails";
+import { getUserById } from "@/features-admin/users/actions/users";
+import { UserProfileHeader } from "@/features-admin/users/components/UserProfileHeader";
+import { UserDetails } from "@/features-admin/users/components/UserDetails";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
 interface UserDetailPageProps {
   params: Promise<{ id: string }>;

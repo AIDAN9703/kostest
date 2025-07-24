@@ -3,9 +3,9 @@ import { db } from "@/database/db";
 import { users, bookings, boats } from "@/database/schema";
 import { eq, count, sum, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import ProfileHeader from "@/components/profile/ProfileHeader";
-import ProfileStats from "@/components/profile/ProfileStats";
-import QuickActions from "@/components/profile/QuickActions";
+import ProfileHeader from "@/features/profile/components/ProfileHeader";
+import ProfileStats from "@/features/profile/components/ProfileStats";
+import QuickActions from "@/features/profile/components/QuickActions";
 export default async function ProfilePage() {
   // Get session - auth already checked by middleware
   const session = await auth();

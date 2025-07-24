@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { BoatForm } from "@/components/admin/boats/BoatForm";
+import { BoatForm } from "@/features-admin/boats/components/BoatForm";
 
 export default function CreateBoatPage() {
   return (

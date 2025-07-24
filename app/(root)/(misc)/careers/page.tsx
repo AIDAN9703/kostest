@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/shared/components/ui/button'
 import { ArrowRight, Mail } from 'lucide-react'
 
 export const metadata: Metadata = {

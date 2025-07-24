@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ReactNode } from "react";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "@/shared/components/ui/toaster";
 import localFont from "next/font/local";
 import { SessionProvider } from "next-auth/react";
-import GoogleMapsScript from "@/components/providers/GoogleMapsScript";
+import GoogleMapsScript from "@/shared/providers/GoogleMapsScript";
 import { ImageKitProvider } from "@imagekit/next";
 
 const openSans = localFont({

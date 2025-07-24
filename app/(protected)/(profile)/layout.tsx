@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
-import { Toaster } from '@/components/ui/toaster';
-import Navigation from '@/components/navigation/Navigation';
-import BackToDashboard from '@/components/profile/BackToDashboard';
+import { Toaster } from '@/shared/components/ui/toaster';
+import Navigation from '@/shared/components/layout/Navigation';
+import BackToDashboard from '@/features/profile/components/BackToDashboard';
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {
   // ✅ No auth check needed - handled by parent layout and middleware

@@ -1,6 +1,6 @@
 import React from 'react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/shared/components/ui/button'
 import { ArrowRight, Mail, Phone, MessageCircle } from 'lucide-react'
 
 // Force static generation - this FAQ page has no dynamic content

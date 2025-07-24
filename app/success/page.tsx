@@ -2,8 +2,8 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/shared/components/ui/card";
 import { CheckCircle, Loader2, AlertCircle, Calendar, MapPin, Clock, Users } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";

@@ -9,16 +9,16 @@ import {
   Search, 
   FileText
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { Input } from "@/shared/components/ui/input";
+import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/shared/components/ui/dropdown-menu";
 import Link from "next/link";
 import { useState } from "react";
 

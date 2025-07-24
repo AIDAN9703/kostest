@@ -2,14 +2,14 @@ import { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, User, Ship, Calendar, Filter, Search } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
 import { db } from '@/database/db';
 import { users, boats, bookings, boatPricingTiers } from '@/database/schema';
 import { like, or, ilike, desc, eq, and, inArray } from 'drizzle-orm';
 import { formatDistanceToNow } from "date-fns";
-import { formatCurrency } from "@/lib/utils/general-utils";
-import { getBoatDefaultPrice, getBoatDefaultHours } from "@/lib/utils/pricing-utils";
+import { formatCurrency } from "@/shared/utils/general-utils";
+import { getBoatDefaultPrice, getBoatDefaultHours } from "@/shared/utils/pricing-utils";
 
 export const metadata: Metadata = {
   title: "Search Results | Admin Dashboard",

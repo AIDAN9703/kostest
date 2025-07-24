@@ -1,8 +1,8 @@
 import { auth } from "@/auth";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/shared/components/ui/button";
 import { ChevronLeft } from "lucide-react";
-import BoatForm from "@/components/boats/NewBoatForm";
+import BoatForm from "@/features/boats/components/NewBoatForm";
 
 export default async function NewBoatPage() {
   // Auth is handled by layout, just get session for user data

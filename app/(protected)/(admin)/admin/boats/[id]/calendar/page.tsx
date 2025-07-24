@@ -5,7 +5,7 @@ import { db } from "@/database/db";
 import { boats } from "@/database/schema";
 import { eq } from "drizzle-orm";
 import { ArrowLeft } from "lucide-react";
-import BoatCalendar from "@/components/admin/boats/BoatCalendar";
+import BoatCalendar from "@/features-admin/boats/components/BoatCalendar";
 
 export const metadata: Metadata = {
   title: "Boat Calendar | Admin Dashboard",

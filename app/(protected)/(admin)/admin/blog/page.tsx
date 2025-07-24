@@ -1,11 +1,11 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/shared/components/ui/button';
 import { Plus } from 'lucide-react';
-import { getBlogPosts } from '@/lib/actions/admin/blog';
-import BlogTable from '@/components/admin/blog/BlogTable';
-import BlogTableSkeleton from '@/components/admin/blog/BlogTableSkeleton';
-import { DataTablePagination } from '@/components/admin/DataTablePagination';
+import { getBlogPosts } from '@/features-admin/blog/actions/admin-blog-actions';
+import BlogTable from '@/features-admin/blog/components/BlogTable';
+import BlogTableSkeleton from '@/features-admin/blog/components/BlogTableSkeleton';
+import { DataTablePagination } from '@/features-admin/_layout/DataTablePagination';
 
 // Constants
 const ITEMS_PER_PAGE = 10;

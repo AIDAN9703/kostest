@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import BlogForm from '@/components/admin/blog/BlogForm';
-import { getBlogPostById } from '@/lib/actions/admin/blog';
+import { Button } from '@/shared/components/ui/button';
+import BlogForm from '@/features-admin/blog/components/BlogForm';
+import { getBlogPostById } from '@/features-admin/blog/actions/admin-blog-actions';
 
 interface EditBlogPageProps {
   params: Promise<{

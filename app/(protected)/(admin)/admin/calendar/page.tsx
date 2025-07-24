@@ -1,4 +1,4 @@
-import AdminCalendar from '@/components/admin/AdminCalendar';
+import AdminCalendar from '@/features-admin/calendar/components/AdminCalendar';
 
 export default function AdminCalendarPage() {
   return (

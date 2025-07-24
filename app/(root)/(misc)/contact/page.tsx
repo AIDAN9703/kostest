@@ -2,34 +2,14 @@
 
 import React from 'react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/shared/components/ui/button'
 import { Mail, Phone, MapPin, Clock, MessageCircle, Calendar } from 'lucide-react'
-import RequestToBook from '@/components/home/RequestToBook'
+import RequestToBook from '@/features/home-page/components/RequestToBook'
 
 export default function ContactPage() {
   return (
     <div className="w-full">
-      {/* Hero Section */}
-      <section className="relative h-[75vh] flex items-center justify-center text-center text-white">
-        <div className="absolute inset-0 z-0">
-          <img
-            src="/images/herooption17.jpeg"
-            alt="Luxury yacht background"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/40" />
-        </div>
-        
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium mb-6 leading-tight">
-            Contact Us
-          </h1>
-          <p className="text-gray-200 max-w-2xl mx-auto text-lg leading-relaxed font-light">
-            Ready to start planning your luxury yacht experience? Our team is here to help you 
-            create unforgettable memories on the water.
-          </p>
-        </div>
-      </section>
+     
 
       {/* Main Content Area */}
       <div className="bg-white">

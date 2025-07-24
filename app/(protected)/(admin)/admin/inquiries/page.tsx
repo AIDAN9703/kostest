@@ -1,8 +1,8 @@
 import { Suspense } from "react";
-import { getInquiries } from "@/lib/actions/admin/inquiries";
-import { InquiriesTable } from "@/components/admin/inquiries/InquiriesTable";
-import { InquiriesTableSkeleton } from "@/components/admin/inquiries/InquiriesTableSkeleton";
-import { DataTablePagination } from "@/components/admin/DataTablePagination";
+import { getInquiries } from "@/features-admin/bookings/actions/inquiries";
+import { InquiriesTable } from "@/features-admin/inquiries/components/InquiriesTable";
+import { InquiriesTableSkeleton } from "@/features-admin/inquiries/components/InquiriesTableSkeleton";
+import { DataTablePagination } from "@/features-admin/_layout/DataTablePagination";
 
 // Constants
 const ITEMS_PER_PAGE = 10;

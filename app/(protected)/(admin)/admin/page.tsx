@@ -1,8 +1,8 @@
 import { Metadata } from "next";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { BarChart, CalendarClock, Ship, Users } from "lucide-react";
 import Link from "next/link";
-import { getDashboardStats } from "@/lib/actions/admin/dashboard";
+import { getDashboardStats } from "@/features-admin/_shared/actions/dashboard";
 
 // Add route segment config for caching
 export const revalidate = 300; // Revalidate every 5 minutes

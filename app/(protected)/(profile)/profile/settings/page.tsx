@@ -2,12 +2,12 @@ import { auth } from "@/auth";
 import { db } from "@/database/db";
 import { users } from "@/database/schema";
 import { eq } from "drizzle-orm";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import ProfileSettingsForm from "@/components/profile/ProfileSettingsForm";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import ProfileSettingsForm from "@/features/profile/components/ProfileSettingsForm";
 import { Settings, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { signOutAction } from "@/lib/actions/auth/sign-out";
-import { UserProfile } from "@/lib/types/types";
+import { Button } from "@/shared/components/ui/button";
+import { signOutAction } from "@/features/auth/actions/sign-out";
+import { UserProfile } from "@/shared/types/types";
 import { redirect } from "next/navigation";
 
 // Sign Out Section Component

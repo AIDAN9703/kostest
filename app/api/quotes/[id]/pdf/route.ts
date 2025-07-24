@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { pdf } from '@react-pdf/renderer';
-import { QuotePDF } from '@/lib/pdf/QuotePDF';
-import { quotesStorage } from '@/lib/utils/quote-storage';
+import { QuotePDF } from '@/features-admin/qoutes/components/QuotePDF';
+import { quotesStorage } from '@/shared/utils/quote-storage';
 
 export async function GET(
   request: NextRequest,

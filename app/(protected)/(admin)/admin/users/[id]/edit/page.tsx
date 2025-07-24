@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getUserById } from "@/lib/actions/admin/users";
-import { UserForm } from "@/components/admin/users/UserForm";
+import { getUserById } from "@/features-admin/users/actions/users";
+import { UserForm } from "@/features-admin/users/components/UserForm";
 import { notFound } from "next/navigation";
-import { type UpdateUserInput } from "@/lib/validation/admin/users";
+import { type UpdateUserInput } from "@/features-admin/_validation/users";
 import { Suspense } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
 interface UserEditPageProps {
   params: Promise<{ id: string }>;

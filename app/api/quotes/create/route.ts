@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { quotesStorage } from '@/lib/utils/quote-storage';
+import { quotesStorage } from '@/shared/utils/quote-storage';
 
 export async function POST(request: NextRequest) {
   try {

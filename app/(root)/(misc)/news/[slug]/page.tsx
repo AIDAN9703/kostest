@@ -11,11 +11,11 @@ import {
   Tag,
   Eye
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { getBlogPostBySlug, incrementViewCount, getPublishedBlogPosts } from '@/lib/actions/admin/blog'
-import { formatDate } from '@/lib/utils/general-utils'
-import SocialShare from '@/components/ui/social-share'
+import { Button } from '@/shared/components/ui/button'
+import { Badge } from '@/shared/components/ui/badge'
+import { getBlogPostBySlug, incrementViewCount, getPublishedBlogPosts } from '@/features-admin/blog/actions/admin-blog-actions'
+import { formatDate } from '@/shared/utils/general-utils'
+import SocialShare from '@/shared/components/ui/social-share'
 
 // Category display names mapping
 const categoryLabels = {

@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { ServicePageTemplate } from '@/components/services'
+import { ServicePageTemplate } from '@/features/services-marketing/components'
 
 export const metadata: Metadata = {
   title: 'Yacht Management Services | KOS',

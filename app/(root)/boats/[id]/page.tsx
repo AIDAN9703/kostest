@@ -1,11 +1,14 @@
-import { getBoatById, getAllBoatIds } from "@/lib/actions/boat-actions";
+import { getBoatById, getAllBoatIds } from "@/features/boats/actions/boat-actions";
 import { notFound } from "next/navigation";
-import BoatDetails from "@/components/boats/listing/BoatDetails";
-import { RequestBookingForm, InstantBookingForm } from "@/components/boats/listing/booking-form";
-import { MobileBookingBar } from "@/components/boats/listing/booking-form/MobileBookingBar";
-import { Boat } from "@/lib/types/types";
-import { ImageGallery } from "@/components/boats/listing/sub-components/ImageGallery";
+import BoatDetails from "@/features/listing/components/BoatDetails";
+import { RequestBookingForm, InstantBookingForm } from "@/features/listing/components/booking-form";
+import { MobileBookingBar } from "@/features/listing/components/booking-form/MobileBookingBar";
+import { Boat } from "@/shared/types/types";
+import { ImageGallery } from "@/features/listing/components/sub-components/ImageGallery";
 import { Metadata } from "next";
+import { and, eq } from "drizzle-orm";
+import { boats } from "@/database/schema";
+import { db } from "@/database/db";
 
 // ================================
 // ISR CONFIGURATION
@@ -21,14 +24,21 @@ export async function generateStaticParams() {
   try {
     console.log('🏗️  Pre-generating static boat pages...');
     
-    // Fetch all active boat IDs efficiently (only ID, not full data)
-    const boatIds = await getAllBoatIds();
+    // Only generate featured boats at build time for Windows compatibility
+    // Other boats will be generated on-demand via ISR
+    const featuredBoats = await db
+      .select({ id: boats.id })
+      .from(boats)
+      .where(and(
+        eq(boats.active, true),
+        eq(boats.featured, true)
+      ))
+      .limit(50); // Limit to max 50 to prevent Windows process issues
     
-    console.log(`📊 Generating static pages for ${boatIds.length} boats`);
+    console.log(`📊 Generating static pages for ${featuredBoats.length} featured boats`);
     
-    // Return array of params for static generation
-    return boatIds.map((id: string) => ({
-      id: id,
+    return featuredBoats.map((boat) => ({
+      id: boat.id,
     }));
   } catch (error) {
     console.error('❌ Error generating static params for boats:', error);

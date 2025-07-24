@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { getAllBoats } from "@/lib/actions/admin/boats";
-import { BoatsTable } from "@/components/admin/boats/BoatsTable";
-import { BoatsPageSkeleton } from "@/components/admin/boats/BoatsPageSkeleton";
-import { BoatsFilterBar } from "@/components/admin/boats/BoatsFilterBar";
-import { DataTablePagination } from "@/components/admin/DataTablePagination";
-import { boatFilterSchema, type BoatFilterInput } from "@/lib/validation/admin/boats";
+import { getAllBoats } from "@/features-admin/boats/actions/boats";
+import { BoatsTable } from "@/features-admin/boats/components/BoatsTable";
+import { BoatsPageSkeleton } from "@/features-admin/boats/components/BoatsPageSkeleton";
+import { BoatsFilterBar } from "@/features-admin/boats/components/BoatsFilterBar";
+import { DataTablePagination } from "@/features-admin/_layout/DataTablePagination";
+import { boatFilterSchema, type BoatFilterInput } from "@/features-admin/_validation/boats";
 
 // This enables automatic revalidation every 30 seconds
 export const revalidate = 30;

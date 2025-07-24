@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import BlogForm from '@/components/admin/blog/BlogForm';
+import { Button } from '@/shared/components/ui/button';
+import BlogForm from '@/features-admin/blog/components/BlogForm';
 
 export default function CreateBlogPage() {
   return (

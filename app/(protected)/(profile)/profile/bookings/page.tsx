@@ -2,11 +2,11 @@ import { auth } from "@/auth";
 import { db } from "@/database/db";
 import { bookings, boats } from "@/database/schema";
 import { eq, desc } from "drizzle-orm";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookingCard, Booking } from "@/components/profile/BookingCard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
+import { BookingCard, Booking } from "@/features/profile/components/BookingCard";
 import { CalendarDays } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { Button } from "@/shared/components/ui/button";
 import Link from "next/link";
 
 // Transform database booking to BookingCard format

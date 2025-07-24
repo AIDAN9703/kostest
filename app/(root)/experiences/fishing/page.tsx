@@ -2,8 +2,8 @@ import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2, Calendar, Users, Navigation, Globe, Fish, Shield, Clock } from "lucide-react";
-import ExperienceLayout from "@/components/experiences/ExperienceLayout";
-import { Button } from "@/components/ui/button";
+import ExperienceLayout from "@/features/experiences-marketing/components/ExperienceLayout";
+import { Button } from "@/shared/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Deep Sea Fishing Charters | KOSyachts",

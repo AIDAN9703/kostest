@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { getBoatById } from "@/lib/actions/admin/boats";
-import { BoatProfileHeader } from "@/components/admin/boats/BoatProfileHeader";
-import { BoatDetails } from "@/components/admin/boats/BoatDetails";
+import { getBoatById } from "@/features-admin/boats/actions/boats";
+import { BoatProfileHeader } from "@/features-admin/boats/components/BoatProfileHeader";
+import { BoatDetails } from "@/features-admin/boats/components/BoatDetails";
 import { boats } from "@/database/schema";
 
 interface BoatDetailPageProps {

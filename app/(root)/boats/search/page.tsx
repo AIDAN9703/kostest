@@ -1,15 +1,15 @@
 import { Suspense } from "react";
 import { Metadata } from "next";
-import SearchResults from "@/components/boats/search/SearchResults";
-import VisGLSearchMap from "@/components/boats/search/map/VisGLSearchMap";
-import SearchSkeleton from "@/components/boats/search/SearchSkeleton";
-import { getBoats } from "@/lib/actions/boat-actions";
-import { SearchResults as SearchResultsType } from "@/lib/types/types";
+import SearchResults from "@/features/search/components/SearchResults";
+import VisGLSearchMap from "@/features/search/components/map/VisGLSearchMap";
+import SearchSkeleton from "@/features/search/components/SearchSkeleton";
+import { searchBoats } from "@/features/search/actions/search-actions";
+import { SearchResults as SearchResultsType } from "@/shared/types/types";
 import { 
   normalizeSearchParams,
   parseNumberParam, 
   extractBoundingBox
-} from "@/lib/utils/search-params-utils";
+} from "@/shared/utils/search-params-utils";
 
 export const metadata: Metadata = {
   title: "Search Boats | KOSyachts",
@@ -95,7 +95,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
   const boundingBox = extractBoundingBox(normalizedParams);
   
   // Single data fetch for all components 
-  const data = await getBoats({
+      const data = await searchBoats({
     searchParams: normalizedParams,
     limit: 12,
     page: currentPage,
