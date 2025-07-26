@@ -1,5 +1,5 @@
-import { db } from "./db";
-import { boats, reviews, users } from "./schema";
+import { db } from '@/database/db';
+import { boats, reviews, users } from '@/database/schema';
 import { eq } from "drizzle-orm";
 
 // Exactly 20 fake reviewer profiles - diverse and realistic

@@ -1,5 +1,5 @@
-import { db } from './db';
-import { boats, reviews } from './schema';
+import { db } from '../db';
+import { boats, reviews } from '../schema';
 import { eq, and, sql } from 'drizzle-orm';
 
 export async function calculateAndUpdateReviewStats() {

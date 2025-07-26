@@ -12,8 +12,8 @@
  * npx tsx database/setup-reviews.ts
  */
 
-import { seedReviews } from './seed-reviews';
-import { calculateAndUpdateReviewStats } from './calculate-review-stats';
+import { seedReviews } from '@/database/scripts/seed-reviews';
+import { calculateAndUpdateReviewStats } from '@/database/scripts/calculate-review-stats';
 
 async function setupCompleteReviewSystem() {
   console.log("🚀 Setting up complete review system...");

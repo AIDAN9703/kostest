@@ -11,11 +11,11 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:push": "drizzle-kit push",
-    "db:seed-boats": "npx tsx database/seed-boats.ts",
-    "db:seed-reviews": "npx tsx database/seed-reviews.ts",
-    "db:create-fake-reviews": "npx tsx database/seed-reviews.ts",
-    "db:setup-reviews": "npx tsx database/setup-reviews.ts",
-    "db:update-review-stats": "npx tsx database/calculate-review-stats.ts"
+    "db:seed-boats": "npx tsx database/scripts/seed-boats.ts",
+    "db:seed-reviews": "npx tsx database/scripts/seed-reviews.ts",
+    "db:create-fake-reviews": "npx tsx database/scripts/seed-reviews.ts",
+    "db:setup-reviews": "npx tsx database/scripts/setup-reviews.ts",
+    "db:update-review-stats": "npx tsx database/scripts/calculate-review-stats.ts"
   },
   "dependencies": {
     "@ai-sdk/xai": "^1.2.18",

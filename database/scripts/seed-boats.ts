@@ -1,7 +1,7 @@
 'use server'
 
-import { db } from './db';
-import { boats, users, boatCategoryEnum } from './schema';
+import { db } from '@/database/db';
+import { boats, users, boatCategoryEnum } from '@/database/schema';
 import { eq } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
 
