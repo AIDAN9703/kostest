@@ -204,7 +204,7 @@ export interface ConversationWithDetails extends Conversation {
     boatId: string;
     boatName?: string;
     customerName: string;
-    startDate: Date;
+    startDateTime: Date;
     bookingStatus: string;
   } | null;
   participants: Array<{

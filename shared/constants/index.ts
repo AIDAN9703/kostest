@@ -68,42 +68,41 @@ export const navigationLinks = [
     },
   ];
   
-// Booking Form Configuration
-export const BOOKING_FIELD_NAMES = {
-  startDate: "Date",
-  startTime: "Start Time",
-  endTime: "End Time",
-  numberOfHours: "Duration",
-  numberOfPassengers: "Passengers",
-  specialRequests: "Special Requests",
-  needsCaptain: "Captain",
+export const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+export const RESPONSE_MESSAGES = {
+  success: "Operation completed successfully",
+  error: "An error occurred. Please try again.",
+  unauthorized: "You are not authorized to perform this action",
+  notFound: "The requested resource was not found",
+  validation: "Please check your input and try again"
 };
 
-export const BOOKING_FIELD_TYPES = {
-  startDate: "date",
-  startTime: "time",
-  endTime: "time",
-  numberOfHours: "select",
-  numberOfPassengers: "select",
-  specialRequests: "textarea",
-  needsCaptain: "toggle",
+export const BOOKING_STATUS_COLORS = {
+  PENDING: { bg: "#FEF3C7", text: "#92400E", border: "#F59E0B" },
+  CONFIRMED: { bg: "#D1FAE5", text: "#065F46", border: "#10B981" },
+  CANCELLED: { bg: "#FEE2E2", text: "#991B1B", border: "#EF4444" },
+  COMPLETED: { bg: "#DBEAFE", text: "#1E40AF", border: "#3B82F6" },
+  EXPIRED: { bg: "#F3F4F6", text: "#374151", border: "#6B7280" }
 };
 
-export const BOOKING_FIELD_VISIBILITY = {
-  startDate: "always",
-  startTime: "always",
-  endTime: "hidden", // Calculated automatically
-  numberOfHours: "always",
-  numberOfPassengers: "always",
-  specialRequests: "always",
-  needsCaptain: "conditional", // Only if not required by boat
-};
+export const BOOKING_TIME_SLOTS = [
+  { value: "09:00", label: "9:00 AM" },
+  { value: "10:00", label: "10:00 AM" },
+  { value: "11:00", label: "11:00 AM" },
+  { value: "12:00", label: "12:00 PM" },
+  { value: "13:00", label: "1:00 PM" },
+  { value: "14:00", label: "2:00 PM" },
+  { value: "15:00", label: "3:00 PM" },
+  { value: "16:00", label: "4:00 PM" },
+  { value: "17:00", label: "5:00 PM" }
+];
 
-export const BOOKING_FIELD_PLACEHOLDERS = {
-  startDate: "Select date",
-  startTime: "Select time",
-  numberOfHours: "Select hours",
-  numberOfPassengers: "Number of passengers",
-  specialRequests: "Any special requests for the captain?",
+export const BOOKING_VALIDATION_MESSAGES = {
+  startDateTime: "Start date and time are required",
+  pricingTierId: "Please select a duration option",
+  numberOfPassengers: "At least one passenger is required",
+  needsCaptain: "Please specify if you need a captain",
+  specialRequests: "Special requests are optional"
 };
   

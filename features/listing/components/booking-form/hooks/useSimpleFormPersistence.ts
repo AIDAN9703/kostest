@@ -20,10 +20,10 @@ export const useSimpleFormPersistence = ({
     try {
       const formData = form.getValues();
       // Only save if form has some data
-      if (formData.startDate || formData.startTime || formData.pricingTierId) {
+      if (formData.startDateTime || formData.pricingTierId) {
         const dataToSave = {
           ...formData,
-          startDate: formData.startDate ? formData.startDate.toISOString() : undefined,
+          // startDateTime is already a string (ISO), no need to convert
         };
         sessionStorage.setItem(storageKey, JSON.stringify(dataToSave));
       }
@@ -39,11 +39,7 @@ export const useSimpleFormPersistence = ({
       if (saved) {
         const parsedData = JSON.parse(saved);
         
-        // Convert date string back to Date object
-        if (parsedData.startDate) {
-          parsedData.startDate = new Date(parsedData.startDate);
-        }
-        
+        // startDateTime is already a string, no need to convert
         // Restore form data
         form.reset(parsedData);
         return true;

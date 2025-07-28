@@ -12,7 +12,7 @@ export default async function BookingDetailsPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-coral-500"></div>
         </div>
       }>
-        <BookingDetailsContent user={session?.user} />
+        <BookingDetailsContent user={session?.user ?? null} />
       </Suspense>
     </div>
   );

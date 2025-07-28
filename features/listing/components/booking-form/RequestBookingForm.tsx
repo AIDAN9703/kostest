@@ -10,16 +10,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { bookingRequestSchema, BookingRequest } from "@/features/_validation/validations";
 import { MessageCircle, Anchor } from "lucide-react";
-import { calculateEndTime } from "@/shared/utils/booking-utils";
 
 // Import components
-import { useSimpleFormPersistence } from "./hooks/useSimpleFormPersistence";
-import { usePriceCalculation, useActivePricingTiers } from "./hooks/usePriceCalculation";
 import { PricingDisplay } from "./shared/PricingDisplay";
 import { DateSelection, TimeSelection, PassengerSelection } from "./shared/BookingDetails";
 import { CaptainSelection } from "./shared/CaptainSelection";
 import { SpecialRequests } from "./shared/SpecialRequests";
 import { PriceSummary } from "./shared/PriceSummary";
+
+// Import hooks
+import { useSimpleFormPersistence } from "./hooks/useSimpleFormPersistence";
+import { useBookingFormState } from "./hooks/useBookingFormState";
+import { useActivePricingTiers } from "./hooks/usePriceCalculation";
+
+
 
 interface RequestBookingFormProps {
   boat: Boat;
@@ -33,8 +37,7 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
   const form = useForm<BookingRequest>({
     resolver: zodResolver(bookingRequestSchema),
     defaultValues: {
-      startDate: undefined as unknown as Date,
-      startTime: "",
+      startDateTime: "",
       pricingTierId: "",
       numberOfPassengers: 1,
       needsCaptain: boat.crewRequired,
@@ -48,19 +51,11 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
     boatId: boat.id
   });
 
-  const selectedPricingTierId = form.watch("pricingTierId");
-  const selectedStartTime = form.watch("startTime");
-  const needsCaptain = form.watch("needsCaptain");
-  
-  const priceBreakdown = usePriceCalculation({
-    boat,
-    selectedPricingTierId,
-    needsCaptain,
+  // Consolidated form state and pricing calculations
+  const formState = useBookingFormState({
+    form,
+    boat
   });
-
-  const endTime = selectedStartTime && priceBreakdown.selectedPricingTier 
-    ? calculateEndTime(selectedStartTime, priceBreakdown.selectedPricingTier.hours)
-    : "";
 
   if (activePricingTiers.length === 0) {
     return (
@@ -75,11 +70,22 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
   }
 
   const handleSubmit = (data: BookingRequest) => {
-    if (!priceBreakdown.selectedPricingTier) {
+    if (!formState.selectedPricingTier) {
       form.setError("pricingTierId", { 
         message: "Please select a duration option" 
       });
       return;
+    }
+
+    // DEBUG: Log the timezone conversion for testing
+    if (data.startDateTime) {
+      console.log('🚀 Booking Submission Debug:', {
+        selectedDateTime: data.startDateTime,
+        userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        utcTime: new Date(data.startDateTime).toISOString(),
+        localDisplay: new Date(data.startDateTime).toLocaleString(),
+        pricingTier: formState.selectedPricingTier?.name
+      });
     }
 
     // Clear form data and navigate to booking details
@@ -98,7 +104,7 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
         cleaningFee: boat.cleaningFee,
         locationLabel: boat.locationLabel
       },
-      selectedTier: priceBreakdown.selectedPricingTier
+      selectedTier: formState.selectedPricingTier
     };
 
     // Navigate to booking details page with minimal data
@@ -108,8 +114,6 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
     
     router.push(`/booking-details?${params.toString()}`);
   };
-
-  const isFormValid = form.formState.isValid && priceBreakdown.selectedPricingTier;
   
   return (
     <div className="p-4">
@@ -117,17 +121,19 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
           <DateSelection 
             control={form.control}
+            currentDate={formState.parsedDateTime.date}
           />
 
           <PricingDisplay 
             boat={boat} 
             control={form.control} 
-            selectedPricingTier={priceBreakdown.selectedPricingTier}
+            selectedPricingTier={formState.selectedPricingTier}
           />
 
           <TimeSelection 
             control={form.control}
-            endTime={endTime}
+            currentTime={formState.parsedDateTime.time}
+            endTime={formState.endTime}
           />
 
           <PassengerSelection 
@@ -147,16 +153,16 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
 
           <PriceSummary 
             boat={boat}
-            selectedPricingTier={priceBreakdown.selectedPricingTier}
-            needsCaptain={needsCaptain}
-            totalPrice={priceBreakdown.totalPrice}
+            selectedPricingTier={formState.selectedPricingTier}
+            needsCaptain={formState.needsCaptain}
+            totalPrice={formState.priceBreakdown.totalPrice}
             isRequest={true}
           />
 
           <Button 
             type="submit" 
             className="w-full h-11 font-semibold text-white transition-colors text-sm rounded-lg bg-gray-800 hover:bg-gray-900"
-            disabled={!isFormValid}
+            disabled={!formState.isFormValid}
           >
             <div className="flex items-center gap-2">
               <MessageCircle className="h-4 w-4" />

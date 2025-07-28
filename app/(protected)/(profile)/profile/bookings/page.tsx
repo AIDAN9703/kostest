@@ -3,25 +3,32 @@ import { db } from "@/database/db";
 import { bookings, boats } from "@/database/schema";
 import { eq, desc } from "drizzle-orm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/components/ui/tabs";
-import { BookingCard, Booking } from "@/features/profile/components/BookingCard";
+import { BookingCard } from "@/features/profile/components/BookingCard";
 import { CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import Link from "next/link";
+import { parseISODateTime } from "@/shared/utils/booking-utils";
+import { format } from "date-fns";
+import { ProfileBooking } from "@/shared/types/booking.types";
 
 // Transform database booking to BookingCard format
-function transformBooking(dbBooking: any): Booking {
+function transformBooking(dbBooking: any): ProfileBooking {
+  // Parse the UTC datetime from database and convert to user's local timezone
+  const { date: startDate, time: startTime } = parseISODateTime(dbBooking.startDateTime);
+  const { time: endTime } = parseISODateTime(dbBooking.endDateTime || "");
+  
+  // Calculate duration from start and end datetime
+  const duration = dbBooking.endDateTime 
+    ? Math.round((new Date(dbBooking.endDateTime).getTime() - new Date(dbBooking.startDateTime).getTime()) / (1000 * 60 * 60))
+    : 0;
+
   return {
     id: dbBooking.id,
     boatName: dbBooking.boatName || 'Unknown Boat',
     boatType: dbBooking.boatCategory || 'Yacht',
-    date: new Date(dbBooking.startDate).toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    }),
-    duration: calculateDuration(dbBooking.startTime, dbBooking.endTime),
+    date: startDate ? format(startDate, 'EEEE, MMMM d, yyyy') : 'No date',
+    duration: duration,
     location: dbBooking.pickupLocation || 'Marina',
     guests: dbBooking.numberOfPassengers,
     captain: dbBooking.needsCaptain,
@@ -29,15 +36,6 @@ function transformBooking(dbBooking: any): Booking {
     status: getBookingDisplayStatus(dbBooking.bookingStatus),
     image: dbBooking.boatMainImage || '/images/boats/yacht1.jpg'
   };
-}
-
-// Calculate duration in hours from start and end time
-function calculateDuration(startTime: string, endTime: string): number {
-  if (!startTime || !endTime) return 0;
-  const start = new Date(`2000-01-01 ${startTime}`);
-  const end = new Date(`2000-01-01 ${endTime}`);
-  const diffMs = end.getTime() - start.getTime();
-  return Math.round(diffMs / (1000 * 60 * 60)); // Convert to hours
 }
 
 // Map database status to display status
@@ -86,10 +84,8 @@ export default async function BookingsPage() {
       // Booking fields
       id: bookings.id,
       bookingStatus: bookings.bookingStatus,
-      startDate: bookings.startDate,
-      endDate: bookings.endDate,
-      startTime: bookings.startTime,
-      endTime: bookings.endTime,
+      startDateTime: bookings.startDateTime,
+      endDateTime: bookings.endDateTime,
       numberOfPassengers: bookings.numberOfPassengers,
       needsCaptain: bookings.needsCaptain,
       totalAmount: bookings.totalAmount,
@@ -104,10 +100,10 @@ export default async function BookingsPage() {
     .from(bookings)
     .leftJoin(boats, eq(bookings.boatId, boats.id))
     .where(eq(bookings.userId, userId))
-    .orderBy(desc(bookings.startDate));
+    .orderBy(desc(bookings.startDateTime));
 
   // Transform bookings to match BookingCard interface
-  const allBookings: Booking[] = userBookingsData.map(transformBooking);
+  const allBookings: ProfileBooking[] = userBookingsData.map(transformBooking);
 
   // Categorize bookings
   const today = new Date();

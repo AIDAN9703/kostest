@@ -19,7 +19,7 @@ import {
   ConversationWithDetails,
   MessageWithDetails,
   SendMessageRequest 
-} from "@/shared/types/messaging";
+} from "@/shared/types/messaging.types";
 import { sendMessage } from "@/features/messaging/actions";
 import { useMessagingSocket } from "@/features/messaging/services/socket";
 

@@ -7,7 +7,7 @@ import {
   TypingIndicator,
   NewMessageEvent,
   MessageReadEvent
-} from "@/shared/types/messaging";
+} from "@/shared/types/messaging.types";
 
 interface UseMessagingSocketReturn {
   isConnected: boolean;

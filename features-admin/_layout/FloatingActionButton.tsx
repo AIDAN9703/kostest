@@ -31,13 +31,13 @@ const menuItems = [
     label: "New Quote",
     href: "/admin/quotes/create",
     icon: <FileText className="h-5 w-5" />,
-    bgColor: "bg-amber-500 hover:bg-amber-600"
+    bgColor: "bg-green-500"
   },
   {
     label: "Create Blog Post",
     href: "/admin/blog/create",
     icon: <FileText className="h-5 w-5" />,
-    bgColor: "bg-teal-500 hover:bg-teal-600"
+    bgColor: "bg-purple-500"
   }
 ];
 
@@ -56,14 +56,14 @@ export function FloatingActionButton() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-8 right-6 z-50">
       {/* Main button */}
       <motion.button
         onClick={toggleMenu}
         className={cn(
           "w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg transition-all duration-300",
           isOpen 
-            ? "bg-gray-700" 
+            ? "bg-gray-600 hover:bg-gray-700" 
             : "bg-primary hover:bg-primary/90"
         )}
         aria-label={isOpen ? "Close menu" : "Open menu"}
@@ -84,7 +84,7 @@ export function FloatingActionButton() {
       {/* Menu items */}
       <AnimatePresence>
         {isOpen && (
-          <div className="absolute bottom-16 right-0 mb-2">
+          <div className="absolute top-0 right-0 mb-4" style={{ transform: 'translateY(-100%)' }}>
             <div className="flex flex-col-reverse gap-2">
               {menuItems.map((item, index) => (
                 <motion.div
@@ -112,14 +112,7 @@ export function FloatingActionButton() {
         )}
       </AnimatePresence>
 
-      {/* Backdrop for closing when clicking outside */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/5 z-[-1]"
-          onClick={closeMenu}
-          aria-hidden="true"
-        />
-      )}
+      {/* Removed problematic backdrop that was blocking all page clicks */}
     </div>
   );
 } 

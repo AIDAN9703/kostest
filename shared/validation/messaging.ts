@@ -14,7 +14,7 @@ import {
   PARTICIPANT_STATUSES,
   PARTICIPANT_ROLES,
   CONVERSATION_PRIORITIES,
-} from "../types/messaging";
+} from "../types/messaging.types";
 
 // =============================================================================
 // ENUM SCHEMAS

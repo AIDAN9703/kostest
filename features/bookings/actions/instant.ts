@@ -5,7 +5,7 @@ import { boats, bookings, boatPricingTiers } from "@/database/schema";
 import { auth } from "@/auth";
 import { bookingRequestSchema, BookingRequest } from "@/features/_validation/validations";
 import { z } from "zod";
-import { calculateEndTime } from "@/shared/utils/booking-utils";
+import { calculateEndDateTime } from "@/shared/utils/booking-utils";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 
@@ -80,8 +80,9 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
       };
     }
     
-    // Calculate end time using the pricing tier hours
-    const endTime = calculateEndTime(validatedData.startTime, pricingTier.hours);
+    // Convert ISO string to Date object and calculate end datetime
+    const startDateTime = new Date(validatedData.startDateTime);
+    const endDateTime = calculateEndDateTime(startDateTime, pricingTier.hours);
     
     // Calculate all fees - captain service is included in base price
     const basePrice = pricingTier.price;
@@ -101,7 +102,7 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
             product_data: {
               name: `${boat.name} - ${pricingTier.name || `${pricingTier.hours}hr Charter`}`,
               images: [boat.mainImage || "https://via.placeholder.com/800x600.png?text=Boat+Image"],
-              description: `${validatedData.needsCaptain || boat.crewRequired ? "With Captain" : "Self-Drive"} - ${new Date(validatedData.startDate).toLocaleDateString()} at ${validatedData.startTime}`
+              description: `${validatedData.needsCaptain || boat.crewRequired ? "With Captain" : "Self-Drive"} - ${startDateTime.toLocaleDateString()} at ${startDateTime.toLocaleTimeString()}`
             },
             unit_amount: Math.round(totalAmount * 100), // Convert to cents
           },
@@ -118,9 +119,8 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
         customerPhone: session.user.phoneNumber || "",
         isMultiDay: "false",
         needsCaptain: (validatedData.needsCaptain || boat.crewRequired).toString(),
-        startDate: validatedData.startDate.toISOString(),
-        startTime: validatedData.startTime,
-        endTime: endTime,
+        startDateTime: validatedData.startDateTime,
+        endDateTime: endDateTime.toISOString(),
         pricingTierId: validatedData.pricingTierId,
         numberOfPassengers: validatedData.numberOfPassengers.toString(),
         specialRequests: validatedData.specialRequests || "",
@@ -154,12 +154,11 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
         customerEmail: session.user.email || "",
         customerPhone: session.user.phoneNumber || "",
         
-        // Booking details
+        // Booking details - NEW unified datetime fields
         isMultiDay: false,
         needsCaptain: validatedData.needsCaptain || boat.crewRequired,
-        startDate: validatedData.startDate,
-        startTime: validatedData.startTime,
-        endTime: endTime,
+        startDateTime: startDateTime,
+        endDateTime: endDateTime,
         numberOfPassengers: validatedData.numberOfPassengers,
         specialRequests: validatedData.specialRequests || "",
         
@@ -222,8 +221,7 @@ export async function createInstantBookingAction(formData: FormData) {
   // Parse form data
   const data = {
     boatId: formData.get("boatId") as string,
-    startDate: new Date(formData.get("startDate") as string),
-    startTime: formData.get("startTime") as string,
+    startDateTime: formData.get("startDateTime") as string,
     pricingTierId: formData.get("pricingTierId") as string,
     numberOfPassengers: parseInt(formData.get("numberOfPassengers") as string),
     needsCaptain: formData.get("needsCaptain") === "true",

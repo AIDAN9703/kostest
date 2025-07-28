@@ -12,7 +12,7 @@ import {
 import { cn } from "@/shared/utils/general-utils";
 import { 
   ConversationListResponse 
-} from "@/shared/types/messaging";
+} from "@/shared/types/messaging.types";
 import { useMessagingSocket } from "@/features/messaging/hooks/useMessagingSocket";
 import { ConversationList } from "./ConversationList";
 

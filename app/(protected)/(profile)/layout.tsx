@@ -15,6 +15,7 @@ export default function ProfileLayout({ children }: { children: ReactNode }) {
           {children}
         </main>
         <Toaster />
+
       </div>
     </>
   );

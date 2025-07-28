@@ -61,9 +61,20 @@ export const profileUpdateSchema = z.object({
  * Users select from exact pricing tiers instead of arbitrary hours
  */
 export const bookingRequestSchema = z.object({
-  // Core booking data
-  startDate: z.date({ required_error: "Date is required" }),
-  startTime: z.string().min(1, "Start time is required"),
+
+    // Core booking data
+  // startDate and startTime are removed.
+  // We now expect startDateTime as a string (ISO 8601 with timezone)
+  startDateTime: z.string({ required_error: "Start date and time are required" })
+    .datetime({ message: "Invalid date and time format" }), // Zod's .datetime() validates ISO 8601 strings
+
+  // You might also need endDateTime, depending on your UI/business logic.
+  // If endDateTime is derived from pricingTierId + startDateTime on the backend,
+  // then you might not need it here directly.
+  // If your UI allows custom end times, you would add:
+  // endDateTime: z.string().datetime({ message: "Invalid end date and time format" }).optional(),
+
+
   pricingTierId: z.string().min(1, "Please select a duration option"),
   numberOfPassengers: z.number().min(1, "At least one passenger is required"),
   needsCaptain: z.boolean(),

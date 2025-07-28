@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db } from '@/database/db';
 import { bookings, boats } from '@/database/schema';
 import { gte, lte, and, eq } from 'drizzle-orm';
+import { parseISODateTime } from '@/shared/utils/booking-utils';
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,12 +18,12 @@ export async function GET(request: NextRequest) {
     const start = searchParams.get('start');
     const end = searchParams.get('end');
 
-    // Build date filter
+    // Build date filter based on startDateTime
     let dateFilter;
     if (start && end) {
       dateFilter = and(
-        gte(bookings.startDate, new Date(start)),
-        lte(bookings.startDate, new Date(end))
+        gte(bookings.startDateTime, new Date(start)),
+        lte(bookings.startDateTime, new Date(end))
       );
     }
 
@@ -33,10 +34,8 @@ export async function GET(request: NextRequest) {
         customerName: bookings.customerName,
         customerEmail: bookings.customerEmail,
         customerPhone: bookings.customerPhone,
-        startDate: bookings.startDate,
-        endDate: bookings.endDate,
-        startTime: bookings.startTime,
-        endTime: bookings.endTime,
+        startDateTime: bookings.startDateTime,
+        endDateTime: bookings.endDateTime,
         bookingStatus: bookings.bookingStatus,
         bookingType: bookings.bookingType,
         numberOfPassengers: bookings.numberOfPassengers,
@@ -49,12 +48,17 @@ export async function GET(request: NextRequest) {
       .from(bookings)
       .leftJoin(boats, eq(bookings.boatId, boats.id))
       .where(dateFilter)
-      .orderBy(bookings.startDate);
+      .orderBy(bookings.startDateTime);
 
     // Convert to FullCalendar event format
     const events = allBookings.map(booking => {
-      const startDateTime = combineDateTime(booking.startDate, booking.startTime);
-      const endDateTime = combineDateTime(booking.endDate || booking.startDate, booking.endTime);
+      // Use the datetime fields directly (they're already Date objects in UTC)
+      const startDateTime = booking.startDateTime;
+      const endDateTime = booking.endDateTime || booking.startDateTime;
+      
+      // Parse times for display in extendedProps (converted to user's local timezone)
+      const { time: startTime } = parseISODateTime(startDateTime?.toISOString() || "");
+      const { time: endTime } = parseISODateTime(endDateTime?.toISOString() || "");
       
       // Color coding based on booking status
       const getStatusColor = (status: string) => {
@@ -84,8 +88,8 @@ export async function GET(request: NextRequest) {
       return {
         id: booking.id,
         title: `${booking.customerName} - ${booking.boatName || 'Unknown Boat'} (${booking.numberOfPassengers || 'N/A'} guests)`,
-        start: startDateTime.toISOString(),
-        end: endDateTime.toISOString(),
+        start: startDateTime?.toISOString(),
+        end: endDateTime?.toISOString(),
         backgroundColor: getStatusColor(booking.bookingStatus),
         borderColor: getBorderColor(booking.bookingStatus),
         textColor: getTextColor(booking.bookingStatus),
@@ -98,8 +102,8 @@ export async function GET(request: NextRequest) {
           numberOfPassengers: booking.numberOfPassengers,
           totalAmount: booking.totalAmount,
           specialRequests: booking.specialRequests,
-          startTime: booking.startTime,
-          endTime: booking.endTime,
+          startTime: startTime, // Local timezone for display
+          endTime: endTime,     // Local timezone for display
           createdAt: booking.createdAt,
           boatId: booking.boatId,
           boatName: booking.boatName,
@@ -115,13 +119,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-function combineDateTime(date: Date, time: string): Date {
-  const combined = new Date(date);
-  if (time) {
-    const [hours, minutes] = time.split(':').map(Number);
-    combined.setHours(hours, minutes, 0, 0);
-  }
-  return combined;
 } 

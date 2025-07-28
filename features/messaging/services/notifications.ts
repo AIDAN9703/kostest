@@ -4,7 +4,7 @@ import { db } from "@/database/db";
 import { notifications, users, conversations, conversationParticipants } from "@/database/schema";
 import { sendVerification } from "@/shared/services/twilio.service"; // Reuse existing Twilio service
 import { eq, and, inArray } from "drizzle-orm";
-import { MessageWithDetails, ConversationWithDetails } from "@/shared/types/messaging";
+import { MessageWithDetails, ConversationWithDetails } from "@/shared/types/messaging.types";
 
 /**
  * Send notification when a new message is received

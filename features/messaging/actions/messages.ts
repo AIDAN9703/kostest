@@ -24,7 +24,7 @@ import {
   ReadStatus,
   SystemMessageData,
   MESSAGING_ERROR_CODES
-} from "@/shared/types/messaging";
+} from "@/shared/types/messaging.types";
 import { revalidatePath } from "next/cache";
 import { eq, and, desc, sql, inArray, like, gte, lte } from "drizzle-orm";
 import { z } from "zod";

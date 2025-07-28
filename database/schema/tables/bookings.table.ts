@@ -27,10 +27,8 @@ export const bookings = pgTable("booking", {
     needsCaptain: boolean("needs_captain").default(false),
     
     // Dates and Times (simplified for day rentals)
-    startDate: timestamp("start_date", { mode: "date" }).notNull(),
-    endDate: timestamp("end_date", { mode: "date" }), // Nullable for single-day bookings
-    startTime: text("start_time").notNull(), // Store as HH:mm in 24h format
-    endTime: text("end_time").notNull(), // Store as HH:mm in 24h format
+    startDateTime: timestamp("start_datetime", { mode: "date", withTimezone: true }).notNull(),
+    endDateTime: timestamp("end_datetime", { mode: "date", withTimezone: true }), // Nullable for single-day bookings
     numberOfPassengers: integer("number_of_passengers").notNull(),
     
     // Location Details
@@ -85,7 +83,7 @@ export const bookings = pgTable("booking", {
     index("booking_user_idx").on(table.userId),
     index("booking_boat_idx").on(table.boatId),
     index("booking_captain_idx").on(table.captainId),
-    index("booking_date_idx").on(table.startDate, table.endDate),
+    index("booking_datetime_idx").on(table.startDateTime, table.endDateTime),
     // Search-specific indexes
     index("booking_search_customer_idx").on(table.customerName, table.customerEmail),
   ]);

@@ -1,34 +1,26 @@
-import { Zap, Clock } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
+import { Clock, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { formatTime12Hour } from "@/shared/utils/general-utils";
-import { calculateEndTime } from "@/shared/utils/booking-utils";
+import { calculateEndDateTime, parseISODateTime } from "@/shared/utils/booking-utils";
 import { PricingTier } from "@/shared/types/types";
-
-interface SafeBoatData {
-  id: string;
-  name: string;
-  mainImage: string | null;
-  instantBook: boolean;
-  cleaningFee: number | null;
-  locationLabel: string | null;
-}
-
-interface BookingData {
-  startDate: string | Date;
-  startTime: string;
-  numberOfPassengers: number;
-}
+import { SafeBoatData, BaseBookingData } from "@/shared/types/booking.types";
 
 interface BoatSummaryProps {
   boat: SafeBoatData;
-  bookingData: BookingData;
+  bookingData: BaseBookingData;
   selectedTier: PricingTier;
   timeLeft?: number;
 }
 
 export default function BoatSummary({ boat, bookingData, selectedTier, timeLeft }: BoatSummaryProps) {
-  const endTime = calculateEndTime(bookingData.startTime, selectedTier.hours);
+  // Parse the UTC datetime from database and convert to user's local timezone
+  const { date: localStartDate, time: localStartTime } = parseISODateTime(bookingData.startDateTime);
+  
+  // Calculate end time in local timezone
+  const startDateTime = new Date(bookingData.startDateTime);
+  const endDateTime = calculateEndDateTime(startDateTime, selectedTier.hours);
+  const { time: localEndTime } = parseISODateTime(endDateTime.toISOString());
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
@@ -95,11 +87,11 @@ export default function BoatSummary({ boat, bookingData, selectedTier, timeLeft 
           
           <div className="space-y-1 text-sm">
             <p className="font-medium text-gray-900">
-              {format(new Date(bookingData.startDate), "EEEE, MMMM d, yyyy")}
+              {localStartDate ? format(localStartDate, "EEEE, MMMM d, yyyy") : "No date"}
             </p>
             
             <p className="text-gray-700">
-              {formatTime12Hour(bookingData.startTime)} - {formatTime12Hour(endTime)} 
+              {localStartTime ? formatTime12Hour(localStartTime) : "No time"} - {localEndTime ? formatTime12Hour(localEndTime) : "No time"} 
               <span className="text-gray-500 ml-1">({selectedTier.hours}h)</span>
             </p>
             

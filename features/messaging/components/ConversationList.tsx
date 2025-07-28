@@ -23,7 +23,7 @@ import { cn } from "@/shared/utils/general-utils";
 import { 
   ConversationWithDetails, 
   ConversationListResponse
-} from "@/shared/types/messaging";
+} from "@/shared/types/messaging.types";
 import { format, isToday, isYesterday } from "date-fns";
 import { ConversationListSkeleton } from "./ConversationListSkeleton";
 

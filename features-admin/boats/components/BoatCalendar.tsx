@@ -11,37 +11,15 @@ import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Calendar, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
+import { BookingCalendarEvent } from "@/shared/types/booking.types";
 
 interface BoatCalendarProps {
   boatId: string;
   boatName: string;
 }
 
-interface BookingEvent {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
-  extendedProps: {
-    customerName: string;
-    customerEmail: string;
-    customerPhone: string;
-    bookingStatus: string;
-    bookingType: string;
-    numberOfPassengers: number;
-    totalAmount: number;
-    specialRequests: string;
-    startTime: string;
-    endTime: string;
-    createdAt: string;
-  };
-}
-
 export default function BoatCalendar({ boatId, boatName }: BoatCalendarProps) {
-  const [selectedEvent, setSelectedEvent] = useState<BookingEvent | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<BookingCalendarEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState('dayGridMonth');
   const calendarRef = useRef<FullCalendar>(null);
@@ -62,21 +40,6 @@ export default function BoatCalendar({ boatId, boatName }: BoatCalendarProps) {
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusStyles = {
-      'CONFIRMED': 'bg-green-100 text-green-800',
-      'PENDING': 'bg-yellow-100 text-yellow-800',
-      'CANCELLED': 'bg-red-100 text-red-800',
-      'COMPLETED': 'bg-blue-100 text-blue-800'
-    };
-
-    return (
-      <Badge className={statusStyles[status as keyof typeof statusStyles] || 'bg-gray-100 text-gray-800'}>
-        {status}
-      </Badge>
-    );
-  };
-
   const handleEventClick = (clickInfo: any) => {
     setSelectedEvent(clickInfo.event);
     setIsModalOpen(true);
@@ -84,103 +47,64 @@ export default function BoatCalendar({ boatId, boatName }: BoatCalendarProps) {
 
   const handleViewChange = (view: string) => {
     setCurrentView(view);
-    calendarRef.current?.getApi().changeView(view);
-  };
-
-  const goToToday = () => {
-    calendarRef.current?.getApi().today();
-  };
-
-  const navigateCalendar = (direction: 'prev' | 'next') => {
-    const api = calendarRef.current?.getApi();
-    if (direction === 'prev') {
-      api?.prev();
-    } else {
-      api?.next();
+    if (calendarRef.current) {
+      calendarRef.current.getApi().changeView(view);
     }
   };
 
+  const handleDateSelect = (selectInfo: any) => {
+    // Handle date selection for creating new bookings
+    console.log('Date selected:', selectInfo);
+  };
+
   return (
-    <>
+    <div className="space-y-6">
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              {boatName} - Booking Calendar
+              {boatName} Calendar
             </CardTitle>
             <div className="flex items-center gap-2">
-              {/* Navigation Controls */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigateCalendar('prev')}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={goToToday}
-              >
-                <RotateCcw className="h-4 w-4" />
-                Today
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigateCalendar('next')}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              
-              {/* View Selector */}
-              <div className="flex border rounded-md">
+              <div className="flex bg-gray-100 rounded-lg p-1">
                 <Button
                   variant={currentView === 'dayGridMonth' ? 'default' : 'ghost'}
                   size="sm"
-                  className="rounded-r-none"
                   onClick={() => handleViewChange('dayGridMonth')}
+                  className="text-xs"
                 >
                   Month
                 </Button>
                 <Button
                   variant={currentView === 'timeGridWeek' ? 'default' : 'ghost'}
                   size="sm"
-                  className="rounded-none"
                   onClick={() => handleViewChange('timeGridWeek')}
+                  className="text-xs"
                 >
                   Week
                 </Button>
                 <Button
                   variant={currentView === 'listWeek' ? 'default' : 'ghost'}
                   size="sm"
-                  className="rounded-l-none"
                   onClick={() => handleViewChange('listWeek')}
+                  className="text-xs"
                 >
                   List
                 </Button>
               </div>
-            </div>
-          </div>
-          
-          {/* Status Legend */}
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <span>Confirmed</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-              <span>Pending</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <span>Cancelled</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-              <span>Completed</span>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (calendarRef.current) {
+                    calendarRef.current.getApi().today();
+                  }
+                }}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -188,55 +112,67 @@ export default function BoatCalendar({ boatId, boatName }: BoatCalendarProps) {
           <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-            initialView="dayGridMonth"
-            headerToolbar={false} // We're using custom header
-            height="auto"
-            aspectRatio={1.8}
+            headerToolbar={{
+              left: 'prev,next',
+              center: 'title',
+              right: ''
+            }}
+            initialView={currentView}
+            editable={false}
+            selectable={true}
+            selectMirror={true}
+            dayMaxEvents={true}
+            weekends={true}
             events={`/api/admin/boats/${boatId}/calendar-events`}
             eventClick={handleEventClick}
+            select={handleDateSelect}
+            height="auto"
             eventDisplay="block"
-            dayMaxEvents={3}
-            moreLinkClick="popover"
-            nowIndicator={true}
-            businessHours={{
-              daysOfWeek: [0, 1, 2, 3, 4, 5, 6], // Every day
-              startTime: '06:00',
-              endTime: '20:00',
+            dayHeaderFormat={{ weekday: 'short' }}
+            slotLabelFormat={{
+              hour: 'numeric',
+              minute: '2-digit',
+              meridiem: 'short'
             }}
-            slotMinTime="06:00:00"
-            slotMaxTime="22:00:00"
-            allDaySlot={false}
             eventTimeFormat={{
               hour: 'numeric',
               minute: '2-digit',
               meridiem: 'short'
             }}
-            eventClassNames="cursor-pointer hover:opacity-80 transition-opacity"
           />
         </CardContent>
       </Card>
 
-      {/* Booking Details Modal */}
+      {/* Event Details Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Booking Details</DialogTitle>
           </DialogHeader>
           
           {selectedEvent && (
             <div className="space-y-4">
+              {/* Status Badge */}
+              <div className="flex justify-center">
+                <Badge 
+                  style={{ 
+                    backgroundColor: selectedEvent.backgroundColor,
+                    color: selectedEvent.textColor
+                  }}
+                  className="px-3 py-1"
+                >
+                  {selectedEvent.extendedProps.bookingStatus}
+                </Badge>
+              </div>
+
               {/* Customer Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-medium text-gray-900">Customer</h3>
-                  <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerName}</p>
-                  <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerEmail}</p>
+              <div>
+                <h3 className="font-medium text-gray-900">Customer</h3>
+                <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerName}</p>
+                <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerEmail}</p>
+                {selectedEvent.extendedProps.customerPhone && (
                   <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerPhone}</p>
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Status</h3>
-                  {getStatusBadge(selectedEvent.extendedProps.bookingStatus)}
-                </div>
+                )}
               </div>
 
               {/* Booking Details */}
@@ -263,27 +199,33 @@ export default function BoatCalendar({ boatId, boatName }: BoatCalendarProps) {
               {selectedEvent.extendedProps.specialRequests && (
                 <div>
                   <h3 className="font-medium text-gray-900">Special Requests</h3>
-                  <p className="text-sm text-gray-600">
-                    {selectedEvent.extendedProps.specialRequests}
-                  </p>
+                  <p className="text-sm text-gray-600">{selectedEvent.extendedProps.specialRequests}</p>
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="flex justify-end gap-2 pt-4 border-t">
-                <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-                  Close
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => window.open(`mailto:${selectedEvent.extendedProps.customerEmail}`)}
+                >
+                  Email Customer
                 </Button>
-                <Button asChild>
-                  <a href={`/admin/bookings/${selectedEvent.id}`}>
-                    View Full Details
-                  </a>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex-1"
+                  onClick={() => window.open(`/admin/bookings/${selectedEvent.id}`)}
+                >
+                  View Details
                 </Button>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 } 

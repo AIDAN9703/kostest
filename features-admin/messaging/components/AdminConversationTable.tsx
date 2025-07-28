@@ -49,7 +49,7 @@ import {
   ConversationWithDetails, 
   ConversationListResponse,
   ConversationFilters 
-} from "@/shared/types/messaging";
+} from "@/shared/types/messaging.types";
 import { getConversations, adminUpdateConversation } from "@/features/messaging/actions";
 import { format, formatDistanceToNow } from "date-fns";
 
@@ -384,7 +384,7 @@ export function AdminConversationTable({
                             </p>
                             {conversation.booking && (
                               <p className="text-sm text-muted-foreground">
-                                {format(conversation.booking.startDate, "MMM d, yyyy")} • {conversation.booking.bookingStatus}
+                                {format(conversation.booking.startDateTime, "MMM d, yyyy")} • {conversation.booking.bookingStatus}
                               </p>
                             )}
                             

@@ -19,7 +19,7 @@ export async function createBookingConversation(bookingId: string) {
         boatId: bookings.boatId,
         customerName: bookings.customerName,
         customerEmail: bookings.customerEmail,
-        startDate: bookings.startDate,
+        startDateTime: bookings.startDateTime,
         bookingType: bookings.bookingType,
         
         // Boat details
@@ -110,7 +110,7 @@ export async function createBookingConversation(bookingId: string) {
       .values(participantRecords);
 
     // Create initial system message about booking creation
-    const systemMessageContent = `New ${booking.bookingType.toLowerCase().replace('_', ' ')} booking created for ${booking.boatName}.\n\nCustomer: ${booking.customerName}\nStart Date: ${booking.startDate.toLocaleDateString()}\n\nUse this conversation to communicate about the booking details.`;
+    const systemMessageContent = `New ${booking.bookingType.toLowerCase().replace('_', ' ')} booking created for ${booking.boatName}.\n\nCustomer: ${booking.customerName}\nStart Date: ${booking.startDateTime.toLocaleDateString()}\n\nUse this conversation to communicate about the booking details.`;
     
     await createSystemMessage(
       conversationId,

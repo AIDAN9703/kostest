@@ -64,7 +64,7 @@ export async function GET(request: Request) {
         customerName: bookings.customerName,
         customerEmail: bookings.customerEmail,
         status: bookings.bookingStatus,
-        startDate: bookings.startDate,
+        startDateTime: bookings.startDateTime,
       })
       .from(bookings)
       .where(
@@ -73,7 +73,7 @@ export async function GET(request: Request) {
           ilike(bookings.customerEmail, `%${q}%`)
         )
       )
-      .orderBy(desc(bookings.startDate))
+      .orderBy(desc(bookings.startDateTime))
       .limit(5);
 
     // Format results for the frontend
@@ -102,7 +102,7 @@ export async function GET(request: Request) {
       ...bookingResults.map(booking => ({
         id: booking.id.toString(),
         title: booking.customerName,
-        subtitle: `${booking.startDate ? new Date(booking.startDate).toLocaleDateString() : 'No date'} · ${booking.status}`,
+        subtitle: `${booking.startDateTime ? new Date(booking.startDateTime).toLocaleDateString() : 'No date'} · ${booking.status}`,
         type: 'booking' as const,
         url: `/admin/bookings/${booking.id}`,
       })),

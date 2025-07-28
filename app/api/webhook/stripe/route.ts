@@ -109,7 +109,7 @@ async function handleInstantBookingPayment(session: Stripe.Checkout.Session) {
     const metadata = session.metadata || {};
     
     // Skip if essential data is missing
-    if (!metadata.boatId || !metadata.userId || !metadata.startDate) {
+    if (!metadata.boatId || !metadata.userId || !metadata.startDateTime) {
       console.error("Missing essential booking data in metadata:", metadata);
       return;
     }
@@ -144,7 +144,7 @@ async function handleInstantBookingPayment(session: Stripe.Checkout.Session) {
     // Create a new Date object for consistent timestamp format
     const now = new Date();
     
-    // Create booking record
+    // Create booking record with new unified datetime fields
     await db.insert(bookings).values({
       bookingType: "INSTANT_BOOK",
       bookingStatus: "CONFIRMED",
@@ -157,12 +157,11 @@ async function handleInstantBookingPayment(session: Stripe.Checkout.Session) {
       customerEmail: metadata.customerEmail || "",
       customerPhone: metadata.customerPhone || "",
       
-      // Booking details
+      // Booking details - NEW unified datetime fields
       isMultiDay: metadata.isMultiDay === "true",
       needsCaptain: metadata.needsCaptain === "true",
-      startDate: new Date(metadata.startDate),
-      startTime: metadata.startTime,
-      endTime: metadata.endTime,
+      startDateTime: new Date(metadata.startDateTime),
+      endDateTime: new Date(metadata.endDateTime),
       numberOfPassengers: parseInt(metadata.numberOfPassengers || "1"),
       specialRequests: metadata.specialRequests || "",
       

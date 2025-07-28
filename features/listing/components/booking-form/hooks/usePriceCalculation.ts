@@ -1,12 +1,11 @@
 "use client";
 
 import { useMemo } from 'react';
-import { Boat } from '@/shared/types/types';
+import { Boat, PricingTier } from '@/shared/types/types';
 
 interface UsePriceCalculationProps {
   boat: Boat;
-  selectedPricingTierId?: string;
-  needsCaptain?: boolean;
+  selectedPricingTierId: string;
 }
 
 interface PriceBreakdown {
@@ -16,20 +15,22 @@ interface PriceBreakdown {
   subtotal: number;
   taxAmount: number;
   totalPrice: number;
-  selectedPricingTier?: any;
+  selectedPricingTier: PricingTier | null;
 }
+
+// Centralized tax rate - move to config later if needed
+const TAX_RATE = 0.08; // 8%
 
 export const usePriceCalculation = ({ 
   boat, 
-  selectedPricingTierId, 
-  needsCaptain 
+  selectedPricingTierId
 }: UsePriceCalculationProps): PriceBreakdown => {
   
   return useMemo(() => {
     // Find the selected pricing tier
     const selectedPricingTier = boat.pricingTiers?.find(
       tier => tier.id === selectedPricingTierId
-    );
+    ) || null;
     
     // If no pricing tier is selected, return zero values
     if (!selectedPricingTier) {
@@ -40,16 +41,16 @@ export const usePriceCalculation = ({
         subtotal: 0,
         taxAmount: 0,
         totalPrice: 0,
-        selectedPricingTier: undefined,
+        selectedPricingTier: null,
       };
     }
     
-    // Calculate individual fees - captain fee is now included in base price
+    // Calculate individual fees - captain fee is included in base price
     const basePrice = selectedPricingTier.price;
     const captainFee = 0; // Captain service is included in base price
     const cleaningFee = boat.cleaningFee || 0;
     const subtotal = basePrice + captainFee + cleaningFee;
-    const taxAmount = subtotal * 0.08; // 8% tax
+    const taxAmount = subtotal * TAX_RATE;
     const totalPrice = subtotal + taxAmount;
     
     return {
@@ -61,7 +62,7 @@ export const usePriceCalculation = ({
       totalPrice,
       selectedPricingTier,
     };
-  }, [boat, selectedPricingTierId]); // Removed needsCaptain dependency since it's no longer used
+  }, [boat.pricingTiers, boat.cleaningFee, selectedPricingTierId]);
 };
 
 // Helper hook for getting active pricing tiers

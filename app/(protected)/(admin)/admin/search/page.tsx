@@ -161,8 +161,8 @@ export default async function SearchPage({
       customerName: bookings.customerName,
       customerEmail: bookings.customerEmail,
       status: bookings.bookingStatus,
-      startDate: bookings.startDate,
-      endDate: bookings.endDate,
+      startDateTime: bookings.startDateTime,
+      endDateTime: bookings.endDateTime,
       totalAmount: bookings.totalAmount,
     })
     .from(bookings)
@@ -172,7 +172,7 @@ export default async function SearchPage({
         ilike(bookings.customerEmail, `%${query}%`)
       )
     )
-    .orderBy(desc(bookings.startDate))
+    .orderBy(desc(bookings.startDateTime))
     .limit(20) : [];
 
   // Helper to format dates
@@ -424,8 +424,8 @@ export default async function SearchPage({
                         <td className="px-4 py-3 font-medium">{booking.customerName}</td>
                         <td className="px-4 py-3 text-gray-600">{booking.customerEmail}</td>
                         <td className="px-4 py-3 text-gray-600">
-                          {booking.startDate ? new Date(booking.startDate).toLocaleDateString() : "N/A"}
-                          {booking.endDate ? ` - ${new Date(booking.endDate).toLocaleDateString()}` : ""}
+                          {booking.startDateTime ? new Date(booking.startDateTime).toLocaleDateString() : "N/A"}
+                          {booking.endDateTime ? ` - ${new Date(booking.endDateTime).toLocaleDateString()}` : ""}
                         </td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${

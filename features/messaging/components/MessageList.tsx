@@ -25,7 +25,7 @@ import {
   ConversationWithDetails,
   MessageType,
   TypingIndicator
-} from "@/shared/types/messaging";
+} from "@/shared/types/messaging.types";
 import { getMessages, markAsRead } from "@/features/messaging/actions";
 import { useMessagingSocket, useMessagingEvents } from "@/features/messaging/services/socket";
 import { format, formatDistanceToNow, isSameDay } from "date-fns";

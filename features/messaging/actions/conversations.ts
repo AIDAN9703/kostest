@@ -24,7 +24,7 @@ import {
   PaginationParams,
   ConversationListResponse,
   MESSAGING_ERROR_CODES
-} from "@/shared/types/messaging";
+} from "@/shared/types/messaging.types";
 import { revalidatePath } from "next/cache";
 import { eq, and, or, desc, sql, inArray, like, gte, lte } from "drizzle-orm";
 import { z } from "zod";
@@ -273,7 +273,7 @@ export async function getConversations(
         
         // Booking data (if exists)
         bookingCustomerName: bookings.customerName,
-        bookingStartDate: bookings.startDate,
+        bookingStartDate: bookings.startDateTime,
         bookingStatus: bookings.bookingStatus,
         boatName: boats.name,
       })
@@ -312,7 +312,7 @@ export async function getConversations(
         boatId: conv.bookingId, // This would need to be fetched properly
         boatName: conv.boatName ?? undefined,
         customerName: conv.bookingCustomerName ?? "Unknown Customer",
-        startDate: conv.bookingStartDate ?? new Date(),
+        startDateTime: conv.bookingStartDate ?? new Date(),
         bookingStatus: conv.bookingStatus ?? "PENDING",
       } : null,
       participants: [], // These would be fetched separately for performance
@@ -406,7 +406,7 @@ export async function getConversation(conversationId: string): Promise<
         
         // Booking data (if exists)
         bookingCustomerName: bookings.customerName,
-        bookingStartDate: bookings.startDate,
+        bookingStartDate: bookings.startDateTime,
         bookingStatus: bookings.bookingStatus,
         boatName: boats.name,
       })
@@ -467,7 +467,7 @@ export async function getConversation(conversationId: string): Promise<
         boatId: conversation.bookingId, // This would need proper fetching
         boatName: conversation.boatName ?? undefined,
         customerName: conversation.bookingCustomerName ?? "Unknown Customer",
-        startDate: conversation.bookingStartDate ?? new Date(),
+        startDateTime: conversation.bookingStartDate ?? new Date(),
         bookingStatus: conversation.bookingStatus ?? "PENDING",
       } : null,
       participants: participantsQuery.map(p => ({

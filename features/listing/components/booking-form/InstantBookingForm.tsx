@@ -2,24 +2,27 @@
 
 import { useState } from "react";
 import { Boat } from "@/shared/types/types";
+import { useSession } from "next-auth/react";
 import { Button } from "@/shared/components/ui/button";
 import { Form } from "@/shared/components/ui/form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { bookingRequestSchema, BookingRequest } from "@/features/_validation/validations";
-import { Zap, Anchor } from "lucide-react";
-import { calculateEndTime } from "@/shared/utils/booking-utils";
+import { MessageCircle, Anchor, CreditCard } from "lucide-react";
 
 // Import components
-import { useSimpleFormPersistence } from "./hooks/useSimpleFormPersistence";
-import { usePriceCalculation, useActivePricingTiers } from "./hooks/usePriceCalculation";
 import { PricingDisplay } from "./shared/PricingDisplay";
 import { DateSelection, TimeSelection, PassengerSelection } from "./shared/BookingDetails";
 import { CaptainSelection } from "./shared/CaptainSelection";
 import { SpecialRequests } from "./shared/SpecialRequests";
 import { PriceSummary } from "./shared/PriceSummary";
-import { useSession } from "next-auth/react";
+
+// Import hooks
+import { useSimpleFormPersistence } from "./hooks/useSimpleFormPersistence";
+import { useBookingFormState } from "./hooks/useBookingFormState";
+import { useActivePricingTiers } from "./hooks/usePriceCalculation";
+
 
 interface InstantBookingFormProps {
   boat: Boat;
@@ -33,8 +36,7 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
   const form = useForm<BookingRequest>({
     resolver: zodResolver(bookingRequestSchema),
     defaultValues: {
-      startDate: undefined as unknown as Date,
-      startTime: "",
+      startDateTime: "",
       pricingTierId: "",
       numberOfPassengers: 1,
       needsCaptain: boat.crewRequired,
@@ -48,19 +50,11 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
     boatId: boat.id
   });
 
-  const selectedPricingTierId = form.watch("pricingTierId");
-  const selectedStartTime = form.watch("startTime");
-  const needsCaptain = form.watch("needsCaptain");
-  
-  const priceBreakdown = usePriceCalculation({
-    boat,
-    selectedPricingTierId,
-    needsCaptain,
+  // Consolidated form state and pricing calculations
+  const formState = useBookingFormState({
+    form,
+    boat
   });
-
-  const endTime = selectedStartTime && priceBreakdown.selectedPricingTier 
-    ? calculateEndTime(selectedStartTime, priceBreakdown.selectedPricingTier.hours)
-    : "";
 
   if (activePricingTiers.length === 0) {
     return (
@@ -75,7 +69,7 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
   }
 
   const handleSubmit = (data: BookingRequest) => {
-    if (!priceBreakdown.selectedPricingTier) {
+    if (!formState.selectedPricingTier) {
       form.setError("pricingTierId", { 
         message: "Please select a duration option" 
       });
@@ -98,7 +92,7 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
         cleaningFee: boat.cleaningFee,
         locationLabel: boat.locationLabel
       },
-      selectedTier: priceBreakdown.selectedPricingTier
+      selectedTier: formState.selectedPricingTier
     };
 
     // Navigate to booking details page with minimal data
@@ -108,8 +102,6 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
     
     router.push(`/booking-details?${params.toString()}`);
   };
-
-  const isFormValid = form.formState.isValid && priceBreakdown.selectedPricingTier;
   
   return (
     <div className="p-4">
@@ -117,17 +109,19 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
           <DateSelection 
             control={form.control}
+            currentDate={formState.parsedDateTime.date}
           />
 
           <PricingDisplay 
             boat={boat} 
             control={form.control} 
-            selectedPricingTier={priceBreakdown.selectedPricingTier}
+            selectedPricingTier={formState.selectedPricingTier}
           />
 
           <TimeSelection 
             control={form.control}
-            endTime={endTime}
+            currentTime={formState.parsedDateTime.time}
+            endTime={formState.endTime}
           />
 
           <PassengerSelection 
@@ -147,31 +141,22 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
 
           <PriceSummary 
             boat={boat}
-            selectedPricingTier={priceBreakdown.selectedPricingTier}
-            needsCaptain={needsCaptain}
-            totalPrice={priceBreakdown.totalPrice}
+            selectedPricingTier={formState.selectedPricingTier}
+            needsCaptain={formState.needsCaptain}
+            totalPrice={formState.priceBreakdown.totalPrice}
             isRequest={false}
           />
 
           <Button 
             type="submit" 
-            className="w-full h-11 font-semibold text-white transition-colors text-sm rounded-lg bg-primary hover:bg-primary/90"
-            disabled={!isFormValid}
+            className="w-full h-11 font-semibold text-white transition-colors text-sm rounded-lg bg-emerald-600 hover:bg-emerald-700"
+            disabled={!formState.isFormValid}
           >
             <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4" />
-              Continue to Booking
+              <CreditCard className="h-4 w-4" />
+              Continue to Payment
             </div>
           </Button>
-
-          <div className="bg-primary/5 border border-primary/20 rounded-lg p-2">
-            <div className="text-sm text-primary text-center">
-              <div className="font-medium">Instant Booking Available</div>
-              <div className="text-xs mt-1 opacity-90">
-                Your booking will be confirmed immediately after payment
-              </div>
-            </div>
-          </div>
         </form>
       </Form>
     </div>

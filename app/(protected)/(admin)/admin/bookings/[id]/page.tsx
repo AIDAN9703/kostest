@@ -21,10 +21,8 @@ type BookingWithJoins = {
   customerName: string | null;
   customerEmail: string | null;
   customerPhone: string | null;
-  startDate: Date | null;
-  endDate: Date | null;
-  startTime: string | null;
-  endTime: string | null;
+  startDateTime: Date | null;
+  endDateTime: Date | null;
   numberOfPassengers: number | null;
   totalAmount: number | null;
   paymentStatus: string | null;
@@ -107,13 +105,16 @@ export default async function BookingDetailsPage({
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Date</h3>
                   <p className="mt-1">
-                    {booking.startDate ? new Date(booking.startDate).toLocaleDateString() : "-"}
-                    {booking.endDate ? ` - ${new Date(booking.endDate).toLocaleDateString()}` : ""}
+                    {booking.startDateTime ? new Date(booking.startDateTime).toLocaleDateString() : "-"}
+                    {booking.endDateTime ? ` - ${new Date(booking.endDateTime).toLocaleDateString()}` : ""}
                   </p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Time</h3>
-                  <p className="mt-1">{booking.startTime || "-"} - {booking.endTime || "-"}</p>
+                  <p className="mt-1">
+                    {booking.startDateTime ? new Date(booking.startDateTime).toLocaleTimeString() : "-"}
+                    {booking.endDateTime ? ` - ${new Date(booking.endDateTime).toLocaleTimeString()}` : ""}
+                  </p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-gray-500">Number of Passengers</h3>

@@ -24,7 +24,7 @@ import { cn } from "@/shared/utils/general-utils";
 import { 
   ConversationWithDetails, 
   MessageWithDetails 
-} from "@/shared/types/messaging";
+} from "@/shared/types/messaging.types";
 import { getConversation } from "@/features/messaging/actions";
 import { useMessagingSocket } from "@/features/messaging/services/socket";
 import { MessageList } from "./MessageList";
@@ -123,7 +123,7 @@ export function ConversationView({
   // Get conversation subtitle
   const getConversationSubtitle = (conv: ConversationWithDetails) => {
     if (conv.booking) {
-      return `Booking • ${format(conv.booking.startDate, "MMM d, yyyy")}`;
+      return `Booking • ${format(conv.booking.startDateTime, "MMM d, yyyy")}`;
     }
     
     const otherParticipants = conv.participants.filter(p => p.userId !== currentUserId);
@@ -260,7 +260,7 @@ export function ConversationView({
                 <div>
                   <p className="font-medium">{conversation.booking.boatName}</p>
                   <p className="text-sm text-muted-foreground">
-                    {conversation.booking.customerName} • {format(conversation.booking.startDate, "MMMM d, yyyy")}
+                    {conversation.booking.customerName} • {format(conversation.booking.startDateTime, "MMMM d, yyyy")}
                   </p>
                 </div>
                 <Badge variant={

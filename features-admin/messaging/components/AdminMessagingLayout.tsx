@@ -19,7 +19,7 @@ import { cn } from "@/shared/utils/general-utils";
 import { 
   ConversationWithDetails, 
   ConversationListResponse 
-} from "@/shared/types/messaging";
+} from "@/shared/types/messaging.types";
 import { ConversationView } from "@/features/messaging/components";
 import { useMessagingSocket } from "@/features/messaging/services/socket";
 import { AdminConversationTable } from "./AdminConversationTable";

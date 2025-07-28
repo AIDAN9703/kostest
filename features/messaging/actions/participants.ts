@@ -12,7 +12,7 @@ import {
 } from "@/shared/validation/messaging";
 import { 
   MESSAGING_ERROR_CODES
-} from "@/shared/types/messaging";
+} from "@/shared/types/messaging.types";
 
 // Define simple schemas inline since they're not exported from the validation file
 const addParticipantRequestSchema = z.object({

@@ -6,7 +6,7 @@ import {
   TypingIndicator,
   NewMessageEvent,
   MessageReadEvent
-} from "@/shared/types/messaging";
+} from "@/shared/types/messaging.types";
 
 class MessagingSocketService {
   private socket: Socket | null = null;
