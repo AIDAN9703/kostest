@@ -64,9 +64,9 @@ const teamMembers = [
   },
   {
     name: "Nathalie Ann Zambarrano",
-    position: "Executive Assistant",
+    position: "Executive Manager",
     image: "/images/team/nathalie-ann.png",
-    description: "Assisting with administrative tasks and ensuring smooth operations."
+    description: "Managing administrative tasks and ensuring smooth operations."
   },
   {
     name: "Sydney Alejado",
