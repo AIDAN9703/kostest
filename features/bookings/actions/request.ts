@@ -43,6 +43,27 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
     
     const pricingTier = pricingTierResults[0];
     
+    // Check availability before creating booking
+    const { AvailabilityService } = await import("@/features/availability/services/availability.service");
+    const availabilityService = new AvailabilityService();
+    
+    const startDateTime = new Date(validatedData.startDateTime);
+    const endDateTime = calculateEndDateTime(startDateTime, pricingTier.hours);
+    
+    const availability = await availabilityService.checkTimeSlotAvailability(
+      data.boatId,
+      startDateTime,
+      endDateTime
+    );
+    
+    if (!availability.isAvailable) {
+      return {
+        success: false,
+        error: "Selected time slot is no longer available. Please choose a different time.",
+        errorType: "AVAILABILITY"
+      };
+    }
+    
     // Get boat details for additional fees
     const boatResults = await db
       .select({
@@ -65,9 +86,7 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
     
     const boat = boatResults[0];
     
-    // Convert ISO string to Date object and calculate end datetime
-    const startDateTime = new Date(validatedData.startDateTime);
-    const endDateTime = calculateEndDateTime(startDateTime, pricingTier.hours);
+    // Use the already calculated startDateTime and endDateTime from availability check
     
     // Calculate all fees - captain service is included in base price
     const basePrice = pricingTier.price;
@@ -80,7 +99,7 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
     // Create booking record
     const now = new Date();
     const booking = await db.insert(bookings).values({
-      bookingType: "DAY_REQUEST",
+      bookingType: "REQUEST",
       bookingStatus: "PENDING",
       userId: session.user.id,
       boatId: data.boatId,
@@ -109,7 +128,7 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
       currency: "USD",
       
       // Initial payment status
-      paymentStatus: "PENDING",
+      paymentStatus: "AWAITING_PAYMENT",
       
       // Set expiration for booking request (3 days)
       expiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000),

@@ -1,27 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { Boat } from "@/shared/types/types";
-import { FormField, FormItem, FormMessage } from "@/shared/components/ui/form";
 import { Control, UseFormSetValue } from "react-hook-form";
-import { BookingRequest } from "@/features/_validation/validations";
-import { generateTimeOptions, formatEndTime, createDateTimeISO } from "@/shared/utils/booking-utils";
-import { format } from "date-fns";
-import { formatTime12Hour } from "@/shared/utils/general-utils";
-import { Plus, Minus, Calendar as CalendarIcon, Clock, Users, ChevronDown } from "lucide-react";
+import { FormField, FormItem, FormMessage } from "@/shared/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/shared/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
-import { Calendar } from "@/shared/components/ui/calendar";
 import { Button } from "@/shared/components/ui/button";
-import { cn } from "@/shared/utils/general-utils";
+import { Calendar, ChevronDown, Clock, Users, Plus, Minus } from "lucide-react";
+import { format } from "date-fns";
+import { cn, formatTime12Hour } from "@/shared/utils/general-utils";
+import { createDateTimeISO } from "@/shared/utils/booking-utils";
+import { BookingRequest } from "@/features/_validation/validations";
+import { Boat } from "@/shared/types/types";
+import { CustomCalendar } from "./CustomCalendar";
+import { CalendarLegend } from "./CalendarLegend";
+import { TimeSlotsDisplay } from "./TimeSlotsDisplay";
 
 // Individual field components for better organization
 export function DateSelection({ 
   control, 
-  currentDate 
+  currentDate,
+  boatId
 }: { 
   control: Control<BookingRequest>; 
   currentDate: Date | null;
+  boatId: string;
 }) {
   const [dateOpen, setDateOpen] = useState(false);
   
@@ -29,7 +31,7 @@ export function DateSelection({
     <FormField
       control={control}
       name="startDateTime"
-      render={({ field }) => (
+      render={({ field }: any) => (
         <FormItem>
           <div className="relative">
             <Button
@@ -39,7 +41,7 @@ export function DateSelection({
               className="w-full border border-gray-300 rounded-lg p-3 h-auto"
             >
               <div className="flex items-center gap-3 w-full">
-                <CalendarIcon className="h-5 w-5 text-primary" />
+                <Calendar className="h-5 w-5 text-primary" />
                 <div className="flex-1 text-left">
                   <div className="text-sm font-semibold text-gray-900">
                     {currentDate ? format(currentDate, "MMMM d, yyyy") : "Select Date"}
@@ -56,34 +58,32 @@ export function DateSelection({
             </Button>
             
             {dateOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-50 justify-center flex">
-                <Calendar
-                  mode="single"
-                  selected={currentDate || undefined}
-                  onSelect={(date) => {
-                    if (date) {
-                      // Get current time from existing startDateTime or default to 09:00
-                      const currentTime = currentDate ? format(currentDate, "HH:mm") : "09:00";
-                      
-                      // Create new ISO string with selected date and current/default time
-                      // This properly converts from user's local timezone to UTC
-                      const newDateTimeISO = createDateTimeISO(date, currentTime);
-                      field.onChange(newDateTimeISO);
-                    }
-                    setDateOpen(false);
-                  }}
-                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                  className="p-3"
-                  classNames={{
-                    day: "h-8 w-8 rounded-md hover:bg-gray-100 transition-colors",
-                    day_selected: "bg-primary text-white",
-                    day_today: "text-gold font-semibold",
-                    day_disabled: "text-gray-300 opacity-30 cursor-not-allowed hover:bg-transparent",
-                  }}
-                />
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white border rounded-lg shadow-lg z-50">
+                <div className="p-4">
+                  <CustomCalendar
+                    selectedDate={currentDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        // Get current time from existing startDateTime or default to 09:00
+                        const currentTime = currentDate ? format(currentDate, "HH:mm") : "09:00";
+                        
+                        // Create new ISO string with selected date and current/default time
+                        // This properly converts from user's local timezone to UTC
+                        const newDateTimeISO = createDateTimeISO(date, currentTime);
+                        field.onChange(newDateTimeISO);
+                      }
+                      setDateOpen(false);
+                    }}
+                    boatId={boatId}
+                  />
+                </div>
               </div>
             )}
           </div>
+          
+          {/* Calendar legend */}
+          <CalendarLegend />
+          
           <FormMessage />
         </FormItem>
       )}
@@ -94,53 +94,44 @@ export function DateSelection({
 export function TimeSelection({ 
   control, 
   currentTime, 
-  endTime 
+  endTime,
+  boatId,
+  selectedDate,
+  duration
 }: { 
   control: Control<BookingRequest>; 
   currentTime: string;
   endTime?: string;
+  boatId: string;
+  selectedDate: Date | null;
+  duration?: number;
 }) {
-  const timeOptions = generateTimeOptions();
-  
   return (
     <FormField
       control={control}
       name="startDateTime"
-      render={({ field }) => (
+      render={({ field }: any) => (
         <FormItem>
-          <Select 
-            onValueChange={(time) => {
-              // Get current date from field value or use today
-              const currentDateTime = field.value ? new Date(field.value) : new Date();
-              
-              // Create new ISO string with current date and selected time
-              // This properly converts from user's local timezone to UTC
-              const newDateTimeISO = createDateTimeISO(currentDateTime, time);
-              field.onChange(newDateTimeISO);
-            }} 
-            value={currentTime}
-          >
-            <SelectTrigger className="w-full border border-gray-300 rounded-lg p-3 h-auto">
-              <div className="flex items-center gap-3 w-full">
-                <Clock className="h-5 w-5 text-primary" />
-                <div className="flex-1 text-left">
-                  <div className="text-sm font-semibold text-gray-900">
-                    {currentTime ? formatTime12Hour(currentTime) : "Select Start Time"}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {endTime ? `Ends at ${formatEndTime(endTime)}` : "Choose departure time"}
-                  </div>
-                </div>
+          {selectedDate ? (
+            <TimeSlotsDisplay
+              date={selectedDate}
+              boatId={boatId}
+              selectedTime={currentTime}
+              duration={duration}
+              onTimeSelect={(time) => {
+                // Create new ISO string with selected date and time
+                const newDateTimeISO = createDateTimeISO(selectedDate, time);
+                field.onChange(newDateTimeISO);
+              }}
+            />
+          ) : (
+            <div className="p-4 border rounded-lg">
+              <div className="flex items-center gap-2 text-sm text-gray-500">
+                <Clock className="h-4 w-4" />
+                <span>Please select a date first</span>
               </div>
-            </SelectTrigger>
-            <SelectContent className="max-h-64">
-              {timeOptions.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            </div>
+          )}
           <FormMessage />
         </FormItem>
       )}

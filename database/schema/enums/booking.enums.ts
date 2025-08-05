@@ -2,10 +2,8 @@ import { pgEnum } from "drizzle-orm/pg-core";
 
 // New consolidated booking type enum
 export const bookingTypeEnum = pgEnum("BookingType", [
-    "DAY_REQUEST",         // Standard booking request that needs approval
+    "REQUEST",         // Standard booking request that needs approval
     "INSTANT_BOOK",    // Instant booking (no approval needed)
-    "TERM_CHARTER",
-    "MULTI_DAY",
     "EXTERNAL_BOOKING"
   ]);
   
@@ -13,7 +11,6 @@ export const bookingTypeEnum = pgEnum("BookingType", [
   export const bookingStatusEnum = pgEnum("BookingStatus", [
     "PENDING",         // Initial state for booking requests
     "APPROVED",        // Request approved, waiting for payment
-    "AWAITING_PAYMENT", // Payment link sent, waiting for payment
     "CONFIRMED",       // Payment received, booking confirmed
     "DENIED",          // Request was denied
     "EXPIRED",         // Payment wasn't made within timeframe

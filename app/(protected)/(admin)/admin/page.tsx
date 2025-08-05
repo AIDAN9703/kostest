@@ -7,10 +7,6 @@ import { getDashboardStats } from "@/features-admin/_shared/actions/dashboard";
 // Add route segment config for caching
 export const revalidate = 300; // Revalidate every 5 minutes
 
-export const metadata: Metadata = {
-  title: "Admin Dashboard | KOS Yachts",
-  description: "Admin dashboard for KOS Yachts platform",
-};
 
 export default async function AdminDashboardPage() {
   // Fetch dashboard statistics

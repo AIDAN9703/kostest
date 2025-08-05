@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Boat } from "@/shared/types/types";
 import { useSession } from "next-auth/react";
 import { Button } from "@/shared/components/ui/button";
@@ -77,16 +76,7 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
       return;
     }
 
-    // DEBUG: Log the timezone conversion for testing
-    if (data.startDateTime) {
-      console.log('🚀 Booking Submission Debug:', {
-        selectedDateTime: data.startDateTime,
-        userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        utcTime: new Date(data.startDateTime).toISOString(),
-        localDisplay: new Date(data.startDateTime).toLocaleString(),
-        pricingTier: formState.selectedPricingTier?.name
-      });
-    }
+
 
     // Clear form data and navigate to booking details
     clearFormData();
@@ -122,6 +112,7 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
           <DateSelection 
             control={form.control}
             currentDate={formState.parsedDateTime.date}
+            boatId={boat.id}
           />
 
           <PricingDisplay 
@@ -134,6 +125,9 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
             control={form.control}
             currentTime={formState.parsedDateTime.time}
             endTime={formState.endTime}
+            boatId={boat.id}
+            selectedDate={formState.parsedDateTime.date}
+            duration={formState.selectedPricingTier?.hours}
           />
 
           <PassengerSelection 

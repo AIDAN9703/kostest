@@ -13,6 +13,7 @@ export const bookings = pgTable("booking", {
     
     // User Information
     userId: uuid("user_id").references(() => users.id), // Renamed from renterId, optional for non-logged in requests
+    boatOwnerId: uuid("boat_owner_id").references(() => users.id), // The owner of the boat - NEW!
     boatId: uuid("boat_id").notNull().references(() => boats.id),
     captainId: uuid("captain_id").references(() => captains.id),
     pricingTierId: uuid("pricing_tier_id").references(() => boatPricingTiers.id),
@@ -45,7 +46,7 @@ export const bookings = pgTable("booking", {
     currency: text("currency").default("USD").notNull(),
     
     // Payment Information
-    paymentStatus: paymentStatusEnum("payment_status").default("PENDING"),
+    paymentStatus: paymentStatusEnum("payment_status").default("AWAITING_PAYMENT"),
     paymentMethod: text("payment_method"),
     paymentDueDate: timestamp("payment_due_date", { mode: "date" }),
     depositPaid: boolean("deposit_paid").default(false),

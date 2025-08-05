@@ -94,42 +94,7 @@ export function formatDateTimeInTimezone(isoString: string, formatPattern: strin
   return formatTz(localDateTime, formatPattern, { timeZone: timezone });
 }
 
-/**
- * DEBUG: Test timezone conversion (can be removed in production)
- * @param testDate Date to test
- * @param testTime Time to test
- * @returns Object with conversion details
- */
-export function debugTimezoneConversion(testDate: Date, testTime: string) {
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const isoString = createDateTimeISO(testDate, testTime);
-  const parsed = parseISODateTime(isoString);
-  
-  console.log('🕐 Timezone Conversion Debug:', {
-    userTimezone: timezone,
-    input: {
-      date: testDate.toLocaleDateString(),
-      time: testTime
-    },
-    utcISO: isoString,
-    parsed: {
-      date: parsed.date?.toLocaleDateString(),
-      time: parsed.time
-    },
-    verification: {
-      inputTime: testTime,
-      parsedTime: parsed.time,
-      matches: testTime === parsed.time
-    }
-  });
-  
-  return {
-    timezone,
-    isoString,
-    parsed,
-    matches: testTime === parsed.time
-  };
-}
+
 
 // ============ LEGACY FUNCTIONS (for backward compatibility) ============
 

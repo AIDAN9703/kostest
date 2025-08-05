@@ -79,26 +79,26 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
     }
   }, [searchParams]);
 
-  // Countdown timer
-  useEffect(() => {
-    if (!bookingState.data || bookingState.timeLeft <= 0) return;
+  // Remove countdown timer - it's causing issues and disabling buttons
+  // useEffect(() => {
+  //   if (!bookingState.data || bookingState.timeLeft <= 0) return;
 
-    const timer = setInterval(() => {
-      setBookingState(prev => ({
-        ...prev,
-        timeLeft: Math.max(0, prev.timeLeft - 1)
-      }));
-    }, 1000);
+  //   const timer = setInterval(() => {
+  //     setBookingState(prev => ({
+  //       ...prev,
+  //       timeLeft: Math.max(0, prev.timeLeft - 1)
+  //     }));
+  //   }, 1000);
 
-    return () => clearInterval(timer);
-  }, [bookingState.data, bookingState.timeLeft]);
+  //   return () => clearInterval(timer);
+  // }, [bookingState.data, bookingState.timeLeft]);
 
-  // Handle redirect when time expires
-  useEffect(() => {
-    if (bookingState.timeLeft === 0 && bookingState.data) {
-      router.push(`/boats/${bookingState.data.boatId}`);
-    }
-  }, [bookingState.timeLeft, bookingState.data, router]);
+  // Remove redirect when time expires
+  // useEffect(() => {
+  //   if (bookingState.timeLeft === 0 && bookingState.data) {
+  //     router.push(`/boats/${bookingState.data.boatId}`);
+  //   }
+  // }, [bookingState.timeLeft, bookingState.data, router]);
 
   const calculateTotalPrice = useCallback(() => {
     if (!bookingState.data) return 0;
@@ -117,7 +117,12 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
   }, [bookingState.data]);
 
   const handleBookingSubmit = useCallback(async (paymentMethod: 'request' | 'instant') => {
-    if (!bookingState.data || !user) return;
+    
+    
+    if (!bookingState.data || !user) {
+      console.log('Early return - missing data or user');
+      return;
+    }
 
     setBookingState(prev => ({ ...prev, isSubmitting: true, error: null }));
 
@@ -245,8 +250,10 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
         <div className="space-y-3">
           {boat.instantBook && (
             <Button
-              onClick={() => handleBookingSubmit('instant')}
-              disabled={bookingState.isSubmitting || bookingState.timeLeft === 0}
+              onClick={() => {
+                handleBookingSubmit('instant');
+              }}
+              disabled={bookingState.isSubmitting}
               className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
             >
               <CreditCard className="h-4 w-4 mr-2" />
@@ -255,8 +262,10 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
           )}
           
           <Button
-            onClick={() => handleBookingSubmit('request')}
-            disabled={bookingState.isSubmitting || bookingState.timeLeft === 0}
+            onClick={() => {
+              handleBookingSubmit('request');
+            }}
+            disabled={bookingState.isSubmitting}
             variant={boat.instantBook ? "outline" : "default"}
             className="w-full h-12 font-semibold"
           >

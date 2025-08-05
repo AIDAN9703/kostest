@@ -1,75 +1,52 @@
 "use client";
 
 import { useMemo } from 'react';
-import { Boat, PricingTier } from '@/shared/types/types';
+import { boatPricingTiers } from '@/database/schema';
+import { Boat } from '@/shared/types/types';
 
-interface UsePriceCalculationProps {
-  boat: Boat;
-  selectedPricingTierId: string;
-}
-
-interface PriceBreakdown {
+export interface PriceBreakdown {
   basePrice: number;
-  captainFee: number;
   cleaningFee: number;
-  subtotal: number;
-  taxAmount: number;
   totalPrice: number;
-  selectedPricingTier: PricingTier | null;
+  pricePerHour: number;
+  duration: number;
 }
 
-// Centralized tax rate - move to config later if needed
-const TAX_RATE = 0.08; // 8%
-
-export const usePriceCalculation = ({ 
-  boat, 
-  selectedPricingTierId
-}: UsePriceCalculationProps): PriceBreakdown => {
-  
+export const usePriceCalculation = (
+  selectedTier: typeof boatPricingTiers.$inferSelect | null,
+  boat: any
+): PriceBreakdown => {
   return useMemo(() => {
-    // Find the selected pricing tier
-    const selectedPricingTier = boat.pricingTiers?.find(
-      tier => tier.id === selectedPricingTierId
-    ) || null;
-    
-    // If no pricing tier is selected, return zero values
-    if (!selectedPricingTier) {
+    if (!selectedTier || !boat) {
       return {
         basePrice: 0,
-        captainFee: 0,
-        cleaningFee: 0,
-        subtotal: 0,
-        taxAmount: 0,
+        cleaningFee: boat?.cleaningFee || 0,
         totalPrice: 0,
-        selectedPricingTier: null,
+        pricePerHour: 0,
+        duration: 0
       };
     }
-    
-    // Calculate individual fees - captain fee is included in base price
-    const basePrice = selectedPricingTier.price;
-    const captainFee = 0; // Captain service is included in base price
+
+    const basePrice = selectedTier.price;
     const cleaningFee = boat.cleaningFee || 0;
-    const subtotal = basePrice + captainFee + cleaningFee;
-    const taxAmount = subtotal * TAX_RATE;
-    const totalPrice = subtotal + taxAmount;
-    
+    const totalPrice = basePrice + cleaningFee;
+    const pricePerHour = selectedTier.hours > 0 ? basePrice / selectedTier.hours : 0;
+
     return {
       basePrice,
-      captainFee,
       cleaningFee,
-      subtotal,
-      taxAmount,
       totalPrice,
-      selectedPricingTier,
+      pricePerHour,
+      duration: selectedTier.hours
     };
-  }, [boat.pricingTiers, boat.cleaningFee, selectedPricingTierId]);
+  }, [selectedTier, boat]);
 };
 
 // Helper hook for getting active pricing tiers
 export const useActivePricingTiers = (boat: Boat) => {
   return useMemo(() => {
     return boat.pricingTiers
-      ?.filter(tier => tier.isActive)
-      .sort((a, b) => a.hours - b.hours) || [];
+      ?.filter((tier: any) => tier.isActive)
+      .sort((a: any, b: any) => a.hours - b.hours) || [];
   }, [boat.pricingTiers]);
 };

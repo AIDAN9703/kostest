@@ -151,7 +151,7 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
                         entity="booking"
                         id={booking.id}
                         field="paymentStatus"
-                        currentValue={booking.paymentStatus || "PENDING"}
+                        currentValue={booking.paymentStatus}
                         size="sm"
                       />
                     </TableCell>

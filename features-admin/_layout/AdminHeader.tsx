@@ -19,7 +19,7 @@ export default function AdminHeader({ session }: { session: Session }) {
   const [showDropdown, setShowDropdown] = useState(false);
   
   return (
-    <header className="bg-white border-b border-gray-200 h-16 flex items-center px-6 sticky top-0 z-10">
+    <header className="bg-white border-b border-gray-200 h-16 flex items-center px-6 w-full">
       <div className="flex-1">
         <GlobalSearch />
       </div>

@@ -80,21 +80,21 @@ export default function AdminSidebar() {
 
   return (
     <div className={cn(
-      "bg-white border-r border-gray-200 h-screen fixed left-0 top-0 flex flex-col transition-all duration-300",
-      collapsed ? "w-20" : "w-64"
+      "bg-white border-r border-gray-200 flex flex-col h-screen",
+      collapsed ? "w-16" : "w-64"
     )}>
-      {/* Logo */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      {/* Logo Section - Fixed Height */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 h-16">
         {!collapsed && (
           <Link href="/" className="flex items-center">
             <Image 
               src="/icons/logo.png" 
               alt="KOS Yachts Admin" 
-              width={40} 
-              height={40} 
-              className="mr-2"
+              width={32} 
+              height={32} 
+              className="mr-3"
             />
-            <span className="text-xl font-bold text-primary">KOS Admin</span>
+            <span className="text-lg font-semibold text-gray-900">KOS Admin</span>
           </Link>
         )}
         {collapsed && (
@@ -109,16 +109,16 @@ export default function AdminSidebar() {
         )}
         <button 
           onClick={() => setCollapsed(!collapsed)}
-          className="p-1 rounded-full hover:bg-gray-100"
+          className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
         >
           <ChevronLeft className={cn(
-            "h-5 w-5 text-gray-600 transition-transform",
+            "h-4 w-4 text-gray-600 transition-transform",
             collapsed && "rotate-180"
           )} />
         </button>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation - Scrollable if needed */}
       <nav className="flex-1 py-4 px-2 overflow-y-auto">
         <ul className="space-y-1">
           {navItems.map((item) => (
@@ -126,44 +126,51 @@ export default function AdminSidebar() {
               <Link
                 href={item.href}
                 className={cn(
-                  "flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-50",
-                  pathname === item.href && "bg-blue-50 text-primary",
+                  "flex items-center px-3 py-2.5 rounded-md text-gray-700 hover:bg-gray-50 transition-colors",
+                  pathname === item.href && "bg-blue-50 text-blue-700 border-r-2 border-blue-700",
                   collapsed ? "justify-center" : "justify-start"
                 )}
               >
-                {item.icon}
-                {!collapsed && <span className="ml-3">{item.label}</span>}
+                <div className={cn(
+                  "flex-shrink-0",
+                  pathname === item.href ? "text-blue-700" : "text-gray-600"
+                )}>
+                  {item.icon}
+                </div>
+                {!collapsed && (
+                  <span className="ml-3 text-sm font-medium">{item.label}</span>
+                )}
               </Link>
             </li>
           ))}
         </ul>
       </nav>
 
-      {/* Footer */}
+      {/* Footer - Fixed Height */}
       <div className="border-t border-gray-200 p-4">
         <ul className="space-y-1">
           <li>
             <Link
               href="/admin/help"
               className={cn(
-                "flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100",
+                "flex items-center px-3 py-2.5 rounded-md text-gray-700 hover:bg-gray-50 transition-colors",
                 collapsed ? "justify-center" : "justify-start"
               )}
             >
               <HelpCircle className="h-5 w-5" />
-              {!collapsed && <span className="ml-3">Help & Support</span>}
+              {!collapsed && <span className="ml-3 text-sm">Help & Support</span>}
             </Link>
           </li>
           <li>
             <Link
               href="/api/auth/signout"
               className={cn(
-                "flex items-center px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100",
+                "flex items-center px-3 py-2.5 rounded-md text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors",
                 collapsed ? "justify-center" : "justify-start"
               )}
             >
               <LogOut className="h-5 w-5" />
-              {!collapsed && <span className="ml-3">Sign Out</span>}
+              {!collapsed && <span className="ml-3 text-sm">Sign Out</span>}
             </Link>
           </li>
         </ul>

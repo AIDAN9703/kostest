@@ -108,6 +108,7 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
           <DateSelection 
+            boatId={boat.id}
             control={form.control}
             currentDate={formState.parsedDateTime.date}
           />
@@ -122,6 +123,9 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
             control={form.control}
             currentTime={formState.parsedDateTime.time}
             endTime={formState.endTime}
+            boatId={boat.id}
+            selectedDate={formState.parsedDateTime.date}
+            duration={formState.selectedPricingTier?.hours}
           />
 
           <PassengerSelection 

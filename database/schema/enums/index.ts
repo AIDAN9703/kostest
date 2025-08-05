@@ -6,6 +6,7 @@ export * from "./messaging.enums";
 export * from "./notification.enums";
 export * from "./payment.enums";
 export * from "./user.enums";
+export * from "./availability.enums";
 
 
 

@@ -144,7 +144,7 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
       const now = new Date();
       const result = await db.insert(bookings).values({
         bookingType: "INSTANT_BOOK",
-        bookingStatus: "AWAITING_PAYMENT",
+        bookingStatus: "PENDING",
         userId: session.user.id,
         boatId: boat.id,
         pricingTierId: validatedData.pricingTierId,
@@ -172,7 +172,7 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
         currency: "USD",
         
         // Payment information
-        paymentStatus: "PENDING",
+        paymentStatus: "AWAITING_PAYMENT",
         paymentMethod: "card",
         stripePaymentLinkId: checkoutSession.id,
         
