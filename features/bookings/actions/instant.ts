@@ -8,6 +8,7 @@ import { z } from "zod";
 import { calculateEndDateTime } from "@/shared/utils/booking-utils";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
+import { TAX_RATE, calculateServiceFee } from "@/shared/constants";
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
@@ -89,8 +90,9 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
     const captainFee = 0; // Captain service is included in base price
     const cleaningFee = boat.cleaningFee || 0;
     const subtotal = basePrice + captainFee + cleaningFee;
-    const taxAmount = subtotal * 0.08; // 8% tax
-    const totalAmount = subtotal + taxAmount;
+    const serviceFee = calculateServiceFee(subtotal);
+    const taxAmount = subtotal * TAX_RATE;
+    const totalAmount = subtotal + serviceFee + taxAmount;
     
     // Create a Stripe Checkout Session
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -123,11 +125,10 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
         endDateTime: endDateTime.toISOString(),
         pricingTierId: validatedData.pricingTierId,
         numberOfPassengers: validatedData.numberOfPassengers.toString(),
-        specialRequests: validatedData.specialRequests || "",
         basePrice: basePrice.toString(),
         captainFee: captainFee.toString(),
         cleaningFee: cleaningFee.toString(),
-        serviceFee: "0",
+        serviceFee: serviceFee.toString(),
         taxAmount: taxAmount.toString(),
         totalAmount: totalAmount.toString(),
         depositAmount: (boat.depositAmount || 0).toString(),
@@ -160,7 +161,6 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
         startDateTime: startDateTime,
         endDateTime: endDateTime,
         numberOfPassengers: validatedData.numberOfPassengers,
-        specialRequests: validatedData.specialRequests || "",
         
         // Pricing
         captainFee: captainFee,

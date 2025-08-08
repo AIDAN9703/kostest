@@ -106,3 +106,6 @@ export const BOOKING_VALIDATION_MESSAGES = {
   specialRequests: "Special requests are optional"
 };
   
+
+// Re-export fee constants for backward compatibility
+export { TAX_RATE, SERVICE_FEE_RATE, calculateTaxAmount, calculateServiceFee, calculateTotalWithFees } from './fees-constants';

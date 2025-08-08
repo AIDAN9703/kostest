@@ -1,6 +1,7 @@
 "use client";
 
 import { Boat } from "@/shared/types/types";
+import { calculateServiceFee, TAX_RATE } from "@/shared/constants";
 
 interface PriceSummaryProps {
   boat: Boat;
@@ -8,19 +9,21 @@ interface PriceSummaryProps {
   needsCaptain: boolean;
   totalPrice: number;
   isRequest?: boolean;
+  show?: boolean;
 }
 
-export function PriceSummary({ boat, selectedPricingTier, totalPrice, isRequest = false }: PriceSummaryProps) {
-  if (!selectedPricingTier) return null;
+export function PriceSummary({ boat, selectedPricingTier, totalPrice, show = true }: PriceSummaryProps) {
+  if (!selectedPricingTier || !show) return null;
 
   const basePrice = selectedPricingTier.price;
   const cleaningFee = boat.cleaningFee || 0;
   const subtotal = basePrice + cleaningFee;
-  const taxAmount = subtotal * 0.08; // 8% tax
+  const serviceFee = calculateServiceFee(subtotal);
+  const taxAmount = subtotal * TAX_RATE;
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4">
-      <div className="text-sm font-semibold text-gray-900 mb-3">Price Breakdown</div>
+    <div className="pt-2">
+      <div className="text-sm font-semibold text-gray-900 mb-2">Price Breakdown</div>
       
       <div className="space-y-2">
         {/* Base Price */}
@@ -43,23 +46,21 @@ export function PriceSummary({ boat, selectedPricingTier, totalPrice, isRequest 
           </div>
         )}
         
+        {/* Service Fee */}
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">Service Fee (3.5%)</span>
+          <span className="font-medium text-gray-900">${serviceFee.toFixed(2)}</span>
+        </div>
+        
         {/* Tax */}
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Tax (8%)</span>
           <span className="font-medium text-gray-900">${taxAmount.toFixed(2)}</span>
         </div>
         
-        {/* Request Disclaimer */}
-        {isRequest && (
-          <div className="bg-gold-50 border border-gold-200 rounded-lg p-2 mt-2">
-            <div className="text-sm text-gold-700 font-medium text-center">
-              You won't be charged - this is just a request
-            </div>
-          </div>
-        )}
         
         {/* Total */}
-        <div className="border-t border-gray-200 pt-2 mt-2">
+        <div className="border-t border-gray-200 pt-3 mt-3">
           <div className="flex justify-between items-center">
             <span className="font-semibold text-gray-900">Total Amount</span>
             <span className="text-xl font-bold text-primary">${totalPrice.toFixed(2)}</span>

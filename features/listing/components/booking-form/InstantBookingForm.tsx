@@ -13,13 +13,14 @@ import { MessageCircle, Anchor, CreditCard } from "lucide-react";
 
 // Import components
 import { PricingDisplay } from "./shared/PricingDisplay";
-import { DateSelection, TimeSelection, PassengerSelection } from "./shared/BookingDetails";
+import { DateSelection } from "./shared/DateSelection";
+import { TimeSelection } from "./shared/TimeSelection";
+import { PassengerSelection } from "./shared/PassengerSelection";
 import { CaptainSelection } from "./shared/CaptainSelection";
-import { SpecialRequests } from "./shared/SpecialRequests";
 import { PriceSummary } from "./shared/PriceSummary";
+import { FormHeader } from "./shared/FormHeader";
 
 // Import hooks
-import { useSimpleFormPersistence } from "./hooks/useSimpleFormPersistence";
 import { useBookingFormState } from "./hooks/useBookingFormState";
 import { useActivePricingTiers } from "./hooks/usePriceCalculation";
 
@@ -37,18 +38,15 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
     resolver: zodResolver(bookingRequestSchema),
     defaultValues: {
       startDateTime: "",
-      pricingTierId: "",
+      // Preselect the lowest active tier by default to avoid ugly placeholder text
+      pricingTierId: activePricingTiers[0]?.id || "",
       numberOfPassengers: 1,
       needsCaptain: boat.crewRequired,
-      specialRequests: "",
     },
     mode: "onChange"
   });
 
-  const { clearFormData } = useSimpleFormPersistence({
-    form,
-    boatId: boat.id
-  });
+  // Temporarily disable form persistence to avoid incorrect default overrides
 
   // Consolidated form state and pricing calculations
   const formState = useBookingFormState({
@@ -76,9 +74,7 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
       return;
     }
 
-    // Clear form data and navigate to booking details
-    clearFormData();
-    
+    // Navigate to booking details
     // Prepare booking data with safe boat properties and selected tier
     const bookingData = {
       ...data,
@@ -104,9 +100,14 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
   };
   
   return (
-    <div className="p-4">
+    <div className="bg-white rounded-3xl shadow-lg p-7 w-full max-w-[560px]" style={{ fontFamily: 'Poppins, var(--font-sans)' }}>
+      <FormHeader 
+        price={formState.selectedPricingTier?.price}
+        hours={formState.selectedPricingTier?.hours}
+      />
+      
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-3">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <DateSelection 
             boatId={boat.id}
             control={form.control}
@@ -132,14 +133,11 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
             boat={boat} 
             control={form.control}
             setValue={form.setValue}
+            show={!!(formState.parsedDateTime.date && formState.parsedDateTime.time && formState.selectedPricingTier)}
           />
 
           <CaptainSelection 
             boat={boat} 
-            control={form.control}
-          />
-
-          <SpecialRequests 
             control={form.control}
           />
 
@@ -149,18 +147,24 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
             needsCaptain={formState.needsCaptain}
             totalPrice={formState.priceBreakdown.totalPrice}
             isRequest={false}
+            show={!!(formState.parsedDateTime.date && formState.parsedDateTime.time && formState.selectedPricingTier)}
           />
 
-          <Button 
-            type="submit" 
-            className="w-full h-11 font-semibold text-white transition-colors text-sm rounded-lg bg-emerald-600 hover:bg-emerald-700"
-            disabled={!formState.isFormValid}
-          >
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
-              Continue to Payment
+          <div className="pt-4">
+            <Button 
+              type="submit" 
+              className="w-full h-12 font-semibold text-white transition-colors text-sm rounded-xl bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-0"
+              disabled={!formState.isFormValid}
+            >
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5" />
+                Continue to Payment
+              </div>
+            </Button>
+            <div className="mt-4 text-center text-xs text-gray-500">
+              You won't be charged yet
             </div>
-          </Button>
+          </div>
         </form>
       </Form>
     </div>

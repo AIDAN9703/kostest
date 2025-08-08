@@ -217,9 +217,9 @@ export default async function BoatPage({ params }: BoatPageProps) {
               </div>
 
               {/* Desktop booking form - hidden on mobile, shown on lg+ screens */}
-              <aside className="lg:col-span-4 hidden md:block">
+              <aside className="lg:col-span-4 hidden md:block lg:-mt-16 xl:-mt-24 relative z-20">
                 <div className="sticky top-24">
-                  <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                  <div className="bg-white rounded-xl shadow-xl overflow-hidden">
                     {boat.instantBook ? (
                       <InstantBookingForm boat={boat} />
                     ) : (

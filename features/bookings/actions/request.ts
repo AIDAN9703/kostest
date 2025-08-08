@@ -8,6 +8,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { calculateEndDateTime } from "@/shared/utils/booking-utils";
 import { eq } from "drizzle-orm";
+import { TAX_RATE, calculateServiceFee } from "@/shared/constants";
 
 /**
  * Creates a booking request using pricing tiers
@@ -93,8 +94,9 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
     const captainFee = 0; // Captain service is included in base price
     const cleaningFee = boat.cleaningFee || 0;
     const subtotal = basePrice + captainFee + cleaningFee;
-    const taxAmount = subtotal * 0.08; // 8% tax
-    const totalAmount = subtotal + taxAmount;
+    const serviceFee = calculateServiceFee(subtotal);
+    const taxAmount = subtotal * TAX_RATE;
+    const totalAmount = subtotal + serviceFee + taxAmount;
     
     // Create booking record
     const now = new Date();
@@ -116,12 +118,11 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
       startDateTime: startDateTime,
       endDateTime: endDateTime,
       numberOfPassengers: validatedData.numberOfPassengers,
-      specialRequests: validatedData.specialRequests || "",
       
       // Pricing breakdown
       captainFee: captainFee,
       cleaningFee: cleaningFee,
-      serviceFee: 0,
+      serviceFee: serviceFee,
       taxAmount: taxAmount,
       totalAmount: totalAmount,
       depositAmount: boat.depositAmount || 0,

@@ -3,6 +3,7 @@ import { UseFormReturn } from "react-hook-form";
 import { BookingRequest } from "@/features/_validation/validations";
 import { parseISODateTime, calculateEndTime } from "@/shared/utils/booking-utils";
 import { Boat, PricingTier } from "@/shared/types/types";
+import { TAX_RATE, calculateServiceFee } from "@/shared/constants";
 
 interface UseBookingFormStateProps {
   form: UseFormReturn<BookingRequest>;
@@ -14,6 +15,7 @@ interface PriceBreakdown {
   captainFee: number;
   cleaningFee: number;
   subtotal: number;
+  serviceFee: number;
   taxAmount: number;
   totalPrice: number;
 }
@@ -41,8 +43,7 @@ interface BookingFormState {
   isFormValid: boolean;
 }
 
-// Centralized tax rate
-const TAX_RATE = 0.08; // 8%
+
 
 /**
  * Comprehensive booking form state management
@@ -78,23 +79,26 @@ export function useBookingFormState({
         captainFee: 0,
         cleaningFee: 0,
         subtotal: 0,
+        serviceFee: 0,
         taxAmount: 0,
         totalPrice: 0,
       };
     }
     
     const basePrice = selectedPricingTier.price;
-    const captainFee = 0; // Captain service included in base price
+    const captainFee = 0; // Captain service is included in base price for now, this is for future use and update
     const cleaningFee = boat.cleaningFee || 0;
     const subtotal = basePrice + captainFee + cleaningFee;
+    const serviceFee = calculateServiceFee(subtotal);
     const taxAmount = subtotal * TAX_RATE;
-    const totalPrice = subtotal + taxAmount;
+    const totalPrice = subtotal + serviceFee + taxAmount;
     
     return {
       basePrice,
       captainFee,
       cleaningFee,
       subtotal,
+      serviceFee,
       taxAmount,
       totalPrice,
     };

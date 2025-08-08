@@ -132,7 +132,6 @@ export default function BookingDetailsContent({ user }: BookingDetailsContentPro
         pricingTierId: bookingState.data.selectedTier.id,
         numberOfPassengers: bookingState.data.numberOfPassengers,
         needsCaptain: bookingState.data.needsCaptain,
-        specialRequests: bookingState.data.specialRequests,
         boatId: bookingState.data.boatId,
       };
 

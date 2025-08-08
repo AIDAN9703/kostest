@@ -27,10 +27,10 @@ export function CaptainSelection({ boat, control }: CaptainSelectionProps) {
               type="button"
               onClick={() => field.onChange(false)}
               className={cn(
-                "h-10 text-sm font-medium rounded-lg transition-colors border-2",
-                !field.value 
-                  ? "bg-gold-50 text-gold-700 border-gold-300" 
-                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                "h-11 text-sm font-medium rounded-xl transition-colors border",
+                !field.value
+                  ? "bg-indigo-600 text-white border-indigo-600"
+                  : "bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
               )}
             >
               Self-Drive Charter
@@ -39,10 +39,10 @@ export function CaptainSelection({ boat, control }: CaptainSelectionProps) {
               type="button"
               onClick={() => field.onChange(true)}
               className={cn(
-                "h-10 text-sm font-medium rounded-lg transition-colors border-2",
-                field.value 
-                  ? "bg-primary/5 text-primary border-primary/30" 
-                  : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
+                "h-11 text-sm font-medium rounded-xl transition-colors border",
+                field.value
+                  ? "bg-indigo-600 text-white border-indigo-600"
+                  : "bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50"
               )}
             >
               Captain Included

@@ -122,8 +122,11 @@ export function TimeSlotsDisplay({
         disabled={!slot.isAvailable}
         onClick={() => slot.isAvailable && handleTimeSelect(slot.time)}
         className={cn(
-          "text-xs",
-          !slot.isAvailable && "opacity-50 cursor-not-allowed"
+          "text-xs font-medium transition-colors",
+          selectedTime === slot.time 
+            ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
+            : "bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50",
+          !slot.isAvailable && "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400 border-gray-100"
         )}
         title={slot.conflictReason}
       >
@@ -142,7 +145,7 @@ export function TimeSlotsDisplay({
 
   if (loading) {
     return (
-      <div className="p-4 border rounded-lg">
+      <div className="p-4 border-b border-gray-200">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Clock className="h-4 w-4" />
           <span>Loading available times...</span>
@@ -152,7 +155,7 @@ export function TimeSlotsDisplay({
   }
 
   return (
-    <div className="p-4 border rounded-lg">
+    <div className="p-4 border-b border-gray-200">
       <div className="flex items-center gap-2 mb-3">
         <Clock className="h-4 w-4 text-primary" />
         <span className="text-sm font-medium">
@@ -160,7 +163,7 @@ export function TimeSlotsDisplay({
         </span>
       </div>
       
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-3">
         {timeSlotButtons}
       </div>
       

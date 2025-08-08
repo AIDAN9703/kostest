@@ -51,28 +51,7 @@ export function MobileBookingBar({ boat }: MobileBookingBarProps) {
       {/* Booking Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[420px] p-0 gap-0 rounded-2xl border-0 shadow-2xl max-h-[90vh] overflow-y-auto">
-          {/* Header with navy gradient */}
-          <div className="bg-gradient-to-r from-navy-700 to-navy-800 p-4 rounded-t-2xl">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center overflow-hidden">
-                <Image
-                  src="/icons/kosupdatedlogo.webp"
-                  alt="KOS Yacht Club"
-                  width={24}
-                  height={24}
-                  className="object-contain"
-                />
-              </div>
-              <div>
-                <DialogTitle className="text-lg font-bold text-white">
-                  Book Your Charter
-                </DialogTitle>
-                <DialogDescription className="text-navy-100 text-sm">
-                  {boat.name} • {price}/{hours}
-                </DialogDescription>
-              </div>
-            </div>
-          </div>
+            <DialogTitle className="text-lg text-center font-bold text-primary p-4">Book Your Charter</DialogTitle>
 
           {/* Form Content */}
           <div className="p-4">

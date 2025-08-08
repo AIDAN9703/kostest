@@ -78,7 +78,6 @@ export const bookingRequestSchema = z.object({
   pricingTierId: z.string().min(1, "Please select a duration option"),
   numberOfPassengers: z.number().min(1, "At least one passenger is required"),
   needsCaptain: z.boolean(),
-  specialRequests: z.string().optional(),
 });
 
 // Export type for use in components
