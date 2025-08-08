@@ -132,10 +132,9 @@ export function CustomCalendar({ selectedDate, onSelect, boatId, onMonthChange }
           ));
         })()}
       </div>
-      <div className="flex items-center gap-5 text-xs text-gray-600 mt-2">
-        <div className="flex items-center gap-2"><div className="w-4 h-0.5 rounded-full bg-rose-500"></div><span>Booked</span></div>
-        <div className="flex items-center gap-2"><div className="w-4 h-0.5 rounded-full bg-amber-500"></div><span>Partial</span></div>
-        <div className="flex items-center gap-2"><div className="w-4 h-0.5 rounded-full bg-slate-400"></div><span>Blocked</span></div>
+      <div className="flex items-center justify-center gap-5 text-xs text-gray-600 mt-2">
+        <div className="flex items-center gap-2"><div className="w-4 h-0.5 rounded-full bg-rose-500"></div><span>No Availability</span></div>
+        <div className="flex items-center gap-2"><div className="w-4 h-0.5 rounded-full bg-amber-500"></div><span>Partial Availability</span></div>
       </div>
       {loading && (
         <div className="mt-2 text-center text-sm text-gray-500">Loading availability…</div>

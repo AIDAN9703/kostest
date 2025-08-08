@@ -19,7 +19,6 @@ export function PriceSummary({ boat, selectedPricingTier, totalPrice, show = tru
   const cleaningFee = boat.cleaningFee || 0;
   const subtotal = basePrice + cleaningFee;
   const serviceFee = calculateServiceFee(subtotal);
-  const taxAmount = subtotal * TAX_RATE;
 
   return (
     <div className="pt-2">
@@ -48,15 +47,10 @@ export function PriceSummary({ boat, selectedPricingTier, totalPrice, show = tru
         
         {/* Service Fee */}
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Service Fee (3.5%)</span>
+          <span className="text-gray-600">Processing Fee (3.5%)</span>
           <span className="font-medium text-gray-900">${serviceFee.toFixed(2)}</span>
         </div>
         
-        {/* Tax */}
-        <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Tax (8%)</span>
-          <span className="font-medium text-gray-900">${taxAmount.toFixed(2)}</span>
-        </div>
         
         
         {/* Total */}

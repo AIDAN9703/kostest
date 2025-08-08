@@ -30,15 +30,18 @@ export function TimeSlotsDisplay({
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Memoized time slots generation
+  // Memoized time slots generation (every 30 minutes)
   const generateTimeSlots = useMemo(() => {
     const slots: TimeSlot[] = [];
-    for (let hour = 9; hour <= 17; hour++) {
-      const time = `${hour.toString().padStart(2, '0')}:00`;
-      slots.push({
-        time,
-        isAvailable: true
-      });
+    // Broader window similar to Boatsetter: 6:00 AM → 8:00 PM
+    for (let hour = 6; hour <= 20; hour++) {
+      const hh = hour.toString().padStart(2, '0');
+      // :00
+      slots.push({ time: `${hh}:00`, isAvailable: true });
+      // :30 (not after the last hour to keep bounds similar to before)
+      if (hour < 20) {
+        slots.push({ time: `${hh}:30`, isAvailable: true });
+      }
     }
     return slots;
   }, []);
@@ -74,11 +77,13 @@ export function TimeSlotsDisplay({
           
           // Update slots based on availability
           const updatedSlots = generateTimeSlots.map(slot => {
-            const [hours] = slot.time.split(':').map(Number);
+            const [hoursStr, minutesStr] = slot.time.split(':');
+            const hours = Number(hoursStr);
+            const minutes = Number(minutesStr);
             const slotStart = new Date(date);
-            slotStart.setHours(hours, 0, 0, 0);
+            slotStart.setHours(hours, minutes, 0, 0);
             const slotEnd = new Date(slotStart);
-            slotEnd.setHours(hours + duration, 0, 0, 0); // Use actual duration from pricing tier
+            slotEnd.setHours(hours + duration, minutes, 0, 0); // Use actual duration from pricing tier
 
             const hasConflict = availability.conflicts.some((conflict: any) => {
               const conflictStart = new Date(conflict.startTime);
@@ -111,28 +116,29 @@ export function TimeSlotsDisplay({
     checkAvailability();
   }, [dateKey, boatId, generateTimeSlots, duration]);
 
-  // Memoized time slot buttons
+  // Render all options (available and unavailable) as clean cards
   const timeSlotButtons = useMemo(() => {
-    return timeSlots.map((slot) => (
-      <Button
-        key={slot.time}
-        type="button"
-        variant={selectedTime === slot.time ? "default" : "outline"}
-        size="sm"
-        disabled={!slot.isAvailable}
-        onClick={() => slot.isAvailable && handleTimeSelect(slot.time)}
-        className={cn(
-          "text-xs font-medium transition-colors",
-          selectedTime === slot.time 
-            ? "bg-blue-600 text-white border-blue-600 hover:bg-blue-700" 
-            : "bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50",
-          !slot.isAvailable && "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400 border-gray-100"
-        )}
-        title={slot.conflictReason}
-      >
-        {formatTime12Hour(slot.time)}
-      </Button>
-    ));
+    return timeSlots.map((slot) => {
+      const isSelected = selectedTime === slot.time;
+      const isDisabled = !slot.isAvailable;
+      return (
+        <button
+          key={slot.time}
+          type="button"
+          disabled={isDisabled}
+          onClick={() => !isDisabled && handleTimeSelect(slot.time)}
+          className={cn(
+            "h-12 w-full rounded-lg border text-sm font-medium transition-colors",
+            isSelected && "bg-blue-50 border-blue-200 text-blue-700",
+            !isSelected && !isDisabled && "bg-white border-gray-200 text-gray-700 hover:bg-gray-50",
+            isDisabled && "bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed"
+          )}
+          title={slot.conflictReason}
+        >
+          {formatTime12Hour(slot.time)}
+        </button>
+      );
+    });
   }, [timeSlots, selectedTime, handleTimeSelect]);
 
   // Memoized formatted date
@@ -155,18 +161,15 @@ export function TimeSlotsDisplay({
   }
 
   return (
-    <div className="p-4 border-b border-gray-200">
-      <div className="flex items-center gap-2 mb-3">
-        <Clock className="h-4 w-4 text-primary" />
-        <span className="text-sm font-medium">
-          Available times for {formattedDate}
-        </span>
+    <div className="">
+      <div className="mb-3 rounded-md bg-slate-50 text-slate-600 text-sm px-4 py-2 text-center">
+        Times shown reflect current availability.
       </div>
-      
-      <div className="grid grid-cols-3 gap-3">
-        {timeSlotButtons}
+      <div className="max-h-72 overflow-y-auto pr-1">
+        <div className="grid grid-cols-2 gap-3">
+          {timeSlotButtons}
+        </div>
       </div>
-      
       {noAvailabilityMessage && (
         <div className="mt-3 text-sm text-red-600">
           No available time slots for this date. Please select a different date.

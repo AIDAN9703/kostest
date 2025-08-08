@@ -16,7 +16,6 @@ interface PriceBreakdown {
   cleaningFee: number;
   subtotal: number;
   serviceFee: number;
-  taxAmount: number;
   totalPrice: number;
 }
 
@@ -90,8 +89,7 @@ export function useBookingFormState({
     const cleaningFee = boat.cleaningFee || 0;
     const subtotal = basePrice + captainFee + cleaningFee;
     const serviceFee = calculateServiceFee(subtotal);
-    const taxAmount = subtotal * TAX_RATE;
-    const totalPrice = subtotal + serviceFee + taxAmount;
+    const totalPrice = subtotal + serviceFee;
     
     return {
       basePrice,
@@ -99,7 +97,6 @@ export function useBookingFormState({
       cleaningFee,
       subtotal,
       serviceFee,
-      taxAmount,
       totalPrice,
     };
   }, [selectedPricingTier, boat.cleaningFee]);

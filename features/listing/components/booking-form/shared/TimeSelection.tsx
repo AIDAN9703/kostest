@@ -35,9 +35,22 @@ export function TimeSelection({
         <FormItem>
           <div className="w-full border-b border-gray-100 p-4">
             <div className="flex items-center gap-3 w-full">
-              <Popover open={open} onOpenChange={setOpen}>
+              <Popover
+                open={open}
+                onOpenChange={(o) => {
+                  setOpen(o);
+                  if (o) {
+                    // Set the popover width to match trigger width via CSS var
+                    const trigger = document?.activeElement as HTMLElement | null;
+                    const triggerWidth = trigger?.closest('[data-ts-trigger]')?.clientWidth;
+                    if (triggerWidth) {
+                      document.documentElement.style.setProperty('--trigger-width', `${triggerWidth}px`);
+                    }
+                  }
+                }}
+              >
                 <PopoverTrigger asChild>
-                  <div className={cn("flex-1 text-left", selectedDate ? "cursor-pointer" : "cursor-not-allowed opacity-50")}>
+                  <div data-ts-trigger className={cn("flex-1 text-left", selectedDate ? "cursor-pointer" : "cursor-not-allowed opacity-50")}> 
                     <div className="text-sm font-semibold text-primary">
                       {selectedDate ? (currentTime ? currentTime : "Select Start Time") : "Select a date first"}
                     </div>
@@ -53,7 +66,7 @@ export function TimeSelection({
                   avoidCollisions={false}
                   onOpenAutoFocus={(e) => e.preventDefault()}
                   onCloseAutoFocus={(e) => e.preventDefault()}
-                  className="w-auto p-0 rounded-3xl border-0 shadow-none"
+                  className="w-[var(--trigger-width)] max-w-[560px] p-4 rounded-xl border border-slate-200 shadow-sm bg-white"
                 >
                   {selectedDate ? (
                     <TimeSlotsDisplay
