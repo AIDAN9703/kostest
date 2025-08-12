@@ -362,8 +362,8 @@ export function MessageList({
                         <div className={cn(
                           "rounded-2xl px-4 py-2 text-sm",
                           isOwn 
-                            ? "bg-primary text-primary-foreground ml-auto" 
-                            : "bg-muted"
+                            ? "bg-sky-50 text-slate-800 border border-sky-100 ml-auto" 
+                            : "bg-slate-100 text-slate-800 border border-slate-200"
                         )}>
                           {/* Sender name for group conversations */}
                           {!isOwn && conversation.participants.length > 2 && (

@@ -33,9 +33,9 @@ export function DateSelection({
         <FormItem>
           <div className="w-full border-b border-gray-100 p-4">
             <div className="flex items-center gap-3 w-full">
-              <Popover open={dateOpen} onOpenChange={setDateOpen}>
+              <Popover open={dateOpen} onOpenChange={setDateOpen} modal>
                 <PopoverTrigger asChild>
-                  <div className="flex items-center gap-3 w-full cursor-pointer">
+                  <button type="button" className="flex items-center gap-3 w-full cursor-pointer">
                     <div className="flex-1 text-left">
                       <div className="text-sm font-semibold text-primary">
                         {currentDate ? format(currentDate, "MMMM d, yyyy") : "Select Date"}
@@ -45,7 +45,7 @@ export function DateSelection({
                       </div>
                     </div>
                     <Calendar className={cn("h-5 w-5 text-primary transition-transform", dateOpen && "rotate-180")} />
-                  </div>
+                  </button>
                 </PopoverTrigger>
                 <PopoverContent
                   align="start"

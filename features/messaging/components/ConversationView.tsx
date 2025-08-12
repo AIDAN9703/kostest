@@ -183,6 +183,7 @@ export function ConversationView({
 
   const typeBadge = getTypeBadge(conversation.type);
   const currentUserParticipant = conversation.currentUserParticipant;
+  const [activeTab, setActiveTab] = useState<'messages'|'details'>('messages');
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
@@ -278,23 +279,47 @@ export function ConversationView({
 
       <Separator />
 
-      {/* Messages */}
-      <div className="flex-1 overflow-hidden">
-        <MessageList
-          conversation={conversation}
-          currentUserId={currentUserId}
-          className="border-0 rounded-none h-full"
-        />
+      {/* Toggle */}
+      <div className="px-4 py-2 flex gap-2 border-b">
+        <Button variant={activeTab==='messages'? 'default':'outline'} size="sm" onClick={() => setActiveTab('messages')}>Messages</Button>
+        <Button variant={activeTab==='details'? 'default':'outline'} size="sm" onClick={() => setActiveTab('details')}>{conversation.type === 'BOOKING' ? 'Booking Details' : 'Inquiry Details'}</Button>
       </div>
 
-      {/* Message Composer */}
-      <MessageComposer
-        conversation={conversation}
-        onMessageSent={() => {
-          // Optionally scroll to bottom or update UI
-        }}
-        className="border-t-0"
-      />
+      {/* Content */}
+      {activeTab === 'messages' ? (
+        <>
+          <div className="flex-1 overflow-hidden">
+            <MessageList
+              conversation={conversation}
+              currentUserId={currentUserId}
+              className="border-0 rounded-none h-full"
+            />
+          </div>
+          <MessageComposer
+            conversation={conversation}
+            onMessageSent={() => {}}
+            className="border-t-0"
+          />
+        </>
+      ) : (
+        <div className="p-6 text-sm text-slate-700">
+          {conversation.booking ? (
+            <div className="space-y-3">
+              <div className="font-medium text-slate-900">Booking</div>
+              <div>Boat: {conversation.booking.boatName}</div>
+              <div>Customer: {conversation.booking.customerName}</div>
+              <div>Date: {format(conversation.booking.startDateTime, 'MMMM d, yyyy')}</div>
+              <div>Status: {conversation.booking.bookingStatus}</div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="font-medium text-slate-900">Inquiry</div>
+              <div>Participants: {conversation.participants.length}</div>
+              <div>Subject: {conversation.subject || 'General inquiry'}</div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
