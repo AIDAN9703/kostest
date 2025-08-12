@@ -2,8 +2,7 @@
 
 import { signIn } from "@/auth";
 
-export async function googleSignIn(): Promise<void> {
-  // NextAuth signIn with OAuth providers handles redirects internally
-  // and doesn't typically throw errors in this context
-  await signIn("google", { redirectTo: "/" });
-} 
+export async function googleSignIn(formData?: FormData): Promise<void> {
+  const callbackUrl = (formData?.get("callbackUrl") as string) || "/";
+  await signIn("google", { redirectTo: callbackUrl });
+}

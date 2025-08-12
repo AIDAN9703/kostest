@@ -33,7 +33,7 @@ export function PriceSummary({ boat, selectedPricingTier, totalPrice, show = tru
         
         {/* Captain Service - Included */}
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Captain Service</span>
+          <span className="text-gray-600">Crew Selection</span>
           <span className="font-medium text-emerald-600">Included</span>
         </div>
         

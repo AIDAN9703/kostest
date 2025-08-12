@@ -1,7 +1,7 @@
 "use client";
 
 import { lazy, Suspense, useState } from 'react';
-import { MessageCircle } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 
 // Lazy load the full chatbot component
@@ -18,30 +18,28 @@ export default function LazyChatbot() {
   if (!isLoaded) {
     // Show only the toggle button - no heavy components loaded
     return (
-      <div className="fixed bottom-6 right-6 z-50">
-        <Button
-          onClick={handleClick}
-          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-blue-600 hover:bg-blue-700"
-          size="lg"
-        >
-          <MessageCircle className="h-6 w-6" />
-        </Button>
-      </div>
+      <Button
+        variant="outline"
+        onClick={handleClick}
+        className="fixed bottom-4 right-0 z-50 h-14 w-14 p-0 rounded-l-full rounded-r-none bg-white text-primary border border-gray-200 shadow-md hover:shadow-lg transition"
+        aria-label="Open chat"
+      >
+        <MessageSquare className="h-6 w-6" />
+      </Button>
     );
   }
 
   // Load the full chatbot component with lazy loading and auto-open
   return (
     <Suspense fallback={
-      <div className="fixed bottom-6 right-6 z-50">
-        <Button
-          disabled
-          className="h-14 w-14 rounded-full shadow-lg bg-blue-600"
-          size="lg"
-        >
-          <MessageCircle className="h-6 w-6 animate-pulse" />
-        </Button>
-      </div>
+      <Button
+        variant="outline"
+        disabled
+        className="fixed bottom-4 right-0 z-50 h-14 w-14 p-0 rounded-l-full rounded-r-none bg-white text-primary border border-gray-200 shadow-md"
+        aria-label="Loading chat"
+      >
+        <MessageSquare className="h-6 w-6 animate-pulse" />
+      </Button>
     }>
       <ChatBot initialOpen={true} />
     </Suspense>

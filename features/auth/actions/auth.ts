@@ -74,8 +74,7 @@ export const signUpAction = async (
     return { 
       success: true, 
       data: { 
-        message: "Account created and signed in successfully!",
-        redirectUrl: "/" 
+        message: "Account created and signed in successfully!"
       } 
     };
   } catch (error) {

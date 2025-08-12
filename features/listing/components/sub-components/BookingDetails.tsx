@@ -1,7 +1,9 @@
 "use client";
 
 import { Boat } from "@/shared/types/types";
-import { Clock, Calendar, Shield, Info, CheckCircle2, CreditCard, AlertTriangle } from "lucide-react";
+import { Clock, Calendar, Shield, Info, CheckCircle2, CreditCard, AlertTriangle, MessageCircle } from "lucide-react";
+import { useState } from "react";
+import Link from "next/link";
 import { formatCurrency } from "@/shared/utils/general-utils";
 
 interface BookingDetailsProps {
@@ -54,7 +56,13 @@ export function BookingDetails({ boat }: BookingDetailsProps) {
           <div>
             <h3 className="font-medium text-gray-900 mb-1">Cancellation Policy</h3>
             <p className="text-gray-700 whitespace-pre-line">{boat.cancellationPolicy || defaultCancellationPolicy}</p>
-            <p className="text-gray-500 text-sm italic mt-2">Please contact KOS for any assistance. Our team will always work with you!</p>
+            <div className="flex items-center gap-3 mt-3">
+              <p className="text-gray-500 text-sm">Need something specific?</p>
+              <Link href={`/boats/${boat.id}/inquiry`} className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80">
+                <MessageCircle className="h-4 w-4" />
+                <span>Send a custom inquiry</span>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { AspectRatio } from "@/shared/components/ui/aspect-ratio";
 import { cn } from "@/shared/utils/general-utils";
 import { Image as IKImage } from "@imagekit/next";
-import { getBoatDefaultPrice, getBoatDefaultHours } from "@/shared/utils/pricing-utils";
+import { getBoatStartingHourlyLabel } from "@/shared/utils/pricing-utils";
 
 interface BoatCardProps {
   boat: Boat;
@@ -225,10 +225,7 @@ const BoatCard = ({
                 "absolute bg-white/95 backdrop-blur-sm px-2 py-1 rounded-lg shadow-md",
                 styles.priceTag
               )}>
-                <span className="text-sm sm:text-base font-medium text-[#1E293B]">
-                  {formatCurrency(getBoatDefaultPrice(boat))}
-                  <span className="text-xs sm:text-sm text-gray-500">/{getBoatDefaultHours(boat)}</span>
-                </span>
+                <span className="text-sm sm:text-base font-medium text-[#1E293B]">{getBoatStartingHourlyLabel(boat)}</span>
               </div>
             )}
             

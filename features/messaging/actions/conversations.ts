@@ -183,6 +183,114 @@ export async function createConversation(data: CreateConversationRequest) {
 }
 
 /**
+ * Creates a simple GENERAL conversation as a boat inquiry and seeds it with the user's message
+ * Participants: current user (auto-included), boat owner (if available), optional support admin via env
+ */
+export async function createBoatInquiry(
+  boatId: string,
+  input: {
+    message: string;
+    guests?: number;
+    date?: string;
+    time?: string;
+    budget?: string;
+    occasion?: string;
+    specialRequests?: string;
+  }
+): Promise<
+  | { success: true; data: { conversationId: string } }
+  | { success: false; error: string; errorCode: string }
+> {
+  const session = await auth();
+  if (!session?.user) {
+    return {
+      success: false,
+      error: "Authentication required",
+      errorCode: MESSAGING_ERROR_CODES.UNAUTHORIZED_ACCESS,
+    };
+  }
+
+  try {
+    // Basic validation
+    const content = (input.message || "").trim();
+    if (content.length === 0) {
+      return {
+        success: false,
+        error: "Please provide a message",
+        errorCode: MESSAGING_ERROR_CODES.SYSTEM_ERROR,
+      };
+    }
+
+    // Fetch boat + owner info
+    const boatRows = await db
+      .select({ id: boats.id, name: boats.name, ownerId: boats.ownerId })
+      .from(boats)
+      .where(eq(boats.id, boatId))
+      .limit(1);
+
+    if (boatRows.length === 0) {
+      return {
+        success: false,
+        error: "Boat not found",
+        errorCode: MESSAGING_ERROR_CODES.CONVERSATION_NOT_FOUND,
+      };
+    }
+
+    const boat = boatRows[0];
+
+    // Compose participant list: owner (if exists and not the current user), optional support admin from env
+    const participantIds: string[] = [];
+    if (boat.ownerId && boat.ownerId !== session.user.id) participantIds.push(boat.ownerId);
+    const supportAdminId = process.env.SUPPORT_ADMIN_USER_ID;
+    if (supportAdminId && supportAdminId !== session.user.id && supportAdminId !== boat.ownerId) {
+      participantIds.push(supportAdminId);
+    }
+
+    // Subject and initial message content
+    const subject = `Inquiry about ${boat.name}`;
+    const details: string[] = [];
+    if (input.guests) details.push(`Guests: ${input.guests}`);
+    if (input.date) details.push(`Date: ${input.date}`);
+    if (input.time) details.push(`Time: ${input.time}`);
+    if (input.budget) details.push(`Budget: ${input.budget}`);
+    if (input.occasion) details.push(`Occasion: ${input.occasion}`);
+    if (input.specialRequests) details.push(`Special Requests: ${input.specialRequests}`);
+
+    const intro = details.length > 0 ? `\n\nDetails:\n- ${details.join("\n- ")}` : "";
+    const initialMessage = `${content}${intro}`;
+
+    // Use existing creator to ensure consistency
+    const createResult = await createConversation({
+      type: "GENERAL",
+      bookingId: undefined,
+      participantIds,
+      subject,
+      initialMessage,
+    });
+
+    if (!createResult.success) {
+      return {
+        success: false,
+        error: createResult.error || "Failed to create conversation",
+        errorCode: MESSAGING_ERROR_CODES.SYSTEM_ERROR,
+      };
+    }
+
+    return {
+      success: true,
+      data: { conversationId: createResult.data!.conversationId },
+    };
+  } catch (error) {
+    console.error("Error creating boat inquiry:", error);
+    return {
+      success: false,
+      error: "Failed to create inquiry",
+      errorCode: MESSAGING_ERROR_CODES.SYSTEM_ERROR,
+    };
+  }
+}
+
+/**
  * Gets conversations for the current user with filtering and pagination
  */
 export async function getConversations(

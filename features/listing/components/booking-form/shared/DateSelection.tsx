@@ -15,11 +15,13 @@ import { CustomCalendar } from "./CustomCalendar";
 export function DateSelection({ 
   control, 
   currentDate,
-  boatId
+  boatId,
+  onDateSelected,
 }: { 
   control: Control<BookingRequest>; 
   currentDate: Date | null;
   boatId: string;
+  onDateSelected?: (date: Date) => void;
 }) {
   const [dateOpen, setDateOpen] = useState(false);
   
@@ -33,13 +35,16 @@ export function DateSelection({
             <div className="flex items-center gap-3 w-full">
               <Popover open={dateOpen} onOpenChange={setDateOpen}>
                 <PopoverTrigger asChild>
-                  <div className="flex-1 text-left cursor-pointer">
-                    <div className="text-sm font-semibold text-primary">
-                      {currentDate ? format(currentDate, "MMMM d, yyyy") : "Select Date"}
+                  <div className="flex items-center gap-3 w-full cursor-pointer">
+                    <div className="flex-1 text-left">
+                      <div className="text-sm font-semibold text-primary">
+                        {currentDate ? format(currentDate, "MMMM d, yyyy") : "Select Date"}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {currentDate ? format(currentDate, "EEEE") : "Choose your charter date"}
+                      </div>
                     </div>
-                    <div className="text-xs text-slate-500">
-                      {currentDate ? format(currentDate, "EEEE") : "Choose your charter date"}
-                    </div>
+                    <Calendar className={cn("h-5 w-5 text-primary transition-transform", dateOpen && "rotate-180")} />
                   </div>
                 </PopoverTrigger>
                 <PopoverContent
@@ -55,9 +60,13 @@ export function DateSelection({
                     selectedDate={currentDate}
                     onSelect={(date) => {
                       if (date) {
-                        const currentTime = currentDate ? format(currentDate, "HH:mm") : "09:00";
-                        const newDateTimeISO = createDateTimeISO(date, currentTime);
-                        field.onChange(newDateTimeISO);
+                        if (onDateSelected) {
+                          onDateSelected(date);
+                        } else {
+                          const currentTime = currentDate ? format(currentDate, "HH:mm") : "09:00";
+                          const newDateTimeISO = createDateTimeISO(date, currentTime);
+                          field.onChange(newDateTimeISO);
+                        }
                       }
                       setDateOpen(false);
                     }}
@@ -65,7 +74,7 @@ export function DateSelection({
                   />
                 </PopoverContent>
               </Popover>
-              <Calendar className={cn("h-6 w-6 text-primary transition-transform", dateOpen && "rotate-180")} />
+              {/* icon moved into trigger above */}
             </div>
           </div>
           <FormMessage />

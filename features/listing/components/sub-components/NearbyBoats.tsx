@@ -10,6 +10,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getOptimizedImageUrl } from "@/shared/services/imagekit.service";
 import { formatCurrency } from "@/shared/utils/general-utils";
+import { getBoatStartingHourlyLabel } from "@/shared/utils/pricing-utils";
 
 interface NearbyBoatsProps {
   boat: Boat;
@@ -20,33 +21,8 @@ export function NearbyBoats({ boat, limit = 3 }: NearbyBoatsProps) {
   const [boats, setBoats] = useState<Boat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Helper function to get the default tier price
-  const getDefaultPrice = (boat: Boat) => {
-    if (!boat.pricingTiers || boat.pricingTiers.length === 0) return 0;
-    
-    const defaultTier = boat.pricingTiers.find(tier => tier.isDefault && tier.isActive);
-    if (defaultTier) return defaultTier.price;
-    
-    // If no default tier, use the first active tier
-    const firstActiveTier = boat.pricingTiers.find(tier => tier.isActive);
-    if (firstActiveTier) return firstActiveTier.price;
-    
-    // Fallback to the first tier regardless of active status
-    return boat.pricingTiers[0].price;
-  };
-  
-  // Helper to get the hours display
-  const getHoursDisplay = (boat: Boat) => {
-    if (!boat.pricingTiers || boat.pricingTiers.length === 0) return "hour";
-    
-    const defaultTier = boat.pricingTiers.find(tier => tier.isDefault && tier.isActive);
-    if (defaultTier) return `${defaultTier.hours}hr`;
-    
-    const firstActiveTier = boat.pricingTiers.find(tier => tier.isActive);
-    if (firstActiveTier) return `${firstActiveTier.hours}hr`;
-    
-    return `${boat.pricingTiers[0].hours}hr`;
-  };
+  // Use unified helper for per-hour starting label
+  const getStartingHourlyLabel = (b: Boat) => getBoatStartingHourlyLabel(b);
 
   useEffect(() => {
     const fetchNearbyBoats = async () => {
@@ -151,9 +127,7 @@ export function NearbyBoats({ boat, limit = 3 }: NearbyBoatsProps) {
                   <span className="truncate">{nearbyBoat.locationLabel}</span>
                 </div>
                 
-                <p className="text-sm font-semibold text-gray-900 mt-2">
-                  {formatCurrency(getDefaultPrice(nearbyBoat))}<span className="text-xs font-normal text-gray-500">/{getHoursDisplay(nearbyBoat)}</span>
-                </p>
+                <p className="text-sm font-semibold text-gray-900 mt-2">From {getStartingHourlyLabel(nearbyBoat)}</p>
               </div>
             </Link>
           ))

@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { boatPricingTiers } from '@/database/schema';
-import { Boat } from '@/shared/types/types';
+import { Boat, PricingTier } from '@/shared/types/types';
 
 export interface PriceBreakdown {
   basePrice: number;
@@ -42,11 +42,16 @@ export const usePriceCalculation = (
   }, [selectedTier, boat]);
 };
 
-// Helper hook for getting active pricing tiers
+// Pure helper for active pricing tiers (filter + sort)
+export function getActivePricingTiers(boat: Boat): PricingTier[] {
+  return (
+    boat.pricingTiers
+      ?.filter((tier: PricingTier) => tier.isActive)
+      .sort((a: PricingTier, b: PricingTier) => a.hours - b.hours) || []
+  );
+}
+
+// Hook wrapper around the helper for React consumers
 export const useActivePricingTiers = (boat: Boat) => {
-  return useMemo(() => {
-    return boat.pricingTiers
-      ?.filter((tier: any) => tier.isActive)
-      .sort((a: any, b: any) => a.hours - b.hours) || [];
-  }, [boat.pricingTiers]);
+  return useMemo(() => getActivePricingTiers(boat), [boat.pricingTiers]);
 };

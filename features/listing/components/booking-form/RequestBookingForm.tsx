@@ -112,13 +112,14 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <DateSelection 
             control={form.control}
-            currentDate={formState.parsedDateTime.date}
+            currentDate={formState.uiDate}
             boatId={boat.id}
+            onDateSelected={(date) => formState.setDate?.(date)}
           />
 
-          <PricingDisplay 
-            boat={boat} 
-            control={form.control} 
+          <PricingDisplay
+            activeTiers={formState.activePricingTiers}
+            control={form.control}
             selectedPricingTier={formState.selectedPricingTier}
           />
 
@@ -127,8 +128,9 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
             currentTime={formState.parsedDateTime.time}
             endTime={formState.endTime}
             boatId={boat.id}
-            selectedDate={formState.parsedDateTime.date}
+            selectedDate={formState.uiDate}
             duration={formState.selectedPricingTier?.hours}
+            onTimeSelected={(time) => formState.setTime?.(time)}
           />
 
           <PassengerSelection 

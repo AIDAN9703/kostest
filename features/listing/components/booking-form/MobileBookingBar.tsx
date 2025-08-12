@@ -3,8 +3,7 @@
 import { Boat } from "@/shared/types/types";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
-import { formatCurrency } from "@/shared/utils/general-utils";
-import { getBoatDefaultPrice, getBoatDefaultHours } from "@/shared/utils/pricing-utils";
+import { getBoatStartingHourlyLabel } from "@/shared/utils/pricing-utils";
 import { useState } from "react";
 import { RequestBookingForm, InstantBookingForm } from ".";
 import { useSession } from "next-auth/react";
@@ -19,9 +18,8 @@ export function MobileBookingBar({ boat }: MobileBookingBarProps) {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
 
-  // Get pricing display using utility functions
-  const price = formatCurrency(getBoatDefaultPrice(boat));
-  const hours = getBoatDefaultHours(boat);
+  // New starting hourly display
+  const startingHourly = getBoatStartingHourlyLabel(boat);
 
   return (
     <>
@@ -31,10 +29,8 @@ export function MobileBookingBar({ boat }: MobileBookingBarProps) {
           {/* Pricing Display */}
           <div className="flex flex-col">
             <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold text-navy-900">{price}</span>
-              <span className="text-sm text-gray-500 font-medium">/{hours}</span>
+              <span className="text-xl font-bold text-navy-900">From {startingHourly}</span>
             </div>
-            <span className="text-xs text-gray-400 font-medium">Starting from</span>
           </div>
 
           {/* Book Button */}

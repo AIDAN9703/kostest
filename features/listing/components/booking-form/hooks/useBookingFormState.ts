@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { BookingRequest } from "@/features/_validation/validations";
-import { parseISODateTime, calculateEndTime } from "@/shared/utils/booking-utils";
+import { parseISODateTime, calculateEndTime, calculateEndDateTime, createDateTimeISO } from "@/shared/utils/booking-utils";
 import { Boat, PricingTier } from "@/shared/types/types";
 import { TAX_RATE, calculateServiceFee } from "@/shared/constants";
+import { getActivePricingTiers } from "./usePriceCalculation";
 
 interface UseBookingFormStateProps {
   form: UseFormReturn<BookingRequest>;
@@ -32,6 +33,9 @@ interface BookingFormState {
   };
   selectedPricingTier: PricingTier | null;
   endTime: string;
+  endDateTime: Date | null;
+  activePricingTiers: PricingTier[];
+  uiDate: Date | null;
   
   // Price breakdown
   priceBreakdown: PriceBreakdown;
@@ -40,6 +44,10 @@ interface BookingFormState {
   hasValidDateTime: boolean;
   hasValidPricingTier: boolean;
   isFormValid: boolean;
+
+  // Actions for dumb components (optional usage)
+  setDate?: (date: Date) => void;
+  setTime?: (time: string) => void;
 }
 
 
@@ -53,6 +61,9 @@ export function useBookingFormState({
   boat 
 }: UseBookingFormStateProps): BookingFormState {
   
+  // Transient date selection before confirming time
+  const [pendingDate, setPendingDate] = useState<Date | null>(null);
+
   // Single source of truth for watched values
   const selectedPricingTierId = form.watch("pricingTierId");
   const selectedStartDateTime = form.watch("startDateTime");
@@ -108,6 +119,19 @@ export function useBookingFormState({
     const { time: startTime } = parsedDateTime;
     return startTime ? calculateEndTime(startTime, selectedPricingTier.hours) : "";
   }, [selectedStartDateTime, selectedPricingTier, parsedDateTime]);
+
+  // Full end Date object derived from startDateTime + duration
+  const endDateTime = useMemo(() => {
+    if (!selectedStartDateTime || !selectedPricingTier) return null;
+    const start = new Date(selectedStartDateTime);
+    return calculateEndDateTime(start, selectedPricingTier.hours);
+  }, [selectedStartDateTime, selectedPricingTier]);
+
+  // Single, centralized active tiers list
+  const activePricingTiers = useMemo(() => getActivePricingTiers(boat), [boat.pricingTiers]);
+
+  // UI date to display in components (pending date if not yet committed)
+  const uiDate = useMemo(() => pendingDate || parsedDateTime.date, [pendingDate, parsedDateTime.date]);
   
   // Validation helpers
   const hasValidDateTime = useMemo(() => 
@@ -124,6 +148,20 @@ export function useBookingFormState({
     form.formState.isValid && hasValidDateTime && hasValidPricingTier,
     [form.formState.isValid, hasValidDateTime, hasValidPricingTier]
   );
+
+  // Step 1: capture date only; do not set form.value until time chosen
+  const setDate = (date: Date) => {
+    setPendingDate(date);
+  };
+
+  // Step 2: on time selection, combine with pending date or existing date and commit
+  const setTime = (time: string) => {
+    const dateForCommit = pendingDate || parsedDateTime.date;
+    if (!dateForCommit) return;
+    const iso = createDateTimeISO(dateForCommit, time);
+    form.setValue("startDateTime", iso, { shouldValidate: true, shouldDirty: true });
+    setPendingDate(null);
+  };
   
   return {
     // Raw values
@@ -135,6 +173,9 @@ export function useBookingFormState({
     parsedDateTime,
     selectedPricingTier,
     endTime,
+    endDateTime,
+    activePricingTiers,
+    uiDate,
     
     // Price breakdown
     priceBreakdown,
@@ -143,5 +184,7 @@ export function useBookingFormState({
     hasValidDateTime,
     hasValidPricingTier,
     isFormValid,
+    setDate,
+    setTime,
   };
 } 

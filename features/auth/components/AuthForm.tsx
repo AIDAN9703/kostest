@@ -144,6 +144,7 @@ const AuthForm = <T extends FieldValues>({
           </div>
 
           <form action={googleSignIn}>
+            <input type="hidden" name="callbackUrl" value={callbackUrl} />
             <button
               type="submit"
               className="flex items-center justify-center gap-2 h-12 w-full border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-300"
@@ -159,7 +160,7 @@ const AuthForm = <T extends FieldValues>({
             <p className="text-sm text-gray-600">
               {isSignIn ? "New to KOS Yachts? " : "Already have an account? "}
               <Link
-                href={isSignIn ? "/sign-up" : "/sign-in"}
+                href={(isSignIn ? "/sign-up" : "/sign-in") + `?callbackUrl=${encodeURIComponent(callbackUrl)}`}
                 className="font-medium text-primary hover:text-primary/80 transition-colors"
               >
                 {isSignIn ? "Create an account" : "Sign in"}

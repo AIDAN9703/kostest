@@ -79,22 +79,21 @@ export default function ChatBot({ className, initialOpen = false }: ChatBotProps
   return (
     <>
       {/* Chat Toggle Button */}
-              <Button
-          onClick={() => setIsOpen(true)}
-          size="lg"
-          className={cn(
-            "fixed bottom-6 right-6 z-50 rounded-full shadow-xl hover:shadow-2xl transition-all duration-300",
-            "bg-primary hover:bg-primary/90",
-            "border-2 border-primary/20 backdrop-blur-sm",
-            "w-16 h-16 p-0 group",
-            className
-          )}
-          aria-label="Open chat assistant"
-        >
-          <MessageSquare 
-            className="w-7 h-7 text-white transition-transform group-hover:scale-110" 
-          />
-        </Button>
+      <Button
+        variant="outline"
+        onClick={() => setIsOpen(true)}
+        className={cn(
+          "fixed bottom-4 right-0 z-50",
+          "h-14 w-14 p-0",
+          "rounded-l-full rounded-r-none",
+          "bg-white text-primary",
+          "border border-gray-200 shadow-md hover:shadow-lg transition",
+          className
+        )}
+        aria-label="Open chat"
+      >
+        <MessageSquare className="w-6 h-6" />
+      </Button>
 
       {/* Chat Interface */}
       {isOpen && (

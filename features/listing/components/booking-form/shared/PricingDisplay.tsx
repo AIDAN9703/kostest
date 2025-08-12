@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Boat } from "@/shared/types/types";
+import { PricingTier } from "@/shared/types/types";
 import { cn, formatCurrency } from "@/shared/utils/general-utils";
 import { FormField, FormItem, FormMessage } from "@/shared/components/ui/form";
 import { Control } from "react-hook-form";
@@ -15,16 +15,12 @@ import {
 } from "@/shared/components/ui/select";
 
 interface PricingDisplayProps {
-  boat: Boat;
+  activeTiers: PricingTier[];
   control: Control<BookingRequest>;
-  selectedPricingTier?: any;
+  selectedPricingTier?: PricingTier | null;
 }
 
-export function PricingDisplay({ boat, control, selectedPricingTier }: PricingDisplayProps) {
-  // Filter and sort pricing tiers once
-  const activeTiers = boat.pricingTiers
-    ?.filter(tier => tier.isActive)
-    .sort((a, b) => a.hours - b.hours) || [];
+export function PricingDisplay({ activeTiers, control, selectedPricingTier }: PricingDisplayProps) {
   const [open, setOpen] = useState(false);
 
   if (activeTiers.length === 0) {
@@ -43,7 +39,7 @@ export function PricingDisplay({ boat, control, selectedPricingTier }: PricingDi
         <FormItem>
           <Select onValueChange={field.onChange} value={field.value} open={open} onOpenChange={setOpen}>
             <SelectTrigger className="w-full border-0 border-b border-gray-100 bg-transparent rounded-none p-4 h-auto focus:outline-none focus:ring-0 focus-visible:ring-0 ring-0 ring-offset-0 focus:ring-offset-0 shadow-none hover:bg-transparent [&>svg:last-child]:hidden">
-              <div className="flex items-center gap-3 w-full">
+              <div className="flex items-center gap-3 w-full cursor-pointer">
                 <div className="flex-1 text-left">
                   <div className="text-sm font-semibold text-primary">
                     {selectedPricingTier ? `${selectedPricingTier.hours}hr Charter` : "Select Duration"}
@@ -53,15 +49,7 @@ export function PricingDisplay({ boat, control, selectedPricingTier }: PricingDi
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  {selectedPricingTier && (
-                    <div className="text-right">
-                      <div className="text-lg font-bold text-primary">
-                        {formatCurrency(selectedPricingTier.price)}
-                      </div>
-                      <div className="text-xs text-gray-500">plus fees</div>
-                    </div>
-                  )}
-                  <Timer className={cn("h-7 w-7 text-primary transition-transform", open && "rotate-180")} />
+                  <Timer className={cn("h-5 w-5 text-primary transition-transform", open && "rotate-180")} />
                 </div>
               </div>
             </SelectTrigger>

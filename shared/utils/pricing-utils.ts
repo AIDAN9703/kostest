@@ -9,17 +9,36 @@ export function getDefaultPricingTier(boat: Boat): PricingTier | null {
   if (!boat.pricingTiers || boat.pricingTiers.length === 0) {
     return null;
   }
-  
-  // Look for default pricing tier first
-  const defaultTier = boat.pricingTiers.find(tier => tier.isDefault && tier.isActive);
-  if (defaultTier) return defaultTier;
-  
-  // Otherwise use the first active tier
-  const firstActiveTier = boat.pricingTiers.find(tier => tier.isActive);
-  if (firstActiveTier) return firstActiveTier;
-  
-  // Last resort - just use the first tier regardless of active status
-  return boat.pricingTiers[0];
+
+  // Prefer only active tiers for any display logic
+  const activeTiers = boat.pricingTiers.filter((tier) => tier.isActive);
+  if (activeTiers.length === 0) {
+    return null;
+  }
+
+  // If any active tier is explicitly marked default, return the cheapest among them
+  const activeDefaultTiers = activeTiers.filter((tier) => tier.isDefault);
+  if (activeDefaultTiers.length > 0) {
+    return activeDefaultTiers.reduce((cheapest, tier) => {
+      if (tier.price < cheapest.price) return tier;
+      if (tier.price === cheapest.price) {
+        // Break ties by the shortest hours to represent a true "starting from"
+        if ((tier.hours ?? Infinity) < (cheapest.hours ?? Infinity)) return tier;
+      }
+      return cheapest;
+    }, activeDefaultTiers[0]);
+  }
+
+  // Otherwise, choose the overall cheapest active tier; tie-break by shortest hours
+  const cheapestActiveTier = activeTiers.reduce((cheapest, tier) => {
+    if (tier.price < cheapest.price) return tier;
+    if (tier.price === cheapest.price) {
+      if ((tier.hours ?? Infinity) < (cheapest.hours ?? Infinity)) return tier;
+    }
+    return cheapest;
+  }, activeTiers[0]);
+
+  return cheapestActiveTier ?? null;
 }
 
 /**
@@ -45,3 +64,31 @@ export function getBoatDefaultHours(boat: Boat): string {
   
   return "hr";
 } 
+
+/**
+ * Compute the lowest price-per-hour across active tiers for "from $X+/hr" display
+ */
+export function getBoatStartingHourlyRate(boat: Boat): number {
+  const activeTiers = boat.pricingTiers?.filter((tier) => tier.isActive) ?? [];
+  if (activeTiers.length > 0) {
+    const minPerHour = activeTiers.reduce((min, tier) => {
+      const hours = Math.max(1, tier.hours || 0);
+      const perHour = tier.price / hours;
+      return perHour < min ? perHour : min;
+    }, Infinity);
+    return Number.isFinite(minPerHour) ? Math.max(0, Math.round(minPerHour)) : 0;
+  }
+  // Fallback to deprecated hourlyRate if provided
+  if (typeof boat.hourlyRate === 'number') {
+    return Math.max(0, boat.hourlyRate);
+  }
+  return 0;
+}
+
+/**
+ * Convenience formatter for UI labels like "from $450+/hr"
+ */
+export function getBoatStartingHourlyLabel(boat: Boat): string {
+  const hourly = getBoatStartingHourlyRate(boat);
+  return `${formatCurrency(hourly)}+/hr`;
+}
