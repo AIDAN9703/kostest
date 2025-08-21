@@ -35,14 +35,6 @@ const poppins = localFont({
   variable: "--font-poppins",
 });
 
-const ibmPlexSans = localFont({
-  src: [
-    { path: "/fonts/IBMPlexSans-Regular.ttf", weight: "400", style: "normal" },
-    { path: "/fonts/IBMPlexSans-Medium.ttf", weight: "500", style: "normal" },
-    { path: "/fonts/IBMPlexSans-SemiBold.ttf", weight: "600", style: "normal" },
-    { path: "/fonts/IBMPlexSans-Bold.ttf", weight: "700", style: "normal" },
-  ],
-});
 
 const bebasNeue = localFont({
   src: [
@@ -54,6 +46,10 @@ const bebasNeue = localFont({
 export const metadata: Metadata = {
   title: "KOS Yachts",
   description: "KOS Yachts is the leading yacht charter experience in the South Florida area. We offer a wide range of yachts for rent, from small to large, for any occasion. Check out our new locations in Connecticut and New York.",
+  metadataBase: new URL("https://www.kosyachts.com"),
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export const viewport: Viewport = {
@@ -67,6 +63,7 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
         {/* Google Tag Manager */}
         <script dangerouslySetInnerHTML={{
           __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -78,7 +75,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         {/* End Google Tag Manager */}
         <GoogleMapsScript />
       </head>
-      <body className={`${ibmPlexSans.className} ${bebasNeue.variable} ${openSans.variable} ${poppins.variable} antialiased`}>
+      <body className={`${openSans.className} ${bebasNeue.variable} ${openSans.variable} ${poppins.variable} antialiased`}>
         <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || ''}>
           <SessionProvider>
             {children}

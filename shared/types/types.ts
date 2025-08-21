@@ -262,11 +262,21 @@ export interface NavigationItem {
   label: string;
   children?: Array<NavigationItem | HeaderItem>;
   icon?: any; // Will use Lucide icons
+  megaMenu?: MegaMenuConfig;
 }
 
 export interface HeaderItem {
   type: 'header';
   label: string;
+}
+
+export interface MegaMenuConfig {
+  columns: MegaMenuColumn[];
+}
+
+export interface MegaMenuColumn {
+  title: string;
+  items: NavigationItem[];
 }
 
 export interface QuickLink {

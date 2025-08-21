@@ -1,9 +1,8 @@
-import { getBoatById, getAllBoatIds } from "@/features/boats/actions/boat-actions";
+import { getBoatById } from "@/features/boats/actions/boat-actions";
 import { notFound } from "next/navigation";
 import BoatDetails from "@/features/listing/components/BoatDetails";
 import { RequestBookingForm, InstantBookingForm } from "@/features/listing/components/booking-form";
 import { MobileBookingBar } from "@/features/listing/components/booking-form/MobileBookingBar";
-import { Boat } from "@/shared/types/types";
 import { ImageGallery } from "@/features/listing/components/sub-components/ImageGallery";
 import { Metadata } from "next";
 import { and, eq } from "drizzle-orm";
@@ -23,7 +22,6 @@ export const revalidate = 21600; // 6 hours
 // New boats will be generated on-demand via ISR
 export async function generateStaticParams() {
   try {
-    console.log('🏗️  Pre-generating static boat pages...');
     
     // Only generate featured boats at build time for Windows compatibility
     // Other boats will be generated on-demand via ISR
@@ -36,7 +34,6 @@ export async function generateStaticParams() {
       ))
       .limit(50); // Limit to max 50 to prevent Windows process issues
     
-    console.log(`📊 Generating static pages for ${featuredBoats.length} featured boats`);
     
     return featuredBoats.map((boat) => ({
       id: boat.id,
@@ -115,7 +112,7 @@ export async function generateMetadata({
         images: boat.mainImage ? [boat.mainImage] : [],
       },
       alternates: {
-        canonical: `/boats/${boat.id}`,
+        canonical: `https://www.kosyachts.com/boats/${boat.id}`,
       },
     };
   } catch (error) {
@@ -144,11 +141,8 @@ export default async function BoatPage({ params }: BoatPageProps) {
 
     // Handle boat not found
     if (!boat) {
-      console.log(`🔍 Boat not found: ${id}`);
       notFound();
     }
-
-    console.log(`⚡ Rendering boat page: ${boat.name} (ID: ${id})`);
 
     return (
       <>
@@ -167,17 +161,13 @@ export default async function BoatPage({ params }: BoatPageProps) {
                 "name": "KOS Yachts"
               },
               "category": boat.category,
-                             "offers": boat.pricingTiers && boat.pricingTiers.length > 0 ? {
-                 "@type": "Offer",
-                 "priceRange": (() => {
-                   const prices = boat.pricingTiers!.map(tier => tier.price);
-                   const minPrice = Math.min(...prices);
-                   const maxPrice = Math.max(...prices);
-                   return `$${minPrice}-$${maxPrice}`;
-                 })(),
+              "offers": boat.pricingTiers?.length ? {
+                "@type": "AggregateOffer",
+                "lowPrice": Math.min(...boat.pricingTiers.map(tier => tier.price)),
+                "highPrice": Math.max(...boat.pricingTiers.map(tier => tier.price)),
                 "priceCurrency": "USD",
                 "availability": "https://schema.org/InStock",
-                "url": `https://kosyachts.com/boats/${boat.id}`
+                "url": `https://www.kosyachts.com/boats/${boat.id}`
               } : undefined,
               "additionalProperty": [
                 {

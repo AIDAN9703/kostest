@@ -59,6 +59,7 @@ export default function ImageGalleryViewAll({
             src={images[currentIndex]}
             alt={`${alt} - Image ${currentIndex + 1}`}
             className="max-h-full max-w-full object-contain mx-auto px-8"
+            loading="lazy"
           />
         </div>
         
@@ -106,6 +107,7 @@ export default function ImageGalleryViewAll({
                   src={src}
                   alt={`Thumbnail ${index + 1}`}
                   className="object-cover h-full w-full"
+                  loading="lazy"
                 />
               </button>
             ))}

@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn, throttle } from '@/shared/utils/general-utils'
@@ -22,15 +22,39 @@ import { navigationData, quickLinks, featuredItems } from '@/shared/constants/na
 const Navigation = () => {
     const { data: session } = useSession()
     const pathname = usePathname()
-    const router = useRouter()
     const [scrolled, setScrolled] = useState(false)
     const [expandedItems, setExpandedItems] = useState<string[]>([])
+    const [isLargeScreen, setIsLargeScreen] = useState(true) // Default to true for SSR
+    const containerRef = useRef<HTMLElement>(null)
     const user = session?.user
     const isHomePage = pathname === '/'
     const { isExpanded, resetSearchExpansion, clearSearchValue, clearPlaceDetails } = useSearchStore()
     
     // Check if user is an admin
     const isAdmin = user?.role === 'ADMIN'
+    
+    // Enhanced responsive detection with ResizeObserver
+    useEffect(() => {
+        const checkWidth = () => {
+            if (containerRef.current) {
+                const width = containerRef.current.offsetWidth
+                setIsLargeScreen(width >= 1024) // lg breakpoint (1024px)
+            }
+        }
+        
+        // Initial check
+        checkWidth()
+        
+        // Set up ResizeObserver for more accurate responsive detection
+        const resizeObserver = new ResizeObserver(checkWidth)
+        if (containerRef.current) {
+            resizeObserver.observe(containerRef.current)
+        }
+        
+        return () => {
+            resizeObserver.disconnect()
+        }
+    }, [])
     
     // Reset the isExpanded state when navigating to the home page
     useEffect(() => {
@@ -45,18 +69,23 @@ const Navigation = () => {
         }
     }, [isHomePage, resetSearchExpansion, pathname, clearSearchValue, clearPlaceDetails])
     
-    // Show search bar in nav on non-home pages or when scrolled past the hero section searchbar
-    const showSearchInNav = !isHomePage || (isHomePage && isExpanded)
+    // Memoized computed values to prevent unnecessary re-renders
+    const showSearchInNav = useMemo(() => 
+        !isHomePage || (isHomePage && isExpanded),
+        [isHomePage, isExpanded]
+    )
 
-    // More responsive throttled scroll handler (50ms instead of 100ms)
+    // Optimized scroll handler with requestAnimationFrame and throttling
     const handleScroll = useCallback(
         throttle(() => {
             // Use requestAnimationFrame to optimize visual updates
             requestAnimationFrame(() => {
                 const scrollPosition = window.scrollY
-                setScrolled(scrollPosition > 50)
+                const newScrolled = scrollPosition > 50
+                // Only update state if it actually changed
+                setScrolled(prev => prev !== newScrolled ? newScrolled : prev)
             })
-        }, 50),
+        }, 16), // ~60fps for smoother scrolling
         []
     )
 
@@ -77,16 +106,6 @@ const Navigation = () => {
         }
     }, [handleScroll])
 
-    // Utility function for user initials
-    const getInitials = useCallback((name?: string | null, email?: string | null) => {
-        if (name) {
-            const parts = name.split(' ')
-            return parts.length > 1 
-                ? `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase()
-                : name[0].toUpperCase()
-        }
-        return email?.[0].toUpperCase() ?? '?'
-    }, [])
 
     // Memoized header style
     const headerStyle = useMemo(() => cn(
@@ -102,7 +121,7 @@ const Navigation = () => {
     // Memoized text style function
     const getTextStyle = useCallback((isActive: boolean = false) => cn(
         "transition-all duration-200",
-        "text-[15px] font-medium tracking-wide",
+        "text-[15px] font-semibold tracking-wide",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-sm",
         isActive
             ? "text-primary"
@@ -111,23 +130,47 @@ const Navigation = () => {
                 : "text-gray-700 hover:text-primary"
     ), [isHomePage, scrolled])
 
+    // Memoized props for child components to prevent unnecessary re-renders
+    const mobileNavProps = useMemo(() => ({
+        navigationData,
+        quickLinks,
+        featuredItems,
+        user,
+        isHomePage,
+        scrolled,
+        expandedItems,
+        setExpandedItems,
+        isAdmin
+    }), [user, isHomePage, scrolled, expandedItems, setExpandedItems, isAdmin])
+
+    const desktopNavProps = useMemo(() => ({
+        navigationData,
+        isHomePage,
+        scrolled,
+        expandedItems,
+        getTextStyle,
+        isAdmin
+    }), [isHomePage, scrolled, expandedItems, getTextStyle, isAdmin])
+
+    const userMenuProps = useMemo(() => ({
+        user,
+        navigationData,
+        isHomePage,
+        scrolled
+    }), [user, isHomePage, scrolled])
+
+    const socialLinksProps = useMemo(() => ({
+        isHomePage,
+        scrolled
+    }), [isHomePage, scrolled])
+
     return (
-        <header className={headerStyle}>
+        <header ref={containerRef} className={headerStyle}>
             <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
                 <nav className="grid grid-cols-[auto_1fr_auto] items-center h-14 gap-4" role="navigation" aria-label="Main navigation">
                     {/* Left section: Logo + Main Navigation */}
                     <div className="flex items-center gap-3">
-                        <MobileNavigation 
-                            navigationData={navigationData}
-                            quickLinks={quickLinks}
-                            featuredItems={featuredItems}
-                            user={user}
-                            isHomePage={isHomePage}
-                            scrolled={scrolled}
-                            expandedItems={expandedItems}
-                            setExpandedItems={setExpandedItems}
-                            isAdmin={isAdmin}
-                        />
+                        <MobileNavigation {...mobileNavProps} />
 
                         <Link 
                             href="/" 
@@ -164,27 +207,13 @@ const Navigation = () => {
 
                     {/* Right section: Navigation + Social + User menu */}
                     <div className="flex items-center gap-4">
-                        <DesktopNavigation 
-                            navigationData={navigationData}
-                            isHomePage={isHomePage}
-                            scrolled={scrolled}
-                            expandedItems={expandedItems}
-                            getTextStyle={getTextStyle}
-                            isAdmin={isAdmin}
-                        />
+                        {isLargeScreen && (
+                            <DesktopNavigation {...desktopNavProps} />
+                        )}
 
-                        <SocialLinks 
-                            isHomePage={isHomePage}
-                            scrolled={scrolled}
-                        />
+                        <SocialLinks {...socialLinksProps} />
 
-                        <UserMenu 
-                            user={user}
-                            navigationData={navigationData}
-                            isHomePage={isHomePage}
-                            scrolled={scrolled}
-                            getInitials={getInitials}
-                        />
+                        <UserMenu {...userMenuProps} />
                     </div>
                 </nav>
             </div>

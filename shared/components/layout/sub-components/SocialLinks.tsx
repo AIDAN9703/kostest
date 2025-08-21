@@ -57,4 +57,4 @@ const SocialLinks: React.FC<SocialLinksProps> = ({
     )
 }
 
-export default SocialLinks 
+export default React.memo(SocialLinks) 

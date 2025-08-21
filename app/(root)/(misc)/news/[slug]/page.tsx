@@ -47,6 +47,9 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   return {
     title: post.metaTitle || `${post.title} | KOS Yachts`,
     description: post.metaDescription || post.excerpt,
+    alternates: {
+      canonical: `https://www.kosyachts.com/news/${slug}`,
+    },
     openGraph: {
       title: post.title,
       description: post.excerpt,

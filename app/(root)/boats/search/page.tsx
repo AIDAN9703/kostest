@@ -14,6 +14,9 @@ import {
 export const metadata: Metadata = {
   title: "Search Boats | KOSyachts",
   description: "Search for luxury yachts and boats available for charter.",
+  alternates: {
+    canonical: 'https://www.kosyachts.com/boats/search',
+  },
 };
 
 // ISR configuration for search page

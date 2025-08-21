@@ -393,7 +393,7 @@ Term Charter Inquiry:
                   <div className="space-y-1 leading-none">
                     <FormLabel className="text-sm font-normal text-gray-700">
                       I agree to the{' '}
-                      <Link href="/terms" className="text-primary hover:underline">
+                      <Link href="/terms-of-service" className="text-primary hover:underline">
                         Terms of Service
                       </Link>
                       {' '}and{' '}

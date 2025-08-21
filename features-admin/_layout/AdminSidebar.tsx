@@ -3,13 +3,13 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Ship, 
-  Users, 
-  CalendarDays, 
-  MessageSquare, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Ship,
+  Users,
+  CalendarDays,
+  MessageSquare,
+  Settings,
   ChevronLeft,
   LogOut,
   HelpCircle,
@@ -76,44 +76,44 @@ const navItems: NavItem[] = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  return (
+    return (
     <div className={cn(
-      "bg-white border-r border-gray-200 flex flex-col h-screen",
-      collapsed ? "w-16" : "w-64"
+      "bg-white border-r border-gray-200 flex flex-col h-screen transition-all duration-300 ease-in-out",
+      isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Logo Section - Fixed Height */}
       <div className="flex items-center justify-between p-4 border-b border-gray-200 h-16">
-        {!collapsed && (
+        {!isCollapsed && (
           <Link href="/" className="flex items-center">
-            <Image 
-              src="/icons/logo.png" 
-              alt="KOS Yachts Admin" 
-              width={32} 
-              height={32} 
+            <Image
+              src="/icons/logo.png"
+              alt="KOS Yachts Admin"
+              width={32}
+              height={32}
               className="mr-3"
             />
             <span className="text-lg font-semibold text-gray-900">KOS Admin</span>
           </Link>
         )}
-        {collapsed && (
+        {isCollapsed && (
           <Link href="/admin" className="mx-auto">
-            <Image 
-              src="/icons/logo.png" 
-              alt="KOS" 
-              width={32} 
-              height={32} 
+            <Image
+              src="/icons/logo.png"
+              alt="KOS"
+              width={32}
+              height={32}
             />
           </Link>
         )}
-        <button 
-          onClick={() => setCollapsed(!collapsed)}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
           className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
         >
           <ChevronLeft className={cn(
-            "h-4 w-4 text-gray-600 transition-transform",
-            collapsed && "rotate-180"
+            "h-4 w-4 text-gray-600 transition-transform duration-300",
+            isCollapsed && "rotate-180"
           )} />
         </button>
       </div>
@@ -126,18 +126,18 @@ export default function AdminSidebar() {
               <Link
                 href={item.href}
                 className={cn(
-                  "flex items-center px-3 py-2.5 rounded-md text-gray-700 hover:bg-gray-50 transition-colors",
-                  pathname === item.href && "bg-blue-50 text-blue-700 border-r-2 border-blue-700",
-                  collapsed ? "justify-center" : "justify-start"
+                  "flex items-center px-3 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors",
+                  pathname === item.href && "text-gray-900 font-bold border-b-2 border-r-2 border-primary",
+                  isCollapsed ? "justify-center" : "justify-start"
                 )}
               >
                 <div className={cn(
                   "flex-shrink-0",
-                  pathname === item.href ? "text-blue-700" : "text-gray-600"
+                  pathname === item.href ? "text-gray-900 font-bold" : "text-gray-600"
                 )}>
                   {item.icon}
                 </div>
-                {!collapsed && (
+                {!isCollapsed && (
                   <span className="ml-3 text-sm font-medium">{item.label}</span>
                 )}
               </Link>
@@ -154,11 +154,11 @@ export default function AdminSidebar() {
               href="/admin/help"
               className={cn(
                 "flex items-center px-3 py-2.5 rounded-md text-gray-700 hover:bg-gray-50 transition-colors",
-                collapsed ? "justify-center" : "justify-start"
+                isCollapsed ? "justify-center" : "justify-start"
               )}
             >
               <HelpCircle className="h-5 w-5" />
-              {!collapsed && <span className="ml-3 text-sm">Help & Support</span>}
+              {!isCollapsed && <span className="ml-3 text-sm">Help & Support</span>}
             </Link>
           </li>
           <li>
@@ -166,11 +166,11 @@ export default function AdminSidebar() {
               href="/api/auth/signout"
               className={cn(
                 "flex items-center px-3 py-2.5 rounded-md text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors",
-                collapsed ? "justify-center" : "justify-start"
+                isCollapsed ? "justify-center" : "justify-start"
               )}
             >
               <LogOut className="h-5 w-5" />
-              {!collapsed && <span className="ml-3 text-sm">Sign Out</span>}
+              {!isCollapsed && <span className="ml-3 text-sm">Sign Out</span>}
             </Link>
           </li>
         </ul>

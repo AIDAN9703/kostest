@@ -28,7 +28,6 @@ import { ImageUpload } from "@/shared/components/ui/image-upload";
 import { Loader2, Ship, GripVertical } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
 import { Checkbox } from "@/shared/components/ui/checkbox";
-import { DragDropContext, Droppable, Draggable, DropResult } from "react-beautiful-dnd";
 
 // Define the form schema
 const boatFormSchema = z.object({
@@ -97,6 +96,8 @@ const ImageItem = memo(({
         alt={`${isMain ? 'Main' : 'Gallery'} image ${index + 1}`}
         className="w-full h-full object-cover"
         loading="lazy"
+        width={128}
+        height={128}
         draggable={false}
       />
       
@@ -188,7 +189,7 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
   }, [updateFormImages]);
 
   // Simple drag end handler
-  const handleDragEnd = useCallback((result: DropResult) => {
+  const handleDragEnd = useCallback((result: any) => {
     if (!result.destination) return;
     
     const startIndex = result.source.index;
@@ -206,42 +207,7 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
   }, [updateFormImages]);
 
   // Simple image delete handler
-  const handleImageDelete = useCallback((indexToDelete: number) => {
-    setImages(prev => {
-      const newImages = prev.filter((_, index) => index !== indexToDelete);
-      updateFormImages(newImages);
-      return newImages;
-    });
-  }, [updateFormImages]);
 
-  // Heavily memoized image items with stable keys
-  const imageItems = useMemo(() => {
-    return images.map((image, index) => (
-      <Draggable key={`img-${image}-${index}`} draggableId={`img-${image}-${index}`} index={index}>
-        {(provided, snapshot) => (
-          <div
-            ref={provided.innerRef}
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-            style={{
-              ...provided.draggableProps.style,
-              // Prevent layout shift by maintaining space
-              transform: snapshot.isDragging 
-                ? provided.draggableProps.style?.transform 
-                : 'translate(0, 0)',
-            }}
-          >
-            <ImageItem
-              image={image}
-              index={index}
-              isMain={index === 0}
-              onDelete={handleImageDelete}
-            />
-          </div>
-        )}
-      </Draggable>
-    ));
-  }, [images, handleImageDelete]);
 
   // Handle form submission
   const onSubmit = async (data: BoatFormValues) => {
@@ -517,68 +483,7 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
                 </span>
               </FormLabel>
               <div className="mt-2 space-y-4">
-                <DragDropContext onDragEnd={handleDragEnd}>
-                  <Droppable 
-                    droppableId="image-gallery" 
-                    direction="horizontal"
-                    isDropDisabled={false}
-                    isCombineEnabled={false}
-                    ignoreContainerClipping={false}
-                  >
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={`p-4 rounded-lg border-2 border-dashed transition-colors overflow-x-auto ${
-                          snapshot.isDraggingOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300'
-                        }`}
-                        style={{
-                          display: 'flex',
-                          gap: '16px',
-                          minHeight: '140px',
-                          alignItems: 'flex-start',
-                        }}
-                      >
-                        {images.length > 0 ? (
-                          images.map((image, index) => (
-                            <Draggable 
-                              key={`image-${index}`} 
-                              draggableId={`image-${index}`} 
-                              index={index}
-                              isDragDisabled={false}
-                            >
-                              {(provided, snapshot) => (
-                                <div
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  style={{
-                                    ...provided.draggableProps.style,
-                                  }}
-                                >
-                                  <ImageItem
-                                    image={image}
-                                    index={index}
-                                    isMain={index === 0}
-                                    onDelete={handleImageDelete}
-                                  />
-                                </div>
-                              )}
-                            </Draggable>
-                          ))
-                        ) : (
-                          <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center bg-gray-50 flex-shrink-0">
-                            <div className="text-center">
-                              <Ship className="h-8 w-8 text-gray-400 mx-auto mb-1" />
-                              <p className="text-xs text-gray-500">No images</p>
-                            </div>
-                          </div>
-                        )}
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
-                </DragDropContext>
+                
                 
                 {/* Upload Button */}
                 <ImageUpload

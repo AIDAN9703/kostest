@@ -14,6 +14,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/shared/components/ui/avatar"
 import { Session } from 'next-auth'
 import { NavigationItem } from '@/shared/types/types'
+import { getUserInitialsFromName } from '@/shared/utils/user-utils'
 import { signOut } from 'next-auth/react'
 
 interface UserMenuProps {
@@ -23,15 +24,13 @@ interface UserMenuProps {
     };
     isHomePage: boolean;
     scrolled: boolean;
-    getInitials: (name?: string | null, email?: string | null) => string;
 }
 
 const UserMenu: React.FC<UserMenuProps> = ({
     user,
     navigationData,
     isHomePage,
-    scrolled,
-    getInitials
+    scrolled
 }) => {
     const router = useRouter();
 
@@ -94,7 +93,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
                                 className="object-cover"
                             />
                             <AvatarFallback className={avatarFallbackStyle}>
-                                {getInitials(user.name, user.email)}
+                                {getUserInitialsFromName(user.name, user.email)}
                             </AvatarFallback>
                         </Avatar>
                     </Button>
@@ -152,4 +151,4 @@ const UserMenu: React.FC<UserMenuProps> = ({
     )
 }
 
-export default UserMenu 
+export default React.memo(UserMenu) 

@@ -39,7 +39,6 @@ export async function getAllBoatIds(): Promise<string[]> {
   "use server";
   
   try {
-    console.log('🔍 Fetching all boat IDs for static generation...');
     
     // Only select active boats for static generation
     // This prevents generating pages for inactive/draft boats
@@ -49,7 +48,6 @@ export async function getAllBoatIds(): Promise<string[]> {
       .where(eq(boats.active, true));
     
     const ids = boatIds.map(boat => boat.id);
-    console.log(`📋 Found ${ids.length} active boats for static generation`);
     
     return ids;
   } catch (error) {

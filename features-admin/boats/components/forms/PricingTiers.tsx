@@ -134,7 +134,7 @@ export function PricingTiers({ tiers = [], onChange }: PricingTiersProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Pricing Tiers</h3>
+      <h3 className="text-lg font-medium text-gray-800">Pricing Tiers</h3>  
         <Button 
           type="button" 
           onClick={handleAddTier}

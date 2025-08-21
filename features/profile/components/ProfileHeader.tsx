@@ -5,6 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { Settings, MapPin, Calendar } from "lucide-react";
+import { getUserInitials } from "@/shared/utils/user-utils";
 import Link from "next/link";
 
 interface ProfileHeaderProps {
@@ -16,9 +17,7 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
   console.log('ProfileHeader database user:', user);
   console.log('Database profileImage:', user?.profileImage);
 
-  const getInitials = (firstName?: string, lastName?: string) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase() || 'U';
-  };
+  // Use shared utility
 
   const getRoleDisplay = () => {
     const roleMap = {
@@ -70,7 +69,7 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
           <Avatar className="h-24 w-24 border-4 border-white shadow-lg flex-shrink-0">
             <AvatarImage src={user?.profileImage || undefined} alt={getDisplayName()} />
             <AvatarFallback className="text-2xl bg-primary text-white">
-              {getInitials(user?.firstName, user?.lastName)}
+              {getUserInitials(user?.firstName, user?.lastName)}
             </AvatarFallback>
           </Avatar>
           

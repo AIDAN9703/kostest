@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, User, X } from "lucide-react";
-import { getBoatOwners } from "@/features-admin/users/actions/users";
+import { getBoatOwners, getUserById } from "@/features-admin/users/actions/users";
 import { cn } from "@/shared/utils/general-utils";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -52,28 +52,18 @@ export function OwnerSelect({ value, onChange, placeholder, disabled }: OwnerSel
     }
   }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Search when debounced value changes
+  // Search when debounced value changes (only search if there's a query)
   useEffect(() => {
     if (open) {
       fetchOwners();
     }
   }, [debouncedSearch, open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Fetch when dropdown opens
-  useEffect(() => {
-    if (open && owners.length === 0) {
-      fetchOwners();
-    }
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const fetchSelectedOwner = async () => {
     if (!value) return;
     
     try {
-      // Use the search functionality to find our owner by ID
-      // This is not optimal but better than creating a separate endpoint
-      const allOwners = await getBoatOwners("");
-      const owner = allOwners.find(o => o.id === value);
+      const owner = await getUserById(value);
       if (owner) {
         setSelectedOwner(owner);
       }
@@ -83,12 +73,19 @@ export function OwnerSelect({ value, onChange, placeholder, disabled }: OwnerSel
   };
 
   const fetchOwners = async () => {
+    // Only search if we have at least 2 characters
+    if (debouncedSearch.length < 2) {
+      setOwners([]);
+      return;
+    }
+    
     setLoading(true);
     try {
       const results = await getBoatOwners(debouncedSearch);
       setOwners(results);
     } catch (error) {
       console.error("Error fetching owners:", error);
+      setOwners([]);
     } finally {
       setLoading(false);
     }
@@ -126,7 +123,7 @@ export function OwnerSelect({ value, onChange, placeholder, disabled }: OwnerSel
             aria-expanded={open}
             disabled={disabled}
             className={cn(
-              "w-full justify-between",
+              "w-full justify-between h-11 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 rounded-lg transition-all",
               !value && "text-muted-foreground"
             )}
           >
@@ -151,57 +148,73 @@ export function OwnerSelect({ value, onChange, placeholder, disabled }: OwnerSel
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0">
-          <Command>
+        <PopoverContent className="w-[300px] p-0 rounded-lg border-gray-200 z-50" sideOffset={4}>
+          <Command className="rounded-lg border-0">
             <CommandInput
               placeholder="Search owners..."
               value={searchQuery}
               onValueChange={setSearchQuery}
-              className="h-9"
+              className="h-9 border-0"
             />
-            <CommandList>
-              {loading && <CommandEmpty>Loading...</CommandEmpty>}
-              {!loading && owners.length === 0 && (
-                <CommandEmpty>No owners found</CommandEmpty>
+            <CommandList className="max-h-[200px] overflow-y-auto">
+              {loading && (
+                <CommandEmpty className="py-6 text-center text-sm">
+                  Loading owners...
+                </CommandEmpty>
               )}
-              <CommandGroup>
-                {owners.map((owner) => (
-                  <CommandItem
-                    key={owner.id}
-                    value={owner.id}
-                    onSelect={() => handleSelectOwner(owner.id)}
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={owner.profileImage || undefined} alt={getDisplayName(owner)} />
-                        <AvatarFallback>
-                          <User className="h-4 w-4" />
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="font-medium">{getDisplayName(owner)}</div>
-                        {owner.email && (
-                          <div className="text-xs text-muted-foreground truncate">{owner.email}</div>
-                        )}
+              {!loading && owners.length === 0 && searchQuery.length < 2 && (
+                <CommandEmpty className="py-6 text-center text-sm">
+                  Type at least 2 characters to search
+                </CommandEmpty>
+              )}
+              {!loading && owners.length === 0 && searchQuery.length >= 2 && (
+                <CommandEmpty className="py-6 text-center text-sm">
+                  No owners found for "{searchQuery}"
+                </CommandEmpty>
+              )}
+              {!loading && owners.length > 0 && (
+                <CommandGroup className="p-1">
+                  {owners.map((owner) => (
+                    <CommandItem
+                      key={owner.id}
+                      value={getDisplayName(owner)}
+                      onSelect={() => handleSelectOwner(owner.id)}
+                      className="cursor-pointer hover:bg-blue-50 aria-selected:bg-blue-50 px-2 py-2 rounded-md"
+                    >
+                      <div className="flex items-center gap-3 w-full">
+                        <Avatar className="h-6 w-6 shrink-0">
+                          <AvatarImage src={owner.profileImage || undefined} alt={getDisplayName(owner)} />
+                          <AvatarFallback className="text-xs">
+                            <User className="h-3 w-3" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">{getDisplayName(owner)}</div>
+                          {owner.email && (
+                            <div className="text-xs text-gray-500 truncate">{owner.email}</div>
+                          )}
+                        </div>
+                        {owner.id === value && <Check className="ml-2 h-4 w-4 text-blue-600 shrink-0" />}
                       </div>
-                      {owner.id === value && <Check className="ml-auto h-4 w-4" />}
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
             </CommandList>
           </Command>
         </PopoverContent>
       </Popover>
       
-      {/* Clear button placed outside the main button to avoid nesting */}
+      {/* Clear button */}
       {selectedOwner && !disabled && (
-        <div 
-          className="absolute right-8 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer opacity-70 hover:opacity-100 hover:bg-gray-300"
+        <button
+          type="button"
+          className="absolute right-8 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors"
           onClick={handleClearSelection}
+          aria-label="Clear selection"
         >
           <X className="h-3 w-3" />
-        </div>
+        </button>
       )}
     </div>
   );

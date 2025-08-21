@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getBoatById } from "@/features-admin/boats/actions/boats";
-import { BoatForm } from "@/features-admin/boats/components/BoatForm";
 import { notFound } from "next/navigation";
 import { CreateBoatInput, PricingTierInput } from "@/features-admin/_validation/boats";
+import AdminAddUpdateBoatForm from "@/features-admin/boats/components/forms/admin-add-update-boat-form";
 
 interface BoatEditPageProps {
   params: Promise<{ id: string }>;
@@ -44,6 +44,7 @@ export default async function BoatEditPage({ params }: BoatEditPageProps) {
     
     // Owner Information
     ownerId: boatData.ownerId,
+    ownerNotes: boatData.ownerNotes || null,
     
     // Boat Specifications
     make: boatData.make || null,
@@ -112,22 +113,9 @@ export default async function BoatEditPage({ params }: BoatEditPageProps) {
   
   return (
     <div className="space-y-6">
-      {/* Page Header with Back Button */}
-      <div className="flex items-center gap-4">
-        <Link
-          href={`/admin/boats/${boatId}`}
-          className="text-gray-500 hover:text-gray-700 transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Edit Boat</h1>
-          <p className="text-gray-500">Update boat information</p>
-        </div>
-      </div>
       
       {/* Boat Edit Form */}
-      <BoatForm boat={boat} boatId={boatId} />
+      <AdminAddUpdateBoatForm boat={boat} boatId={boatId} />
     </div>
   );
 } 

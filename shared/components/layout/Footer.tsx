@@ -18,18 +18,40 @@ const quickLinks = [
 ];
 
 const locations = [
-  { label: "Miami, FL", href: "/locations" },
-  { label: "Fort Lauderdale, FL", href: "/locations" },
-  { label: "Bahamas", href: "/locations" },
-  { label: "Standord, CT", href: "/locations" },
-  { label: "Naples, FL", href: "/locations" },
-  { label: "Palm Beach, FL", href: "/locations" }
+  {
+    label: 'Miami',
+    href: '/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=25.85578602396197&ne_lng=-80.13217904641093&sw_lat=25.7090419531335&sw_lng=-80.31860792381018&zoom_level=13&map_toggle=on',
+  },
+  {
+    label: 'Fort Lauderdale',
+    href: '/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=26.342075651857815&ne_lng=-79.94274801289657&sw_lat=25.85493658661458&sw_lng=-80.27851766621689&zoom_level=13&map_toggle=on&page=1',
+  },
+  {
+    label: 'Naples',
+    href: '/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=26.78162320580448&ne_lng=-81.53055713088251&sw_lat=25.80900322954124&sw_lng=-82.20209643752314&zoom_level=13&map_toggle=on&page=1',
+  },
+  {
+    label: 'West Palm Beach',
+    href: '/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=27.20361325071068&ne_lng=-79.67871662569503&sw_lat=26.234574624628717&sw_lng=-80.35025593233566&zoom_level=13&map_toggle=on&page=1',
+  },
+  {
+    label: 'Connecticut',
+    href: '/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=42.52785484619885&ne_lng=-71.37854485044119&sw_lat=39.24828154025446&sw_lng=-74.06470207700369&zoom_level=13&map_toggle=on&page=1',
+  },
+  {
+    label: 'Bahamas',
+    href: '/boats/search?near=The+Bahamas&ne_lat=26.590274469914576&ne_lng=-76.65761869261429&sw_lat=22.560024925745196&sw_lng=-79.35476224730179&zoom_level=8&map_toggle=on&center_lat=24.591364629076335&center_lng=-78.00619046995804&page=1',
+  },
+  {
+    label: 'Dominican Republic',
+    href: '/boats/search?near=Dominican+Republic&ne_lat=27.00077435235987&ne_lng=-65.31237564053237&sw_lat=10.272085808139986&sw_lng=-76.10094985928237&zoom_level=6&map_toggle=on&center_lat=18.844302328127366&center_lng=-70.70666274990737&page=1',
+  }
 ];
 
 const services = [
   { label: "Charter Management", href: "/services/charter-management" },
   { label: "Yacht Management", href: "/services/yacht-management" },
-  { label: "Sales/Purchase", href: "/services/sales-purchase" },
+  { label: "Sales/Purchase", href: "/services/sales" },
   { label: "Term Charters", href: "/services/term-charters" },
   { label: "Dock Management", href: "/services/dock-management" }
 ];

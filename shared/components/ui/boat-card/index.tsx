@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { AspectRatio } from "@/shared/components/ui/aspect-ratio";
 import { cn } from "@/shared/utils/general-utils";
 import { Image as IKImage } from "@imagekit/next";
+import { getImageKitProps } from "@/shared/services/imagekit.service";
 import { getBoatStartingHourlyLabel } from "@/shared/utils/pricing-utils";
 
 interface BoatCardProps {
@@ -53,9 +54,6 @@ const BoatCard = ({
 
   // If no images are available, use our custom fallback
   const hasImages = images.length > 0;
-
-  // Check if a URL already has transformations
-  const hasTransformations = (src: string) => src?.includes('tr=');
 
   // Get the current image
   const currentImageUrl = hasImages ? images[currentImageIndex] : null;
@@ -130,31 +128,23 @@ const BoatCard = ({
         <CardHeader className="p-0">
           <AspectRatio ratio={aspectRatio} className="overflow-hidden">
             {hasImages ? (
-              hasTransformations(currentImageUrl!) ? (
-                // For URLs with existing transformations, use a regular img tag
-                <img
-                  src={currentImageUrl!}
-                  alt={boat.displayTitle || boat.name}
-                  className="object-cover w-full h-full"
-                />
-              ) : (
-                // For other images, use the ImageKit component with transformations
-                <IKImage
-                  src={currentImageUrl!}
-                  alt={boat.displayTitle || boat.name}
-                  width={622}
-                  height={350}
-                  className="object-cover w-full h-full"
-                  style={{ position: "absolute", inset: 0 }}
-                  loading={index < 3 || imagePriority ? "eager" : "lazy"}
-                  transformation={[{
-                    width: 622,
-                    height: 350,
-                    quality: 85,
-                    format: "auto"
-                  }]}
-                />
-              )
+              (() => {
+                const props = getImageKitProps(currentImageUrl!, 'card', { eager: index < 3 || !!imagePriority });
+                return (
+                  <IKImage
+                    src={props.src}
+                    alt={boat.displayTitle || boat.name}
+                    width={props.width}
+                    height={props.height}
+                    sizes={props.sizes}
+                    className="object-cover w-full h-full"
+                    style={{ position: "absolute", inset: 0 }}
+                    loading={props.loading}
+                    fetchPriority={props.fetchPriority}
+                    transformation={props.transformation}
+                  />
+                );
+              })()
             ) : (
               <div className="w-full h-full bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
                 <div className="relative w-16 h-16 mb-4">

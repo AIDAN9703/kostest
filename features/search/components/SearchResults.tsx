@@ -250,7 +250,7 @@ export default function SearchResults({
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious 
-                href="#" 
+                href={`/boats/search?page=${currentPage - 1}`}
                 onClick={(e) => {
                   e.preventDefault();
                   handlePageChange(currentPage - 1);
@@ -270,7 +270,7 @@ export default function SearchResults({
                 return (
                   <PaginationItem key={page}>
                     <PaginationLink
-                      href="#"
+                      href={`/boats/search?page=${page}`}
                       onClick={(e) => {
                         e.preventDefault();
                         handlePageChange(page);
@@ -300,7 +300,7 @@ export default function SearchResults({
             
             <PaginationItem>
               <PaginationNext 
-                href="#" 
+                href={`/boats/search?page=${currentPage + 1}`}
                 onClick={(e) => {
                   e.preventDefault();
                   handlePageChange(currentPage + 1);

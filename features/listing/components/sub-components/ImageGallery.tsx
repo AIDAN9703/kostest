@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Image as IKImage } from "@imagekit/next";
+import { getImageKitProps } from "@/shared/services/imagekit.service";
 import { AspectRatio } from "@/shared/components/ui/aspect-ratio";
 import {
   Carousel,
@@ -46,8 +47,7 @@ export function ImageGallery({ mainImage, galleryImages = [], alt }: ImageGaller
     setViewAllOpen(true);
   }, []);
 
-  // Check if a URL already has transformations
-  const hasTransformations = useCallback((src: string) => src.includes('tr='), []);
+  // Check if a URL already has transformations (legacy leftover removed)
 
   if (allImages.length === 0) {
     return (
@@ -87,15 +87,22 @@ export function ImageGallery({ mainImage, galleryImages = [], alt }: ImageGaller
                   className="bg-slate-50 rounded-none sm:rounded-lg overflow-hidden group cursor-pointer"
                   onClick={() => openViewAll(idx)}
                 >
-                  <IKImage
-                    src={image}
-                    alt={`${alt} ${idx + 1}`}
-                    loading={idx === 0 ? "eager" : "lazy"}
-                    className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-[1.02]"
-                    width={1200}
-                    height={800}
-                    transformation={hasTransformations(image) ? [] : [{ quality: 50 }]}
-                  />
+                  {(() => {
+                    const props = getImageKitProps(image, 'gallery', { eager: idx === 0 });
+                    return (
+                      <IKImage
+                        src={props.src}
+                        alt={`${alt} ${idx + 1}`}
+                        loading={props.loading}
+                        fetchPriority={props.fetchPriority}
+                        className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-[1.02]"
+                        width={props.width}
+                        height={props.height}
+                        sizes={props.sizes}
+                        transformation={props.transformation}
+                      />
+                    );
+                  })()}
                 </AspectRatio>
               </CarouselItem>
             ))}

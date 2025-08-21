@@ -6,27 +6,27 @@ import { FloatingActionButton } from "@/features-admin/_layout/FloatingActionBut
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const session = await auth();
-  
+
   if (!session) {
     return null;
   }
-  
+
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Fixed Sidebar - Never moves */}
-      <div className="fixed left-0 top-0 h-full z-20">
+    <div className="flex h-screen">
+      {/* Sidebar */}
+      <div className="group">
         <AdminSidebar />
       </div>
-      
-      {/* Main Content Area - Offset by sidebar width */}
-      <div className="flex-1 ml-64 flex flex-col">
-        {/* Fixed Header - Never moves */}
-        <div className="fixed top-0 left-64 right-0 h-16 z-10">
+
+      {/* Main Content Area - Automatically takes remaining space */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header - Full width of content area */}
+        <div className="flex-shrink-0">
           <AdminHeader session={session} />
         </div>
-        
-        {/* Scrollable Content Area - Offset by header height */}
-        <div className="flex-1 mt-16">
+
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-auto">
           <div className="p-6">
             <div className="max-w-7xl mx-auto">
               {children}
@@ -34,7 +34,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           </div>
         </div>
       </div>
-      
+
       {/* Floating Action Button */}
       <FloatingActionButton />
     </div>

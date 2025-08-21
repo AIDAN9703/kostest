@@ -12,7 +12,7 @@ interface UploadOptions {
 
 export async function POST(request: Request) {
   try {
-    // Check authentication
+    // Check authentication (non-interactive API safe)
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -39,6 +39,7 @@ export async function POST(request: Request) {
     }
 
     // Convert file to buffer
+    // Convert to a Buffer once
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
@@ -77,16 +78,17 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Invalid upload type' }, { status: 400 });
     }
     
-    // Upload to ImageKit
+    // Upload to ImageKit with sane defaults (auto format/quality on CDN side)
     const result = await imagekit.upload({
       file: buffer,
       fileName: `${type}_${Date.now()}.${file.name.split('.').pop()}`,
-      folder: folder,
+      folder,
       useUniqueFileName: true,
-      tags: tags,
-      responseFields: ['tags', 'metadata'] // Get additional fields in response
+      tags,
+      responseFields: ['tags', 'metadata']
     });
     
+    // Normalize URL endpoint if needed (support multiple endpoints)
     return NextResponse.json({
       url: result.url,
       fileId: result.fileId,

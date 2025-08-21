@@ -1,66 +1,14 @@
 "use client"
 
-import React, { useMemo, useCallback } from 'react'
+import React, { useMemo } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/shared/utils/general-utils'
 import { ChevronDown, Crown } from 'lucide-react'
-import { Session } from 'next-auth'
+
 import { NavigationItem, HeaderItem } from '@/shared/types/types'
 
-// Define the dropdown menu data structure
-const dropdownMenus = {
-  explore: {
-    columns: [
-      {
-        title: "Experiences",
-        links: [
-          { href: "/boats/search", label: "All Boats" },
-          { href: "/boats/yachts", label: "All Yachts" },
-          { href: "/experiences/term-charters", label: "Term Charters" },
-          { href: "/experiences/fishing", label: "Fishing" },
-          { href: "/experiences/watersports", label: "Water Sports" },
-          { href: "/experiences/sand-bar", label: "Sand Bar" },
-          { href: "/experiences/special-events", label: "Special Events" },
-          { href: "/experiences", label: "All Experiences" }
-        ]
-      },
-      {
-        title: "Locations",
-        links: [
-          { href: "/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=25.85578602396197&ne_lng=-80.13217904641093&sw_lat=25.7090419531335&sw_lng=-80.31860792381018&zoom_level=13&map_toggle=on", label: "Miami" },
-          { href: "/boats/search?near=Fort+Lauderdale%2C+FL%2C+USA&ne_lat=26.3409054020211&ne_lng=-79.96155203202743&sw_lat=25.843256360518946&sw_lng=-80.29869497636336&zoom_level=11&map_toggle=on&center_lat=26.092345480536487&center_lng=-80.1301235041954&page=1", label: "Fort Lauderdale" },
-          { href: "/boats/search?near=Naples%2C+FL%2C+USA&ne_lat=26.2112380492215&ne_lng=-81.766661003186&sw_lat=26.07891108467754&sw_lng=-81.82036397203399&zoom_level=13&map_toggle=on", label: "Naples" },
-          { href: "/boats/search?near=West+Palm+Beach%2C+FL%2C+USA&ne_lat=27.22490351163897&ne_lng=-79.80718021289641&sw_lat=26.235107843921803&sw_lng=-80.48146610156829&zoom_level=10&map_toggle=on&center_lat=26.73108210125018&center_lng=-80.14432315723235&page=1", label: "West Palm Beach" },
-          { href: "/boats/search?near=Connecticut%2C+USA&ne_lat=42.05051096606773&ne_lng=-71.78723902917415&sw_lat=40.95094295977581&sw_lng=-73.7277749818916&zoom_level=13&map_toggle=on", label: "Connecticut" },
-          { href: "/boats/search?near=The+Bahamas&ne_lat=26.590274469914576&ne_lng=-76.65761869261429&sw_lat=22.560024925745196&sw_lng=-79.35476224730179&zoom_level=8&map_toggle=on&center_lat=24.591364629076335&center_lng=-78.00619046995804&page=1", label: "Bahamas" },
-          { href: "/boats/search?near=Dominican+Republic&ne_lat=27.00077435235987&ne_lng=-65.31237564053237&sw_lat=10.272085808139986&sw_lng=-76.10094985928237&zoom_level=6&map_toggle=on&center_lat=18.844302328127366&center_lng=-70.70666274990737&page=1", label: "Dominican Republic" }
-        ]
-      },
-      {
-        title: "Our Services",
-        links: [
-          { href: "/services/charter-management", label: "Charter Managment" },
-          { href: "/services/yacht-management", label: "Yacht Management" },
-          { href: "/services/sales", label: "Sales/Purchase" },
-          { href: "/services/term-charters", label: "Term Charters" },
-          { href: "/services/dock-management", label: "Dock Management" }
-        ]
-      }
-    ]
-  },
-  charters: {
-    columns: [
-      {
-        title: "Boat charters",
-        links: [
-          { href: "/charters/luxury", label: "Luxury yachts" },
-          { href: "/charters/fishing", label: "Fishing" },
-        ]
-      }
-    ]
-  }
-};
+
 
 interface DesktopNavigationProps {
     navigationData: {
@@ -85,7 +33,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
 
     // Memoized button style
     const buttonStyle = useMemo(() => cn(
-        "flex items-center gap-1 group",
+        "flex items-center gap-1 group font-bold",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-sm",
         "hover:scale-105 active:scale-95 transition-transform"
     ), []);
@@ -105,7 +53,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
 
     // Memoized dropdown column title style
     const columnTitleStyle = useMemo(() => cn(
-        "text-lg font-medium text-[#1E293B] mb-4"
+        "text-lg font-bold text-[#1E293B] mb-2"
     ), []);
 
     // Memoized dropdown item style
@@ -153,7 +101,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
             
             {navigationData.main.map((item) => (
                 <div key={item.href} className="relative group">
-                    {item.href === "/explore" ? (
+                    {item.megaMenu ? (
                         <>
                             <button 
                                 className={buttonStyle}
@@ -165,11 +113,11 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
                                 <ChevronDown className={getChevronStyle} />
                             </button>
                             <div className={dropdownStyle}>
-                                {dropdownMenus.explore.columns.map((column, columnIndex) => (
+                                {item.megaMenu.columns.map((column, columnIndex) => (
                                     <div key={`column-${columnIndex}`} className="flex flex-col">
                                         <h3 className={columnTitleStyle}>{column.title}</h3>
                                         <div className="flex flex-col space-y-1">
-                                            {column.links.map((link, linkIndex) => (
+                                            {column.items.map((link, linkIndex) => (
                                                 <Link
                                                     key={`link-${columnIndex}-${linkIndex}`}
                                                     href={link.href}
@@ -228,4 +176,4 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
     )
 }
 
-export default DesktopNavigation 
+export default React.memo(DesktopNavigation) 

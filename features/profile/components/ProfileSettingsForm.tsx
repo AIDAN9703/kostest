@@ -27,8 +27,8 @@ import { useToast } from "@/shared/hooks/use-toast";
 import { Loader2, User, Image as ImageIcon } from "lucide-react";
 import { UserProfile } from "@/shared/types/types";
 import { ImageUpload } from "@/shared/components/ui/image-upload";
-import { getOptimizedImageUrl } from '@/shared/services/imagekit.service';
-import { Image as IKImage, ImageKitProvider } from "@imagekit/next";
+import { Image as IKImage } from "@imagekit/next";
+import { getImageKitProps } from "@/shared/services/imagekit.service";
 
 interface ProfileSettingsFormProps {
   user: UserProfile;
@@ -236,19 +236,22 @@ const ProfileImagesSection = ({ form, user }: { form: any; user: any }) => {
         <div className="flex items-center justify-center">
           <div className="border-2 border-primary/20 rounded-full w-32 h-32 overflow-hidden">
             {profilePreview ? (
-              <IKImage
-                src={profilePreview}
-                width={128}
-                height={128}
-                alt="Profile preview"
-                className="w-full h-full object-cover"
-                transformation={[{
-                  width: 256,
-                  height: 256,
-                  quality: 90,
-                  format: "auto"
-                }]}
-              />
+              (() => {
+                const props = getImageKitProps(profilePreview, 'thumb');
+                return (
+                  <IKImage
+                    src={props.src}
+                    width={props.width}
+                    height={props.height}
+                    alt="Profile preview"
+                    className="w-full h-full object-cover"
+                    sizes={props.sizes}
+                    loading={props.loading}
+                    fetchPriority={props.fetchPriority}
+                    transformation={props.transformation}
+                  />
+                );
+              })()
             ) : (
               <div className="bg-gray-100 h-full w-full flex items-center justify-center">
                 <User className="h-16 w-16 text-gray-400" />
@@ -275,19 +278,22 @@ const ProfileImagesSection = ({ form, user }: { form: any; user: any }) => {
         <p className="text-sm font-medium">Cover Image</p>
         <div className="w-full h-32 overflow-hidden rounded-md border-2 border-primary/20">
           {coverPreview ? (
-            <IKImage
-              src={coverPreview}
-              width={640}
-              height={128}
-              alt="Cover preview"
-              className="w-full h-full object-cover"
-              transformation={[{
-                width: 800,
-                height: 200,
-                quality: 85,
-                format: "auto"
-              }]}
-            />
+            (() => {
+              const props = getImageKitProps(coverPreview, 'secondary');
+              return (
+                <IKImage
+                  src={props.src}
+                  width={props.width}
+                  height={props.height}
+                  alt="Cover preview"
+                  className="w-full h-full object-cover"
+                  sizes={props.sizes}
+                  loading={props.loading}
+                  fetchPriority={props.fetchPriority}
+                  transformation={props.transformation}
+                />
+              );
+            })()
           ) : (
             <div className="bg-gray-100 h-full w-full flex items-center justify-center">
               <ImageIcon className="h-8 w-8 text-gray-400" />
