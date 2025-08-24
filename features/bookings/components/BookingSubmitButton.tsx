@@ -40,7 +40,7 @@ export default function BookingSubmitButton({
                     Processing...
                   </div>
                 ) : (
-                  "Continue to Payment"
+                  "Submit Request"
                 )}
               </Button>
             )}
