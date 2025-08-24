@@ -1,24 +1,23 @@
 "use client";
 
-import { Boat } from "@/shared/types/types";
-import { calculateServiceFee, TAX_RATE } from "@/shared/constants";
+import { Boat, PricingTier } from "@/shared/types/types";
+import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
 
 interface PriceSummaryProps {
   boat: Boat;
-  selectedPricingTier?: any;
-  needsCaptain: boolean;
-  totalPrice: number;
-  isRequest?: boolean;
+  selectedPricingTier?: PricingTier | null;
   show?: boolean;
 }
 
-export function PriceSummary({ boat, selectedPricingTier, totalPrice, show = true }: PriceSummaryProps) {
+export function PriceSummary({ boat, selectedPricingTier, show = true }: PriceSummaryProps) {
   if (!selectedPricingTier || !show) return null;
 
-  const basePrice = selectedPricingTier.price;
-  const cleaningFee = boat.cleaningFee || 0;
-  const subtotal = basePrice + cleaningFee;
-  const serviceFee = calculateServiceFee(subtotal);
+  // ✅ Use unified pricing calculation
+  const priceBreakdown = calculateBookingPrice(
+    selectedPricingTier.price,
+    boat.cleaningFee || 0,
+    0 // Captain fee included in base price
+  );
 
   return (
     <div className="pt-2">
@@ -28,7 +27,7 @@ export function PriceSummary({ boat, selectedPricingTier, totalPrice, show = tru
         {/* Base Price */}
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">{selectedPricingTier.hours}hr Charter</span>
-          <span className="font-medium text-gray-900">${basePrice.toFixed(2)}</span>
+          <span className="font-medium text-gray-900">${priceBreakdown.basePrice.toFixed(2)}</span>
         </div>
         
         {/* Captain Service - Included */}
@@ -38,26 +37,24 @@ export function PriceSummary({ boat, selectedPricingTier, totalPrice, show = tru
         </div>
         
         {/* Cleaning Fee */}
-        {cleaningFee > 0 && (
+        {priceBreakdown.cleaningFee > 0 && (
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Cleaning Fee</span>
-            <span className="font-medium text-gray-900">${cleaningFee.toFixed(2)}</span>
+            <span className="font-medium text-gray-900">${priceBreakdown.cleaningFee.toFixed(2)}</span>
           </div>
         )}
         
         {/* Service Fee */}
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Processing Fee (3.5%)</span>
-          <span className="font-medium text-gray-900">${serviceFee.toFixed(2)}</span>
+          <span className="font-medium text-gray-900">${priceBreakdown.serviceFee.toFixed(2)}</span>
         </div>
-        
-        
         
         {/* Total */}
         <div className="border-t border-gray-200 pt-3 mt-3">
           <div className="flex justify-between items-center">
             <span className="font-semibold text-gray-900">Total Amount</span>
-            <span className="text-xl font-bold text-primary">${totalPrice.toFixed(2)}</span>
+            <span className="text-xl font-bold text-primary">${priceBreakdown.totalPrice.toFixed(2)}</span>
           </div>
         </div>
       </div>

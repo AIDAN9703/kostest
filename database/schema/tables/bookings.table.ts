@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, boolean, doublePrecision, timestamp, index, json, integer } from "drizzle-orm/pg-core";
-import { users, boats, captains, boatPricingTiers } from "@/database/schema/tables";
+import { users, boats, captains, boatPricingTiers, promoCodes } from "@/database/schema/tables";
 import { bookingStatusEnum, paymentStatusEnum, bookingTypeEnum } from "@/database/schema/enums";
 
 
@@ -17,6 +17,7 @@ export const bookings = pgTable("booking", {
     boatId: uuid("boat_id").notNull().references(() => boats.id),
     captainId: uuid("captain_id").references(() => captains.id),
     pricingTierId: uuid("pricing_tier_id").references(() => boatPricingTiers.id),
+    promoCodeId: uuid("promo_code_id").references(() => promoCodes.id),
     
     // Customer Information (needed even when userId exists)
     customerName: text("customer_name").notNull(),
@@ -41,6 +42,7 @@ export const bookings = pgTable("booking", {
     cleaningFee: doublePrecision("cleaning_fee"),
     serviceFee: doublePrecision("service_fee"),
     taxAmount: doublePrecision("tax_amount"),
+    discountAmount: doublePrecision("discount_amount").default(0), // Promo code discount
     totalAmount: doublePrecision("total_amount").notNull(),
     depositAmount: doublePrecision("deposit_amount"),
     currency: text("currency").default("USD").notNull(),

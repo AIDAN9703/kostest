@@ -3,7 +3,7 @@ import { auth } from '@/auth';
 import { db } from '@/database/db';
 import { bookings, boats } from '@/database/schema';
 import { eq, gte, lte, and } from 'drizzle-orm';
-import { parseISODateTime } from '@/shared/utils/booking-utils';
+import { parseISODateTimeInBoatTimezone } from '@/shared/utils/booking-utils';
 
 export async function GET(
   request: NextRequest,
@@ -70,8 +70,8 @@ export async function GET(
       const endDateTime = booking.endDateTime || booking.startDateTime;
       
       // Parse times for display in extendedProps (converted to user's local timezone)
-      const { time: startTime } = parseISODateTime(startDateTime?.toISOString() || "");
-      const { time: endTime } = parseISODateTime(endDateTime?.toISOString() || "");
+      const { time: startTime } = parseISODateTimeInBoatTimezone(startDateTime?.toISOString() || "");
+      const { time: endTime } = parseISODateTimeInBoatTimezone(endDateTime?.toISOString() || "");
       
       // Color coding based on booking status
       const getStatusColor = (status: string) => {

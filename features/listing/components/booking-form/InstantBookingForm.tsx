@@ -79,14 +79,15 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
     const bookingData = {
       ...data,
       boatId: boat.id,
-      // Only pass safe boat properties
+      // Only pass safe boat properties (including timezone!)
       boat: {
         id: boat.id,
         name: boat.name,
         mainImage: boat.mainImage,
         instantBook: boat.instantBook,
         cleaningFee: boat.cleaningFee,
-        locationLabel: boat.locationLabel
+        locationLabel: boat.locationLabel,
+        timezone: boat.timezone // CRITICAL: Pass timezone for proper display
       },
       selectedTier: formState.selectedPricingTier
     };
@@ -124,7 +125,6 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
           <TimeSelection 
             control={form.control}
             currentTime={formState.parsedDateTime.time}
-            endTime={formState.endTime}
             boatId={boat.id}
             selectedDate={formState.uiDate}
             duration={formState.selectedPricingTier?.hours}
@@ -146,9 +146,6 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
           <PriceSummary 
             boat={boat}
             selectedPricingTier={formState.selectedPricingTier}
-            needsCaptain={formState.needsCaptain}
-            totalPrice={formState.priceBreakdown.totalPrice}
-            isRequest={false}
             show={!!(formState.parsedDateTime.date && formState.parsedDateTime.time && formState.selectedPricingTier)}
           />
 

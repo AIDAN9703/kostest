@@ -14,7 +14,6 @@ import { cn } from "@/shared/utils/general-utils";
 export function TimeSelection({ 
   control, 
   currentTime, 
-  endTime,
   boatId,
   selectedDate,
   duration,
@@ -22,7 +21,6 @@ export function TimeSelection({
 }: { 
   control: Control<BookingRequest>; 
   currentTime: string;
-  endTime?: string;
   boatId: string;
   selectedDate: Date | null;
   duration?: number;

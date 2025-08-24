@@ -1,5 +1,9 @@
 import { formatTime12Hour } from "./general-utils";
 import { toZonedTime, fromZonedTime, format as formatTz } from 'date-fns-tz';
+import { timezoneEnum } from "@/database/schema/enums";
+
+// Supported timezones type - inferred from database enum
+export type SupportedTimezones = typeof timezoneEnum.enumValues[number];
 
 /**
  * Generate time options for booking form (9 AM to 5 PM)
@@ -31,107 +35,74 @@ export function calculateEndDateTime(startDateTime: Date, hours: number): Date {
   return endDateTime;
 }
 
+// Default timezone fallback
+const DEFAULT_TIMEZONE: SupportedTimezones = 'America/New_York' as const;
+
 /**
- * NEW: Create ISO string for database storage with proper timezone handling
- * @param date Date object (local date)
- * @param time Time string in HH:mm format (local time)
- * @param userTimezone Optional user timezone (defaults to browser timezone)
+ * Get timezone for a boat from database
+ * @param boat Boat object with timezone data  
+ * @returns Timezone string
+ */
+export function getBoatTimezone(boat: { 
+  timezone?: SupportedTimezones | string | null;
+}): SupportedTimezones {
+  // Use explicit timezone from database or default
+  // Handle both enum and string types (from URL serialization)
+  return (boat.timezone as SupportedTimezones) || DEFAULT_TIMEZONE;
+}
+
+/**
+ * SCALABLE: Create ISO string treating user input as BOAT's local time
+ * Each boat can be in a different timezone
+ * @param date Date object (calendar date)
+ * @param time Time string in HH:mm format (boat's local time)
+ * @param boatTimezone Boat's timezone (e.g., "America/Chicago")
  * @returns ISO string in UTC for database storage
  */
-export function createDateTimeISO(date: Date, time: string, userTimezone?: string): string {
+export function createDateTimeISO(date: Date, time: string, boat?: { 
+  timezone?: SupportedTimezones | string | null;
+}): string {
   if (!date || !time) return "";
   
-  const [hours, minutes] = time.split(":").map(Number);
+  // Get timezone from boat data or use default
+  const timezone = boat ? getBoatTimezone(boat) : DEFAULT_TIMEZONE;
   
-  // Create a date object in the user's local timezone
-  const localDateTime = new Date(date);
-  localDateTime.setHours(hours, minutes, 0, 0);
+  // Create date string in YYYY-MM-DD format
+  const dateStr = date.toISOString().split('T')[0];
   
-  // Get the user's timezone (browser timezone if not specified)
-  const timezone = userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // Combine date + time as boat's local timezone
+  const boatDateTimeStr = `${dateStr} ${time}:00`;
   
-  // Convert local time to UTC for database storage
-  const utcDateTime = fromZonedTime(localDateTime, timezone);
+  // Convert boat's local time to UTC for database storage
+  const utcDateTime = fromZonedTime(boatDateTimeStr, timezone);
   
   return utcDateTime.toISOString();
 }
 
+
+
 /**
- * NEW: Parse ISO string to separate date and time for display in user's timezone
+ * Parse ISO string and display in BOAT's timezone
+ * Industry standard: Always show times in boat's local timezone
  * @param isoString ISO datetime string (UTC from database)
- * @param userTimezone Optional user timezone (defaults to browser timezone)
- * @returns Object with date and time components in user's local timezone
+ * @param boat Boat object with timezone data
+ * @returns Object with date and time components in boat's timezone
  */
-export function parseISODateTime(isoString: string, userTimezone?: string) {
+export function parseISODateTimeInBoatTimezone(isoString: string, boat?: { 
+  timezone?: SupportedTimezones | string | null;
+}) {
   if (!isoString) return { date: null, time: "" };
   
-  // Get the user's timezone (browser timezone if not specified)
-  const timezone = userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // Get timezone from boat data or use default
+  const timezone = boat ? getBoatTimezone(boat) : DEFAULT_TIMEZONE;
   
-  // Convert UTC datetime to user's local timezone
-  const utcDate = new Date(isoString);
-  const localDateTime = toZonedTime(utcDate, timezone);
+  // Convert UTC to boat's timezone
+  const boatDateTime = toZonedTime(isoString, timezone);
   
   return {
-    date: localDateTime,
-    time: `${localDateTime.getHours().toString().padStart(2, "0")}:${localDateTime.getMinutes().toString().padStart(2, "0")}`
+    date: boatDateTime,
+    time: `${boatDateTime.getHours().toString().padStart(2, "0")}:${boatDateTime.getMinutes().toString().padStart(2, "0")}`
   };
 }
 
-/**
- * NEW: Format datetime for display in user's timezone
- * @param isoString ISO datetime string (UTC from database)
- * @param userTimezone Optional user timezone (defaults to browser timezone)
- * @returns Formatted datetime string in user's timezone
- */
-export function formatDateTimeInTimezone(isoString: string, formatPattern: string = 'PPP p', userTimezone?: string): string {
-  if (!isoString) return "";
-  
-  const timezone = userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const utcDate = new Date(isoString);
-  const localDateTime = toZonedTime(utcDate, timezone);
-  
-  return formatTz(localDateTime, formatPattern, { timeZone: timezone });
-}
-
-
-
-// ============ LEGACY FUNCTIONS (for backward compatibility) ============
-
-/**
- * Calculate end time based on start time and duration
- * @param startTime Start time in HH:mm format
- * @param hours Duration in hours
- * @returns End time in HH:mm format
- */
-export function calculateEndTime(startTime: string, hours: number): string {
-  if (!startTime || !hours) return "";
-  
-  const [startHour, startMinute] = startTime.split(":").map(Number);
-  const endHour = startHour + hours;
-  
-  // Handle overflow past midnight (shouldn't happen with our time restrictions)
-  if (endHour >= 24) {
-    return "23:59"; // Cap at end of day
-  }
-  
-  return `${endHour.toString().padStart(2, "0")}:${startMinute.toString().padStart(2, "0")}`;
-}
-
-/**
- * Format end time for display with proper messaging for bookings
- * @param endTime End time in HH:mm format
- * @returns Formatted end time string with booking context
- */
-export function formatEndTime(endTime: string): string {
-  if (!endTime) return "Invalid end time";
-  
-  const [hours, minutes] = endTime.split(':').map(Number);
-  
-  // Check if end time is past reasonable hours
-  if (hours >= 22) {
-    return `${formatTime12Hour(endTime)} (Late evening)`;
-  }
-  
-  return formatTime12Hour(endTime);
-} 
+ 

@@ -3,6 +3,11 @@
 import { useEffect } from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
 
+/**
+ * @deprecated This component is no longer used in the booking flow.
+ * Auth handling is now done via BookingAuthModal for a better user experience.
+ * Consider removing this component if not used elsewhere.
+ */
 export default function BookingAuthGuard() {
   const router = useRouter();
   const pathname = usePathname();
@@ -20,5 +25,4 @@ export default function BookingAuthGuard() {
     </div>
   );
 }
-
 

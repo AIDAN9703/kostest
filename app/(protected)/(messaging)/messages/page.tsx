@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-
+import { MessagingInterface } from "@/features/messaging/components/MessagingInterface";
 
 export const metadata: Metadata = {
   title: "Messages | KOS",
@@ -7,14 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default async function MessagesPage() {
- 
-
-  return (
-
-    
-    <div className="flex flex-col items-center justify-center h-full">
-        <h1 className="text-2xl font-bold text-primary">Messages</h1>
-        <p className="text-muted-foreground">Select a conversation to start messaging, or create a new conversation.</p>
-    </div>
-  );
+  return <MessagingInterface />;
 } 

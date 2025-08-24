@@ -7,7 +7,13 @@ import {
   ChevronDown,
   Settings,
   HelpCircle,
-  LogOut
+  LogOut,
+  Plus,
+  Ship,
+  Users,
+  CalendarDays,
+  FileText,
+  PenTool
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,13 +21,81 @@ import { cn } from "@/shared/utils/general-utils";
 import { GlobalSearch } from "@/features-admin/_layout/GlobalSearch";
 import { Session } from "next-auth";
 
+// Quick action items
+const quickActions = [
+  {
+    label: "Create Boat",
+    href: "/admin/boats/create",
+    icon: <Ship className="h-4 w-4" />,
+    color: "text-blue-600 hover:text-blue-700"
+  },
+  {
+    label: "Create User", 
+    href: "/admin/users/create",
+    icon: <Users className="h-4 w-4" />,
+    color: "text-green-600 hover:text-green-700"
+  },
+  {
+    label: "Create New Quote",
+    href: "/admin/quotes/create", 
+    icon: <FileText className="h-4 w-4" />,
+    color: "text-purple-600 hover:text-purple-700"
+  },
+  {
+    label: "Create Blog Post",
+    href: "/admin/blog/create",
+    icon: <PenTool className="h-4 w-4" />,
+    color: "text-orange-600 hover:text-orange-700"
+  }
+];
+
 export default function AdminHeader({ session }: { session: Session }) {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showQuickActions, setShowQuickActions] = useState(false);
 
-    return (
+  return (
     <header className="bg-white/95 backdrop-blur-sm border-b border-gray-200/80 h-16 flex items-center px-6 w-full shadow-sm">
-      <div className="flex-1">
+      <div className="flex-1 flex items-center space-x-4">
         <GlobalSearch />
+        
+        {/* Quick Actions Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setShowQuickActions(!showQuickActions)}
+            className="font-medium text-sm text-primary relative group flex items-center"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="relative">
+              Actions
+            </span>
+          </button>
+          
+          {showQuickActions && (
+            <div
+              className="absolute left-0 mt-3 w-48 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-200/80 py-2 z-50"
+              onBlur={() => setShowQuickActions(false)}
+            >
+              <div className="px-3 py-2 border-b border-gray-200/80">
+                <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  Quick Actions
+                </span>
+              </div>
+              {quickActions.map((action) => (
+                <Link
+                  key={action.href}
+                  href={action.href}
+                  className="flex items-center px-4 py-3 text-sm hover:bg-gray-50 rounded-lg mx-1 transition-colors duration-200"
+                  onClick={() => setShowQuickActions(false)}
+                >
+                  <span className={cn("mr-3", action.color)}>
+                    {action.icon}
+                  </span>
+                  <span className="text-gray-700 font-medium">{action.label}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center space-x-3">

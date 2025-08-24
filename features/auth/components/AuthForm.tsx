@@ -48,10 +48,21 @@ const AuthForm = <T extends FieldValues>({
   
   // Basic callbackUrl support for NextAuth (keep this for general auth flows)
   const callbackUrl = searchParams.get("callbackUrl") || "/";
+  
+  // Get pre-filled data from URL params (from booking flow)
+  const prefilledEmail = searchParams.get("email") || "";
+  const prefilledPhone = searchParams.get("phone") || "";
+
+  // Merge prefilled data with default values
+  const mergedDefaultValues = {
+    ...defaultValues,
+    ...(prefilledEmail && { email: prefilledEmail }),
+    ...(prefilledPhone && { phoneNumber: prefilledPhone }),
+  } as DefaultValues<T>;
 
   const form: UseFormReturn<T> = useForm({
     resolver: zodResolver(schema),
-    defaultValues: defaultValues as DefaultValues<T>,
+    defaultValues: mergedDefaultValues,
   });
 
   const handleSubmit: SubmitHandler<T> = async (data) => {

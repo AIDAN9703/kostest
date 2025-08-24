@@ -8,15 +8,15 @@ import { CalendarDays } from "lucide-react";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import Link from "next/link";
-import { parseISODateTime } from "@/shared/utils/booking-utils";
+import { parseISODateTimeInBoatTimezone } from "@/shared/utils/booking-utils";
 import { format } from "date-fns";
 import { ProfileBooking } from "@/shared/types/booking.types";
 
 // Transform database booking to BookingCard format
 function transformBooking(dbBooking: any): ProfileBooking {
   // Parse the UTC datetime from database and convert to user's local timezone
-  const { date: startDate, time: startTime } = parseISODateTime(dbBooking.startDateTime);
-  const { time: endTime } = parseISODateTime(dbBooking.endDateTime || "");
+  const { date: startDate, time: startTime } = parseISODateTimeInBoatTimezone(dbBooking.startDateTime);
+  const { time: endTime } = parseISODateTimeInBoatTimezone(dbBooking.endDateTime || "");
   
   // Calculate duration from start and end datetime
   const duration = dbBooking.endDateTime 

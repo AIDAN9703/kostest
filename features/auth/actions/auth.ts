@@ -10,6 +10,36 @@ import { formatPhoneNumberE164 } from '@/shared/utils/general-utils';
 import { SignInData, SignUpData } from "@/features/_validation/validations";
 import { checkVerification } from "@/shared/services/twilio.service";
 
+/**
+ * Check if a user exists with the given email address
+ * Used in booking flow to route to sign-in or sign-up
+ */
+export const checkUserExistsByEmail = async (
+  email: string
+): Promise<ActionResponse<{ exists: boolean; user?: any }>> => {
+  try {
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    
+    return {
+      success: true,
+      data: {
+        exists: existingUser.length > 0,
+        user: existingUser[0] || null
+      }
+    };
+  } catch (error) {
+    console.error("Error checking user existence:", error);
+    return {
+      success: false,
+      error: "Failed to check user existence"
+    };
+  }
+};
+
 export const signInAction = async (
   params: SignInData
 ): Promise<ActionResponse<{ message: string; redirectUrl?: string }>> => {

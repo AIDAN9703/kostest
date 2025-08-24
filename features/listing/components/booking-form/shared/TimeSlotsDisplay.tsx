@@ -66,6 +66,9 @@ export function TimeSlotsDisplay({ date, boatId, selectedTime, onTimeSelect, dur
     <div className="">
       <div className="mb-3 rounded-md bg-slate-50 text-slate-600 text-sm px-4 py-2 text-center">
         Times shown reflect current availability.
+        <div className="text-xs text-slate-500 mt-1">
+          All times shown in vessel's <span className="font-bold">local</span> time
+        </div>
       </div>
       <div className="max-h-72 overflow-y-auto pr-1">
         <div className="grid grid-cols-2 gap-3">

@@ -1,5 +1,6 @@
 import { Boat, PricingTier } from "../types/types";
 import { formatCurrency } from "./general-utils";
+import { SERVICE_FEE_RATE } from '@/shared/constants/fees-constants';
 
 /**
  * Gets the default or best pricing tier for a boat
@@ -92,3 +93,54 @@ export function getBoatStartingHourlyLabel(boat: Boat): string {
   const hourly = getBoatStartingHourlyRate(boat);
   return `${formatCurrency(hourly)}+/hr`;
 }
+
+// ========================================
+// BOOKING CALCULATION FUNCTIONS
+// Added for booking flow pricing logic
+// ========================================
+
+// UNIVERSAL price breakdown interface - used everywhere
+export interface BookingPriceBreakdown {
+  basePrice: number;
+  captainFee: number;
+  cleaningFee: number;
+  subtotal: number;
+  serviceFee: number;
+  totalPrice: number;
+}
+
+/**
+ * Calculate service fee based on subtotal
+ */
+export const calculateServiceFee = (subtotal: number): number => {
+  return subtotal * SERVICE_FEE_RATE;
+};
+
+/**
+ * MAIN booking price calculator - single source of truth
+ * Use this everywhere for consistent pricing
+ * 
+ * @param pricingTierPrice - Base price from pricing tier
+ * @param cleaningFee - One-time cleaning fee (optional)
+ * @param captainFee - Captain service fee (optional, usually 0 as included in base)
+ * @returns Complete price breakdown with all fees
+ */
+export const calculateBookingPrice = (
+  pricingTierPrice: number,
+  cleaningFee: number = 0,
+  captainFee: number = 0
+): BookingPriceBreakdown => {
+  const basePrice = pricingTierPrice;
+  const subtotal = basePrice + captainFee + cleaningFee;
+  const serviceFee = calculateServiceFee(subtotal);
+  const totalPrice = subtotal + serviceFee;
+
+  return {
+    basePrice,
+    captainFee,
+    cleaningFee,
+    subtotal,
+    serviceFee,
+    totalPrice,
+  };
+};

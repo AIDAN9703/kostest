@@ -37,12 +37,11 @@ export const navigationData: {
                         ]
                     },
                     {
-                        title: "Our Services",
+                        title: "Owner Services",
                         items: [
                             { href: "/services/charter-management", label: "Charter Management" },
                             { href: "/services/yacht-management", label: "Yacht Management" },
                             { href: "/services/sales", label: "Sales/Purchase" },
-                            { href: "/services/term-charters", label: "Term Charters" },
                             { href: "/services/dock-management", label: "Dock Management" }
                         ]
                     }

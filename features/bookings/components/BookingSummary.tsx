@@ -1,8 +1,10 @@
 "use client";
 
-import { User } from "next-auth";
 import { PricingTier } from "@/shared/types/types";
-import { BookingRequest } from "@/features/_validation/validations";
+import { CalendarIcon, UsersIcon } from "lucide-react";
+import { ClockIcon } from "lucide-react";
+import { formatDate, formatTime12Hour } from "@/shared/utils/general-utils";
+import { parseISODateTimeInBoatTimezone } from "@/shared/utils/booking-utils";
 
 // Safe boat data interface - only includes necessary and safe properties
 interface SafeBoatData {
@@ -12,157 +14,89 @@ interface SafeBoatData {
   instantBook: boolean;
   cleaningFee: number | null;
   locationLabel: string | null;
+  timezone?: string | null; // Need timezone for proper boat time display
 }
-import { formatCurrency } from "@/shared/utils/general-utils";
-import { Button } from "@/shared/components/ui/button";
-import { ArrowRight, MessageSquare, Loader2 } from "lucide-react";
 
 interface BookingSummaryProps {
   boat: SafeBoatData;
-  bookingData: BookingRequest & { boat: SafeBoatData; selectedTier: PricingTier };
-  selectedTier: PricingTier;
-  user?: User;
-  isSubmitting: boolean;
-  onSubmit: () => void;
+  selectedTier: PricingTier | null;
+  bookingData: {
+    startDateTime: string | null;
+    numberOfPassengers: number;
+  };
 }
 
 export default function BookingSummary({ 
   boat, 
   bookingData, 
   selectedTier, 
-  user, 
-  isSubmitting, 
-  onSubmit 
 }: BookingSummaryProps) {
-  if (!selectedTier) {
-    return (
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-        <p className="text-slate-500 text-center">No pricing tier selected</p>
-      </div>
+  // Format date and time for display in BOAT's timezone (consistent with "vessel's local time")
+  const formatBookingDateTime = () => {
+    if (!bookingData.startDateTime) return { date: 'TBD', time: 'TBD' };
+    
+    // Parse in boat's timezone to match the "vessel's local time" promise
+    const { date: boatDate, time: boatTime } = parseISODateTimeInBoatTimezone(
+      bookingData.startDateTime, 
+      boat
     );
-  }
+    
+    if (!boatDate) return { date: 'TBD', time: 'TBD' };
+    
+    const date = formatDate(boatDate);
+    const time = formatTime12Hour(boatTime);
+    
+    return { date, time };
+  };
 
-  const basePrice = selectedTier.price;
-  const cleaningFee = boat.cleaningFee || 0;
-  const captainFee = 0; // Captain service included
-  const subtotal = basePrice + cleaningFee;
-  const taxAmount = subtotal * 0.08; // 8% tax
-  const totalPrice = subtotal + taxAmount;
-  
-  const tierName = selectedTier.name || `${selectedTier.hours}hr Charter`;
+  const { date, time } = formatBookingDateTime();
+  const partySize = `${bookingData.numberOfPassengers} ${bookingData.numberOfPassengers === 1 ? 'person' : 'people'}`;
+  const charterDuration = selectedTier ? `(${selectedTier.hours} hour charter)` : '';
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-      {/* Header */}
-      <div className="p-6 border-b border-slate-200">
-        <h3 className="text-lg font-semibold text-slate-900">Charter summary</h3>
-      </div>
-
-      {/* Price Breakdown */}
-      <div className="p-6 space-y-5">
-        <div className="space-y-4">
-          {/* Base Price */}
-          <div className="flex justify-between items-center">
-            <span className="text-slate-700 font-medium">{tierName}</span>
-            <span className="font-semibold text-slate-900">{formatCurrency(basePrice)}</span>
-          </div>
-          
-          {/* Captain Service */}
-          <div className="flex justify-between items-center">
-            <span className="text-slate-700">Captain Service</span>
-            <span className="font-medium text-emerald-600">Included</span>
-          </div>
-          
-          {/* Cleaning Fee */}
-          {cleaningFee > 0 && (
-            <div className="flex justify-between items-center">
-              <span className="text-slate-700">Cleaning Fee</span>
-              <span className="font-semibold text-slate-900">{formatCurrency(cleaningFee)}</span>
-            </div>
-          )}
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pb-4">
+        <div className="flex-shrink-0 self-center sm:self-start">
+          <img 
+            src={boat.mainImage || '/images/boats/default-boat.jpg'} 
+            alt={boat.name}
+            className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg"
+          />
         </div>
-        
-        {/* Subtotal and Tax */}
-        <div className="pt-4 border-t border-slate-200 space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-slate-700">Subtotal</span>
-            <span className="font-semibold text-slate-900">{formatCurrency(subtotal)}</span>
-          </div>
+        <div className="flex-1 text-center sm:text-left">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-1">{boat.name}</h2>
           
-          <div className="flex justify-between items-center">
-            <span className="text-slate-700">Tax (8%)</span>
-            <span className="font-semibold text-slate-900">{formatCurrency(taxAmount)}</span>
-          </div>
-        </div>
-        
-        {/* Total */}
-        <div className="pt-4 border-t border-slate-300">
-          <div className="flex justify-between items-center">
-            <span className="text-xl font-bold text-slate-900">Total</span>
-            <span className="text-2xl font-bold text-slate-900">{formatCurrency(totalPrice)}</span>
-          </div>
-        </div>
-
-        {/* Request Disclaimer */}
-        {!boat.instantBook && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="text-sm text-blue-800 font-medium text-center">
-              No payment required - this is a request for availability
-            </div>
-          </div>
-        )}
-
-        {/* Instant Book Notice */}
-        {boat.instantBook && (
-          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-            <div className="text-sm text-emerald-800 font-medium text-center">
-              Payment will be processed immediately upon confirmation
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Submit Button */}
-      <div className="p-6 pt-0">
-        <Button 
-          onClick={onSubmit}
-          disabled={!user || isSubmitting}
-          className={`w-full h-12 font-semibold text-white transition-all duration-200 rounded-lg ${
-            boat.instantBook 
-              ? 'bg-primary hover:bg-primary/90 disabled:bg-primary/50' 
-              : 'bg-slate-800 hover:bg-slate-900 disabled:bg-slate-400'
-          } disabled:cursor-not-allowed`}
-        >
-          {isSubmitting ? (
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Processing...
-            </div>
-          ) : !user ? (
-            "Sign in to continue"
-          ) : (
-            <div className="flex items-center gap-2">
-              {boat.instantBook ? (
-                <>
-                  Book instantly
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  <MessageSquare className="h-4 w-4" />
-                  Submit request
-                </>
+          {/* Mobile: 2-column grid layout, Desktop: Horizontal flow */}
+          <div className="space-y-2">
+            {/* Main booking details in 2-column grid */}
+            <div className="grid grid-cols-2 gap-x-3 gap-y-2 sm:flex sm:items-center sm:gap-4 text-xs sm:text-sm text-gray-600">
+              <span className="flex items-center gap-1.5">
+                <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" /> 
+                <span className="truncate font-medium">{date}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <ClockIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" /> 
+                <span className="truncate font-medium">{time}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <UsersIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" /> 
+                <span className="truncate">{partySize}</span>
+              </span>
+              {charterDuration && (
+                <span className="flex items-center gap-1.5 text-gray-500">
+                  <span className="truncate text-xs">{charterDuration}</span>
+                </span>
               )}
             </div>
-          )}
-        </Button>
-
-        {!user && (
-          <p className="text-xs text-slate-500 text-center mt-3">
-            Please sign in above to complete your booking
-          </p>
-        )}
+            
+            {/* Location as a separate, full-width row */}
+            {boat.locationLabel && (
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 pt-1">
+                <span className="text-sm">📍</span>
+                <span className="truncate">{boat.locationLabel}</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
   );
 } 

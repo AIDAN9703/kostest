@@ -1,6 +1,7 @@
 import { boatCategoryEnum } from "@/database/schema";
 import { z } from "zod";
 import { LucideIcon } from 'lucide-react';
+import { SupportedTimezones } from "../utils/booking-utils";
 
 // User profile types
 export type BoatingExperience = "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT" | null;
@@ -103,6 +104,7 @@ export interface Boat {
   virtualTourUrl?: string | null;
   videoUrl?: string | null;
   cancellationPolicy?: string | null;
+  timezone?: SupportedTimezones | null;
   
   // Pricing tiers - comes from a join/separate query (not in the boats table)
   pricingTiers?: PricingTier[];

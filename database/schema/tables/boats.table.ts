@@ -1,5 +1,5 @@
 import { pgTable, text, integer, boolean, doublePrecision, uuid, timestamp, index, geometry } from "drizzle-orm/pg-core";
-import { boatCategoryEnum } from "@/database/schema/enums";
+import { boatCategoryEnum, timezoneEnum } from "@/database/schema/enums";
 import { users, captains } from "@/database/schema/tables";
 
 
@@ -48,6 +48,7 @@ export const boats = pgTable("boat",{
     // Location
     locationLabel: text("location_label"), // Human-readable label for the geo point
     location: geometry('location', { type: 'point', srid: 4326 }),
+    timezone: timezoneEnum("timezone"), // IANA timezone identifier
     availableDestinations: text("available_destinations").array(),
     dockInfo: text("dock_info"),
     parkingInfo: text("parking_info"),        // Renamed from parkingNotes

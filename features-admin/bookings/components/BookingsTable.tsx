@@ -4,7 +4,7 @@ import { CalendarCheck, MoreHorizontal, Mail, Trash } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { formatCurrency, formatDate, formatTime12Hour } from "@/shared/utils/general-utils";
-import { parseISODateTime } from "@/shared/utils/booking-utils";
+import { parseISODateTimeInBoatTimezone } from "@/shared/utils/booking-utils";
 import { format } from "date-fns";
 import { DatabaseBooking } from "@/shared/types/booking.types";
 import {
@@ -57,8 +57,8 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
             ) : (
               bookings.map((booking) => {
                 // Parse UTC datetime from database and convert to user's local timezone
-                const { date: startDate, time: startTime } = parseISODateTime(booking.startDateTime?.toISOString() || "");
-                const { time: endTime } = parseISODateTime(booking.endDateTime?.toISOString() || "");
+                const { date: startDate, time: startTime } = parseISODateTimeInBoatTimezone(booking.startDateTime?.toISOString() || "");
+                const { time: endTime } = parseISODateTimeInBoatTimezone(booking.endDateTime?.toISOString() || "");
                 
                 return (
                   <TableRow key={booking.id} className="hover:bg-gray-50/50 transition-colors">

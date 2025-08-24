@@ -18,3 +18,5 @@ export const bookingTypeEnum = pgEnum("BookingType", [
     "COMPLETED",       // Trip completed
     "REFUNDED"         // Booking was refunded
   ]);
+
+  

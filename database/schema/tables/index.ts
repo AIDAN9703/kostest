@@ -9,6 +9,8 @@ export * from "./generalInquiries.table";
 export * from "./blogPosts.table";
 export * from "./boatPricingTiers.table";
 export * from "./boatBlocking.table";
+export * from "./promoCodes.table";
+export * from "./promoCodeUsage.table";
 export * from "./messaging/conversations.table";
 export * from "./messaging/messages.table";
 export * from "./messaging/conversationParticipants.table";

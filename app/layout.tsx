@@ -6,6 +6,7 @@ import localFont from "next/font/local";
 import { SessionProvider } from "next-auth/react";
 import GoogleMapsScript from "@/shared/providers/GoogleMapsScript";
 import { ImageKitProvider } from "@imagekit/next";
+import CookiesConsent from "@/shared/components/CookiesConsent";
 
 const openSans = localFont({
   src: [
@@ -80,6 +81,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           <SessionProvider>
             {children}
             <Toaster />
+            <CookiesConsent />
           </SessionProvider>
         </ImageKitProvider>
       </body>

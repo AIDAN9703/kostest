@@ -44,6 +44,7 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: false, // Re-enable linting
   },
+  
 };
 
 export default nextConfig;

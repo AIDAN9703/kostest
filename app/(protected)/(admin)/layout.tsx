@@ -2,7 +2,6 @@ import { ReactNode } from "react";
 import { auth } from "@/auth";
 import AdminSidebar from "@/features-admin/_layout/AdminSidebar";
 import AdminHeader from "@/features-admin/_layout/AdminHeader";
-import { FloatingActionButton } from "@/features-admin/_layout/FloatingActionButton";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const session = await auth();
@@ -12,7 +11,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="fixed inset-0 flex overflow-hidden">
       {/* Sidebar */}
       <div className="group">
         <AdminSidebar />
@@ -26,17 +25,14 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         </div>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-auto">
-          <div className="p-6">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="p-6 min-h-full">
             <div className="max-w-7xl mx-auto">
               {children}
             </div>
           </div>
         </div>
       </div>
-
-      {/* Floating Action Button */}
-      <FloatingActionButton />
     </div>
   );
 } 

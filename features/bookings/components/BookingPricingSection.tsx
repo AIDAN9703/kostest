@@ -1,64 +1,61 @@
-import { DollarSign } from "lucide-react";
+"use client";
+
+import React from "react";
 import { formatCurrency } from "@/shared/utils/general-utils";
+import { SafeBoatData } from "@/shared/types/booking.types";
 import { PricingTier } from "@/shared/types/types";
+import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
 
-interface SafeBoatData {
-  id: string;
-  name: string;
-  mainImage: string | null;
-  instantBook: boolean;
-  cleaningFee: number | null;
-  locationLabel: string | null;
-}
-
-interface BookingData {
-  needsCaptain: boolean;
-  numberOfPassengers: number;
-}
-
-interface PricingSummaryProps {
+interface BookingPricingSectionProps {
   boat: SafeBoatData;
   selectedTier: PricingTier;
-  bookingData: BookingData;
+  bookingData: {
+    needsCaptain: boolean;
+    numberOfPassengers: number;
+  };
 }
 
-export default function PricingSummary({ boat, selectedTier, bookingData }: PricingSummaryProps) {
-  // Use the same pricing logic as the listing page
-  const basePrice = selectedTier.price;
-  const captainFee = 0; // Captain service is included in base price
-  const cleaningFee = boat.cleaningFee || 0;
-  const subtotal = basePrice + captainFee + cleaningFee;
-  const taxAmount = subtotal * 0.08; // 8% tax to match listing page
-  const total = subtotal + taxAmount;
+export default function BookingPricingSection({ 
+  boat, 
+  selectedTier, 
+  bookingData 
+}: BookingPricingSectionProps) {
+  // Use universal pricing function for consistency
+  const priceBreakdown = calculateBookingPrice(
+    selectedTier.price,
+    boat.cleaningFee || 0,
+    0 // Captain fee included in base price
+  );
 
   const priceItems = [
     {
       label: `${selectedTier.name || 'Charter'} (${selectedTier.hours}h)`,
-      amount: basePrice,
+      amount: priceBreakdown.basePrice,
       description: `Charter package`
     },
     {
       label: "Captain service",
-      amount: 0,
+      amount: priceBreakdown.captainFee,
       description: "Professional licensed captain",
       isIncluded: true
     },
-    ...(cleaningFee > 0 ? [{
+    ...(priceBreakdown.cleaningFee > 0 ? [{
       label: "Cleaning fee",
-      amount: cleaningFee,
+      amount: priceBreakdown.cleaningFee,
       description: "One-time cleaning charge",
       isIncluded: false
     }] : []),
     {
-      label: "Taxes & fees",
-      amount: taxAmount,
-      description: "Sales tax (8%)",
+      label: "Service fee",
+      amount: priceBreakdown.serviceFee,
+      description: "Platform service fee (3.5%)",
       isIncluded: false
     }
   ];
 
   return (
-    <div className="py-4">
+    <div className="space-y-2">
+      
       <div className="space-y-3 mb-6">
         {priceItems.map((item, index) => (
           <div key={index} className="flex items-center justify-between">
@@ -80,7 +77,7 @@ export default function PricingSummary({ boat, selectedTier, bookingData }: Pric
       <div className="pt-4 border-t border-gray-100">
         <div className="flex items-center justify-between">
           <p className="text-lg font-semibold text-gray-900">Total</p>
-          <p className="text-xl font-bold text-primary">{formatCurrency(total)}</p>
+          <p className="text-xl font-bold text-primary">{formatCurrency(priceBreakdown.totalPrice)}</p>
         </div>
         <p className="text-xs text-gray-500 mt-1">
           Final price includes all fees and taxes
@@ -100,4 +97,4 @@ export default function PricingSummary({ boat, selectedTier, bookingData }: Pric
       )}
     </div>
   );
-} 
+}

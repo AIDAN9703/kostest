@@ -8,7 +8,7 @@ import { z } from "zod";
 import { calculateEndDateTime } from "@/shared/utils/booking-utils";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
-import { TAX_RATE, calculateServiceFee } from "@/shared/constants";
+import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
@@ -85,14 +85,12 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
     const startDateTime = new Date(validatedData.startDateTime);
     const endDateTime = calculateEndDateTime(startDateTime, pricingTier.hours);
     
-    // Calculate all fees - captain service is included in base price
-    const basePrice = pricingTier.price;
-    const captainFee = 0; // Captain service is included in base price
-    const cleaningFee = boat.cleaningFee || 0;
-    const subtotal = basePrice + captainFee + cleaningFee;
-    const serviceFee = calculateServiceFee(subtotal);
-    const taxAmount = subtotal * TAX_RATE;
-    const totalAmount = subtotal + serviceFee + taxAmount;
+    // Calculate all fees using universal pricing function
+    const priceBreakdown = calculateBookingPrice(
+      pricingTier.price,
+      boat.cleaningFee || 0,
+      0 // Captain service is included in base price
+    );
     
     // Create a Stripe Checkout Session
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -106,7 +104,7 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
               images: [boat.mainImage || "https://via.placeholder.com/800x600.png?text=Boat+Image"],
               description: `${validatedData.needsCaptain || boat.crewRequired ? "With Captain" : "Self-Drive"} - ${startDateTime.toLocaleDateString()} at ${startDateTime.toLocaleTimeString()}`
             },
-            unit_amount: Math.round(totalAmount * 100), // Convert to cents
+            unit_amount: Math.round(priceBreakdown.totalPrice * 100), // Convert to cents
           },
           quantity: 1,
         },
@@ -125,17 +123,17 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
         endDateTime: endDateTime.toISOString(),
         pricingTierId: validatedData.pricingTierId,
         numberOfPassengers: validatedData.numberOfPassengers.toString(),
-        basePrice: basePrice.toString(),
-        captainFee: captainFee.toString(),
-        cleaningFee: cleaningFee.toString(),
-        serviceFee: serviceFee.toString(),
-        taxAmount: taxAmount.toString(),
-        totalAmount: totalAmount.toString(),
+        basePrice: priceBreakdown.basePrice.toString(),
+        captainFee: priceBreakdown.captainFee.toString(),
+        cleaningFee: priceBreakdown.cleaningFee.toString(),
+        serviceFee: priceBreakdown.serviceFee.toString(),
+        totalAmount: priceBreakdown.totalPrice.toString(),
         depositAmount: (boat.depositAmount || 0).toString(),
         createdAt: new Date().toISOString(),
       },
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/success?session_id={CHECKOUT_SESSION_ID}`,
+      allow_promotion_codes: true, // ✨ Enable Stripe's built-in coupon input
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/booking-success?type=instant&session_id={CHECKOUT_SESSION_ID}&boatName=${encodeURIComponent(boat.name)}&totalAmount=${priceBreakdown.totalPrice}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/boats/${boat.id}?canceled=true`,
     } as any);
     
@@ -163,11 +161,10 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
         numberOfPassengers: validatedData.numberOfPassengers,
         
         // Pricing
-        captainFee: captainFee,
-        cleaningFee: cleaningFee,
-        serviceFee: 0,
-        taxAmount: taxAmount,
-        totalAmount: totalAmount,
+        captainFee: priceBreakdown.captainFee,
+        cleaningFee: priceBreakdown.cleaningFee,
+        serviceFee: priceBreakdown.serviceFee,
+        totalAmount: priceBreakdown.totalPrice,
         depositAmount: boat.depositAmount || 0,
         currency: "USD",
         

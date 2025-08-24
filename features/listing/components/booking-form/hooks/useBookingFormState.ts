@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { BookingRequest } from "@/features/_validation/validations";
-import { parseISODateTime, calculateEndTime, calculateEndDateTime, createDateTimeISO } from "@/shared/utils/booking-utils";
+import { parseISODateTimeInBoatTimezone, calculateEndDateTime, createDateTimeISO } from "@/shared/utils/booking-utils";
 import { Boat, PricingTier } from "@/shared/types/types";
-import { TAX_RATE, calculateServiceFee } from "@/shared/constants";
+import { calculateBookingPrice, BookingPriceBreakdown } from "@/shared/utils/pricing-utils";
 import { getActivePricingTiers } from "./usePriceCalculation";
 
 interface UseBookingFormStateProps {
@@ -11,14 +11,7 @@ interface UseBookingFormStateProps {
   boat: Boat;
 }
 
-interface PriceBreakdown {
-  basePrice: number;
-  captainFee: number;
-  cleaningFee: number;
-  subtotal: number;
-  serviceFee: number;
-  totalPrice: number;
-}
+
 
 interface BookingFormState {
   // Raw watched values
@@ -32,13 +25,12 @@ interface BookingFormState {
     time: string;
   };
   selectedPricingTier: PricingTier | null;
-  endTime: string;
   endDateTime: Date | null;
   activePricingTiers: PricingTier[];
   uiDate: Date | null;
   
   // Price breakdown
-  priceBreakdown: PriceBreakdown;
+  priceBreakdown: BookingPriceBreakdown;
   
   // Validation helpers
   hasValidDateTime: boolean;
@@ -69,10 +61,10 @@ export function useBookingFormState({
   const selectedStartDateTime = form.watch("startDateTime");
   const needsCaptain = form.watch("needsCaptain");
   
-  // Memoized parsed datetime
+  // Memoized parsed datetime in boat's timezone
   const parsedDateTime = useMemo(() => 
-    parseISODateTime(selectedStartDateTime || ""), 
-    [selectedStartDateTime]
+    parseISODateTimeInBoatTimezone(selectedStartDateTime || "", boat), 
+    [selectedStartDateTime, boat]
   );
   
   // Memoized pricing tier lookup
@@ -81,7 +73,7 @@ export function useBookingFormState({
     [boat.pricingTiers, selectedPricingTierId]
   );
   
-  // Memoized price calculation
+  // Memoized price calculation using universal function
   const priceBreakdown = useMemo(() => {
     if (!selectedPricingTier) {
       return {
@@ -95,30 +87,15 @@ export function useBookingFormState({
       };
     }
     
-    const basePrice = selectedPricingTier.price;
-    const captainFee = 0; // Captain service is included in base price for now, this is for future use and update
-    const cleaningFee = boat.cleaningFee || 0;
-    const subtotal = basePrice + captainFee + cleaningFee;
-    const serviceFee = calculateServiceFee(subtotal);
-    const totalPrice = subtotal + serviceFee;
-    
-    return {
-      basePrice,
-      captainFee,
-      cleaningFee,
-      subtotal,
-      serviceFee,
-      totalPrice,
-    };
+    // SINGLE SOURCE OF TRUTH for pricing
+    return calculateBookingPrice(
+      selectedPricingTier.price,
+      boat.cleaningFee || 0,
+      0 // Captain fee is included in base price
+    );
   }, [selectedPricingTier, boat.cleaningFee]);
   
-  // Memoized end time calculation
-  const endTime = useMemo(() => {
-    if (!selectedStartDateTime || !selectedPricingTier) return "";
-    
-    const { time: startTime } = parsedDateTime;
-    return startTime ? calculateEndTime(startTime, selectedPricingTier.hours) : "";
-  }, [selectedStartDateTime, selectedPricingTier, parsedDateTime]);
+
 
   // Full end Date object derived from startDateTime + duration
   const endDateTime = useMemo(() => {
@@ -158,7 +135,8 @@ export function useBookingFormState({
   const setTime = (time: string) => {
     const dateForCommit = pendingDate || parsedDateTime.date;
     if (!dateForCommit) return;
-    const iso = createDateTimeISO(dateForCommit, time);
+    // CRITICAL: Pass boat timezone to ensure correct time conversion
+    const iso = createDateTimeISO(dateForCommit, time, boat);
     form.setValue("startDateTime", iso, { shouldValidate: true, shouldDirty: true });
     setPendingDate(null);
   };
@@ -172,7 +150,6 @@ export function useBookingFormState({
     // Computed values
     parsedDateTime,
     selectedPricingTier,
-    endTime,
     endDateTime,
     activePricingTiers,
     uiDate,

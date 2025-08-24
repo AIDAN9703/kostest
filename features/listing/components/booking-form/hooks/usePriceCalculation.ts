@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { boatPricingTiers } from '@/database/schema';
 import { Boat, PricingTier } from '@/shared/types/types';
 
+
 export interface PriceBreakdown {
   basePrice: number;
   cleaningFee: number;

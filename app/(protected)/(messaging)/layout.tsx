@@ -1,9 +1,6 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { getConversations } from "@/features/messaging/actions";
-import { MessagingClient } from "@/features/messaging/components/MessagingClient";
-import { MessagingErrorBoundary } from "@/features/messaging/components/MessagingErrorBoundary";
 
 export const metadata: Metadata = {
   title: "Messages | KOS",
@@ -21,30 +18,25 @@ export default async function MessagingLayout({ children }: MessagingLayoutProps
     redirect("/sign-in");
   }
 
-  // Fetch conversations data on the server
-  let initialConversations;
-  try {
-    const result = await getConversations(
-      {}, // No filters - get all conversations
-      { page: 1, limit: 50 } // Get first 50 conversations
-    );
-    
-    if ('conversations' in result) {
-      initialConversations = result;
-    }
-  } catch (error) {
-    console.error("Error loading conversations in layout:", error);
-    // Don't fail the page load - let the client handle the error state
-  }
+  /* 
+  TODO: Hook up to actual messaging system later
+  
+  To integrate with your existing messaging system:
+  1. Uncomment the imports for MessagingClient and MessagingErrorBoundary
+  2. Fetch initial conversations using getConversations action
+  3. Pass currentUserId and initialConversations to MessagingClient
+  4. Wrap everything in MessagingErrorBoundary for error handling
+  
+  Example:
+  const result = await getConversations({}, { page: 1, limit: 50 });
+  <MessagingClient currentUserId={session.user.id} initialConversations={result}>
+    {children}
+  </MessagingClient>
+  */
 
   return (
-    <MessagingErrorBoundary>
-      <MessagingClient
-        currentUserId={session.user.id!}
-        initialConversations={initialConversations}
-      >
-        {children}
-      </MessagingClient>
-    </MessagingErrorBoundary>
+    <div className="h-screen flex flex-col bg-gray-50">
+      {children}
+    </div>
   );
 }

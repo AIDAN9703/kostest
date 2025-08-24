@@ -36,6 +36,7 @@ export interface SafeBoatData {
   instantBook: boolean;
   cleaningFee: number | null;
   locationLabel: string | null;
+  timezone?: string | null; // Required for proper boat time display
 }
 
 /**

@@ -1,337 +1,243 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Card, CardContent } from "@/shared/components/ui/card";
+import { Send, Smile, Paperclip, Image as ImageIcon, Plus, X } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
-import { Badge } from "@/shared/components/ui/badge";
-import { 
-  Send, 
-  Paperclip, 
-  Smile, 
-  X,
-  Image as ImageIcon,
-  FileText,
-  Loader2
-} from "lucide-react";
 import { cn } from "@/shared/utils/general-utils";
-import { 
-  ConversationWithDetails,
-  MessageWithDetails,
-  SendMessageRequest 
-} from "@/shared/types/messaging.types";
-import { sendMessage } from "@/features/messaging/actions";
-import { useMessagingSocket } from "@/features/messaging/services/socket";
+
+/* 
+TODO: Integration Notes for Message Composer
+
+1. REAL MESSAGE SENDING:
+   Replace mockSendMessage with actual API call:
+   ```tsx
+   const sendMessage = async (content: string, type: 'text' | 'image' | 'file') => {
+     await messagingAPI.sendMessage(conversationId, { content, type });
+   };
+   ```
+
+2. FILE UPLOADS:
+   Implement actual file upload handling:
+   ```tsx
+   const handleFileUpload = async (files: FileList) => {
+     const uploadedFiles = await fileUploadService.upload(files);
+     await sendMessage(uploadedFiles[0].url, 'file');
+   };
+   ```
+
+3. REAL-TIME TYPING:
+   Add typing indicator broadcast:
+   ```tsx
+   const handleTyping = useDebouncedCallback(() => {
+     websocket.emit('typing', { conversationId, isTyping: true });
+   }, 300);
+   ```
+
+4. EMOJI PICKER:
+   Integrate with a real emoji picker library like emoji-mart
+
+5. RICH TEXT:
+   Consider adding rich text formatting (bold, italic, links)
+*/
 
 interface MessageComposerProps {
-  conversation: ConversationWithDetails;
+  onSendMessage?: (content: string, type?: 'text' | 'image' | 'file') => void;
   onMessageSent?: () => void;
+  disabled?: boolean;
+  placeholder?: string;
+  conversation?: any; // Legacy prop - not used in new implementation
   className?: string;
 }
 
 export function MessageComposer({ 
-  conversation, 
+  onSendMessage,
   onMessageSent,
-  className 
+  disabled = false,
+  placeholder = "Type your message...",
+  conversation, // Legacy prop - ignored
+  className
 }: MessageComposerProps) {
   const [message, setMessage] = useState("");
+  const [isExpanded, setIsExpanded] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
-  const [sending, setSending] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
-  
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
-  const { startTyping, stopTyping, sendMessage: socketSendMessage } = useMessagingSocket();
 
   // Auto-resize textarea
-  const adjustTextareaHeight = () => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = 'auto';
-      textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [message]);
+
+  // Mock send function for demonstration
+  const mockSendMessage = (content: string, type: 'text' | 'image' | 'file' = 'text') => {
+    console.log('Sending message:', { content, type, attachments });
+    // TODO: Replace with real API call
+  };
+
+  const handleSend = () => {
+    if (message.trim() || attachments.length > 0) {
+      if (onSendMessage) {
+        onSendMessage(message.trim(), attachments.length > 0 ? 'file' : 'text');
+      } else {
+        mockSendMessage(message.trim(), attachments.length > 0 ? 'file' : 'text');
+      }
+      
+      onMessageSent?.(); // Call legacy callback if provided
+      setMessage("");
+      setAttachments([]);
+      setIsExpanded(false);
     }
   };
 
-  // Handle typing indicators
-  const handleTypingStart = () => {
-    if (!isTyping) {
-      setIsTyping(true);
-      startTyping(conversation.id);
-    }
-    
-    // Clear existing timeout
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    
-    // Set new timeout to stop typing after 3 seconds of inactivity
-    typingTimeoutRef.current = setTimeout(() => {
-      setIsTyping(false);
-      stopTyping(conversation.id);
-    }, 3000);
-  };
-
-  const handleTypingStop = () => {
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    if (isTyping) {
-      setIsTyping(false);
-      stopTyping(conversation.id);
-    }
-  };
-
-  // Handle message input
-  const handleMessageChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(e.target.value);
-    adjustTextareaHeight();
-    
-    if (e.target.value.trim()) {
-      handleTypingStart();
-    } else {
-      handleTypingStop();
-    }
-  };
-
-  // Handle key press
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      handleSend();
     }
   };
 
-  // Handle file selection
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    const validFiles = files.filter(file => {
-      // File type validation
-      const allowedTypes = [
-        'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-        'application/pdf', 'text/plain',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      ];
-      
-      // Size validation (10MB max per file)
-      const maxSize = 10 * 1024 * 1024;
-      
-      return allowedTypes.includes(file.type) && file.size <= maxSize;
-    });
-    
-    setAttachments(prev => [...prev, ...validFiles].slice(0, 5)); // Max 5 files
-    
-    // Clear input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    setAttachments(prev => [...prev, ...files]);
+    setIsExpanded(true);
   };
 
-  // Remove attachment
   const removeAttachment = (index: number) => {
     setAttachments(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Send message
-  const handleSendMessage = async () => {
-    const messageText = message.trim();
-    
-    if (!messageText && attachments.length === 0) {
-      return;
-    }
-
-    if (conversation.isLocked) {
-      // Show error message
-      return;
-    }
-
-    setSending(true);
-    handleTypingStop();
-    
-    try {
-      const messageData: SendMessageRequest = {
-        conversationId: conversation.id,
-        content: messageText,
-        messageType: "TEXT",
-      };
-
-      // Send via server action
-      const result = await sendMessage(messageData);
-      
-      if (result.success) {
-        // Send real-time update
-        socketSendMessage(conversation.id, {
-          content: messageText,
-          messageType: "TEXT",
-        });
-        
-        // Clear form
-        setMessage("");
-        setAttachments([]);
-        adjustTextareaHeight();
-        onMessageSent?.();
-        
-        // Focus back to textarea
-        textareaRef.current?.focus();
-      } else {
-        console.error("Failed to send message:", result.error);
-        // TODO: Show error toast
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      // TODO: Show error toast
-    } finally {
-      setSending(false);
-    }
-  };
-
-  // Focus textarea on mount
-  useEffect(() => {
-    textareaRef.current?.focus();
-  }, []);
-
-  // Clean up typing timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-      if (isTyping) {
-        stopTyping(conversation.id);
-      }
-    };
-  }, [conversation.id, isTyping, stopTyping]);
-
-  // Format file size
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
-  // Get file icon
-  const getFileIcon = (fileType: string) => {
-    if (fileType.startsWith('image/')) {
-      return <ImageIcon className="h-4 w-4" />;
-    }
-    return <FileText className="h-4 w-4" />;
-  };
-
-  const canSend = (message.trim() || attachments.length > 0) && !sending && !conversation.isLocked;
+  const commonEmojis = ['😊', '😄', '😅', '😂', '🤣', '😍', '🥰', '😘', '😉', '😎', '🤔', '👍', '👌', '🙌', '👏', '🎉', '🔥', '💯', '❤️', '💙'];
 
   return (
-    <Card className={cn("border-t-0 rounded-t-none", className)}>
-      <CardContent className="p-4 space-y-4">
-        {/* Attachments preview */}
-        {attachments.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+    <div className={cn("border-t border-gray-200 bg-white", className)}>
+      {/* Attachments Preview */}
+      {attachments.length > 0 && (
+        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+          <div className="flex gap-2 overflow-x-auto">
             {attachments.map((file, index) => (
-              <Badge 
-                key={index}
-                variant="secondary" 
-                className="flex items-center gap-2 px-3 py-2"
-              >
-                {getFileIcon(file.type)}
-                <span className="text-xs">
-                  {file.name} ({formatFileSize(file.size)})
-                </span>
+              <div key={index} className="flex items-center gap-2 bg-white px-3 py-2 rounded-lg border text-sm min-w-0">
+                <span className="truncate max-w-32">{file.name}</span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                  className="h-4 w-4 p-0 text-gray-400 hover:text-gray-600"
                   onClick={() => removeAttachment(index)}
                 >
                   <X className="h-3 w-3" />
                 </Button>
-              </Badge>
+              </div>
             ))}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Message input */}
-        <div className="flex items-end gap-2">
-          {/* Attachment button */}
-          <div className="flex gap-1 pb-2">
+      {/* Emoji Picker */}
+      {showEmojiPicker && (
+        <div className="px-4 py-3 border-b border-gray-100 bg-gray-50">
+          <div className="grid grid-cols-10 gap-2">
+            {commonEmojis.map((emoji, index) => (
+              <button
+                key={index}
+                className="w-8 h-8 text-lg hover:bg-gray-200 rounded transition-colors flex items-center justify-center"
+                onClick={() => {
+                  setMessage(prev => prev + emoji);
+                  setShowEmojiPicker(false);
+                  textareaRef.current?.focus();
+                }}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Main Composer */}
+      <div className="p-4">
+        <div className={`
+          flex items-end gap-3 p-3 bg-gray-50 rounded-2xl border transition-all duration-200
+          ${isExpanded || message ? 'bg-white border-gray-300 shadow-sm' : 'border-gray-200'}
+        `}>
+          {/* Attachment Button */}
+          <div className="flex-shrink-0">
             <Button
               variant="ghost"
-              size="icon"
-              className="h-9 w-9"
+              size="sm"
+              className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
               onClick={() => fileInputRef.current?.click()}
-              disabled={sending || conversation.isLocked}
+              disabled={disabled}
             >
               <Paperclip className="h-4 w-4" />
             </Button>
-            
-            {/* Hidden file input */}
             <input
               ref={fileInputRef}
               type="file"
               multiple
-              accept="image/*,.pdf,.doc,.docx,.txt"
               className="hidden"
               onChange={handleFileSelect}
+              accept="image/*,.pdf,.doc,.docx"
             />
           </div>
 
-          {/* Message input */}
-          <div className="flex-1 relative">
+          {/* Text Input */}
+          <div className="flex-1 min-w-0">
             <Textarea
               ref={textareaRef}
               value={message}
-              onChange={handleMessageChange}
+              onChange={(e) => {
+                setMessage(e.target.value);
+                setIsExpanded(e.target.value.length > 0);
+              }}
               onKeyDown={handleKeyPress}
-              placeholder={
-                conversation.isLocked 
-                  ? "This conversation is locked"
-                  : "Type a message..."
-              }
-              className="min-h-[40px] max-h-[120px] resize-none pr-12"
-              disabled={sending || conversation.isLocked}
-              rows={1}
+              placeholder={placeholder}
+              disabled={disabled}
+              className="min-h-[20px] max-h-32 resize-none border-0 bg-transparent p-0 text-sm placeholder:text-gray-500 focus-visible:ring-0 scrollbar-thin scrollbar-thumb-gray-300"
+              style={{ height: 'auto' }}
             />
-            
-            {/* Emoji button */}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {/* Emoji Button */}
             <Button
               variant="ghost"
-              size="icon"
-              className="absolute right-2 bottom-2 h-6 w-6"
-              disabled={sending || conversation.isLocked}
+              size="sm"
+              className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              disabled={disabled}
             >
               <Smile className="h-4 w-4" />
             </Button>
-          </div>
 
-          {/* Send button */}
-          <Button
-            onClick={handleSendMessage}
-            disabled={!canSend}
-            size="icon"
-            className="h-9 w-9 rounded-full"
-          >
-            {sending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
+            {/* Send Button */}
+            <Button
+              size="sm"
+              className="h-8 w-8 p-0 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 rounded-full"
+              onClick={handleSend}
+              disabled={disabled || (!message.trim() && attachments.length === 0)}
+            >
               <Send className="h-4 w-4" />
-            )}
-          </Button>
+            </Button>
+          </div>
         </div>
 
-        {/* Status messages */}
-        {conversation.isLocked && (
-          <p className="text-xs text-muted-foreground text-center">
-            🔒 This conversation has been locked by an administrator
-          </p>
+        {/* Quick Actions */}
+        {isExpanded && (
+          <div className="flex items-center gap-2 mt-3 text-xs text-gray-500">
+            <span>Press Enter to send, Shift+Enter for new line</span>
+            <div className="flex-1"></div>
+            <Button variant="ghost" size="sm" className="text-xs h-6">
+              <ImageIcon className="h-3 w-3 mr-1" />
+              Image
+            </Button>
+          </div>
         )}
-        
-        {attachments.length >= 5 && (
-          <p className="text-xs text-muted-foreground text-center">
-            Maximum 5 files allowed
-          </p>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
