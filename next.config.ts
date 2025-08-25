@@ -5,14 +5,6 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'images.yachtworld.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'm.media-amazon.com',
-      },
-      {
-        protocol: 'https',
         hostname: 'lh3.googleusercontent.com',
       },
       {
@@ -31,12 +23,8 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'source.unsplash.com'
       },
-      {
-        protocol: 'https',
-        hostname: 'images.pexels.com'
-      },
     ],
-    domains: ['localhost'],
+    qualities: [75, 80, 85, 90, 95, 100], // Define allowed quality values
   },
   typescript: {
     ignoreBuildErrors: false, // Re-enable type checking
@@ -44,7 +32,7 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: false, // Re-enable linting
   },
-  
+  typedRoutes: true,
 };
 
 export default nextConfig;
