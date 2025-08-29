@@ -39,7 +39,7 @@ export function ConversationListSkeleton({
             <div key={index} className="p-4 hover:bg-muted/50 transition-colors">
               <div className="flex items-start gap-3">
                 {/* Avatar skeleton */}
-                <Skeleton className="h-10 w-10 rounded-full flex-shrink-0" />
+                <Skeleton className="h-10 w-10 rounded-full shrink-0" />
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
@@ -98,7 +98,7 @@ export function ConversationSkeleton() {
             )}
           >
             {index % 2 === 0 && (
-              <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
+              <Skeleton className="h-8 w-8 rounded-full shrink-0" />
             )}
             
             <div className={cn(
@@ -113,7 +113,7 @@ export function ConversationSkeleton() {
             </div>
             
             {index % 2 === 1 && (
-              <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />
+              <Skeleton className="h-8 w-8 rounded-full shrink-0" />
             )}
           </div>
         ))}

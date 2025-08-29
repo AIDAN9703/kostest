@@ -1,6 +1,6 @@
 export default function SearchSkeleton() {
   return (
-    <div className="flex min-h-screen bg-gradient-to-b from-white to-gray-50/50">
+    <div className="flex min-h-screen bg-linear-to-b from-white to-gray-50/50">
       {/* Main Content Area */}
       <div className="flex w-full">
         {/* Left Side - Search Results */}
@@ -23,10 +23,10 @@ export default function SearchSkeleton() {
               {Array.from({ length: 6 }).map((_, idx) => (
                 <div
                   key={idx}
-                  className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100"
+                  className="bg-white rounded-xl overflow-hidden shadow-xs border border-gray-100"
                 >
                   {/* Image Skeleton */}
-                  <div className="aspect-[16/9] bg-gray-200 animate-pulse" />
+                  <div className="aspect-video bg-gray-200 animate-pulse" />
 
                   {/* Content Skeleton */}
                   <div className="p-3 sm:p-4 space-y-3">

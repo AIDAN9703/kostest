@@ -97,7 +97,7 @@ export function Reviews({ boat }: ReviewsProps) {
                 reviews.map((review) => (
                   <div key={review.id} className="border-b border-gray-200 pb-8 last:border-0">
                     <div className="flex gap-4 mb-4">
-                      <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 text-gray-700 font-medium">
+                      <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center shrink-0 text-gray-700 font-medium">
                         {getReviewerInitial(review)}
                       </div>
                       <div className="flex-1">

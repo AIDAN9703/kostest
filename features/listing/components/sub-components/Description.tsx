@@ -57,7 +57,7 @@ export function Description({ boat }: DescriptionProps) {
               className={cn(
                 "mt-4 h-auto font-medium",
                 "text-primary hover:bg-transparent hover:text-primary/90",
-                "focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                "focus:ring-2 focus:ring-primary/20 focus:outline-hidden"
               )}
             >
               {expanded ? "Show less" : "Read more"}

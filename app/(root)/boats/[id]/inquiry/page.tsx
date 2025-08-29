@@ -14,7 +14,7 @@ export default async function BoatInquiryPage({ params }: InquiryPageProps) {
 
   if (!boat) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center px-6 py-16">
+      <main className="min-h-screen bg-linear-to-b from-slate-50 to-white flex items-center justify-center px-6 py-16">
         <div className="text-center">
           <h1 className="text-2xl font-semibold text-slate-800">Boat not found</h1>
           <p className="text-slate-500 mt-2">Please go back and try again.</p>
@@ -57,8 +57,8 @@ export default async function BoatInquiryPage({ params }: InquiryPageProps) {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12">
             {/* Left: Boat visual */}
             <div className="lg:col-span-5">
-              <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm">
-                <div className="aspect-[16/10] relative">
+              <div className="relative overflow-hidden rounded-2xl bg-white shadow-xs">
+                <div className="aspect-16/10 relative">
                   <Image src={boat.mainImage || "/images/boats/placeholder.jpg"} alt={boat.name} fill className="object-cover" />
                 </div>
                 <div className="p-5">
@@ -75,7 +75,7 @@ export default async function BoatInquiryPage({ params }: InquiryPageProps) {
 
             {/* Right: Inquiry form */}
             <div className="lg:col-span-7">
-              <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-sm">
+              <div className="rounded-2xl bg-white p-6 sm:p-8 shadow-xs">
                 <h2 className="text-xl font-semibold text-slate-800">Tell us about your charter</h2>
                 <p className="text-slate-600 mt-1 mb-6">We’ll open a message with the owner and our team to finalize the details.</p>
                 <BoatInquiryForm boatId={boat.id} />

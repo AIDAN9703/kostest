@@ -47,7 +47,7 @@ const BoatCard = ({ boat }: { boat: any }) => (
           <Ship className="h-8 w-8 text-gray-400" />
         </div>
       )}
-      <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-sm">
+      <div className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-xs">
         <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
           <Link href={`/profile/boats/${boat.id}/edit`}>
             <Edit className="h-4 w-4" />
@@ -63,7 +63,7 @@ const BoatCard = ({ boat }: { boat: any }) => (
       </CardDescription>
     </CardHeader>
     
-    <CardContent className="pb-2 flex-grow">
+    <CardContent className="pb-2 grow">
       <div className="grid grid-cols-2 gap-2 text-sm">
         <div className="flex items-center">
           <Calendar className="h-4 w-4 mr-2 text-gray-500" />

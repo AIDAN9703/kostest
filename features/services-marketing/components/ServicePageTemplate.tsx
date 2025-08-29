@@ -78,7 +78,7 @@ const ServicePageTemplate: React.FC<ServicePageProps> = ({
             quality={90}
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60" />
+          <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-black/60" />
         </div>
         
         <div className="relative z-10 h-full flex flex-col justify-center px-4 sm:px-6 lg:px-8">
@@ -160,7 +160,7 @@ const ServicePageTemplate: React.FC<ServicePageProps> = ({
                   <span className="relative z-10">Book a Meeting</span>
                   <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 relative z-10" />
                   {/* Elegant fill animation */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/90 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out" />
+                  <div className="absolute inset-0 bg-linear-to-r from-primary to-primary/90 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out" />
                 </Button>
               </Link>
            </div>
@@ -213,9 +213,9 @@ const ServicePageTemplate: React.FC<ServicePageProps> = ({
                 className="group animate-fade-in-up"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full">
+                <div className="bg-white rounded-lg p-6 shadow-xs border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full">
                   <div className="flex items-start gap-4">
-                    <div className="bg-gold/10 p-3 rounded-lg flex-shrink-0">
+                    <div className="bg-gold/10 p-3 rounded-lg shrink-0">
                       <CheckCircle className="h-6 w-6 text-gold" />
                     </div>
                     <div>
@@ -245,9 +245,9 @@ const ServicePageTemplate: React.FC<ServicePageProps> = ({
                 className="group animate-fade-in-up"
                 style={{ animationDelay: `${(features.length + index) * 100}ms` }}
               >
-                <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full">
+                <div className="bg-white rounded-lg p-6 shadow-xs border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full">
                   <div className="flex items-start gap-4">
-                    <div className="bg-gold/10 p-3 rounded-lg flex-shrink-0">
+                    <div className="bg-gold/10 p-3 rounded-lg shrink-0">
                       {index === 0 ? <Headphones className="h-6 w-6 text-gold" /> : <Users className="h-6 w-6 text-gold" />}
                     </div>
                     <div>
@@ -282,12 +282,12 @@ const ServicePageTemplate: React.FC<ServicePageProps> = ({
               {faqItems.map((item, index) => (
                 <details 
                   key={index} 
-                  className={`group bg-white rounded-lg border border-gray-200 hover:shadow-sm transition-all duration-300 animate-fade-in-up`}
+                  className={`group bg-white rounded-lg border border-gray-200 hover:shadow-xs transition-all duration-300 animate-fade-in-up`}
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <summary className="flex items-center justify-between cursor-pointer p-6">
                     <h3 className="text-xl font-medium text-primary">{item.question}</h3>
-                    <span className="ml-6 flex-shrink-0 text-primary/60 group-open:rotate-180 transition-transform">
+                    <span className="ml-6 shrink-0 text-primary/60 group-open:rotate-180 transition-transform">
                       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>

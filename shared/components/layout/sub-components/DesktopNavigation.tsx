@@ -34,7 +34,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
     // Memoized button style
     const buttonStyle = useMemo(() => cn(
         "flex items-center gap-1 group font-bold",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-sm",
+        "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50 rounded-sm",
         "hover:scale-105 active:scale-95 transition-transform"
     ), []);
 
@@ -79,7 +79,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
     // Admin crown link/button style
     const crownLinkStyle = useMemo(() => cn(
         "p-1.5 rounded-full",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
+        "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50",
         "hover:bg-primary/5",
         "flex items-center justify-center",
         "mr-3"

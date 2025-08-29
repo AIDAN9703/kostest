@@ -55,7 +55,7 @@ export default function BookingSummary({
 
   return (
       <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pb-4">
-        <div className="flex-shrink-0 self-center sm:self-start">
+        <div className="shrink-0 self-center sm:self-start">
           <img 
             src={boat.mainImage || '/images/boats/default-boat.jpg'} 
             alt={boat.name}
@@ -70,15 +70,15 @@ export default function BookingSummary({
             {/* Main booking details in 2-column grid */}
             <div className="grid grid-cols-2 gap-x-3 gap-y-2 sm:flex sm:items-center sm:gap-4 text-xs sm:text-sm text-gray-600">
               <span className="flex items-center gap-1.5">
-                <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" /> 
+                <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> 
                 <span className="truncate font-medium">{date}</span>
               </span>
               <span className="flex items-center gap-1.5">
-                <ClockIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" /> 
+                <ClockIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> 
                 <span className="truncate font-medium">{time}</span>
               </span>
               <span className="flex items-center gap-1.5">
-                <UsersIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" /> 
+                <UsersIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" /> 
                 <span className="truncate">{partySize}</span>
               </span>
               {charterDuration && (

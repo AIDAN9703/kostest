@@ -61,7 +61,7 @@ const StatsCard = ({
 
   return (
     <Card className={cn(
-      "hover:shadow-lg transition-all duration-500 border-0 bg-gradient-to-br from-white to-gray-50/50 group cursor-pointer transform hover:-translate-y-2",
+      "hover:shadow-lg transition-all duration-500 border-0 bg-linear-to-br from-white to-gray-50/50 group cursor-pointer transform hover:-translate-y-2",
       isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
     )}>
       <CardContent className="p-6 relative overflow-hidden">
@@ -98,7 +98,7 @@ const StatsCard = ({
         {/* Progress bar animation */}
         <div className="mt-4 h-1 bg-gray-100 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-primary to-primary/60 rounded-full transition-all duration-1000 ease-out"
+            className="h-full bg-linear-to-r from-primary to-primary/60 rounded-full transition-all duration-1000 ease-out"
             style={{ 
               width: isVisible ? `${Math.min((animatedValue / Math.max(value as number, 100)) * 100, 100)}%` : '0%' 
             }}

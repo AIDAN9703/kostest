@@ -3,7 +3,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export function InquiriesTableSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xs">
       <Table>
         <TableHeader>
           <TableRow className="border-b border-gray-100 bg-gray-50/70">

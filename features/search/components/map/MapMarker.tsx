@@ -63,7 +63,7 @@ export default function BoatMapMarker({ location, isActive, onToggleInfoWindow }
             />
           </div>
           {/* Price label */}
-          <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white px-1.5 py-0.5 rounded shadow-sm text-[10px] font-bold text-gray-800 whitespace-nowrap">
+          <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white px-1.5 py-0.5 rounded shadow-xs text-[10px] font-bold text-gray-800 whitespace-nowrap">
             {displayPrice}
           </div>
         </div>
@@ -74,7 +74,7 @@ export default function BoatMapMarker({ location, isActive, onToggleInfoWindow }
           position={{ lat: location.latitude, lng: location.longitude }}
           onCloseClick={handleCloseClick}
           headerDisabled={true}
-          className="!shadow-lg" // Add additional shadow
+          className="shadow-lg!" // Add additional shadow
         >
           {location.count && location.count > 1 && location.groupedBoats ? (
             // Multiple boats at this location - compact layout
@@ -102,7 +102,7 @@ export default function BoatMapMarker({ location, isActive, onToggleInfoWindow }
             // Single boat - horizontal card layout with image on left
             <div className="flex w-[220px] overflow-hidden rounded-md">
               {/* Left side - Image - No padding so image is flush with edge */}
-              <div className="relative w-[80px] h-[80px] flex-shrink-0">
+              <div className="relative w-[80px] h-[80px] shrink-0">
                 {location.imageUrl ? (
                   <Image 
                     src={location.imageUrl} 

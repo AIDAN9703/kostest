@@ -109,7 +109,7 @@ export default function ClientsShowcase() {
   const ImageGrid = ({ images }: { images: ImageGroup }) => (
     <div className="grid grid-cols-12 gap-3">
       {/* Top Row */}
-      <div className="col-span-7 relative aspect-[16/10] rounded-2xl overflow-hidden">
+      <div className="col-span-7 relative aspect-16/10 rounded-2xl overflow-hidden">
         <Image
           src={images[0].url}
           alt={images[0].title}
@@ -119,7 +119,7 @@ export default function ClientsShowcase() {
           quality={80}
         />
       </div>
-      <div className="col-span-5 relative aspect-[4/3] rounded-2xl overflow-hidden mt-[13%]">
+      <div className="col-span-5 relative aspect-4/3 rounded-2xl overflow-hidden mt-[13%]">
         <Image
           src={images[1].url}
           alt={images[1].title}
@@ -131,7 +131,7 @@ export default function ClientsShowcase() {
       </div>
 
       {/* Bottom Row */}
-      <div className="col-span-5 relative aspect-[4/3] rounded-2xl overflow-hidden">
+      <div className="col-span-5 relative aspect-4/3 rounded-2xl overflow-hidden">
         <Image
           src={images[2].url}
           alt={images[2].title}
@@ -141,7 +141,7 @@ export default function ClientsShowcase() {
           quality={80}
         />
       </div>
-      <div className="col-span-7 relative aspect-[16/10] rounded-2xl overflow-hidden">
+      <div className="col-span-7 relative aspect-16/10 rounded-2xl overflow-hidden">
         <Image
           src={images[3].url}
           alt={images[3].title}
@@ -170,7 +170,7 @@ export default function ClientsShowcase() {
                   whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
                   whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
                   onClick={prevSlide}
-                  className="p-2 rounded-full bg-white shadow hover:shadow-md transition-all duration-300 border border-gray-200"
+                  className="p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200"
                   aria-label="Previous experience images"
                 >
                   <ChevronLeft className="w-5 h-5 text-primary" />
@@ -179,7 +179,7 @@ export default function ClientsShowcase() {
                   whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
                   whileTap={prefersReducedMotion ? {} : { scale: 0.95 }}
                   onClick={nextSlide}
-                  className="p-2 rounded-full bg-white shadow hover:shadow-md transition-all duration-300 border border-gray-200"
+                  className="p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200"
                   aria-label="Next experience images"
                 >
                   <ChevronRight className="w-5 h-5 text-primary" />

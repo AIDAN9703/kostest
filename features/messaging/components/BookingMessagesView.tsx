@@ -144,7 +144,7 @@ function MessageBubble({ message }: { message: Message }) {
   return (
     <div className={`flex gap-3 mb-6 ${isOwn ? 'flex-row-reverse' : ''}`}>
       {/* Avatar */}
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
           isOwn ? 'bg-gray-900' : 'bg-blue-500'
         }`}>
@@ -277,7 +277,7 @@ export function BookingMessagesView({ booking }: BookingMessagesViewProps) {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-end gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
             {/* Attachment Button */}
-            <Button variant="ghost" size="sm" className="flex-shrink-0 text-gray-500">
+            <Button variant="ghost" size="sm" className="shrink-0 text-gray-500">
               <Paperclip className="w-4 h-4" />
             </Button>
 
@@ -298,7 +298,7 @@ export function BookingMessagesView({ booking }: BookingMessagesViewProps) {
             <Button
               onClick={handleSend}
               disabled={!message.trim()}
-              className="flex-shrink-0 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300"
+              className="shrink-0 bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300"
             >
               <Send className="w-4 h-4" />
             </Button>

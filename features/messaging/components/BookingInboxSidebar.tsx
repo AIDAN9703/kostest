@@ -108,7 +108,7 @@ function BookingCard({
 
       {/* Yacht Image and Info */}
       <div className="flex gap-3 mb-3">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <img 
             src={booking.yacht.image} 
             alt={booking.yacht.name}

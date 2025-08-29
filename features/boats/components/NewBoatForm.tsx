@@ -83,10 +83,10 @@ const ImageItem = memo(({
   onDelete: (index: number) => void;
 }) => {
   return (
-    <div className="relative w-32 h-32 border rounded-md overflow-hidden group bg-gray-100 flex-shrink-0">
+    <div className="relative w-32 h-32 border rounded-md overflow-hidden group bg-gray-100 shrink-0">
       {/* Main Image Badge */}
       {isMain && (
-        <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded z-10 shadow-sm font-medium">
+        <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded z-10 shadow-xs font-medium">
           Main
         </div>
       )}

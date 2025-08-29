@@ -72,7 +72,7 @@ export default function ServicesPage() {
             quality={90}
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60" />
+          <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-black/60" />
         </div>
 
         {/* Hero Content */}
@@ -128,7 +128,7 @@ export default function ServicesPage() {
                 href={service.href}
                 className="group block"
               >
-                <div className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full overflow-hidden">
+                <div className="bg-white rounded-lg shadow-xs border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full overflow-hidden">
                   {/* Image */}
                   <div className="relative h-[300px] md:h-[350px]">
                     <Image
@@ -153,7 +153,7 @@ export default function ServicesPage() {
 
                     {/* Category Badge */}
                     <div className="absolute top-6 right-6">
-                      <span className="bg-white text-primary text-sm font-medium px-3 py-1 rounded-full shadow-sm">
+                      <span className="bg-white text-primary text-sm font-medium px-3 py-1 rounded-full shadow-xs">
                         {service.category}
                       </span>
                     </div>
@@ -232,7 +232,7 @@ export default function ServicesPage() {
       {/* CTA Section */}
       <section className="py-16 md:py-20 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-lg p-8 md:p-12 shadow-sm border border-gray-100 text-center">
+          <div className="bg-white rounded-lg p-8 md:p-12 shadow-xs border border-gray-100 text-center">
             <h2 className="text-3xl md:text-4xl font-medium text-primary mb-6">
               Ready to Experience Premium Service?
             </h2>

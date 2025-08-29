@@ -38,8 +38,8 @@ const QuickActionButton = ({
         className={cn(
           "h-full transition-all duration-500 border-0 cursor-pointer group relative overflow-hidden transform",
           variant === "primary" 
-            ? "bg-gradient-to-br from-primary via-primary/95 to-primary/90 text-white hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl" 
-            : "bg-gradient-to-br from-white to-gray-50/50 hover:from-gray-50 hover:to-white shadow-sm hover:shadow-lg",
+            ? "bg-linear-to-br from-primary via-primary/95 to-primary/90 text-white hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl" 
+            : "bg-linear-to-br from-white to-gray-50/50 hover:from-gray-50 hover:to-white shadow-xs hover:shadow-lg",
           isVisible 
             ? "opacity-100 translate-y-0" 
             : "opacity-0 translate-y-8",
@@ -52,8 +52,8 @@ const QuickActionButton = ({
         <div className={cn(
           "absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500",
           variant === "primary" 
-            ? "bg-gradient-to-r from-white/10 to-transparent" 
-            : "bg-gradient-to-r from-primary/5 to-transparent"
+            ? "bg-linear-to-r from-white/10 to-transparent" 
+            : "bg-linear-to-r from-primary/5 to-transparent"
         )}></div>
         
         {/* Sparkle effect for primary variant */}
@@ -113,7 +113,7 @@ const QuickActionButton = ({
           "absolute bottom-0 left-0 h-1 transition-all duration-500 ease-out",
           variant === "primary" 
             ? "bg-white/30" 
-            : "bg-gradient-to-r from-primary to-primary/60",
+            : "bg-linear-to-r from-primary to-primary/60",
           isHovered ? "w-full" : "w-0"
         )}></div>
       </Card>

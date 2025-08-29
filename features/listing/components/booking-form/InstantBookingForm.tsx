@@ -152,7 +152,7 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
           <div className="pt-4">
             <Button 
               type="submit" 
-              className="w-full h-12 font-semibold text-white transition-colors text-sm rounded-xl bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-0"
+              className="w-full h-12 font-semibold text-white transition-colors text-sm rounded-xl bg-emerald-600 hover:bg-emerald-700 focus:outline-hidden focus:ring-0"
               disabled={!formState.isFormValid}
             >
               <div className="flex items-center gap-2">

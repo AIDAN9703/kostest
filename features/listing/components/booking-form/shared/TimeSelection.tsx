@@ -56,7 +56,7 @@ export function TimeSelection({
                       <AlarmClockPlus className="h-5 w-5 text-primary" />
                     </button>
                     {mobileOpen && (
-                      <div className="fixed inset-0 z-[1000]" role="dialog" aria-modal="true">
+                      <div className="fixed inset-0 z-1000" role="dialog" aria-modal="true">
                         <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
                         <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl shadow-2xl max-h-[80vh] overflow-hidden">
                           <div className="px-4 pt-4 pb-2 border-b">
@@ -112,7 +112,7 @@ export function TimeSelection({
                     avoidCollisions={false}
                     onOpenAutoFocus={(e) => e.preventDefault()}
                     onCloseAutoFocus={(e) => e.preventDefault()}
-                    className="w-[var(--trigger-width)] max-w-[560px] p-4 rounded-xl border border-slate-200 shadow-sm bg-white"
+                    className="w-(--trigger-width) max-w-[560px] p-4 rounded-xl border border-slate-200 shadow-xs bg-white"
                   >
                     <TimeSlotsDisplay
                       date={selectedDate}

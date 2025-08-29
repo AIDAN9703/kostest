@@ -36,7 +36,7 @@ StarRating.displayName = 'StarRating';
 const ReviewCard = React.memo(({ review }: { review: Review }) => (
   <div className="bg-white rounded-xl shadow-lg p-6 h-full flex flex-col">
     <div className="flex items-start mb-4">
-      <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4 flex-shrink-0">
+      <div className="relative w-12 h-12 rounded-full overflow-hidden mr-4 shrink-0">
         <Image
           src={review.profile_photo_url}
           alt={review.author_name}

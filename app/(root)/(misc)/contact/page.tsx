@@ -18,7 +18,7 @@ export default function ContactPage() {
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* Phone */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+              <div className="bg-white rounded-xl p-6 shadow-xs border border-gray-100 text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 <div className="bg-primary/10 p-3 rounded-full w-14 h-14 mx-auto mb-4 flex items-center justify-center">
                   <Phone className="h-7 w-7 text-primary" />
                 </div>
@@ -32,7 +32,7 @@ export default function ContactPage() {
               </div>
 
               {/* Email */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+              <div className="bg-white rounded-xl p-6 shadow-xs border border-gray-100 text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 <div className="bg-primary/10 p-3 rounded-full w-14 h-14 mx-auto mb-4 flex items-center justify-center">
                   <Mail className="h-7 w-7 text-primary" />
                 </div>
@@ -46,7 +46,7 @@ export default function ContactPage() {
               </div>
 
               {/* WhatsApp/Text */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+              <div className="bg-white rounded-xl p-6 shadow-xs border border-gray-100 text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 <div className="bg-primary/10 p-3 rounded-full w-14 h-14 mx-auto mb-4 flex items-center justify-center">
                   <MessageCircle className="h-7 w-7 text-primary" />
                 </div>
@@ -60,7 +60,7 @@ export default function ContactPage() {
               </div>
 
               {/* Schedule */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+              <div className="bg-white rounded-xl p-6 shadow-xs border border-gray-100 text-center hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 <div className="bg-primary/10 p-3 rounded-full w-14 h-14 mx-auto mb-4 flex items-center justify-center">
                   <Calendar className="h-7 w-7 text-primary" />
                 </div>
@@ -93,7 +93,7 @@ export default function ContactPage() {
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Location */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
+              <div className="bg-white rounded-xl p-6 shadow-xs border border-gray-100 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center mb-6">
                   <div className="bg-primary/10 p-3 rounded-full mr-4">
                     <MapPin className="h-6 w-6 text-primary" />
@@ -118,7 +118,7 @@ export default function ContactPage() {
               </div>
 
               {/* Business Hours */}
-              <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300">
+              <div className="bg-white rounded-xl p-6 shadow-xs border border-gray-100 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center mb-6">
                   <div className="bg-primary/10 p-3 rounded-full mr-4">
                     <Clock className="h-6 w-6 text-primary" />

@@ -28,7 +28,7 @@ export function DeleteUserButton({ userId, userName, iconOnly = false }: DeleteU
             <button 
               onClick={() => confirmDelete()}
               disabled={isDeleting}
-              className="rounded-md bg-red-600 px-3 py-2 text-xs font-semibold text-black shadow-sm hover:bg-red-500"
+              className="rounded-md bg-red-600 px-3 py-2 text-xs font-semibold text-black shadow-xs hover:bg-red-500"
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </button>
@@ -65,7 +65,7 @@ export function DeleteUserButton({ userId, userName, iconOnly = false }: DeleteU
     return (
       <button
         type="button"
-        className="text-red-600 hover:text-red-800 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-red-400"
+        className="text-red-600 hover:text-red-800 p-1 rounded-full focus:outline-hidden focus:ring-2 focus:ring-red-400"
         title="Delete"
         onClick={(e) => {
           e.preventDefault();

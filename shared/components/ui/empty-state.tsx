@@ -26,7 +26,7 @@ export function EmptyState({
   iconClassName = "bg-primary/10 text-primary",
 }: EmptyStateProps) {
   return (
-    <Card className="w-full border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md">
+    <Card className="w-full border border-gray-100 shadow-xs transition-all duration-300 hover:shadow-md">
       <CardContent className="flex flex-col items-center justify-center py-16">
         <div className={`rounded-full p-4 mb-6 ${iconClassName} animate-pulse`}>
           <Icon className="h-10 w-10" />

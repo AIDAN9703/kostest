@@ -82,14 +82,14 @@ const FeaturedFleet = ({ boats }: { boats: Boat[] }) => {
             <>
               <button
                 onClick={scrollPrev}
-                className="absolute left-1 sm:left-4 lg:-left-12 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-200 z-10"
+                className="absolute left-1 sm:left-4 lg:-left-12 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-xs hover:shadow-md transition-shadow duration-200 border border-slate-200 z-10"
                 aria-label="Previous boats"
               >
                 <ChevronLeft className="w-5 h-5 text-slate-700" />
               </button>
               <button
                 onClick={scrollNext}
-                className="absolute right-1 sm:right-4 lg:-right-12 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-shadow duration-200 border border-slate-200 z-10"
+                className="absolute right-1 sm:right-4 lg:-right-12 top-1/2 -translate-y-1/2 p-2 rounded-full bg-white shadow-xs hover:shadow-md transition-shadow duration-200 border border-slate-200 z-10"
                 aria-label="Next boats"
               >
                 <ChevronRight className="w-5 h-5 text-slate-700" />

@@ -163,7 +163,7 @@ const BoatCard = ({
             {/* Favorite button */}
             <button
               onClick={handleFavoriteClick}
-              className="absolute top-3 right-3 z-10 p-1.5 bg-white/70 backdrop-blur-sm rounded-full shadow-md transition-all duration-200 hover:scale-110"
+              className="absolute top-3 right-3 z-10 p-1.5 bg-white/70 backdrop-blur-xs rounded-full shadow-md transition-all duration-200 hover:scale-110"
               aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
             >
               <Heart 
@@ -212,7 +212,7 @@ const BoatCard = ({
             {/* Price tag */}
             {showPrice && (
               <div className={cn(
-                "absolute bg-white/95 backdrop-blur-sm px-2 py-1 rounded-lg shadow-md",
+                "absolute bg-white/95 backdrop-blur-xs px-2 py-1 rounded-lg shadow-md",
                 styles.priceTag
               )}>
                 <span className="text-sm sm:text-base font-medium text-[#1E293B]">{getBoatStartingHourlyLabel(boat)}</span>
@@ -222,7 +222,7 @@ const BoatCard = ({
             {/* Featured tag - Corner flag */}
             {boat.featured && highlightFeatured && (
               <div className="absolute top-0 left-0 z-20">
-                <div className="bg-gradient-to-r from-emerald-400 to-emerald-500 text-white px-2 py-1 font-medium text-xs uppercase tracking-wide shadow-lg rounded-br-lg">
+                <div className="bg-linear-to-r from-emerald-400 to-emerald-500 text-white px-2 py-1 font-medium text-xs uppercase tracking-wide shadow-lg rounded-br-lg">
                   Featured
                 </div>
               </div>
@@ -264,7 +264,7 @@ const BoatCard = ({
                     "flex items-center mb-1 sm:mb-2 w-full overflow-hidden text-gray-600",
                     styles.details
                   )}>
-                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
                     <span className="font-light tracking-wide truncate overflow-hidden">{boat.locationLabel}</span>
                   </div>
                 )}

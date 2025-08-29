@@ -200,11 +200,11 @@ export function ConversationView({
             <div className="flex items-center gap-3 flex-1 min-w-0">
               {/* Avatar */}
               {conversation.booking ? (
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <Calendar className="h-5 w-5 text-primary" />
                 </div>
               ) : (
-                <Avatar className="h-10 w-10 flex-shrink-0">
+                <Avatar className="h-10 w-10 shrink-0">
                   <AvatarImage 
                     src={conversation.participants.find(p => p.userId !== currentUserId)?.profileImage} 
                   />

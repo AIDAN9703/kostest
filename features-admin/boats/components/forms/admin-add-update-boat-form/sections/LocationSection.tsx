@@ -63,7 +63,7 @@ export function LocationSection() {
                     {hasCoordinates ? (
                       <div className="h-full flex flex-col">
                         <div className="bg-green-50 px-4 py-3 rounded-t-lg border-b border-green-100 text-sm font-semibold text-green-800">Location coordinates set</div>
-                        <div className="p-4 flex-grow grid grid-cols-2 gap-2 text-sm">
+                        <div className="p-4 grow grid grid-cols-2 gap-2 text-sm">
                           <div>
                             <span className="text-gray-500">Latitude:</span>
                             <div className="font-mono mt-1 bg-gray-50 p-1 rounded border border-gray-200 text-gray-800">{value.lat.toFixed(6)}</div>

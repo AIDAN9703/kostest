@@ -44,7 +44,7 @@ const ProfileActivity = ({ activities }: ProfileActivityProps) => {
           <div className="space-y-5">
             {activities.map((activity) => (
               <div key={activity.id} className="flex gap-4">
-                <div className="flex-shrink-0 mt-1">
+                <div className="shrink-0 mt-1">
                   <div className="p-2 rounded-full bg-gray-50">
                     {getActivityIcon(activity.type)}
                   </div>

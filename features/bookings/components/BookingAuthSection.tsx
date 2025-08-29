@@ -111,7 +111,7 @@ export default function BookingAuthSection({ user }: BookingAuthSectionProps) {
                 placeholder="Phone number"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
-                className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all"
+                className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 text-sm focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary transition-all"
               />
               <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
                 <Phone className="w-4 h-4 text-gray-400" />
@@ -189,7 +189,7 @@ export default function BookingAuthSection({ user }: BookingAuthSectionProps) {
               placeholder="Enter 6-digit code"
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all text-center text-lg tracking-widest"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary transition-all text-center text-lg tracking-widest"
               maxLength={6}
             />
 

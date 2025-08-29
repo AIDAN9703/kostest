@@ -16,7 +16,7 @@ const SocialLinks: React.FC<SocialLinksProps> = ({
     // Memoized social link style
     const socialLinkStyle = useMemo(() => cn(
         "transition-all duration-200 hover:scale-110",
-        "focus:outline-none focus-visible:ring-2",
+        "focus:outline-hidden focus-visible:ring-2",
         "focus-visible:ring-primary/50 rounded-sm p-1",
         "hover:-translate-y-0.5",
         isHomePage && !scrolled

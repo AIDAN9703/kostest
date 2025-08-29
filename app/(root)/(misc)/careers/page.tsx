@@ -26,7 +26,7 @@ export default function CareersPage() {
             quality={90}
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60" />
+          <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-black/60" />
         </div>
         
         <div className="relative z-10 h-full flex flex-col justify-center px-4 sm:px-6 lg:px-8">

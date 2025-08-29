@@ -44,7 +44,7 @@ export default function QuotesPage() {
         </div>
 
         {/* Filters and Search */}
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-xs">
           <CardContent className="p-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-4">
@@ -85,7 +85,7 @@ export default function QuotesPage() {
         </Card>
 
         {/* Empty State */}
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-xs">
           <CardContent className="p-0">
             <div className="text-center py-16">
               <div className="mx-auto h-16 w-16 rounded-full bg-gray-100 flex items-center justify-center mb-6">

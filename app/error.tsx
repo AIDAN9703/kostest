@@ -39,7 +39,7 @@ export default function GlobalError({
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white to-gray-50/50 p-8">
+    <main className="min-h-screen bg-linear-to-b from-white to-gray-50/50 p-8">
       <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-red-600 mb-4">We encountered an error</h1>

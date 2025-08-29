@@ -53,7 +53,7 @@ export function FeaturesAmenities({ boat }: FeaturesAmenitiesProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-8">
             {visibleFeatures.map((feature, index) => (
               <div key={index} className="flex items-center gap-2">
-                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0" />
+                <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
                 <span className="text-gray-700">{feature}</span>
               </div>
             ))}
@@ -71,7 +71,7 @@ export function FeaturesAmenities({ boat }: FeaturesAmenitiesProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-8">
             {visibleAmenities.map((amenity, index) => (
               <div key={index} className="flex items-center gap-2">
-                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0" />
+                <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
                 <span className="text-gray-700">{amenity}</span>
               </div>
             ))}
@@ -89,7 +89,7 @@ export function FeaturesAmenities({ boat }: FeaturesAmenitiesProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-8">
             {visibleSafetyItems.map((item, index) => (
               <div key={index} className="flex items-center gap-2">
-                <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0" />
+                <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
                 <span className="text-gray-700">{item}</span>
               </div>
             ))}

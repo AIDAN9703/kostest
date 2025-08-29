@@ -59,7 +59,7 @@ function SortableImage({ id, image, index, onDelete }: SortableImageProps) {
     >
       <div className="relative w-24 h-24 border rounded-lg overflow-hidden bg-gray-100 hover:shadow-lg transition-all duration-200 cursor-grab active:cursor-grabbing">
         {index === 0 && (
-          <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded z-10 shadow-sm font-medium">
+          <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded z-10 shadow-xs font-medium">
             Main
           </div>
         )}

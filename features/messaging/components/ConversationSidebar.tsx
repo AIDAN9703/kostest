@@ -81,10 +81,10 @@ function ConversationItem({
     >
       <div className="flex items-start gap-3">
         {/* Avatar with Online Status */}
-        <div className="relative flex-shrink-0">
+        <div className="relative shrink-0">
           <Avatar className="w-12 h-12">
             <AvatarImage src={participant.avatar} alt={participant.name} />
-            <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white font-semibold">
+            <AvatarFallback className="bg-linear-to-br from-blue-400 to-blue-600 text-white font-semibold">
               {participant.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
             </AvatarFallback>
           </Avatar>
@@ -105,7 +105,7 @@ function ConversationItem({
                 {participant.role}
               </Badge>
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               <span className="text-xs text-gray-500">
                 {formatTimestamp(lastMessage.timestamp)}
               </span>

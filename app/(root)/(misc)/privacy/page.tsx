@@ -68,7 +68,7 @@ export default function PrivacyPage() {
                       "Preferences and special requests related to your bookings"
                     ].map((item, index) => (
                       <li key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                         <span className="text-gray-600 font-light">{item}</span>
                       </li>
                     ))}
@@ -87,7 +87,7 @@ export default function PrivacyPage() {
                       "Interaction with emails and messages"
                     ].map((item, index) => (
                       <li key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                         <span className="text-gray-600 font-light">{item}</span>
                       </li>
                     ))}
@@ -105,7 +105,7 @@ export default function PrivacyPage() {
                       "Preferences for receiving marketing and service updates"
                     ].map((item, index) => (
                       <li key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                         <span className="text-gray-600 font-light">{item}</span>
                       </li>
                     ))}
@@ -134,7 +134,7 @@ export default function PrivacyPage() {
                   "Comply with legal obligations and prevent fraud"
                 ].map((item, index) => (
                   <li key={index} className="flex items-start">
-                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                     <span className="text-gray-600 font-light">{item}</span>
                   </li>
                 ))}
@@ -161,7 +161,7 @@ export default function PrivacyPage() {
                   "Marketing Partners: Only with consent for promotional campaigns"
                 ].map((item, index) => (
                   <li key={index} className="flex items-start">
-                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                     <span className="text-gray-600 font-light">{item}</span>
                   </li>
                 ))}
@@ -201,7 +201,7 @@ export default function PrivacyPage() {
                   "Manage cookies through your browser settings"
                 ].map((item, index) => (
                   <li key={index} className="flex items-start">
-                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                     <span className="text-gray-600 font-light">{item}</span>
                   </li>
                 ))}
@@ -227,7 +227,7 @@ export default function PrivacyPage() {
                   "For help, reply HELP. To unsubscribe, reply STOP"
                 ].map((item, index) => (
                   <li key={index} className="flex items-start">
-                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                     <span className="text-gray-600 font-light">{item}</span>
                   </li>
                 ))}

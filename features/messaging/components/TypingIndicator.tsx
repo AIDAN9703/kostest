@@ -12,10 +12,10 @@ export function TypingIndicator({ participantName, participantAvatar }: TypingIn
   return (
     <div className="flex gap-3 mb-4">
       {/* Avatar */}
-      <div className="flex-shrink-0">
+      <div className="shrink-0">
         <Avatar className="w-8 h-8">
           <AvatarImage src={participantAvatar} alt={participantName} />
-          <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white text-xs">
+          <AvatarFallback className="bg-linear-to-br from-blue-400 to-blue-600 text-white text-xs">
             {participantName.split(' ').map(n => n[0]).join('').slice(0, 2)}
           </AvatarFallback>
         </Avatar>

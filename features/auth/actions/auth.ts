@@ -62,7 +62,7 @@ export const signInAction = async (
 export const signUpAction = async (
   params: SignUpData
 ): Promise<ActionResponse<{ message: string; redirectUrl?: string }>> => {
-  const { firstName, lastName, email, password, phoneNumber, birthday } = params;
+  const { firstName, lastName, email, password, phoneNumber } = params;
 
   const existingUser = await db
     .select()
@@ -90,7 +90,6 @@ export const signUpAction = async (
       email,
       password: hashedPassword,
       phoneNumber: formattedPhoneNumber,
-      birthday: new Date(birthday),
       // phoneVerified defaults to false in schema - no need to set explicitly
     }).returning({ id: users.id });
 

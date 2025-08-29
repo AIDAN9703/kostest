@@ -58,8 +58,8 @@ export default function HeroSection2() {
           quality={85}
         />
         {/* Improved gradient overlay - better boat visibility */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
-        <div className="absolute top-0 left-0 right-0 h-1/3 bg-gradient-to-b from-black/40 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-black/60" />
+        <div className="absolute top-0 left-0 right-0 h-1/3 bg-linear-to-b from-black/40 to-transparent" />
       </div>
 
       {/* Simple Two Column Layout */}
@@ -74,7 +74,7 @@ export default function HeroSection2() {
                 </span>
                 <span className="block text-5xl sm:text-6xl md:text-7xl lg:text-8xl">
                   Your
-                  <span className="bg-gradient-to-r from-cyan-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent ml-2">
+                  <span className="bg-linear-to-r from-cyan-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent ml-2">
                     Perfect
                   </span>
                 </span>

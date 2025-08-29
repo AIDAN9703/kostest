@@ -11,7 +11,6 @@ export default function SignUpModal() {
     firstName: "",
     lastName: "",
     phoneNumber: "",
-    birthday: "",
     password: "",
   };
 

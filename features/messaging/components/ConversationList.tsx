@@ -204,7 +204,7 @@ export const ConversationList = React.memo(function ConversationList({
                   >
                     <div className="flex items-start gap-3">
                       {/* Avatar */}
-                      <Avatar className="h-10 w-10 flex-shrink-0">
+                      <Avatar className="h-10 w-10 shrink-0">
                         <AvatarImage src="" alt={displayName} />
                         <AvatarFallback className="text-sm">
                           {conversation.type === 'BOOKING' ? (
@@ -225,7 +225,7 @@ export const ConversationList = React.memo(function ConversationList({
                             {displayName}
                           </h4>
                           
-                          <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-2 shrink-0">
                             {conversation.lastMessageAt && (
                               <span className="text-xs text-muted-foreground">
                                 {formatRelativeTime(new Date(conversation.lastMessageAt))}
@@ -243,7 +243,7 @@ export const ConversationList = React.memo(function ConversationList({
                             {previewText}
                           </p>
                           
-                          <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-2 shrink-0">
                             {hasUnread && (
                               <Badge variant="destructive" className="text-xs px-2 py-0.5 min-w-[20px] h-5 rounded-full">
                                 {unreadCount}

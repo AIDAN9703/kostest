@@ -118,7 +118,7 @@ export function MessagingHeader({
           <div className="relative">
             <Avatar className="w-10 h-10">
               <AvatarImage src={participant.avatar} alt={participant.name} />
-              <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white font-semibold text-sm">
+              <AvatarFallback className="bg-linear-to-br from-blue-400 to-blue-600 text-white font-semibold text-sm">
                 {participant.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
               </AvatarFallback>
             </Avatar>

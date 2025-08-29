@@ -283,7 +283,7 @@ export function MessageList({
                 "flex gap-3",
                 i % 3 === 0 ? "justify-end" : "justify-start"
               )}>
-                {i % 3 !== 0 && <Skeleton className="h-8 w-8 rounded-full flex-shrink-0" />}
+                {i % 3 !== 0 && <Skeleton className="h-8 w-8 rounded-full shrink-0" />}
                 <div className="space-y-2 max-w-xs">
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-3/4" />
@@ -337,7 +337,7 @@ export function MessageList({
                         <TooltipProvider>
                           <Tooltip>
                             <TooltipTrigger asChild>
-                              <Avatar className="h-8 w-8 flex-shrink-0">
+                              <Avatar className="h-8 w-8 shrink-0">
                                 <AvatarImage 
                                   src={message.sender.profileImage} 
                                   alt={message.sender.displayName || "User"} 
@@ -440,7 +440,7 @@ export function MessageList({
             {/* Typing indicator */}
             {typingUsers.size > 0 && (
               <div className="flex gap-3">
-                <Avatar className="h-8 w-8 flex-shrink-0">
+                <Avatar className="h-8 w-8 shrink-0">
                   <AvatarFallback>
                     <div className="animate-pulse">💬</div>
                   </AvatarFallback>

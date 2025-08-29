@@ -132,7 +132,7 @@ export default function AdminSidebar() {
                 )}
               >
                 <div className={cn(
-                  "flex-shrink-0",
+                  "shrink-0",
                   pathname === item.href ? "text-gray-900 font-bold" : "text-gray-600"
                 )}>
                   {item.icon}

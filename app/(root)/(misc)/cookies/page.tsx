@@ -83,7 +83,7 @@ export default function CookiesPage() {
                   "Security: Protect against fraud and ensure secure transactions"
                 ].map((item, index) => (
                   <li key={index} className="flex items-start">
-                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                     <span className="text-gray-600 font-light">{item}</span>
                   </li>
                 ))}
@@ -114,7 +114,7 @@ export default function CookiesPage() {
                         "Load balancing and website performance"
                       ].map((item, index) => (
                         <li key={index} className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2 mt-2 flex-shrink-0" />
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2 mt-2 shrink-0" />
                           <span className="text-gray-600">{item}</span>
                         </li>
                       ))}
@@ -136,7 +136,7 @@ export default function CookiesPage() {
                         "Error monitoring and performance optimization"
                       ].map((item, index) => (
                         <li key={index} className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2 mt-2 flex-shrink-0" />
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2 mt-2 shrink-0" />
                           <span className="text-gray-600">{item}</span>
                         </li>
                       ))}
@@ -158,7 +158,7 @@ export default function CookiesPage() {
                         "Social media integration and sharing"
                       ].map((item, index) => (
                         <li key={index} className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2 mt-2 flex-shrink-0" />
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2 mt-2 shrink-0" />
                           <span className="text-gray-600">{item}</span>
                         </li>
                       ))}
@@ -180,7 +180,7 @@ export default function CookiesPage() {
                         "Cross-device user identification"
                       ].map((item, index) => (
                         <li key={index} className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2 mt-2 flex-shrink-0" />
+                          <div className="w-1.5 h-1.5 bg-primary rounded-full mr-2 mt-2 shrink-0" />
                           <span className="text-gray-600">{item}</span>
                         </li>
                       ))}
@@ -261,7 +261,7 @@ export default function CookiesPage() {
                       "Browse in private/incognito mode to avoid storing cookies"
                     ].map((item, index) => (
                       <li key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                         <span className="text-gray-600 font-light">{item}</span>
                       </li>
                     ))}
@@ -290,7 +290,7 @@ export default function CookiesPage() {
                       "Industry opt-out: Visit youronlinechoices.eu or optout.aboutads.info"
                     ].map((item, index) => (
                       <li key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                         <span className="text-gray-600 font-light">{item}</span>
                       </li>
                     ))}
@@ -328,7 +328,7 @@ export default function CookiesPage() {
                   "App usage analytics and crash reporting"
                 ].map((item, index) => (
                   <li key={index} className="flex items-start">
-                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                     <span className="text-gray-600 font-light">{item}</span>
                   </li>
                 ))}

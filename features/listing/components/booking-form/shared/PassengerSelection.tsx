@@ -46,7 +46,7 @@ export function PassengerSelection({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-9 w-9 rounded-full p-0 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-0"
+                  className="h-9 w-9 rounded-full p-0 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors focus:outline-hidden focus:ring-0"
                   onClick={() => handlePassengerChange(false, field.value)}
                   disabled={field.value <= 1}
                 >
@@ -57,7 +57,7 @@ export function PassengerSelection({
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-9 w-9 rounded-full p-0 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-0"
+                  className="h-9 w-9 rounded-full p-0 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors focus:outline-hidden focus:ring-0"
                   onClick={() => handlePassengerChange(true, field.value)}
                   disabled={field.value >= (boat.capacity || 12)}
                 >

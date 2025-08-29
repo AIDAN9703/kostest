@@ -150,7 +150,7 @@ export function InboxHeader({
             className={`
               flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all
               ${activeView === "details" 
-                ? 'bg-white text-blue-600 shadow-sm' 
+                ? 'bg-white text-blue-600 shadow-xs' 
                 : 'text-gray-600 hover:text-gray-900'
               }
             `}
@@ -164,7 +164,7 @@ export function InboxHeader({
             className={`
               flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all relative
               ${activeView === "messages" 
-                ? 'bg-white text-blue-600 shadow-sm' 
+                ? 'bg-white text-blue-600 shadow-xs' 
                 : 'text-gray-600 hover:text-gray-900'
               }
             `}

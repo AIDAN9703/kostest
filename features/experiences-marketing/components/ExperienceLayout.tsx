@@ -53,7 +53,7 @@ export default function ExperienceLayout({
             quality={90}
             sizes="100vw"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/25 to-black/50" />
+          <div className="absolute inset-0 bg-linear-to-b from-black/10 via-black/25 to-black/50" />
         </div>
         
         <div className="relative z-10 h-full flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8">
@@ -104,12 +104,12 @@ export default function ExperienceLayout({
               {faqs.map((faq, index) => (
                 <details 
                   key={index} 
-                  className={`group bg-white rounded-lg border border-gray-200 hover:shadow-sm transition-all duration-300 animate-fade-in-up`}
+                  className={`group bg-white rounded-lg border border-gray-200 hover:shadow-xs transition-all duration-300 animate-fade-in-up`}
                   style={{ animationDelay: `${index * 100}ms` }}
                 >
                   <summary className="flex items-center justify-between cursor-pointer p-4 lg:p-6">
                     <h3 className="text-sm sm:text-base lg:text-xl font-medium text-primary leading-tight pr-4">{faq.question}</h3>
-                    <span className="ml-2 lg:ml-6 flex-shrink-0 text-primary/60 group-open:rotate-180 transition-transform">
+                    <span className="ml-2 lg:ml-6 shrink-0 text-primary/60 group-open:rotate-180 transition-transform">
                       <svg width="20" height="20" className="lg:w-6 lg:h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>

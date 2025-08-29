@@ -32,7 +32,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: false, // Re-enable linting
   },
-  typedRoutes: true,
 };
 
 export default nextConfig;

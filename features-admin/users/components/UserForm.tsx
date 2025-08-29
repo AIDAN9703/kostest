@@ -125,7 +125,7 @@ export function UserForm({ user, userId }: UserFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Personal Information */}
-        <Card className="border-gray-200 shadow-sm">
+        <Card className="border-gray-200 shadow-xs">
           <CardHeader className="bg-gray-50 border-b border-gray-100">
             <CardTitle>Personal Information</CardTitle>
             <CardDescription>Basic profile information</CardDescription>
@@ -211,7 +211,7 @@ export function UserForm({ user, userId }: UserFormProps) {
         </Card>
         
         {/* Account Information */}
-        <Card className="border-gray-200 shadow-sm">
+        <Card className="border-gray-200 shadow-xs">
           <CardHeader className="bg-gray-50 border-b border-gray-100">
             <CardTitle>Account Information</CardTitle>
             <CardDescription>Account credentials and settings</CardDescription>
@@ -397,7 +397,7 @@ export function UserForm({ user, userId }: UserFormProps) {
         </Card>
         
         {/* Contact Information */}
-        <Card className="border-gray-200 shadow-sm">
+        <Card className="border-gray-200 shadow-xs">
           <CardHeader className="bg-gray-50 border-b border-gray-100">
             <CardTitle>Contact Information</CardTitle>
             <CardDescription>User's contact details</CardDescription>
@@ -478,7 +478,7 @@ export function UserForm({ user, userId }: UserFormProps) {
         </Card>
         
         {/* Verification Status */}
-        <Card className="border-gray-200 shadow-sm">
+        <Card className="border-gray-200 shadow-xs">
           <CardHeader className="bg-gray-50 border-b border-gray-100">
             <CardTitle>Verification Status</CardTitle>
             <CardDescription>User verification information</CardDescription>

@@ -139,14 +139,14 @@ export default async function TermChartersPage() {
               className="group animate-fade-in-up h-full"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="bg-white rounded-lg p-3 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
+              <div className="bg-white rounded-lg p-3 lg:p-6 shadow-xs border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
                 <div className="bg-gold/10 p-2 lg:p-3 rounded-lg w-8 h-8 lg:w-12 lg:h-12 mb-2 lg:mb-4 flex items-center justify-center">
                   <div className="text-gold">
                     {benefit.icon}
                   </div>
                 </div>
                 <h3 className="text-sm lg:text-xl font-medium text-primary mb-1 lg:mb-3 leading-tight">{benefit.title}</h3>
-                <p className="text-xs lg:text-base text-gray-600 leading-snug lg:leading-relaxed font-light flex-grow line-clamp-2">{benefit.description}</p>
+                <p className="text-xs lg:text-base text-gray-600 leading-snug lg:leading-relaxed font-light grow line-clamp-2">{benefit.description}</p>
               </div>
             </div>
           ))}
@@ -168,7 +168,7 @@ export default async function TermChartersPage() {
         
         <div className="grid grid-cols-2 gap-4 lg:gap-8">
           {/* Included Items */}
-          <div className="bg-white rounded-lg p-4 lg:p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-lg p-4 lg:p-8 shadow-xs border border-gray-100">
             <h3 className="text-sm lg:text-xl font-medium text-primary mb-4 lg:mb-6">Included in Every Charter</h3>
             <div className="space-y-2 lg:space-y-4">
               {[
@@ -188,7 +188,7 @@ export default async function TermChartersPage() {
           </div>
 
           {/* Premium Add-ons */}
-          <div className="bg-white rounded-lg p-4 lg:p-8 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-lg p-4 lg:p-8 shadow-xs border border-gray-100">
             <h3 className="text-sm lg:text-xl font-medium text-primary mb-4 lg:mb-6">Premium Add-ons</h3>
             <div className="space-y-2 lg:space-y-4">
               {[
@@ -251,7 +251,7 @@ export default async function TermChartersPage() {
           </p>
         </div>
         
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white rounded-lg shadow-xs border border-gray-100 overflow-hidden">
           <RequestTermCharter />
         </div>
       </section>

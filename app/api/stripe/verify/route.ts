@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2025-03-31.basil",
+  apiVersion: "2025-07-30.basil",
 });
 
 export async function GET(request: NextRequest) {

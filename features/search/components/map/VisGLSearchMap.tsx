@@ -163,7 +163,7 @@ function MapContent({ locations, boundingBox }: {
     <>
       {/* No locations message */}
       {locations.length === 0 && (
-        <div className="absolute top-4 left-4 bg-white p-2 rounded shadow z-10 text-sm">
+        <div className="absolute top-4 left-4 bg-white p-2 rounded shadow-sm z-10 text-sm">
           No boats found in this area
         </div>
       )}

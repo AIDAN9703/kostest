@@ -161,10 +161,10 @@ export function MessageComposer({
       <div className="p-4">
         <div className={`
           flex items-end gap-3 p-3 bg-gray-50 rounded-2xl border transition-all duration-200
-          ${isExpanded || message ? 'bg-white border-gray-300 shadow-sm' : 'border-gray-200'}
+          ${isExpanded || message ? 'bg-white border-gray-300 shadow-xs' : 'border-gray-200'}
         `}>
           {/* Attachment Button */}
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <Button
               variant="ghost"
               size="sm"
@@ -202,7 +202,7 @@ export function MessageComposer({
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-1 shrink-0">
             {/* Emoji Button */}
             <Button
               variant="ghost"

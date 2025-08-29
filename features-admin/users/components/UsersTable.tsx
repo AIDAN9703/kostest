@@ -39,7 +39,7 @@ interface UsersTableProps {
 
 export function UsersTable({ users }: UsersTableProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xs">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-100 bg-gray-50/70 text-left text-xs uppercase tracking-wider text-gray-500">
@@ -56,7 +56,7 @@ export function UsersTable({ users }: UsersTableProps) {
             <tr key={user.id} className="hover:bg-gray-50/50 transition-colors">
               <td className="px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center shrink-0">
                     {user.profileImage ? (
                       <Image
                         src={user.profileImage || user.image || ""}

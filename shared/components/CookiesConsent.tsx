@@ -54,11 +54,11 @@ export default function CookiesConsent() {
           </div>
 
           {/* Right side - Close button */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center lg:flex-shrink-0 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center lg:shrink-0 w-full sm:w-auto">
             <Button
               size="lg"
               onClick={handleClose}
-              className="bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white shadow-lg"
+              className="bg-linear-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-white shadow-lg"
             >
               Close
             </Button>

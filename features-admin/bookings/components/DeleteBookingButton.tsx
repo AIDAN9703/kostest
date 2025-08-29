@@ -55,7 +55,7 @@ export function DeleteBookingButton({ bookingId, customerName, iconOnly = false 
       <>
         <button
           type="button"
-          className="text-red-600 hover:text-red-800 p-1 rounded-full focus:outline-none focus:ring-2 focus:ring-red-400"
+          className="text-red-600 hover:text-red-800 p-1 rounded-full focus:outline-hidden focus:ring-2 focus:ring-red-400"
           title="Delete"
           onClick={(e) => {
             e.preventDefault();

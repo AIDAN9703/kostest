@@ -108,7 +108,7 @@ export default function TeamSection() {
             {teamMembers.map((member, index) => (
               <div 
                 key={index}
-                className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 flex flex-col"
+                className="bg-white rounded-xl overflow-hidden shadow-xs border border-gray-100 hover:shadow-lg transition-all duration-300 flex flex-col"
               >
                 <div className="aspect-square relative overflow-hidden">
                   <Image

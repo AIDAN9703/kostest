@@ -170,13 +170,13 @@ export default function CancellationPolicyPage() {
 
               <ul className="space-y-3">
                 <li className="flex items-start">
-                  <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                  <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                   <span className="text-gray-600 font-light">
                     To modify or cancel your booking, please contact us as early as possible.
                   </span>
                 </li>
                 <li className="flex items-start">
-                  <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                  <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                   <span className="text-gray-600 font-light">
                     All rescheduling is subject to vessel availability and applicable rates or fees.
                   </span>

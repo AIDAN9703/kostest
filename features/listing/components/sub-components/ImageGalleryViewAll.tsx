@@ -84,7 +84,7 @@ export default function ImageGalleryViewAll({
         )}
         
         {/* Image counter */}
-        <div className="absolute left-1/2 -translate-x-1/2 bottom-[110px] bg-black/60 text-white px-3 py-1 rounded-full text-sm backdrop-blur-sm">
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-[110px] bg-black/60 text-white px-3 py-1 rounded-full text-sm backdrop-blur-xs">
           {currentIndex + 1} / {images.length}
         </div>
 
@@ -94,7 +94,7 @@ export default function ImageGalleryViewAll({
             {images.map((src, index) => (
               <button 
                 key={index}
-                className={`h-full aspect-[16/9] flex-shrink-0 rounded-md overflow-hidden transition-opacity duration-200 focus:outline-none ${
+                className={`h-full aspect-video shrink-0 rounded-md overflow-hidden transition-opacity duration-200 focus:outline-hidden ${
                   currentIndex === index 
                     ? 'ring-2 ring-white opacity-100' 
                     : 'opacity-60 hover:opacity-90'

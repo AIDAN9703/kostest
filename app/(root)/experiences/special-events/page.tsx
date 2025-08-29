@@ -142,14 +142,14 @@ export default function SpecialEventsPage() {
               className="group animate-fade-in-up h-full"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="bg-white rounded-lg p-4 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
+              <div className="bg-white rounded-lg p-4 lg:p-6 shadow-xs border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
                 <div className="bg-gold/10 p-3 lg:p-4 rounded-lg w-12 h-12 lg:w-14 lg:h-14 mb-4 lg:mb-6 flex items-center justify-center">
                   <div className="text-gold">
                     {service.icon}
                   </div>
                 </div>
                 <h3 className="text-base lg:text-xl font-medium text-primary mb-2 lg:mb-3 leading-tight">{service.title}</h3>
-                <p className="text-sm lg:text-base text-gray-600 leading-relaxed font-light flex-grow line-clamp-2">{service.desc}</p>
+                <p className="text-sm lg:text-base text-gray-600 leading-relaxed font-light grow line-clamp-2">{service.desc}</p>
               </div>
             </div>
           ))}
@@ -196,14 +196,14 @@ export default function SpecialEventsPage() {
                 />
               </div>
               
-              <div className="p-3 lg:p-6 flex flex-col flex-grow">
+              <div className="p-3 lg:p-6 flex flex-col grow">
                 <h3 className="text-sm sm:text-base lg:text-xl font-medium text-primary mb-2 lg:mb-3">{event.title}</h3>
-                <p className="text-gray-600 font-light leading-relaxed mb-3 lg:mb-4 flex-grow text-xs sm:text-sm lg:text-base">{event.description}</p>
+                <p className="text-gray-600 font-light leading-relaxed mb-3 lg:mb-4 grow text-xs sm:text-sm lg:text-base">{event.description}</p>
                 
                 <div className="space-y-1 lg:space-y-2 mb-3 lg:mb-6">
                   {event.features.map((feature, idx) => (
                     <div key={idx} className="flex items-center">
-                      <CheckCircle2 className="h-3 w-3 lg:h-4 lg:w-4 text-primary mr-2 flex-shrink-0" />
+                      <CheckCircle2 className="h-3 w-3 lg:h-4 lg:w-4 text-primary mr-2 shrink-0" />
                       <span className="text-xs lg:text-sm text-gray-600 font-light">{feature}</span>
                     </div>
                   ))}

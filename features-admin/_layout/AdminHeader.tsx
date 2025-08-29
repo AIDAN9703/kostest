@@ -54,7 +54,7 @@ export default function AdminHeader({ session }: { session: Session }) {
   const [showQuickActions, setShowQuickActions] = useState(false);
 
   return (
-    <header className="bg-white/95 backdrop-blur-sm border-b border-gray-200/80 h-16 flex items-center px-6 w-full shadow-sm">
+    <header className="bg-white/95 backdrop-blur-xs border-b border-gray-200/80 h-16 flex items-center px-6 w-full shadow-xs">
       <div className="flex-1 flex items-center space-x-4">
         <GlobalSearch />
         
@@ -72,7 +72,7 @@ export default function AdminHeader({ session }: { session: Session }) {
           
           {showQuickActions && (
             <div
-              className="absolute left-0 mt-3 w-48 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-200/80 py-2 z-50"
+              className="absolute left-0 mt-3 w-48 bg-white/95 backdrop-blur-xs rounded-xl shadow-xl border border-gray-200/80 py-2 z-50"
               onBlur={() => setShowQuickActions(false)}
             >
               <div className="px-3 py-2 border-b border-gray-200/80">
@@ -108,10 +108,10 @@ export default function AdminHeader({ session }: { session: Session }) {
         {/* User Menu */}
         <div className="relative">
           <button
-            className="flex items-center space-x-3 focus:outline-none group p-1 rounded-xl hover:bg-gray-100 transition-all duration-200"
+            className="flex items-center space-x-3 focus:outline-hidden group p-1 rounded-xl hover:bg-gray-100 transition-all duration-200"
             onClick={() => setShowDropdown(!showDropdown)}
           >
-            <div className="flex-shrink-0 h-9 w-9 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm">
+            <div className="shrink-0 h-9 w-9 rounded-full bg-linear-to-br from-blue-100 to-blue-200 flex items-center justify-center overflow-hidden border-2 border-white shadow-xs">
               {session?.user?.profileImage ? (
                 <Image
                   src={session.user.profileImage}
@@ -138,7 +138,7 @@ export default function AdminHeader({ session }: { session: Session }) {
           {/* Dropdown Menu */}
           {showDropdown && (
             <div
-              className="absolute right-0 mt-3 w-56 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-200/80 py-2 z-50"
+              className="absolute right-0 mt-3 w-56 bg-white/95 backdrop-blur-xs rounded-xl shadow-xl border border-gray-200/80 py-2 z-50"
               onBlur={() => setShowDropdown(false)}
             >
               <Link

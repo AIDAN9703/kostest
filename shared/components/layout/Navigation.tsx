@@ -113,16 +113,16 @@ const Navigation = () => {
         "transition-all duration-300",
         isHomePage 
             ? scrolled 
-                ? "bg-white backdrop-blur-sm shadow-md py-3" 
+                ? "bg-white backdrop-blur-xs shadow-md py-3" 
                 : "bg-transparent py-5"
-            : "bg-white backdrop-blur-sm shadow-md py-3"
+            : "bg-white backdrop-blur-xs shadow-md py-3"
     ), [isHomePage, scrolled])
 
     // Memoized text style function
     const getTextStyle = useCallback((isActive: boolean = false) => cn(
         "transition-all duration-200",
         "text-[15px] font-semibold tracking-wide",
-        "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-sm",
+        "focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50 rounded-sm",
         isActive
             ? "text-primary"
             : isHomePage && !scrolled
@@ -174,7 +174,7 @@ const Navigation = () => {
 
                         <Link 
                             href="/" 
-                            className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-full"
+                            className="focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50 rounded-full"
                             aria-label="Home"
                         >
                             <Image 

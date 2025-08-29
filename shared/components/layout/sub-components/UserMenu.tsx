@@ -43,7 +43,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
         "text-[15px] font-medium tracking-wide",
         "border-2 rounded-md px-2 py-1",
         "transition-all duration-300",
-        "focus:outline-none focus-visible:ring-2",
+        "focus:outline-hidden focus-visible:ring-2",
         "focus-visible:ring-primary/50",
         "hover:scale-105 active:scale-95",
         isHomePage && !scrolled
@@ -54,19 +54,19 @@ const UserMenu: React.FC<UserMenuProps> = ({
     const avatarButtonStyle = useMemo(() => cn(
         "p-0.5 h-10 w-10 sm:h-11 sm:w-11 rounded-full",
         "focus-visible:ring-2 focus-visible:ring-offset-2",
-        "focus:outline-none focus:ring-0 focus:ring-offset-0",
+        "focus:outline-hidden focus:ring-0 focus:ring-offset-0",
         isHomePage && !scrolled
             ? "focus-visible:ring-white/80 focus-visible:ring-offset-transparent"
             : "focus-visible:ring-white/50 focus-visible:ring-offset-white",
         "transition-all duration-300 hover:scale-105",
         "data-[state=open]:bg-transparent",
-        "[&:not(:focus-visible)]:ring-0 [&:not(:focus-visible)]:ring-offset-0",
+        "not-focus-visible:ring-0 not-focus-visible:ring-offset-0",
         "after:hidden"
     ), [isHomePage, scrolled]);
     
     const avatarStyle = useMemo(() => cn(
         "h-full w-full transition-all duration-300",
-        "ring-[2px] sm:ring-[2.5px]",
+        "ring-2 sm:ring-[2.5px]",
         isHomePage && !scrolled 
             ? "ring-white/90 bg-white/10" 
             : "ring-gray-300/90 bg-white/5"
@@ -101,7 +101,7 @@ const UserMenu: React.FC<UserMenuProps> = ({
                 <DropdownMenuContent 
                     align="end" 
                     sideOffset={8}
-                    className="w-64 p-2 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg"
+                    className="w-64 p-2 bg-white/95 backdrop-blur-xs rounded-lg shadow-lg"
                     forceMount
                     onCloseAutoFocus={(e) => e.preventDefault()}
                     avoidCollisions={false}

@@ -99,7 +99,7 @@ export function GlobalSearch() {
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query.length >= 2 && setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-md text-sm focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-transparent"
         />
         {isLoading && (
           <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -124,11 +124,11 @@ export function GlobalSearch() {
                 >
                   <div className="flex items-center gap-3">
                     {result.image ? (
-                      <div className="h-8 w-8 rounded-full overflow-hidden flex-shrink-0">
+                      <div className="h-8 w-8 rounded-full overflow-hidden shrink-0">
                         <Image src={result.image} alt={result.title} width={32} height={32} className="object-cover" />
                       </div>
                     ) : (
-                      <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                      <div className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
                         <span>{getTypeIcon(result.type)}</span>
                       </div>
                     )}

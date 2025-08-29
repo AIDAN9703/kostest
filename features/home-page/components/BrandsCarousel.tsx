@@ -50,8 +50,8 @@ export default function BrandsCarousel() {
         {/* Brands Carousel */}
         <div className="relative mt-0">
           {/* Gradient Overlays */}
-          <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-16 bg-gradient-to-r from-white to-transparent z-10" />
-          <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-16 bg-gradient-to-l from-white to-transparent z-10" />
+          <div className="absolute left-0 top-0 bottom-0 w-8 sm:w-16 bg-linear-to-r from-white to-transparent z-10" />
+          <div className="absolute right-0 top-0 bottom-0 w-8 sm:w-16 bg-linear-to-l from-white to-transparent z-10" />
 
           {/* Scrolling Containers */}
           <div className="overflow-hidden">
@@ -78,7 +78,7 @@ export default function BrandsCarousel() {
 function BrandLogo({ brand }: { brand: Brand }) {
   return (
     <div className="inline-flex items-center justify-center px-3 sm:px-4 md:px-6">
-      <div className="relative w-20 h-16 sm:w-28 sm:h-20 md:w-36 md:h-28 bg-white rounded-lg p-2 flex items-center justify-center border border-gray-100/50 hover:border-primary/20 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="relative w-20 h-16 sm:w-28 sm:h-20 md:w-36 md:h-28 bg-white rounded-lg p-2 flex items-center justify-center border border-gray-100/50 hover:border-primary/20 shadow-xs hover:shadow-md transition-all duration-300">
         <Image
           src={brand.logo}
           alt={brand.name}
@@ -92,31 +92,4 @@ function BrandLogo({ brand }: { brand: Brand }) {
   );
 }
 
-// Add this to your globals.css
-/*
-@keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
 
-@keyframes marquee-reverse {
-  0% {
-    transform: translateX(-50%);
-  }
-  100% {
-    transform: translateX(0);
-  }
-}
-
-.animate-marquee {
-  animation: marquee 25s linear infinite;
-}
-
-.animate-marquee-reverse {
-  animation: marquee-reverse 25s linear infinite;
-}
-*/

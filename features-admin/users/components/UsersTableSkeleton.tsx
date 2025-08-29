@@ -5,7 +5,7 @@ export function UsersTableSkeleton() {
   const skeletonRows = Array.from({ length: 5 }, (_, i) => i);
   
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xs">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-100 bg-gray-50/70 text-left text-xs uppercase tracking-wider text-gray-500">

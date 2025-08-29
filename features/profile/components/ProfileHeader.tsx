@@ -58,7 +58,7 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
         {user?.coverImage ? (
           <img src={user.coverImage} alt="Cover" className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full bg-gradient-to-r from-primary to-primary/80" />
+          <div className="w-full h-full bg-linear-to-r from-primary to-primary/80" />
         )}
       </div>
 
@@ -66,7 +66,7 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
       <CardContent className="p-8 -mt-12 relative">
         <div className="flex flex-col sm:flex-row sm:items-end gap-6">
           {/* Avatar */}
-          <Avatar className="h-24 w-24 border-4 border-white shadow-lg flex-shrink-0">
+          <Avatar className="h-24 w-24 border-4 border-white shadow-lg shrink-0">
             <AvatarImage src={user?.profileImage || undefined} alt={getDisplayName()} />
             <AvatarFallback className="text-2xl bg-primary text-white">
               {getUserInitials(user?.firstName, user?.lastName)}
@@ -101,7 +101,7 @@ export default function ProfileHeader({ user }: ProfileHeaderProps) {
               </div>
               
               {/* Actions */}
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <Button size="sm" asChild>
                   <Link href="/profile/settings">
                     <Settings className="h-4 w-4 mr-2" />

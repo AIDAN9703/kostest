@@ -34,10 +34,10 @@ export default function BoatCard({ boat }: BoatCardProps) {
   const priceDisplay = formatPrice();
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 w-full">
+    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-xs hover:shadow-lg transition-all duration-200 w-full">
       <div className="flex">
         {/* Image Section */}
-        <div className="relative h-24 w-32 flex-shrink-0">
+        <div className="relative h-24 w-32 shrink-0">
           <Image
             src={imageUrl}
             alt={boat.name}

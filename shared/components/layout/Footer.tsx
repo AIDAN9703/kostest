@@ -6,6 +6,7 @@ import { Instagram, Send } from 'lucide-react';
 import { FaYoutube, FaTiktok } from 'react-icons/fa';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/shared/components/ui/accordion';
 
 // Setup footer sections for better organization
 const quickLinks = [
@@ -58,171 +59,150 @@ const services = [
 
 export default function Footer() {
   return (
-    <footer className="bg-primary">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 lg:pt-20 pb-8">
-        {/* Mobile Optimized Layout */}
-        <div className="flex flex-col gap-8 md:hidden">
-          {/* Top Row - Logo and Social */}
-          <div className="flex items-center justify-between mb-2">
+    <footer className="bg-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 lg:pt-16 pb-8">
+        {/* Mobile-first layout */}
+        <div className="md:hidden space-y-8">
+          {/* Brand + Social */}
+          <div className="flex items-center justify-between">
             <Link href="/" className="block">
-              <Image 
-                src="/icons/logo.png" 
-                alt="KOS Yachts" 
-                width={48} 
+              <Image
+                src="/icons/logo.png"
+                alt="KOS Yachts"
+                width={48}
                 height={48}
                 className="rounded-full"
               />
             </Link>
             <div className="flex items-center gap-3">
-              <a 
-                href="https://instagram.com" 
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+              <a
+                href="https://instagram.com"
+                className="w-9 h-9 rounded-full border border-gray-200 hover:border-primary/30 flex items-center justify-center transition-colors"
                 aria-label="Instagram"
               >
-                <Instagram className="w-4 h-4 text-gray-300" />
+                <Instagram className="w-4.5 h-4.5 text-gray-600" />
               </a>
-              <a 
-                href="https://tiktok.com" 
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+              <a
+                href="https://tiktok.com"
+                className="w-9 h-9 rounded-full border border-gray-200 hover:border-primary/30 flex items-center justify-center transition-colors"
                 aria-label="TikTok"
               >
-                <FaTiktok className="w-4 h-4 text-gray-300" />
+                <FaTiktok className="w-4.5 h-4.5 text-gray-600" />
               </a>
-              <a 
-                href="https://youtube.com" 
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+              <a
+                href="https://youtube.com"
+                className="w-9 h-9 rounded-full border border-gray-200 hover:border-primary/30 flex items-center justify-center transition-colors"
                 aria-label="YouTube"
               >
-                <FaYoutube className="w-4 h-4 text-gray-300" />
+                <FaYoutube className="w-4.5 h-4.5 text-gray-600" />
               </a>
             </div>
           </div>
-          
-          {/* Section Grid - More spacing between sections */}
-          <div className="grid grid-cols-2 gap-x-6 gap-y-8">
-            {/* Quick Links */}
-            <div>
-              <h3 className="text-white font-serif text-lg mb-3">Quick Links</h3>
-              <ul className="space-y-2">
-                {quickLinks.slice(0, 3).map(link => (
-                  <li key={link.label}>
-                    <Link href={link.href} className="text-gray-300 text-sm hover:text-gold transition-colors font-light">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            {/* Locations */}
-            <div>
-              <h3 className="text-white font-serif text-lg mb-3">Locations</h3>
-              <ul className="space-y-2">
-                {locations.slice(0, 3).map(location => (
-                  <li key={location.label}>
-                    <Link href={location.href} className="text-gray-300 text-sm hover:text-gold transition-colors font-light">
-                      {location.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            {/* Services */}
-            <div>
-              <h3 className="text-white font-serif text-lg mb-3">Services</h3>
-              <ul className="space-y-2">
-                {services.slice(0, 3).map(service => (
-                  <li key={service.label}>
-                    <Link href={service.href} className="text-gray-300 text-sm hover:text-gold transition-colors font-light">
-                      {service.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            
-            {/* Additional Links - Fill the 4th grid slot */}
-            <div>
-              <h3 className="text-white font-serif text-lg mb-3">More</h3>
-              <ul className="space-y-2">
-                {quickLinks.slice(3, 6).map(link => (
-                  <li key={link.label}>
-                    <Link href={link.href} className="text-gray-300 text-sm hover:text-gold transition-colors font-light">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          
-          {/* Newsletter - Mobile */}
-          <div className="mt-2">
-            <h3 className="text-white font-serif text-lg mb-3">Newsletter</h3>
-            <form className="flex items-center">
-              <div className="relative flex-1">
+
+          {/* Newsletter */}
+          <div className="rounded-2xl border border-gray-200 p-4">
+            <h3 className="text-base font-medium text-primary mb-2">Join the KOS Yacht Club Newsletter</h3>
+            <p className="text-sm text-gray-600 mb-3">Insider access to yachts, events, and exclusive offers.</p>
+            <form>
+              <div className="flex items-stretch rounded-full border border-gray-200 overflow-hidden bg-white">
                 <Input
                   type="email"
-                  placeholder="Email"
-                  className="w-full bg-white/5 border-white/10 text-white placeholder:text-gray-400 rounded-full py-2 pl-4 pr-12 text-sm focus:border-gold focus:ring-gold"
+                  placeholder="Email address"
+                  className="flex-1 bg-transparent border-0 focus:ring-0 focus-visible:outline-none px-4 py-2.5 text-sm rounded-none"
                 />
                 <Button
                   type="submit"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 bg-gold hover:bg-gold/90 text-[#1E293B] rounded-full w-8 h-8 flex items-center justify-center p-0"
+                  className="bg-gold hover:bg-gold/90 text-white rounded-none rounded-r-full h-10 px-4 text-sm font-medium"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
             </form>
           </div>
+
+          {/* Collapsible sections */}
+          <Accordion type="multiple" className="divide-y divide-gray-100 rounded-2xl border border-gray-200">
+            <AccordionItem value="quick-links" className="px-4">
+              <AccordionTrigger className="py-4 text-primary">Quick Links</AccordionTrigger>
+              <AccordionContent>
+                <ul className="space-y-2">
+                  {quickLinks.map(link => (
+                    <li key={link.label}>
+                      <Link href={link.href} className="text-gray-600 hover:text-primary transition-colors text-sm">
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="locations" className="px-4">
+              <AccordionTrigger className="py-4 text-primary">Locations</AccordionTrigger>
+              <AccordionContent>
+                <ul className="space-y-2">
+                  {locations.map(location => (
+                    <li key={location.label}>
+                      <Link href={location.href} className="text-gray-600 hover:text-primary transition-colors text-sm">
+                        {location.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="services" className="px-4">
+              <AccordionTrigger className="py-4 text-primary">Services</AccordionTrigger>
+              <AccordionContent>
+                <ul className="space-y-2">
+                  {services.map(service => (
+                    <li key={service.label}>
+                      <Link href={service.href} className="text-gray-600 hover:text-primary transition-colors text-sm">
+                        {service.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
 
-        {/* Desktop Layout */}
+        {/* Desktop layout */}
         <div className="hidden md:grid md:grid-cols-12 gap-8 lg:gap-12">
           {/* Company Info */}
-          <div className="md:col-span-2">
+          <div className="md:col-span-3">
             <Link href="/" className="block mb-6">
-              <Image 
-                src="/icons/logo.png" 
-                alt="KOS Yachts" 
-                width={48} 
-                height={48}
+              <Image
+                src="/icons/logo.png"
+                alt="KOS Yachts"
+                width={56}
+                height={56}
                 className="rounded-full"
               />
             </Link>
-            <div className="flex items-center gap-4">
-              <a 
-                href="https://instagram.com" 
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-                aria-label="Instagram"
-              >
-                <Instagram className="w-5 h-5 text-gray-300" />
+            <p className="text-gray-600 leading-relaxed mb-6">
+              Luxury charters and curated experiences across Miami, the Bahamas, and beyond.
+            </p>
+            <div className="flex items-center gap-3">
+              <a href="https://instagram.com/kosyachts" className="w-10 h-10 rounded-full border border-gray-200 hover:border-primary/30 flex items-center justify-center transition-colors" aria-label="Instagram">
+                <Instagram className="w-5 h-5 text-gray-700" />
               </a>
-              <a 
-                href="https://tiktok.com" 
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-                aria-label="TikTok"
-              >
-                <FaTiktok className="w-5 h-5 text-gray-300" />
+              <a href="https://tiktok.com/@kosyachts" className="w-10 h-10 rounded-full border border-gray-200 hover:border-primary/30 flex items-center justify-center transition-colors" aria-label="TikTok">
+                <FaTiktok className="w-5 h-5 text-gray-700" />
               </a>
-              <a 
-                href="https://youtube.com" 
-                className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
-                aria-label="YouTube"
-              >
-                <FaYoutube className="w-5 h-5 text-gray-300" />
+              <a href="https://youtube.com" className="w-10 h-10 rounded-full border border-gray-200 hover:border-primary/30 flex items-center justify-center transition-colors" aria-label="YouTube">
+                <FaYoutube className="w-5 h-5 text-gray-700" />
               </a>
             </div>
           </div>
 
           {/* Quick Links */}
           <div className="md:col-span-2">
-            <h3 className="text-white font-serif text-xl mb-6">Quick Links</h3>
-            <ul className="space-y-4">
+            <h3 className="text-primary font-serif text-lg mb-4">Quick Links</h3>
+            <ul className="space-y-3">
               {quickLinks.map(link => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-gray-300 hover:text-gold transition-colors font-light">
+                  <Link href={link.href} className="text-gray-600 hover:text-primary transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -232,11 +212,11 @@ export default function Footer() {
 
           {/* Locations */}
           <div className="md:col-span-2">
-            <h3 className="text-white font-serif text-xl mb-6">Locations</h3>
-            <ul className="space-y-4">
+            <h3 className="text-primary font-serif text-lg mb-4">Locations</h3>
+            <ul className="space-y-3">
               {locations.map(location => (
                 <li key={location.label}>
-                  <Link href={location.href} className="text-gray-300 hover:text-gold transition-colors font-light">
+                  <Link href={location.href} className="text-gray-600 hover:text-primary transition-colors">
                     {location.label}
                   </Link>
                 </li>
@@ -246,11 +226,11 @@ export default function Footer() {
 
           {/* Services */}
           <div className="md:col-span-2">
-            <h3 className="text-white font-serif text-xl mb-6">Services</h3>
-            <ul className="space-y-4">
+            <h3 className="text-primary font-serif text-lg mb-4">Services</h3>
+            <ul className="space-y-3">
               {services.map(service => (
                 <li key={service.label}>
-                  <Link href={service.href} className="text-gray-300 hover:text-gold transition-colors font-light">
+                  <Link href={service.href} className="text-gray-600 hover:text-primary transition-colors">
                     {service.label}
                   </Link>
                 </li>
@@ -258,49 +238,39 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter */}
-          <div className="md:col-span-4">
-            <h3 className="text-white font-serif text-xl mb-6">Join the KOS Yacht Club Newsletter!</h3>
-            <p className="text-gray-300 font-light leading-relaxed mb-6">
-              Insider access to yachts, events, and the world of premeire charters.
-            </p>
-            <form className="space-y-4">
-              <div className="relative">
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="w-full bg-white/5 border-white/10 text-white placeholder:text-gray-400 rounded-full py-6 pl-6 pr-36 focus:border-gold focus:ring-gold"
-                />
-                <Button
-                  type="submit"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 bg-gold hover:bg-gold/90 text-[#1E293B] rounded-full px-6 py-2"
-                >
-                  <Send className="w-5 h-5" />
-                </Button>
-              </div>
-            </form>
+          {/* Newsletter (right-most) */}
+          <div className="md:col-span-3">
+            <div className="rounded-2xl border border-gray-200 p-4">
+              <h3 className="text-primary font-medium mb-2">Join the KOS Yacht Club Newsletter</h3>
+              <p className="text-sm text-gray-600 mb-3">Insider access to yachts, events, and exclusive offers.</p>
+              <form>
+                <div className="flex items-stretch rounded-full border border-gray-200 bg-white overflow-hidden">
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    className="flex-1 bg-transparent border-0 focus:ring-0 focus-visible:outline-none px-5 py-3 rounded-none"
+                  />
+                  <Button
+                    type="submit"
+                    className="bg-gold hover:bg-gold/90 text-white rounded-none rounded-r-full h-11 px-5 text-sm font-medium"
+                  >
+                    <Send className="w-5 h-5" />
+                  </Button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-10 md:mt-16 pt-6 border-t border-white/10">
+        {/* Bottom bar */}
+        <div className="mt-10 md:mt-14 pt-6 border-t border-gray-200">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-400 font-light text-xs sm:text-sm">
-              © 2024 KOS Yachts. All rights reserved.
-            </p>
+            <p className="text-gray-600 text-xs sm:text-sm">© 2024 KOS Yachts. All rights reserved.</p>
             <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
-              <Link href="/cancellation-policy" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">
-              Cancellation Policy
-              </Link>
-              <Link href="/privacy" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">
-                Privacy Policy
-              </Link>
-              <Link href="/terms-of-service" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">
-                Terms of Service
-              </Link>
-              <Link href="/cookies" className="text-gray-400 hover:text-gold transition-colors text-xs sm:text-sm font-light">
-                Cookie Policy
-              </Link>
+              <Link href="/cancellation-policy" className="text-gray-600 hover:text-primary transition-colors text-xs sm:text-sm">Cancellation Policy</Link>
+              <Link href="/privacy" className="text-gray-600 hover:text-primary transition-colors text-xs sm:text-sm">Privacy Policy</Link>
+              <Link href="/terms-of-service" className="text-gray-600 hover:text-primary transition-colors text-xs sm:text-sm">Terms of Service</Link>
+              <Link href="/cookies" className="text-gray-600 hover:text-primary transition-colors text-xs sm:text-sm">Cookie Policy</Link>
             </div>
           </div>
         </div>

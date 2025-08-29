@@ -83,12 +83,12 @@ export default function FAQPage() {
             {faqItems.map((item, index) => (
               <details 
                 key={index} 
-                className="group bg-white rounded-lg border border-gray-200 hover:shadow-sm transition-all duration-300 animate-fade-in-up"
+                className="group bg-white rounded-lg border border-gray-200 hover:shadow-xs transition-all duration-300 animate-fade-in-up"
                 style={{ animationDelay: `${index * 50}ms` }}
               >
                 <summary className="flex items-center justify-between cursor-pointer p-6">
                   <h3 className="text-xl font-medium text-primary pr-4">{item.question}</h3>
-                  <span className="ml-6 flex-shrink-0 text-primary/60 group-open:rotate-180 transition-transform">
+                  <span className="ml-6 shrink-0 text-primary/60 group-open:rotate-180 transition-transform">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>

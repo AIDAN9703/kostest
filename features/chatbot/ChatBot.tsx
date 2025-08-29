@@ -97,7 +97,7 @@ export default function ChatBot({ className, initialOpen = false }: ChatBotProps
 
       {/* Chat Interface */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-end p-4 bg-black/20 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-end justify-end p-4 bg-black/20 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-md h-[600px] flex flex-col overflow-hidden">
             {/* Header */}
             <div className="bg-primary p-4 text-white">

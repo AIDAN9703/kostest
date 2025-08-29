@@ -25,7 +25,7 @@ export function BookingCard({ booking }: BookingCardProps) {
       <CardContent className="p-0">
         <div className="flex">
           {/* Boat Image */}
-          <div className="w-24 h-24 sm:w-32 sm:h-32 relative overflow-hidden rounded-l-lg flex-shrink-0">
+          <div className="w-24 h-24 sm:w-32 sm:h-32 relative overflow-hidden rounded-l-lg shrink-0">
             <img
               src={booking.image}
               alt={booking.boatName}
@@ -45,7 +45,7 @@ export function BookingCard({ booking }: BookingCardProps) {
                   {booking.boatType}
                 </p>
               </div>
-              <Badge className={`ml-2 text-xs ${statusStyle.color} flex-shrink-0`}>
+              <Badge className={`ml-2 text-xs ${statusStyle.color} shrink-0`}>
                 {statusStyle.label}
               </Badge>
             </div>

@@ -76,7 +76,7 @@ export default function TermsOfServicePage() {
                   "Concierge and lifestyle coordination"
                 ].map((item, index) => (
                   <li key={index} className="flex items-start">
-                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                     <span className="text-gray-600 font-light">{item}</span>
                   </li>
                 ))}
@@ -106,7 +106,7 @@ export default function TermsOfServicePage() {
                       "Bookings are only confirmed once full payment is received and processed"
                     ].map((item, index) => (
                       <li key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                         <span className="text-gray-600 font-light">{item}</span>
                       </li>
                     ))}
@@ -150,7 +150,7 @@ export default function TermsOfServicePage() {
                       "Unfavorable Conditions (e.g., light rain, cloudy skies): Most charters will proceed as scheduled"
                     ].map((item, index) => (
                       <li key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                         <span className="text-gray-600 font-light">{item}</span>
                       </li>
                     ))}
@@ -187,7 +187,7 @@ export default function TermsOfServicePage() {
                   "Any damage or misconduct may result in termination without refund"
                 ].map((item, index) => (
                   <li key={index} className="flex items-start">
-                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                     <span className="text-gray-600 font-light">{item}</span>
                   </li>
                 ))}
@@ -210,7 +210,7 @@ export default function TermsOfServicePage() {
                   "You agree to indemnify and hold harmless KOS Yachts and its affiliates from any claims, liabilities, or damages arising from your use of the services"
                 ].map((item, index) => (
                   <li key={index} className="flex items-start">
-                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                    <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                     <span className="text-gray-600 font-light">{item}</span>
                   </li>
                 ))}
@@ -265,7 +265,7 @@ export default function TermsOfServicePage() {
                       "Promotions, offers, or service alerts (if applicable)"
                     ].map((item, index) => (
                       <li key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                         <span className="text-gray-600 font-light">{item}</span>
                       </li>
                     ))}
@@ -305,7 +305,7 @@ export default function TermsOfServicePage() {
                       "By filling out a paper form at one of our events or offices"
                     ].map((item, index) => (
                       <li key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                         <span className="text-gray-600 font-light">{item}</span>
                       </li>
                     ))}
@@ -323,7 +323,7 @@ export default function TermsOfServicePage() {
                       "Contact us directly via email or phone to request removal from our SMS list"
                     ].map((item, index) => (
                       <li key={index} className="flex items-start">
-                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 flex-shrink-0" />
+                        <div className="w-2 h-2 bg-primary rounded-full mr-3 mt-2 shrink-0" />
                         <span className="text-gray-600 font-light">{item}</span>
                       </li>
                     ))}

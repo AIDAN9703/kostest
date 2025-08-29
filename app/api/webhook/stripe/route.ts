@@ -8,7 +8,7 @@ import config from "@/shared/config/config";
 
 // Use config for Stripe configuration
 const stripe = new Stripe(config.stripeSecretKey, {
-  apiVersion: "2025-03-31.basil",
+  apiVersion: "2025-07-30.basil",
 });
 
 const webhookSecret = config.stripeWebhookSecret;

@@ -63,7 +63,7 @@ const MobileNavigation = ({
     // Memoized hamburger button style
     const hamburgerButtonStyle = useMemo(() => cn(
         "transition-colors px-1 sm:px-1.5", 
-        "focus:outline-none focus-visible:ring-2",
+        "focus:outline-hidden focus-visible:ring-2",
         "focus-visible:ring-primary/50 rounded-sm",
         "hover:scale-105 active:scale-95",
         isHomePage && !scrolled 
@@ -77,6 +77,7 @@ const MobileNavigation = ({
                 <button
                     className={hamburgerButtonStyle}
                     aria-label="Open menu"
+                    suppressHydrationWarning
                 >
                     <svg 
                         width="32" 
@@ -245,7 +246,7 @@ const MobileNavigation = ({
                                         <SheetClose asChild key={item.href}>
                                             <Link
                                                 href={item.href}
-                                                className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                                                className="px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50"
                                             >
                                                 {item.label}
                                             </Link>
@@ -264,7 +265,7 @@ const MobileNavigation = ({
                                             href={item.href}
                                             className="flex items-center gap-3 p-3 rounded-lg hover:bg-primary/5 transition-colors"
                                         >
-                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
                                                 <item.icon className="w-4 h-4" />
                                             </div>
                                             <div>

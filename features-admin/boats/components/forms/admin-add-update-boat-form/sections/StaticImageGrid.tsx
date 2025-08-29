@@ -32,7 +32,7 @@ export default function StaticImageGrid({ images, onDelete, showDeleteButton = f
           <div key={`static-${image}-${index}`} className="relative group">
             <div className="relative w-24 h-24 border rounded-lg overflow-hidden bg-gray-100 hover:shadow-lg transition-shadow duration-200">
               {index === 0 && (
-                <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded z-10 shadow-sm font-medium">
+                <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded z-10 shadow-xs font-medium">
                   Main
                 </div>
               )}

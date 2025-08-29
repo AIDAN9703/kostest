@@ -52,7 +52,7 @@ export function BookingDetails({ boat }: BookingDetailsProps) {
       {/* Cancellation Policy */}
       <div className="bg-gray-50 rounded-lg p-4 border border-gray-100">
         <div className="flex items-start gap-3">
-          <Info className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+          <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
           <div>
             <h3 className="font-medium text-gray-900 mb-1">Cancellation Policy</h3>
             <p className="text-gray-700 whitespace-pre-line">{boat.cancellationPolicy || defaultCancellationPolicy}</p>
@@ -103,7 +103,7 @@ interface SpecItemProps {
 function SpecItem({ icon, label, value }: SpecItemProps) {
   return (
     <div className="flex items-center gap-4">
-      <div className="bg-gray-50 rounded-full p-3 text-gray-600 flex-shrink-0">{icon}</div>
+      <div className="bg-gray-50 rounded-full p-3 text-gray-600 shrink-0">{icon}</div>
       <div>
         <p className="text-sm text-gray-500 font-medium">{label}</p>
         <p className="font-medium text-gray-900">{value}</p>
@@ -121,7 +121,7 @@ interface StatusItemProps {
 function StatusItem({ icon, text }: StatusItemProps) {
   return (
     <div className="flex items-center">
-      <div className="mr-2 flex-shrink-0">{icon}</div>
+      <div className="mr-2 shrink-0">{icon}</div>
       <span className="font-medium">{text}</span>
     </div>
   );

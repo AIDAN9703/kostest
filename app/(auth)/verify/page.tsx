@@ -28,7 +28,7 @@ const VerifyPage = () => {
 
   return (
     <div className="flex justify-center items-center min-h-screen p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-sm">
+      <div className="w-full max-w-md bg-white p-8 rounded-xl shadow-xs">
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-3">
             <Image src="/icons/logo.png" alt="logo" width={45} height={45} />

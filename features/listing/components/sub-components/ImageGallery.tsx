@@ -116,7 +116,7 @@ export function ImageGallery({ mainImage, galleryImages = [], alt }: ImageGaller
             whileHover="hover"
             whileTap="tap"
             onClick={prevSlide}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200/50"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-xs hover:bg-white shadow-xs hover:shadow-md transition-all duration-300 border border-gray-200/50"
             aria-label="Previous image"
           >
             <ChevronLeft className="w-5 h-5 text-gray-700" />
@@ -128,7 +128,7 @@ export function ImageGallery({ mainImage, galleryImages = [], alt }: ImageGaller
             whileHover="hover"
             whileTap="tap"
             onClick={nextSlide}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md transition-all duration-300 border border-gray-200/50"
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-xs hover:bg-white shadow-xs hover:shadow-md transition-all duration-300 border border-gray-200/50"
             aria-label="Next image"
           >
             <ChevronRight className="w-5 h-5 text-gray-700" />
@@ -139,7 +139,7 @@ export function ImageGallery({ mainImage, galleryImages = [], alt }: ImageGaller
         <Button
           variant="outline"
           size="sm"
-          className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm hover:bg-white shadow-sm hover:shadow-md border-gray-200/50 font-medium text-gray-700 hover:text-gray-900 transition-all duration-300"
+          className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-xs hover:bg-white shadow-xs hover:shadow-md border-gray-200/50 font-medium text-gray-700 hover:text-gray-900 transition-all duration-300"
           onClick={() => openViewAll(0)}
         >
           View All Photos

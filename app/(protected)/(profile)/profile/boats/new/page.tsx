@@ -23,7 +23,7 @@ export default async function NewBoatPage() {
         <h1 className="text-2xl font-bold text-gray-900">List a New Boat</h1>
       </div>
       
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-lg shadow-xs border border-gray-200 p-6">
         <BoatForm userId={userId} />
       </div>
     </div>

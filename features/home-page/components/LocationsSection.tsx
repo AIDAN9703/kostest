@@ -105,7 +105,7 @@ export default function LocationsSection() {
                   whileHover="hover"
                   whileTap="tap"
                   onClick={prevSlide}
-                  className="p-2 rounded-full bg-white shadow-sm hover:shadow transition-all duration-300 border border-slate-200"
+                  className="p-2 rounded-full bg-white shadow-xs hover:shadow-sm transition-all duration-300 border border-slate-200"
                   aria-label="Previous locations"
                 >
                   <ChevronLeft className="w-5 h-5 text-slate-700" />
@@ -115,7 +115,7 @@ export default function LocationsSection() {
                   whileHover="hover"
                   whileTap="tap"
                   onClick={nextSlide}
-                  className="p-2 rounded-full bg-white shadow-sm hover:shadow transition-all duration-300 border border-slate-200"
+                  className="p-2 rounded-full bg-white shadow-xs hover:shadow-sm transition-all duration-300 border border-slate-200"
                   aria-label="Next locations"
                 >
                   <ChevronRight className="w-5 h-5 text-slate-700" />
@@ -142,7 +142,7 @@ export default function LocationsSection() {
                   whileHover="hover"
                   whileTap="tap"
                   onClick={prevSlide}
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm hover:shadow transition-all duration-300 border border-slate-200"
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-xs hover:shadow-sm transition-all duration-300 border border-slate-200"
                   aria-label="Previous locations"
                 >
                   <ChevronLeft className="w-5 h-5 text-slate-700" />
@@ -152,7 +152,7 @@ export default function LocationsSection() {
                   whileHover="hover"
                   whileTap="tap"
                   onClick={nextSlide}
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-sm hover:shadow transition-all duration-300 border border-slate-200"
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-xs hover:shadow-sm transition-all duration-300 border border-slate-200"
                   aria-label="Next locations"
                 >
                   <ChevronRight className="w-5 h-5 text-slate-700" />
@@ -203,7 +203,7 @@ export default function LocationsSection() {
                           priority={index < 3}
                           loading={index >= 3 ? "lazy" : undefined}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none"></div>
+                        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/20 to-transparent pointer-events-none"></div>
                         
                         <div className="absolute bottom-0 left-0 w-full p-4">
                           <h3 className="text-xl font-normal text-white">{location.name}</h3>

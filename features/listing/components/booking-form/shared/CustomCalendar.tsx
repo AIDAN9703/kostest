@@ -96,9 +96,9 @@ export function CustomCalendar({ selectedDate, onSelect, boatId, onMonthChange }
   return (
     <div className="p-2 border border-gray-100 rounded-2xl max-w-[92vw] w-[min(380px,92vw)] select-none" style={{ WebkitTapHighlightColor: 'transparent' }}>
       <div className="flex items-center justify-between px-2 mb-2">
-        <button type="button" onClick={goPrev} className="h-7 w-7 rounded-full text-gray-600 hover:bg-gray-50 focus:outline-none active:scale-95">‹</button>
+        <button type="button" onClick={goPrev} className="h-7 w-7 rounded-full text-gray-600 hover:bg-gray-50 focus:outline-hidden active:scale-95">‹</button>
         <div className="text-sm font-semibold tracking-tight">{format(currentMonth, 'MMMM yyyy')}</div>
-        <button type="button" onClick={goNext} className="h-7 w-7 rounded-full text-gray-600 hover:bg-gray-50 focus:outline-none active:scale-95">›</button>
+        <button type="button" onClick={goNext} className="h-7 w-7 rounded-full text-gray-600 hover:bg-gray-50 focus:outline-hidden active:scale-95">›</button>
       </div>
       <div className="grid grid-cols-7 gap-1 px-2 text-[0.7rem] text-muted-foreground">
         {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d => (

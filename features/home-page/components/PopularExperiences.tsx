@@ -102,9 +102,9 @@ export default function PopularExperiences() {
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
                     quality={90}
                   />
-                  <div className={`absolute inset-0 bg-gradient-to-b ${experience.color} opacity-40 group-hover:opacity-60 transition-opacity duration-500`} />
+                  <div className={`absolute inset-0 bg-linear-to-b ${experience.color} opacity-40 group-hover:opacity-60 transition-opacity duration-500`} />
                   {/* Content Overlay */}
-                  <div className="absolute inset-0 p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col justify-end bg-gradient-to-t from-black/60 via-black/20 to-transparent">
+                  <div className="absolute inset-0 p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col justify-end bg-linear-to-t from-black/60 via-black/20 to-transparent">
                     <h3 className="text-white text-base sm:text-lg md:text-xl lg:text-2xl font-poppins font-medium truncate">
                       {experience.title}
                     </h3>

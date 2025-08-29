@@ -136,14 +136,14 @@ export default function FishingPage() {
               className="group animate-fade-in-up h-full"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="bg-white rounded-lg p-3 lg:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
+              <div className="bg-white rounded-lg p-3 lg:p-6 shadow-xs border border-gray-100 hover:shadow-md transition-all duration-300 hover:-translate-y-1 h-full flex flex-col">
                 <div className="bg-gold/10 p-2 lg:p-3 rounded-lg w-8 h-8 lg:w-12 lg:h-12 mb-2 lg:mb-4 flex items-center justify-center">
                   <div className="text-gold">
                     {feature.icon}
                   </div>
                 </div>
                 <h3 className="text-sm lg:text-xl font-medium text-primary mb-1 lg:mb-3 leading-tight">{feature.title}</h3>
-                <p className="text-xs lg:text-base text-gray-600 leading-snug lg:leading-relaxed font-light flex-grow line-clamp-2">{feature.description}</p>
+                <p className="text-xs lg:text-base text-gray-600 leading-snug lg:leading-relaxed font-light grow line-clamp-2">{feature.description}</p>
               </div>
             </div>
           ))}
@@ -181,15 +181,15 @@ export default function FishingPage() {
                 </div>
               )}
               
-              <div className="p-3 lg:p-6 flex flex-col flex-grow">
+              <div className="p-3 lg:p-6 flex flex-col grow">
                 <h3 className="text-sm sm:text-base lg:text-xl font-medium text-primary mb-2 lg:mb-3">{option.title}</h3>
                 <p className="text-primary/70 font-medium mb-2 text-xs lg:text-sm">{option.duration}</p>
-                <p className="text-gray-600 font-light leading-relaxed mb-3 lg:mb-4 flex-grow text-xs sm:text-sm lg:text-base">{option.description}</p>
+                <p className="text-gray-600 font-light leading-relaxed mb-3 lg:mb-4 grow text-xs sm:text-sm lg:text-base">{option.description}</p>
                 
                 <div className="space-y-1 lg:space-y-2 mb-3 lg:mb-6">
                   {option.highlights.map((highlight, idx) => (
                     <div key={idx} className="flex items-center">
-                      <CheckCircle2 className="h-3 w-3 lg:h-4 lg:w-4 text-primary mr-2 flex-shrink-0" />
+                      <CheckCircle2 className="h-3 w-3 lg:h-4 lg:w-4 text-primary mr-2 shrink-0" />
                       <span className="text-xs lg:text-sm text-gray-600 font-light">{highlight}</span>
                     </div>
                   ))}

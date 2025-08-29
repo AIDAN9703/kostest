@@ -47,7 +47,7 @@ interface InquiriesTableProps {
 
 export function InquiriesTable({ inquiries }: InquiriesTableProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xs">
       <Table>
         <TableHeader>
           <TableRow className="border-b border-gray-100 bg-gray-50/70">
@@ -77,7 +77,7 @@ export function InquiriesTable({ inquiries }: InquiriesTableProps) {
                     </TableCell>
                     <TableCell className="px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        <div className="h-8 w-8 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center shrink-0">
                           <div className="flex items-center justify-center w-full h-full bg-purple-600 text-white text-xs font-medium">
                             {inquiry.name.charAt(0).toUpperCase()}
                           </div>
@@ -90,11 +90,11 @@ export function InquiriesTable({ inquiries }: InquiriesTableProps) {
                     <TableCell className="px-3 py-2">
                       <div className="text-sm space-y-0.5">
                         <div className="flex items-center gap-1">
-                          <Mail className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                          <Mail className="h-3 w-3 text-gray-400 shrink-0" />
                           <span className="text-gray-600 truncate">{inquiry.email}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Phone className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                          <Phone className="h-3 w-3 text-gray-400 shrink-0" />
                           <span className="text-gray-600 truncate">{inquiry.phone}</span>
                         </div>
                       </div>
@@ -113,7 +113,7 @@ export function InquiriesTable({ inquiries }: InquiriesTableProps) {
                         )}
                         {inquiry.date && (
                           <div className="flex items-center gap-1 text-gray-600">
-                            <CalendarCheck className="h-3 w-3 text-gray-400 flex-shrink-0" />
+                            <CalendarCheck className="h-3 w-3 text-gray-400 shrink-0" />
                             <span className="truncate">{formatDate(inquiry.date)}</span>
                             {inquiry.time && <span className="truncate"> at {inquiry.time}</span>}
                           </div>

@@ -38,7 +38,7 @@ export function PricingDisplay({ activeTiers, control, selectedPricingTier }: Pr
       render={({ field }) => (
         <FormItem>
           <Select onValueChange={field.onChange} value={field.value} open={open} onOpenChange={setOpen}>
-            <SelectTrigger className="w-full border-0 border-b border-gray-100 bg-transparent rounded-none p-4 h-auto focus:outline-none focus:ring-0 focus-visible:ring-0 ring-0 ring-offset-0 focus:ring-offset-0 shadow-none hover:bg-transparent [&>svg:last-child]:hidden">
+            <SelectTrigger className="w-full border-0 border-b border-gray-100 bg-transparent rounded-none p-4 h-auto focus:outline-hidden focus:ring-0 focus-visible:ring-0 ring-0 ring-offset-0 focus:ring-offset-0 shadow-none hover:bg-transparent [&>svg:last-child]:hidden">
               <div className="flex items-center gap-3 w-full cursor-pointer">
                 <div className="flex-1 text-left">
                   <div className="text-sm font-semibold text-primary">

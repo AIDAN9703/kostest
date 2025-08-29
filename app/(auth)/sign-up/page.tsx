@@ -13,7 +13,6 @@ const Page = () => (
       firstName: "",
       lastName: "",
       phoneNumber: "",
-      birthday: "",
       password: "",
     }}
     onSubmit={signUpAction}

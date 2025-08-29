@@ -12,7 +12,7 @@ import { redirect } from "next/navigation";
 
 // Sign Out Section Component
 const SignOutSection = () => (
-  <Card className="border-gray-200 shadow-sm">
+  <Card className="border-gray-200 shadow-xs">
     <CardContent className="p-4 md:p-6">
       <div className="flex flex-col space-y-3">
         <h3 className="text-lg font-medium text-destructive">Sign Out</h3>
@@ -56,8 +56,8 @@ export default async function SettingsPage() {
 
   return (
     <div className="p-4 pt-16 md:p-6 lg:pt-6 space-y-6 animate-fadeIn">    
-      <Card className="border-gray-200 shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-primary/5 to-transparent p-4 md:p-6">
+      <Card className="border-gray-200 shadow-xs">
+        <CardHeader className="bg-linear-to-r from-primary/5 to-transparent p-4 md:p-6">
           <CardTitle className="flex items-center gap-2 text-base md:text-lg">
             <Settings className="h-4 w-4 md:h-5 md:w-5 text-primary" />
             Profile Information

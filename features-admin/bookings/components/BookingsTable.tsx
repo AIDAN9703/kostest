@@ -33,7 +33,7 @@ interface BookingsTableProps {
 
 export function BookingsTable({ bookings }: BookingsTableProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xs">
       <Table>
         <TableHeader>
           <TableRow className="border-b border-gray-100 bg-gray-50/70">
@@ -69,7 +69,7 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
                     </TableCell>
                     <TableCell className="px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        <div className="h-8 w-8 rounded-full bg-gray-100 overflow-hidden flex items-center justify-center shrink-0">
                           {booking.userProfileImage ? (
                             <Image
                               src={booking.userProfileImage}
@@ -95,7 +95,7 @@ export function BookingsTable({ bookings }: BookingsTableProps) {
                     </TableCell>
                     <TableCell className="px-3 py-2">
                       <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-md bg-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        <div className="h-8 w-8 rounded-md bg-gray-100 overflow-hidden flex items-center justify-center shrink-0">
                           {booking.boatMainImage ? (
                             <Image
                               src={booking.boatMainImage}

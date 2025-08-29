@@ -58,7 +58,7 @@ export default function HeroSection() {
           sizes="100vw"
           quality={80}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60 opacity-50" />
+        <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/60 opacity-50" />
       </div>
 
       {/* Content Container */}
@@ -71,7 +71,7 @@ export default function HeroSection() {
               Find Your Perfect
               <br />
               {/* Fixed height container to prevent layout shifts */}
-              <span className="bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent inline-block min-h-[1.2em]">
+              <span className="bg-linear-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent inline-block min-h-[1.2em]">
                 <TypeAnimation
                   sequence={TYPE_SEQUENCE}
                   wrapper="span"

@@ -20,7 +20,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
       {/* Main Content Area - Automatically takes remaining space */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header - Full width of content area */}
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <AdminHeader session={session} />
         </div>
 

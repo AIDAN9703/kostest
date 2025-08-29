@@ -204,7 +204,7 @@ export default function BlogTable({
                   <td className="p-4">
                     <div className="flex items-start space-x-3">
                       {/* Featured Image */}
-                      <div className="flex-shrink-0">
+                      <div className="shrink-0">
                         {post.featuredImage ? (
                           <Image
                             src={post.featuredImage}

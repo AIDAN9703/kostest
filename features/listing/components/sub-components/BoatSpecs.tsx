@@ -103,7 +103,7 @@ interface SpecItemProps {
 function SpecItem({ icon, label, value }: SpecItemProps) {
   return (
     <div className="flex items-center gap-4">
-      <div className="bg-gray-50 rounded-full p-3 text-gray-600 flex-shrink-0">{icon}</div>
+      <div className="bg-gray-50 rounded-full p-3 text-gray-600 shrink-0">{icon}</div>
       <div>
         <p className="text-sm text-gray-500 font-medium">{label}</p>
         <p className="font-medium text-gray-900">{value || "—"}</p>

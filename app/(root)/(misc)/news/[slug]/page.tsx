@@ -201,7 +201,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                       <div className="absolute top-4 left-4">
-                        <Badge variant="secondary" className="bg-white/90 backdrop-blur text-primary">
+                        <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-primary">
                           {categoryLabels[relatedPost.category]}
                         </Badge>
                       </div>

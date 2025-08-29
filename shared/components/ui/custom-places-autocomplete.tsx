@@ -275,7 +275,7 @@ export function CustomPlacesAutocomplete({
       )}
       
       {isOpen && predictions.length > 0 && (
-        <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 z-[10000]">
+        <div className="absolute left-0 right-0 top-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 z-10000">
           <ul className="py-1">
             {predictions.map((prediction) => (
               <li

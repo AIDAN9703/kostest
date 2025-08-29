@@ -25,7 +25,7 @@ const Layout = async ({ children }: { children: ReactNode }) => {
             sizes="50vw"
             quality={90}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/40 to-primary/60" />
+          <div className="absolute inset-0 bg-linear-to-r from-primary/40 to-primary/60" />
           
           {/* Branding Overlay */}
           <div className="absolute inset-0 flex flex-col justify-between p-12 text-white z-10">
