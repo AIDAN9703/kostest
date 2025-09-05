@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { auth } from "@/auth";
-import BookingDetailsContent from "@/features/bookings/components/BookingDetailsContent";
+import BookingSuccessClient from "@/features/bookings/components/BookingSuccessClient";
 
-export default async function BookingDetailsPage() {
+export default async function BookingSuccessPage() {
   const session = await auth();
 
   return (
@@ -11,7 +11,8 @@ export default async function BookingDetailsPage() {
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-coral-500"></div>
       </div>
     }>
-      <BookingDetailsContent user={session?.user || null} />
+      <BookingSuccessClient user={session?.user || null} />
     </Suspense>
   );
-} 
+}
+

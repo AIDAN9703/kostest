@@ -25,7 +25,9 @@ export default function BookingAuthSection({ user }: BookingAuthSectionProps) {
   // Get current URL with parameters for Google auth callback
   React.useEffect(() => {
     const currentParams = new URLSearchParams(window.location.search);
-    setCallbackUrl(`/booking-details?${currentParams.toString()}`);
+    // Use current path for callback to preserve context in the new route
+    const currentPath = window.location.pathname + (currentParams.toString() ? `?${currentParams.toString()}` : "");
+    setCallbackUrl(currentPath);
   }, []);
 
   const handlePhoneSubmit = async () => {
@@ -59,7 +61,8 @@ export default function BookingAuthSection({ user }: BookingAuthSectionProps) {
       
       if (result.success && result.data) {
         const currentParams = new URLSearchParams(window.location.search);
-        const callbackUrl = `/booking-details?${currentParams.toString()}`;
+        const currentPath = window.location.pathname + (currentParams.toString() ? `?${currentParams.toString()}` : "");
+        const callbackUrl = currentPath;
         
         if (result.data.existingUser) {
           // User exists, go to sign-in modal with email pre-filled

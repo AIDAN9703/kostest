@@ -60,7 +60,7 @@ const services = [
 export default function Footer() {
   return (
     <footer className="bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 lg:pt-16 pb-8">
+      <div className="max-w-full sm:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 lg:pt-16 pb-8">
         {/* Mobile-first layout */}
         <div className="md:hidden space-y-8">
           {/* Brand + Social */}

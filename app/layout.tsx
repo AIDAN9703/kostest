@@ -7,6 +7,7 @@ import { SessionProvider } from "next-auth/react";
 import GoogleMapsScript from "@/shared/providers/GoogleMapsScript";
 import { ImageKitProvider } from "@imagekit/next";
 import CookiesConsent from "@/shared/components/CookiesConsent";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 const openSans = localFont({
   src: [
@@ -79,7 +80,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       <body className={`${openSans.className} ${bebasNeue.variable} ${openSans.variable} ${poppins.variable} antialiased`}>
         <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || ''}>
           <SessionProvider>
-            {children}
+            <NuqsAdapter>
+              {children}
+            </NuqsAdapter>
             <Toaster />
             <CookiesConsent />
           </SessionProvider>

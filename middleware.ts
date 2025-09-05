@@ -19,6 +19,8 @@ export default auth(async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL("/", req.url));
     }
   }
+
+  
   
   // All other protected routes are handled by auth() above
   return NextResponse.next();

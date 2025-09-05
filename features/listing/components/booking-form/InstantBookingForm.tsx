@@ -1,15 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { Boat } from "@/shared/types/types";
-import { useSession } from "next-auth/react";
 import { Button } from "@/shared/components/ui/button";
 import { Form } from "@/shared/components/ui/form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { bookingRequestSchema, BookingRequest } from "@/features/_validation/validations";
-import { MessageCircle, Anchor, CreditCard } from "lucide-react";
+import { CreditCard } from "lucide-react";
 
 // Import components
 import { PricingDisplay } from "./shared/PricingDisplay";
@@ -24,13 +22,11 @@ import { FormHeader } from "./shared/FormHeader";
 import { useBookingFormState } from "./hooks/useBookingFormState";
 import { useActivePricingTiers } from "./hooks/usePriceCalculation";
 
-
 interface InstantBookingFormProps {
   boat: Boat;
 }
 
 export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
-  const { data: session } = useSession();
   const router = useRouter();
   const activePricingTiers = useActivePricingTiers(boat);
 
@@ -58,7 +54,7 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
     return (
       <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
         <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-          <Anchor className="h-6 w-6 text-gray-400" />
+          <CreditCard className="h-6 w-6 text-gray-400" />
         </div>
         <h3 className="font-semibold text-gray-900 mb-2">No pricing available</h3>
         <p className="text-gray-600 text-sm">No pricing options are currently available for this boat</p>
@@ -74,30 +70,15 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
       return;
     }
 
-    // Navigate to booking details
-    // Prepare booking data with safe boat properties and selected tier
-    const bookingData = {
-      ...data,
-      boatId: boat.id,
-      // Only pass safe boat properties (including timezone!)
-      boat: {
-        id: boat.id,
-        name: boat.name,
-        mainImage: boat.mainImage,
-        instantBook: boat.instantBook,
-        cleaningFee: boat.cleaningFee,
-        locationLabel: boat.locationLabel,
-        timezone: boat.timezone // CRITICAL: Pass timezone for proper display
-      },
-      selectedTier: formState.selectedPricingTier
-    };
-
-    // Navigate to booking details page with minimal data
+    // ✨ NUQS SIMPLIFIED: Just navigate with query params - nuqs handles the rest!
     const params = new URLSearchParams({
-      data: encodeURIComponent(JSON.stringify(bookingData))
+      startDateTime: data.startDateTime,
+      pricingTierId: formState.selectedPricingTier.id,
+      numberOfPassengers: String(data.numberOfPassengers),
+      needsCaptain: String(data.needsCaptain || false),
     });
     
-    router.push(`/booking-details?${params.toString()}`);
+    router.push(`/bookings/${boat.id}/details?${params.toString()}`);
   };
   
   return (
@@ -168,4 +149,4 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
       </Form>
     </div>
   );
-} 
+}

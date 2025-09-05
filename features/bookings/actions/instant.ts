@@ -9,9 +9,10 @@ import { calculateEndDateTime } from "@/shared/utils/booking-utils";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
+import { ghlWebhookService } from "@/shared/services/ghl-webhook";
 
 // Initialize Stripe with your secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+const stripe = new Stripe(process.env.NODE_ENV === "development" ? process.env.STRIPE_SECRET_KEY! : process.env.STRIPE_LIVE_SECRET_KEY!, {
   apiVersion: "2025-07-30.basil",
 });
 
@@ -133,7 +134,7 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
       },
       mode: 'payment',
       allow_promotion_codes: true, // ✨ Enable Stripe's built-in coupon input
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/booking-success?type=instant&session_id={CHECKOUT_SESSION_ID}&boatName=${encodeURIComponent(boat.name)}&totalAmount=${priceBreakdown.totalPrice}`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/bookings/${boat.id}/success?type=instant&session_id={CHECKOUT_SESSION_ID}&boatName=${encodeURIComponent(boat.name)}&boatImage=${encodeURIComponent(boat.mainImage || "")}&startDateTime=${encodeURIComponent(validatedData.startDateTime)}&hours=${encodeURIComponent(String(pricingTier.hours || ""))}&basePrice=${encodeURIComponent(String(priceBreakdown.basePrice))}&cleaningFee=${encodeURIComponent(String(priceBreakdown.cleaningFee))}&serviceFee=${encodeURIComponent(String(priceBreakdown.serviceFee))}&totalAmount=${encodeURIComponent(String(priceBreakdown.totalPrice))}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/boats/${boat.id}?canceled=true`,
     } as any);
     
@@ -184,6 +185,36 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
     } catch (error) {
       console.error("Error creating pending booking:", error);
       // Continue even if this fails - the webhook will create the booking
+    }
+
+    // Send to GoHighLevel instant booking webhook (non-blocking)
+    try {
+      const ghlData = {
+        name: session.user.name || "",
+        email: session.user.email || "",
+        phone: session.user.phoneNumber || "",
+        boat_name: boat.name,
+        boat_id: boat.id,
+        start_date_time: validatedData.startDateTime,
+        end_date_time: endDateTime.toISOString(),
+        hours: pricingTier.hours || 0,
+        number_of_passengers: validatedData.numberOfPassengers,
+        needs_captain: validatedData.needsCaptain || boat.crewRequired,
+        base_price: priceBreakdown.basePrice,
+        cleaning_fee: priceBreakdown.cleaningFee,
+        service_fee: priceBreakdown.serviceFee,
+        total_amount: priceBreakdown.totalPrice,
+        booking_id: bookingRecord?.id || checkoutSession.id,
+        source: 'KOS Yacht Club - Instant Booking',
+        submitted_at: new Date().toISOString()
+      };
+
+      // Send webhook asynchronously (don't block the response)
+      ghlWebhookService.sendInstantBooking(ghlData).catch(error => {
+        console.warn('GHL instant booking webhook failed:', error);
+      });
+    } catch (error) {
+      console.warn('Error preparing GHL instant booking webhook data:', error);
     }
     
     return { 

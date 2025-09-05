@@ -8,7 +8,7 @@ import { eq } from "drizzle-orm";
 export const dynamic = 'force-dynamic';
 
 // Initialize Stripe with your secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+const stripe = new Stripe(process.env.NODE_ENV === "development" ? process.env.STRIPE_SECRET_KEY! : process.env.STRIPE_LIVE_SECRET_KEY!, {
   apiVersion: "2025-07-30.basil",
 });
 
