@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/database/db";
-import { boats, bookings, boatPricingTiers } from "@/database/schema";
+import { boats, boatPricingTiers, bookings } from "@/database/schema";
 import { auth } from "@/auth";
 import { bookingRequestSchema, BookingRequest } from "@/features/_validation/validations";
 import { z } from "zod";
@@ -9,7 +9,6 @@ import { calculateEndDateTime } from "@/shared/utils/booking-utils";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
-import { ghlWebhookService } from "@/shared/services/ghl-webhook";
 
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.NODE_ENV === "development" ? process.env.STRIPE_SECRET_KEY! : process.env.STRIPE_LIVE_SECRET_KEY!, {
@@ -187,36 +186,6 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
       // Continue even if this fails - the webhook will create the booking
     }
 
-    // Send to GoHighLevel instant booking webhook (non-blocking)
-    try {
-      const ghlData = {
-        name: session.user.name || "",
-        email: session.user.email || "",
-        phone: session.user.phoneNumber || "",
-        boat_name: boat.name,
-        boat_id: boat.id,
-        start_date_time: validatedData.startDateTime,
-        end_date_time: endDateTime.toISOString(),
-        hours: pricingTier.hours || 0,
-        number_of_passengers: validatedData.numberOfPassengers,
-        needs_captain: validatedData.needsCaptain || boat.crewRequired,
-        base_price: priceBreakdown.basePrice,
-        cleaning_fee: priceBreakdown.cleaningFee,
-        service_fee: priceBreakdown.serviceFee,
-        total_amount: priceBreakdown.totalPrice,
-        booking_id: bookingRecord?.id || checkoutSession.id,
-        source: 'KOS Yacht Club - Instant Booking',
-        submitted_at: new Date().toISOString()
-      };
-
-      // Send webhook asynchronously (don't block the response)
-      ghlWebhookService.sendInstantBooking(ghlData).catch(error => {
-        console.warn('GHL instant booking webhook failed:', error);
-      });
-    } catch (error) {
-      console.warn('Error preparing GHL instant booking webhook data:', error);
-    }
-    
     return { 
       success: true,
       paymentUrl: checkoutSession.url,

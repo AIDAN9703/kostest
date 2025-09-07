@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2, MapPin, Calendar, Users, Navigation, Globe } from "lucide-react";
-import ExperienceLayout from "@/features/experiences-marketing/components/ExperienceLayout";
+import ExperienceLayout from "@/features/_marketing/experiences/components/ExperienceLayout";
 import { Button } from "@/shared/components/ui/button";
 
 export const metadata: Metadata = {

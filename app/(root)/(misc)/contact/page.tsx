@@ -4,7 +4,7 @@ import React from 'react'
 import Link from 'next/link'
 import { Button } from '@/shared/components/ui/button'
 import { Mail, Phone, MapPin, Clock, MessageCircle, Calendar } from 'lucide-react'
-import RequestToBook from '@/features/home-page/components/RequestToBook'
+import RequestToBook from '@/features/_marketing/landing/components/RequestToBook'
 
 export default function ContactPage() {
   return (

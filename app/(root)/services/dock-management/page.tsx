@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { ServicePageTemplate } from '@/features/services-marketing/components'
+import { ServicePageTemplate } from '@/features/_marketing/services/components'
 
 export const metadata: Metadata = {
   title: 'Dock Management Services | KOS',

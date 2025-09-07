@@ -1,17 +1,16 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://www.kosyachts.com' // Canonical domain with www
+  const baseUrl = 'https://www.kosyachts.com'
   const lastModified = new Date()
 
-  // Static pages with high priority (your newly optimized pages!)
-  const staticPages = [
-    // Main pages
-    { url: '', priority: 1.0, changeFrequency: 'monthly' as const },
-    { url: '/contact', priority: 0.9, changeFrequency: 'monthly' as const },
-    { url: '/about-us', priority: 0.8, changeFrequency: 'monthly' as const },
+  // Public pages only - no protected or admin routes
+  const publicPages = [
+    // Core pages (highest priority)
+    { url: '', priority: 1.0, changeFrequency: 'weekly' as const },
+    { url: '/boats/search', priority: 0.9, changeFrequency: 'daily' as const },
     
-    // Services (now static!)
+    // Services pages
     { url: '/services', priority: 0.9, changeFrequency: 'monthly' as const },
     { url: '/services/charter-management', priority: 0.8, changeFrequency: 'monthly' as const },
     { url: '/services/yacht-management', priority: 0.8, changeFrequency: 'monthly' as const },
@@ -19,23 +18,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: '/services/term-charters', priority: 0.8, changeFrequency: 'monthly' as const },
     { url: '/services/dock-management', priority: 0.8, changeFrequency: 'monthly' as const },
     
-    // Experiences (now static!)
+    // Experiences pages
     { url: '/experiences', priority: 0.9, changeFrequency: 'monthly' as const },
     { url: '/experiences/fishing', priority: 0.8, changeFrequency: 'monthly' as const },
     { url: '/experiences/watersports', priority: 0.8, changeFrequency: 'monthly' as const },
     { url: '/experiences/sand-bar', priority: 0.8, changeFrequency: 'monthly' as const },
     { url: '/experiences/special-events', priority: 0.8, changeFrequency: 'monthly' as const },
-    { url: '/experiences/term-charters', priority: 0.8, changeFrequency: 'weekly' as const }, // Still dynamic
+    { url: '/experiences/term-charters', priority: 0.8, changeFrequency: 'monthly' as const },
     
-    // Other marketing pages
-    { url: '/boats/search', priority: 0.9, changeFrequency: 'daily' as const },
+    // Company pages
+    { url: '/about-us', priority: 0.7, changeFrequency: 'monthly' as const },
+    { url: '/contact', priority: 0.8, changeFrequency: 'monthly' as const },
+    { url: '/kos-yacht-club', priority: 0.6, changeFrequency: 'monthly' as const },
+    { url: '/careers', priority: 0.5, changeFrequency: 'monthly' as const },
+    
+    // News/Blog
+    { url: '/news', priority: 0.6, changeFrequency: 'weekly' as const },
+    
+    // Legal pages
     { url: '/privacy', priority: 0.3, changeFrequency: 'yearly' as const },
     { url: '/terms-of-service', priority: 0.3, changeFrequency: 'yearly' as const },
     { url: '/cancellation-policy', priority: 0.3, changeFrequency: 'yearly' as const },
+    { url: '/cookies', priority: 0.2, changeFrequency: 'yearly' as const },
+    
+    // Support pages
     { url: '/faq', priority: 0.6, changeFrequency: 'monthly' as const },
   ]
 
-  return staticPages.map(page => ({
+  return publicPages.map(page => ({
     url: `${baseUrl}${page.url}`,
     lastModified,
     changeFrequency: page.changeFrequency,

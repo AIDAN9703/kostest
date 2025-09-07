@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import Image from 'next/image'
 import { Calendar, Users, MapPin, Shield, CheckCircle, Star, Clock, Anchor } from 'lucide-react'
-import ExperienceLayout from '@/features/experiences-marketing/components/ExperienceLayout'
+import ExperienceLayout from '@/features/_marketing/experiences/components/ExperienceLayout'
 import { Button } from '@/shared/components/ui/button'
 import RequestTermCharter from './RequestTermCharter'
 import { db } from "@/database/db"

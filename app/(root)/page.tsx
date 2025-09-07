@@ -1,6 +1,6 @@
 import React from 'react';
-import { HeroSection, TestimonialsSection, BrandsCarousel, FeaturedFleet, PopularExperiences, RequestToBook, ClientsShowcase, LocationsSection } from "@/features/home-page/components";
-import { getFeaturedBoats, getTestimonials } from "@/features/home-page/actions";
+import { HeroSection, TestimonialsSection, BrandsCarousel, FeaturedFleet, PopularExperiences, RequestToBook, ClientsShowcase, LocationsSection } from "@/features/_marketing/landing/components";
+import { getFeaturedBoats, getTestimonials } from "@/features/_marketing/landing/actions";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
 import LazyChatbot from '@/features/chatbot/LazyChatbot';
