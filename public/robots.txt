@@ -1,0 +1,45 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /profile/
+Disallow: /bookings/
+Disallow: /messages/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /sign-in
+Disallow: /sign-up
+Disallow: /verify
+Disallow: /_next/
+Disallow: /test-*
+Disallow: /private/
+Disallow: *.json
+Disallow: *.xml
+Disallow: *.txt
+
+# Googlebot
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /profile/
+Disallow: /bookings/
+Disallow: /messages/
+Disallow: /api/
+Disallow: /auth/
+
+# Bingbot
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /profile/
+Disallow: /bookings/
+Disallow: /messages/
+Disallow: /api/
+Disallow: /auth/
+
+# Host
+Host: https://www.kosyachts.com
+
+# Sitemaps
+Sitemap: https://www.kosyachts.com/sitemap.xml
+Sitemap: https://www.kosyachts.com/server-sitemap-boats.xml
