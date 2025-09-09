@@ -14,12 +14,9 @@ import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
 import { BookingRequest } from "@/features/_validation/validations";
 import { createInstantBooking } from "@/features/bookings/actions/instant";
 import { createBookingRequest } from "@/features/bookings/actions/request";
+import type { Session } from "next-auth";
 
-interface BookingDetailsClientProps {
-  user: any;
-}
-
-export default function BookingDetailsClient({ user }: BookingDetailsClientProps) {
+export default function BookingDetailsClient({ user }: { user: Session['user'] | null }) {
   const router = useRouter();
   const boat = useBoat();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -91,11 +88,13 @@ export default function BookingDetailsClient({ user }: BookingDetailsClientProps
 
     if (result?.success) {
       if (paymentMethod === 'instant' && 'paymentUrl' in result && result.paymentUrl) {
+        // For instant bookings, redirect to Stripe (stateless flow)
         window.location.href = result.paymentUrl;
-      } else {
+      } else if (paymentMethod === 'request' && 'booking' in result && result.booking) {
+        // For request bookings, go to success page with booking data
         const params = new URLSearchParams({
           type: 'request',
-          bookingId: result.booking?.id || '',
+          bookingId: result.booking.id || '',
           boatName: boat.name || '',
           conversationId: ('conversationId' in result) ? (result.conversationId || '') : '',
           boatImage: boat.mainImage || '',

@@ -9,6 +9,7 @@ import { z } from "zod";
 import { calculateEndDateTime } from "@/shared/utils/booking-utils";
 import { eq } from "drizzle-orm";
 import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
+import { ghlWebhookService } from "@/shared/services/ghl-webhook.service";
 
 /**
  * Creates a booking request using pricing tiers
@@ -147,6 +148,11 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
       // Don't fail the booking if conversation creation fails
     }
     
+    // Send GHL webhook for booking request (async, don't block the response)
+    sendGHLWebhookForBookingRequest(booking[0], boat, pricingTier, startDateTime, endDateTime, session.user).catch(error => {
+      console.warn('GHL booking request webhook failed:', error);
+    });
+
     // Revalidate relevant paths
     revalidatePath("/profile/bookings");
     revalidatePath(`/boats/${data.boatId}`);
@@ -193,4 +199,43 @@ export async function createBookingRequestAction(formData: FormData) {
   };
 
   return await createBookingRequest(data);
+}
+/**
+ * Send GHL webhook for booking request
+ */
+async function sendGHLWebhookForBookingRequest(
+  booking: any,
+  boat: any,
+  pricingTier: any,
+  startDateTime: Date,
+  endDateTime: Date,
+  user: any
+) {
+  try {
+    const ghlData = {
+      name: user.name || "",
+      email: user.email || "",
+      phone: user.phoneNumber || "",
+      boat_name: boat.name,
+      boat_id: boat.id,
+      start_date_time: startDateTime.toISOString(),
+      end_date_time: endDateTime.toISOString(),
+      hours: String(pricingTier.hours || 0),
+      number_of_passengers: String(booking.numberOfPassengers),
+      needs_captain: booking.needsCaptain ? "true" : "false",
+      base_price: String(pricingTier.price),
+      cleaning_fee: String(booking.cleaningFee || 0),
+      service_fee: String(booking.serviceFee || 0),
+      total_amount: String(booking.totalAmount),
+      booking_id: booking.id,
+      booking_type: 'REQUEST',
+      source: 'KOS Yacht Club - Booking Request',
+      submitted_at: new Date().toISOString()
+    };
+
+    await ghlWebhookService.sendBookingRequest(ghlData);
+    console.log("GHL webhook sent for booking request:", booking.id);
+  } catch (error) {
+    console.error("Error sending GHL webhook for booking request:", error);
+  }
 } 

@@ -10,6 +10,27 @@ import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
 
+/**
+ * Helper function to ensure we have a proper base URL with scheme
+ */
+function getBaseUrl(): string {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  
+  // If no base URL is set, use localhost for development
+  if (!baseUrl) {
+    return process.env.NODE_ENV === "development" 
+      ? "http://localhost:3000" 
+      : "https://www.kosyachts.com";
+  }
+  
+  // If base URL doesn't have a scheme, add https
+  if (!baseUrl.startsWith("http")) {
+    return `https://${baseUrl}`;
+  }
+  
+  return baseUrl;
+}
+
 // Initialize Stripe with your secret key
 const stripe = new Stripe(process.env.NODE_ENV === "development" ? process.env.STRIPE_SECRET_KEY! : process.env.STRIPE_LIVE_SECRET_KEY!, {
   apiVersion: "2025-07-30.basil",
@@ -133,63 +154,14 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
       },
       mode: 'payment',
       allow_promotion_codes: true, // ✨ Enable Stripe's built-in coupon input
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/bookings/${boat.id}/success?type=instant&session_id={CHECKOUT_SESSION_ID}&boatName=${encodeURIComponent(boat.name)}&boatImage=${encodeURIComponent(boat.mainImage || "")}&startDateTime=${encodeURIComponent(validatedData.startDateTime)}&hours=${encodeURIComponent(String(pricingTier.hours || ""))}&basePrice=${encodeURIComponent(String(priceBreakdown.basePrice))}&cleaningFee=${encodeURIComponent(String(priceBreakdown.cleaningFee))}&serviceFee=${encodeURIComponent(String(priceBreakdown.serviceFee))}&totalAmount=${encodeURIComponent(String(priceBreakdown.totalPrice))}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/boats/${boat.id}?canceled=true`,
+      success_url: `${getBaseUrl()}/bookings/${boat.id}/success?type=instant&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${getBaseUrl()}/boats/${boat.id}?canceled=true`,
     } as any);
     
-    // Create a temporary booking record with pending status
-    let bookingRecord = null;
-    try {
-      const now = new Date();
-      const result = await db.insert(bookings).values({
-        bookingType: "INSTANT_BOOK",
-        bookingStatus: "PENDING",
-        userId: session.user.id,
-        boatId: boat.id,
-        pricingTierId: validatedData.pricingTierId,
-        
-        // Customer information
-        customerName: session.user.name || "",
-        customerEmail: session.user.email || "",
-        customerPhone: session.user.phoneNumber || "",
-        
-        // Booking details - NEW unified datetime fields
-        isMultiDay: false,
-        needsCaptain: validatedData.needsCaptain || boat.crewRequired,
-        startDateTime: startDateTime,
-        endDateTime: endDateTime,
-        numberOfPassengers: validatedData.numberOfPassengers,
-        
-        // Pricing
-        captainFee: priceBreakdown.captainFee,
-        cleaningFee: priceBreakdown.cleaningFee,
-        serviceFee: priceBreakdown.serviceFee,
-        totalAmount: priceBreakdown.totalPrice,
-        depositAmount: boat.depositAmount || 0,
-        currency: "USD",
-        
-        // Payment information
-        paymentStatus: "AWAITING_PAYMENT",
-        paymentMethod: "card",
-        stripePaymentLinkId: checkoutSession.id,
-        
-        // Timestamps
-        createdAt: now,
-        updatedAt: now,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // Expires in 24 hours
-      }).returning();
-
-      bookingRecord = result[0];
-      console.log("Created pending booking for session:", checkoutSession.id);
-    } catch (error) {
-      console.error("Error creating pending booking:", error);
-      // Continue even if this fails - the webhook will create the booking
-    }
-
+    // No pending booking creation - webhook handles everything
     return { 
       success: true,
       paymentUrl: checkoutSession.url,
-      booking: bookingRecord,
       message: "Redirecting to payment page."
     };
   } catch (error) {
@@ -226,4 +198,4 @@ export async function createInstantBookingAction(formData: FormData) {
   };
 
   return await createInstantBooking(data);
-} 
+}  

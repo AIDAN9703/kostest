@@ -5,7 +5,7 @@ import { db } from "@/database/db";
 import { bookings, bookingTypeEnum, bookingStatusEnum, boats } from "@/database/schema";
 import { eq, or } from "drizzle-orm";
 import config from "@/shared/config/config";
-import { ghlWebhookService } from "@/shared/services/ghl-webhook";
+import { ghlWebhookService } from "@/shared/services/ghl-webhook.service";
 
 // Use config for Stripe configuration
 const stripe = new Stripe(config.stripeSecretKey, {
@@ -122,12 +122,7 @@ async function handleInstantBookingPayment(session: Stripe.Checkout.Session) {
       const existingBookings = await tx
         .select({ id: bookings.id })
         .from(bookings)
-        .where(
-          or(
-            eq(bookings.stripePaymentIntentId, paymentIntentId),
-            eq(bookings.stripePaymentLinkId, session.id)
-          )
-        );
+        .where(eq(bookings.stripePaymentLinkId, session.id));
       
       if (existingBookings.length > 0) {
         // Update the existing booking's status
@@ -143,7 +138,7 @@ async function handleInstantBookingPayment(session: Stripe.Checkout.Session) {
       } else {
         // Create a new Date object for consistent timestamp format
         const now = new Date();
-        
+         
         // Create booking record with new unified datetime fields
         await tx.insert(bookings).values({
           bookingType: "INSTANT_BOOK",

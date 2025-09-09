@@ -16,8 +16,8 @@ class GHLWebhookService {
   // Different webhook endpoints for different workflows
   private readonly webhookEndpoints = {
     inquiry: 'a807016d-cf25-4284-8d83-b7fb0129fa68', // Your existing inquiry webhook
-    instantBooking: 'KUjCPRCtj1FACCVb150m', // New instant booking webhook
-    bookingRequest: 'TBD', // Will add when you get the endpoint
+    instantBooking: 'KUjCPRCtj1FACCVb150m', // Instant booking webhook
+    bookingRequest: '34cb6b42-f9a1-4445-b0bd-a4e1405cb86f', // New booking request webhook
   };
 
   /**
@@ -77,12 +77,31 @@ class GHLWebhookService {
   }
 
   /**
-   * Send booking request data to GHL (when you get the endpoint)
+   * Send booking request data to GHL
    */
   async sendBookingRequest(data: GHLWebhookData): Promise<boolean> {
-    // TODO: Add endpoint when you get it
-    console.log('Booking request webhook not configured yet');
-    return false;
+    try {
+      const webhookUrl = `${this.baseUrl}/${this.webhookEndpoints.bookingRequest}`;
+      
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        console.warn('GHL booking request webhook failed:', response.status, response.statusText);
+        return false;
+      }
+
+      console.log('GHL booking request webhook sent successfully');
+      return true;
+    } catch (error) {
+      console.warn('GHL booking request webhook error:', error);
+      return false;
+    }
   }
 }
 
