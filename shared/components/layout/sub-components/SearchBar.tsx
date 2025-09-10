@@ -16,14 +16,14 @@ interface SearchBarProps {
 export default function SearchBar({ variant = 'hero' }: SearchBarProps) {
   const styles = {
     container: variant === 'hero' 
-      ? "w-full max-w-[90%] md:max-w-[75%] lg:max-w-[50%] mx-auto text-black relative"
+      ? "w-full max-w-[90%] md:max-w-[75%] lg:max-w-[50%] text-black relative"
       : "w-full max-w-[300px] md:max-w-[400px] text-black relative",
     wrapper: "group relative transition-all duration-300 rounded-full",
     input: variant === 'hero'
       ? "h-12 sm:h-14 text-black font-poppins font-thin text-base md:text-lg bg-white rounded-full pl-10 pr-12 border-2 border-slate-300 shadow-md outline-hidden focus:outline-hidden focus-visible:outline-hidden focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-0 focus:ring-offset-0"
       : "h-10 text-black font-poppins font-thin text-sm bg-white rounded-full pl-9 pr-10 border-2 border-slate-300 shadow-md outline-hidden focus:outline-hidden focus-visible:outline-hidden focus-visible:ring-0 focus-visible:ring-offset-0 focus:ring-0 focus:ring-offset-0",
     button: variant === 'hero'
-      ? "absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8"
+      ? "absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8 text-emerald-500"
       : "absolute right-2.5 top-1/2 -translate-y-1/2 h-6 w-6",
     locationIcon: variant === 'hero'
       ? "absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
@@ -127,7 +127,7 @@ export default function SearchBar({ variant = 'hero' }: SearchBarProps) {
         >
           <Search 
             size={variant === 'hero' ? 24 : 18} 
-            className="text-slate-400" 
+            className="" 
           />
         </button>
       </form>

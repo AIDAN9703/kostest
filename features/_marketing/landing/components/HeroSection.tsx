@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import Image from 'next/image';
 import { useSearchStore } from '@/features/search/store/useSearchStore';
 import SearchBar from '@/shared/components/layout/sub-components/SearchBar';
@@ -8,12 +8,12 @@ import { TypeAnimation } from 'react-type-animation';
 
 // Pre-compute the sequence once outside component
 const TYPE_SEQUENCE = [
-  "Yacht", 5000,
-  "Boat", 5000, 
-  "Luxury", 5000,
-  "Family", 5000,
-  "Corporate", 5000,
-  "Birthday", 3000,
+  "Yacht", 4000,
+  "Boat", 4000, 
+  "Luxury", 4000,
+  "Adventure", 4000,
+  "Experience", 4000,
+  "Escape", 3500,
 ] as (string | number)[];
 
 export default function HeroSection() {
@@ -50,52 +50,55 @@ export default function HeroSection() {
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <Image 
-          src="/images/herooption22.jpg" 
-          alt="Luxury yachts in crystal clear waters"
+          src="/images/experiences/yacht-ppl-swim.jpg" 
+          alt="Luxury yacht charter experience with guests enjoying crystal clear waters"
           fill
-          className="object-cover"
+          className="object-cover object-center"
           priority
           sizes="100vw"
-          quality={80}
+          quality={85}
         />
-        <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/60 opacity-50" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/40" />
       </div>
 
-      {/* Content Container */}
-      <div className="relative z-10 h-full flex flex-col items-center py-8 sm:py-12 md:py-16 space-y-4">
-        {/* Content area */}
-        <div className="flex-1 flex flex-col items-center justify-center w-full font-poppins text-white text-center">
-          {/* Main Heading with fixed height container */}
-          <div className="mb-4 sm:mb-6">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-tight">
-              Find Your Perfect
-              <br />
-              {/* Fixed height container to prevent layout shifts */}
-              <span className="bg-linear-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent inline-block min-h-[1.2em]">
-                <TypeAnimation
-                  sequence={TYPE_SEQUENCE}
-                  wrapper="span"
-                  speed={20}
-                  deletionSpeed={30}
-                  repeat={Infinity}
-                  cursor={false}
-                  preRenderFirstString={true}
-                />
-                {' Experience'}
-              </span>
-            </h1>
+      {/* Search Overlay Card */}
+      <div className="absolute bottom-0 sm:bottom-50 left-0 right-0 z-20">
+      
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            
+            {/* Main Heading */}
+            <div className="mb-4">
+              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold text-white mb-2">
+                Find Your Perfect
+                <br />
+                <span className="inline-block relative">
+                  <span className="relative">
+                    <TypeAnimation
+                      sequence={TYPE_SEQUENCE}
+                      wrapper="span"
+                      speed={25}
+                      deletionSpeed={35}
+                      repeat={Infinity}
+                      cursor={false}
+                      preRenderFirstString={true}
+                      className="text-white relative z-10"
+                    />
+                    <div className="absolute bottom-2 left-0 right-0 h-1 bg-gradient-to-r from-sky-400 to-emerald-400 rounded-full"></div>
+                  </span>
+                  <span className="text-white">{' Charter'}</span>
+                </span>
+              </h1>
+              <p className="text-white text-base sm:text-lg font-poppins">
+                500+ premium yachts • Professional crew • Unforgettable experiences
+              </p>
+            </div>
+            
+            {/* Search Bar */}
+            <div>
+              <SearchBar variant="hero" />
+            </div>
+            
           </div>
-          
-          {/* Search Bar */}
-          <div className="w-full mt-8 sm:mt-12 md:mt-16 lg:mt-24">
-            <SearchBar variant="hero" />
-          </div>
-          
-          {/* Subtitle */}
-          <p className="text-sm sm:text-base md:text-lg max-w-xs sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl text-white mt-2 sm:mt-4 md:mt-6">
-            Discover unforgettable boat and yacht charters with experienced crew worldwide
-          </p>
-        </div>
       </div>
     </section>
   );

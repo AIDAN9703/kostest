@@ -222,7 +222,7 @@ const BoatCard = ({
             {/* Featured tag - Corner flag */}
             {boat.featured && highlightFeatured && (
               <div className="absolute top-0 left-0 z-20">
-                <div className="bg-linear-to-r from-emerald-400 to-emerald-500 text-white px-2 py-1 font-medium text-xs uppercase tracking-wide shadow-lg rounded-br-lg">
+                <div className="bg-linear-to-r from-teal-300 to-teal-400 text-white px-2 py-1 font-medium text-xs uppercase tracking-wide shadow-lg rounded-br-lg">
                   Featured
                 </div>
               </div>
