@@ -1,11 +1,11 @@
 import { db } from "@/database/db";
-import { bookings, boatBlocking } from "@/database/schema";
+import { bookings, boatBlocking, externalGoogleCalendarSyncEvents } from "@/database/schema";
 import { eq, and, or, lte, gte, ne, inArray } from "drizzle-orm";
 
 export interface AvailabilityResult {
   isAvailable: boolean;
   conflicts: Array<{
-    type: 'booking' | 'blocking' | 'validation';
+    type: 'booking' | 'blocking' | 'external' | 'validation';
     id: string;
     startTime: Date;
     endTime: Date;
@@ -165,6 +165,22 @@ export class AvailabilityService {
         )
       );
 
+    // Get external calendar blocks
+    const externalBlocks = await db
+      .select()
+      .from(externalGoogleCalendarSyncEvents)
+      .where(
+        and(
+          eq(externalGoogleCalendarSyncEvents.boatId, boatId),
+          eq(externalGoogleCalendarSyncEvents.isAvailable, false), // Only get blocking events
+          or(
+            and(lte(externalGoogleCalendarSyncEvents.startTime, startTime), gte(externalGoogleCalendarSyncEvents.endTime, startTime)),
+            and(lte(externalGoogleCalendarSyncEvents.startTime, endTime), gte(externalGoogleCalendarSyncEvents.endTime, endTime)),
+            and(gte(externalGoogleCalendarSyncEvents.startTime, startTime), lte(externalGoogleCalendarSyncEvents.endTime, endTime))
+          )
+        )
+      );
+
     return [
       ...blockingBookings
         .filter(b => b.endDateTime) // Filter out null endDateTime
@@ -181,6 +197,13 @@ export class AvailabilityService {
         startTime: b.startTime,
         endTime: b.endTime,
         reason: b.reason || `${b.blockingType}`
+      })),
+      ...externalBlocks.map(b => ({
+        type: 'external' as const,
+        id: b.id,
+        startTime: b.startTime,
+        endTime: b.endTime,
+        reason: `External calendar (${b.source})`
       }))
     ];
   }

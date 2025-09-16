@@ -16,9 +16,10 @@ import { BookingCalendarEvent } from "@/shared/types/booking.types";
 interface BoatCalendarProps {
   boatId: string;
   boatName: string;
+  timezone?: string;
 }
 
-export default function BoatCalendar({ boatId, boatName }: BoatCalendarProps) {
+export default function BoatCalendar({ boatId, boatName, timezone }: BoatCalendarProps) {
   const [selectedEvent, setSelectedEvent] = useState<BookingCalendarEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState('dayGridMonth');
@@ -112,6 +113,7 @@ export default function BoatCalendar({ boatId, boatName }: BoatCalendarProps) {
           <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+            timeZone={timezone || 'local'}
             headerToolbar={{
               left: 'prev,next',
               center: 'title',
@@ -123,7 +125,7 @@ export default function BoatCalendar({ boatId, boatName }: BoatCalendarProps) {
             selectMirror={true}
             dayMaxEvents={true}
             weekends={true}
-            events={`/api/admin/boats/${boatId}/calendar-events`}
+            events={`/api/admin/calendar-events?boatId=${boatId}`}
             eventClick={handleEventClick}
             select={handleDateSelect}
             height="auto"
@@ -147,56 +149,62 @@ export default function BoatCalendar({ boatId, boatName }: BoatCalendarProps) {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Booking Details</DialogTitle>
+            <DialogTitle>
+              {selectedEvent?.extendedProps?.type === 'external' ? 'External Block' : 'Booking Details'}
+            </DialogTitle>
           </DialogHeader>
           
           {selectedEvent && (
             <div className="space-y-4">
-              {/* Status Badge */}
-              <div className="flex justify-center">
-                <Badge 
-                  style={{ 
-                    backgroundColor: selectedEvent.backgroundColor,
-                    color: selectedEvent.textColor
-                  }}
-                  className="px-3 py-1"
-                >
-                  {selectedEvent.extendedProps.bookingStatus}
-                </Badge>
-              </div>
+              {selectedEvent.extendedProps.type === 'booking' && (
+                <div className="flex justify-center">
+                  <Badge 
+                    style={{ 
+                      backgroundColor: selectedEvent.backgroundColor,
+                      color: selectedEvent.textColor
+                    }}
+                    className="px-3 py-1"
+                  >
+                    {selectedEvent.extendedProps.bookingStatus}
+                  </Badge>
+                </div>
+              )}
 
-              {/* Customer Info */}
-              <div>
-                <h3 className="font-medium text-gray-900">Customer</h3>
-                <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerName}</p>
-                <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerEmail}</p>
-                {selectedEvent.extendedProps.customerPhone && (
-                  <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerPhone}</p>
-                )}
-              </div>
+              {selectedEvent.extendedProps.type === 'booking' && (
+                <div>
+                  <h3 className="font-medium text-gray-900">Customer</h3>
+                  <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerName}</p>
+                  <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerEmail}</p>
+                  {selectedEvent.extendedProps.customerPhone && (
+                    <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerPhone}</p>
+                  )}
+                </div>
+              )}
 
-              {/* Booking Details */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h3 className="font-medium text-gray-900">Date & Time</h3>
                   <p className="text-sm text-gray-600">{formatDate(selectedEvent.start)}</p>
                   <p className="text-sm text-gray-600">
-                    {selectedEvent.extendedProps.startTime} - {selectedEvent.extendedProps.endTime}
+                    {new Date(selectedEvent.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                    {selectedEvent.end ? ` - ${new Date(selectedEvent.end).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : ''}
                   </p>
                 </div>
-                <div>
-                  <h3 className="font-medium text-gray-900">Guests & Amount</h3>
-                  <p className="text-sm text-gray-600">
-                    {selectedEvent.extendedProps.numberOfPassengers} guests
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {formatCurrency(selectedEvent.extendedProps.totalAmount)}
-                  </p>
-                </div>
+                {selectedEvent.extendedProps.type === 'booking' && (
+                  <div>
+                    <h3 className="font-medium text-gray-900">Guests & Amount</h3>
+                    <p className="text-sm text-gray-600">
+                      {selectedEvent.extendedProps.numberOfPassengers} guests
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {formatCurrency(selectedEvent.extendedProps.totalAmount)}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Special Requests */}
-              {selectedEvent.extendedProps.specialRequests && (
+              {selectedEvent.extendedProps.type === 'booking' && selectedEvent.extendedProps.specialRequests && (
                 <div>
                   <h3 className="font-medium text-gray-900">Special Requests</h3>
                   <p className="text-sm text-gray-600">{selectedEvent.extendedProps.specialRequests}</p>
@@ -204,24 +212,26 @@ export default function BoatCalendar({ boatId, boatName }: BoatCalendarProps) {
               )}
 
               {/* Action Buttons */}
-              <div className="flex gap-2 pt-4">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => window.open(`mailto:${selectedEvent.extendedProps.customerEmail}`)}
-                >
-                  Email Customer
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="flex-1"
-                  onClick={() => window.open(`/admin/bookings/${selectedEvent.id}`)}
-                >
-                  View Details
-                </Button>
-              </div>
+              {selectedEvent.extendedProps.type === 'booking' && (
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => window.open(`mailto:${selectedEvent.extendedProps.customerEmail}`)}
+                  >
+                    Email Customer
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => window.open(`/admin/bookings/${selectedEvent.extendedProps.bookingId}`)}
+                  >
+                    View Details
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

@@ -1,0 +1,3 @@
+ALTER TABLE "external_google_calendar_sync_events" ADD COLUMN "boat_calendar_id" uuid NOT NULL;--> statement-breakpoint
+ALTER TABLE "external_google_calendar_sync_events" ADD CONSTRAINT "external_google_calendar_sync_events_boat_calendar_id_boat_google_calendars_id_fk" FOREIGN KEY ("boat_calendar_id") REFERENCES "public"."boat_google_calendars"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "external_google_calendar_sync_events_boat_calendar_idx" ON "external_google_calendar_sync_events" USING btree ("boat_calendar_id");

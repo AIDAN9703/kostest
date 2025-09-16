@@ -86,6 +86,14 @@ export interface BookingCalendarEvent {
   borderColor: string;
   textColor: string;
   extendedProps: {
+    // Discriminator for event kind (admin calendars may include external blocks)
+    type?: 'booking' | 'external';
+    // Present when type === 'booking'
+    bookingId?: string;
+    // Present when type === 'external'
+    source?: string;
+    eventId?: string;
+
     customerName: string;
     customerEmail: string;
     customerPhone: string;

@@ -24,6 +24,8 @@ import { Checkbox } from '@/shared/components/ui/checkbox';
 import { createGeneralInquiry, GeneralInquiryInput } from '@/features/bookings/actions/inquiry';
 import { toast } from '@/shared/hooks/use-toast';
 
+import { ghlWebhookService } from "@/shared/services/ghl-webhook.service";
+
 // Form schema with validation rules
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -53,8 +55,6 @@ const fadeInUpAnimation = {
   })
 };
 
-// GHL Webhook URL
-const GHL_WEBHOOK_URL = "https://services.leadconnectorhq.com/hooks/uk2U6vqDpNjnOPwiTM8g/webhook-trigger/a807016d-cf25-4284-8d83-b7fb0129fa68";
 
 export default function RequestToBook() {
   const prefersReducedMotion = useReducedMotion();
@@ -82,7 +82,6 @@ export default function RequestToBook() {
   // Function to trigger GHL webhook
   const triggerGHLWebhook = async (formData: z.infer<typeof formSchema>) => {
     try {
-      // Prepare webhook payload
       const webhookPayload = {
         name: formData.name,
         email: formData.email,
@@ -98,20 +97,7 @@ export default function RequestToBook() {
         submitted_at: new Date().toISOString()
       };
 
-      const response = await fetch(GHL_WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(webhookPayload)
-      });
-
-      if (!response.ok) {
-        console.warn('GHL webhook failed:', response.status, response.statusText);
-        // Don't throw error - we don't want to fail the whole form if webhook fails
-      } else {
-        console.log('GHL webhook triggered successfully');
-      }
+      await ghlWebhookService.sendInquiry(webhookPayload);
     } catch (error) {
       console.warn('GHL webhook error:', error);
       // Don't throw error - we don't want to fail the whole form if webhook fails

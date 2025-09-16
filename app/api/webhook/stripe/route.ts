@@ -194,7 +194,6 @@ async function handleInstantBookingPayment(session: Stripe.Checkout.Session) {
     // Transaction will automatically rollback on error
   }
 }
-
 /**
  * Send GHL webhook for instant booking after payment confirmation
  */

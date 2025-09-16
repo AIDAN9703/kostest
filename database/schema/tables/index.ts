@@ -14,3 +14,5 @@ export * from "./promoCodeUsage.table";
 export * from "./messaging/conversations.table";
 export * from "./messaging/messages.table";
 export * from "./messaging/conversationParticipants.table";
+export * from "./boatGoogleCalendars.table";
+export * from "./externalGoogleCalendarSyncEvents.table";
