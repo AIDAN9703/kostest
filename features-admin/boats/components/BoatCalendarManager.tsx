@@ -136,12 +136,28 @@ export default function BoatCalendarManager({
     }
   };
 
-  const handleRemoveCalendar = (calendarId: string) => {
-    onCalendarsChange(calendars.filter(cal => cal.id !== calendarId));
-    toast({
-      title: "Calendar Removed",
-      description: "External calendar has been removed"
-    });
+  const handleRemoveCalendar = async (calendarId: string) => {
+    try {
+      const response = await fetch(`/api/admin/boats/${boatId}/calendars/${calendarId}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete calendar');
+      }
+
+      onCalendarsChange(calendars.filter(cal => cal.id !== calendarId));
+      toast({
+        title: "Calendar Removed",
+        description: "External calendar has been removed"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove calendar",
+        variant: "destructive"
+      });
+    }
   };
 
   const getStatusIcon = (status?: string) => {
