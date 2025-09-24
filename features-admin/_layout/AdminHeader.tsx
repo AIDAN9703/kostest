@@ -13,7 +13,8 @@ import {
   Users,
   CalendarDays,
   FileText,
-  PenTool
+  PenTool,
+  PartyPopper,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -46,6 +47,12 @@ const quickActions = [
     href: "/admin/blog/create",
     icon: <PenTool className="h-4 w-4" />,
     color: "text-orange-600 hover:text-orange-700"
+  },
+  {
+    label: "Create Event",
+    href: "/admin/events?create=true",
+    icon: <PartyPopper className="h-4 w-4" />,
+    color: "text-pink-600 hover:text-pink-700"
   }
 ];
 
@@ -54,25 +61,24 @@ export default function AdminHeader({ session }: { session: Session }) {
   const [showQuickActions, setShowQuickActions] = useState(false);
 
   return (
-    <header className="bg-white/95 backdrop-blur-xs border-b border-gray-200/80 h-16 flex items-center px-6 w-full shadow-xs">
-      <div className="flex-1 flex items-center space-x-4">
+    <header className="h-16 w-full px-6 sticky top-0 z-40">
+      <div className="h-full w-full bg-white/95 backdrop-blur-xs border border-gray-200/80 shadow-xs rounded-bl-3xl rounded-br-3xl flex items-center px-4">
+        <div className="flex-1 flex items-center gap-3">
         <GlobalSearch />
         
         {/* Quick Actions Dropdown */}
         <div className="relative">
           <button
             onClick={() => setShowQuickActions(!showQuickActions)}
-            className="font-medium text-sm text-primary relative group flex items-center"
+            className="font-medium text-sm text-primary relative group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 hover:bg-primary/10 transition-colors"
           >
             <Plus className="h-4 w-4" />
-            <span className="relative">
-              Actions
-            </span>
+            <span className="relative">Actions</span>
           </button>
           
           {showQuickActions && (
             <div
-              className="absolute left-0 mt-3 w-48 bg-white/95 backdrop-blur-xs rounded-xl shadow-xl border border-gray-200/80 py-2 z-50"
+              className="absolute left-0 mt-3 w-52 bg-white/95 backdrop-blur-xs rounded-2xl shadow-xl border border-gray-200/80 py-2 z-50"
               onBlur={() => setShowQuickActions(false)}
             >
               <div className="px-3 py-2 border-b border-gray-200/80">
@@ -84,7 +90,7 @@ export default function AdminHeader({ session }: { session: Session }) {
                 <Link
                   key={action.href}
                   href={action.href}
-                  className="flex items-center px-4 py-3 text-sm hover:bg-gray-50 rounded-lg mx-1 transition-colors duration-200"
+                  className="flex items-center px-4 py-3 text-sm hover:bg-gray-50 rounded-xl mx-1 transition-colors duration-200"
                   onClick={() => setShowQuickActions(false)}
                 >
                   <span className={cn("mr-3", action.color)}>
@@ -96,11 +102,11 @@ export default function AdminHeader({ session }: { session: Session }) {
             </div>
           )}
         </div>
-      </div>
+        </div>
 
-      <div className="flex items-center space-x-3">
+        <div className="flex items-center gap-2">
         {/* Notifications */}
-        <button className="relative p-2.5 rounded-xl hover:bg-gray-100 transition-all duration-200 group">
+        <button className="relative p-2.5 rounded-2xl hover:bg-gray-100 transition-all duration-200 group">
           <Bell className="h-5 w-5 text-gray-600 group-hover:text-gray-900 transition-colors" />
           <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-red-500 border-2 border-white animate-pulse"></span>
         </button>
@@ -108,7 +114,7 @@ export default function AdminHeader({ session }: { session: Session }) {
         {/* User Menu */}
         <div className="relative">
           <button
-            className="flex items-center space-x-3 focus:outline-hidden group p-1 rounded-xl hover:bg-gray-100 transition-all duration-200"
+            className="flex items-center gap-3 focus:outline-hidden group p-1 rounded-2xl hover:bg-gray-100 transition-all duration-200"
             onClick={() => setShowDropdown(!showDropdown)}
           >
             <div className="shrink-0 h-9 w-9 rounded-full bg-linear-to-br from-blue-100 to-blue-200 flex items-center justify-center overflow-hidden border-2 border-white shadow-xs">
@@ -138,12 +144,12 @@ export default function AdminHeader({ session }: { session: Session }) {
           {/* Dropdown Menu */}
           {showDropdown && (
             <div
-              className="absolute right-0 mt-3 w-56 bg-white/95 backdrop-blur-xs rounded-xl shadow-xl border border-gray-200/80 py-2 z-50"
+              className="absolute right-0 mt-3 w-56 bg-white/95 backdrop-blur-xs rounded-2xl shadow-xl border border-gray-200/80 py-2 z-50"
               onBlur={() => setShowDropdown(false)}
             >
               <Link
                 href="/admin/profile"
-                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg mx-1 transition-colors duration-200"
+                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-xl mx-1 transition-colors duration-200"
                 onClick={() => setShowDropdown(false)}
               >
                 <User className="mr-3 h-4 w-4 text-gray-500" />
@@ -151,7 +157,7 @@ export default function AdminHeader({ session }: { session: Session }) {
               </Link>
               <Link
                 href="/admin/settings"
-                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg mx-1 transition-colors duration-200"
+                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-xl mx-1 transition-colors duration-200"
                 onClick={() => setShowDropdown(false)}
               >
                 <Settings className="mr-3 h-4 w-4 text-gray-500" />
@@ -159,7 +165,7 @@ export default function AdminHeader({ session }: { session: Session }) {
               </Link>
               <Link
                 href="/admin/help"
-                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-lg mx-1 transition-colors duration-200"
+                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 rounded-xl mx-1 transition-colors duration-200"
                 onClick={() => setShowDropdown(false)}
               >
                 <HelpCircle className="mr-3 h-4 w-4 text-gray-500" />
@@ -168,7 +174,7 @@ export default function AdminHeader({ session }: { session: Session }) {
               <div className="border-t border-gray-200/80 my-2"></div>
               <Link
                 href="/api/auth/signout"
-                className="flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-lg mx-1 transition-colors duration-200"
+                className="flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 rounded-xl mx-1 transition-colors duration-200"
                 onClick={() => setShowDropdown(false)}
               >
                 <LogOut className="mr-3 h-4 w-4 text-red-500" />
@@ -176,6 +182,7 @@ export default function AdminHeader({ session }: { session: Session }) {
               </Link>
             </div>
           )}
+        </div>
         </div>
       </div>
     </header>

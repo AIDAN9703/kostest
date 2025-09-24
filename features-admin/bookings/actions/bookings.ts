@@ -5,6 +5,9 @@ import { db } from '@/database/db'
 import { bookings, boats, users } from '@/database/schema'
 import { and, count, eq, desc, or, like, gte, lte, sql } from 'drizzle-orm'
 
+// Import enum types for type safety
+type BookingStatus = 'PENDING' | 'EXPIRED' | 'APPROVED' | 'CONFIRMED' | 'DENIED' | 'CANCELLED' | 'COMPLETED' | 'REFUNDED';
+
 // Helper to validate UUID format
 function isValidUUID(uuid: string) {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -17,13 +20,67 @@ function isValidUUID(uuid: string) {
 export async function getBookings(options: {
   page?: number;
   limit?: number;
+  search?: string;
+  status?: BookingStatus;
+  dateFrom?: string;
+  dateTo?: string;
+  boat?: string;
+  customer?: string;
 } = {}) {
   const { 
     page = 1, 
-    limit = 10
+    limit = 10,
+    search,
+    status,
+    dateFrom,
+    dateTo,
+    boat,
+    customer
   } = options;
   
   const offset = (page - 1) * limit;
+  
+  // Build filter conditions
+  const conditions = [];
+  
+  // Status filter
+  if (status) {
+    conditions.push(eq(bookings.bookingStatus, status));
+  }
+  
+  // Search filter (search across customer name, email, boat name)
+  if (search) {
+    conditions.push(
+      or(
+        like(bookings.customerName, `%${search}%`),
+        like(bookings.customerEmail, `%${search}%`),
+        like(boats.name, `%${search}%`)
+      )
+    );
+  }
+  
+  // Date range filters
+  if (dateFrom) {
+    conditions.push(gte(bookings.startDateTime, new Date(dateFrom)));
+  }
+  if (dateTo) {
+    conditions.push(lte(bookings.startDateTime, new Date(dateTo)));
+  }
+  
+  // Boat filter
+  if (boat) {
+    conditions.push(eq(bookings.boatId, boat));
+  }
+  
+  // Customer filter (search by customer name or email)
+  if (customer) {
+    conditions.push(
+      or(
+        like(bookings.customerName, `%${customer}%`),
+        like(bookings.customerEmail, `%${customer}%`)
+      )
+    );
+  }
   
   // Select booking data with joined boat and user information
   const bookingsData = await db
@@ -62,14 +119,17 @@ export async function getBookings(options: {
     .from(bookings)
     .leftJoin(boats, eq(bookings.boatId, boats.id))
     .leftJoin(users, eq(bookings.userId, users.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
     .limit(limit)
     .offset(offset)
     .orderBy(desc(bookings.createdAt));
   
-  // Get total count for pagination
+  // Get total count for pagination with same filters
   const [{ value: totalCount }] = await db
     .select({ value: count() })
-    .from(bookings);
+    .from(bookings)
+    .leftJoin(boats, eq(bookings.boatId, boats.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined);
   
   return {
     bookings: bookingsData,

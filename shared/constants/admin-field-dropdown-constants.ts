@@ -150,4 +150,4 @@ export const ADMIN_FIELD_DROPDOWN_OPTIONS: Record<string, EntityFieldConfig> = {
       options: createEnumOptions(userRoleEnum.enumValues, USER_ROLE_COLORS)
     }
   }
-}; 
+};  

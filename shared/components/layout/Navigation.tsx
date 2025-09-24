@@ -113,9 +113,9 @@ const Navigation = () => {
         "transition-all duration-300",
         isHomePage 
             ? scrolled 
-                ? "bg-white backdrop-blur-xs shadow-md py-3" 
+                ? "bg-white backdrop-blur-xs shadow-xs py-3" 
                 : "bg-transparent py-5"
-            : "bg-white backdrop-blur-xs shadow-md py-3"
+            : "bg-white backdrop-blur-xs shadow-xs py-3"
     ), [isHomePage, scrolled])
 
     // Memoized text style function

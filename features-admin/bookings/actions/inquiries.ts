@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { db } from '@/database/db'
 import { generalInquiries } from '@/database/schema'
-import { and, eq, desc, sql } from 'drizzle-orm'
+import { and, eq, desc, sql, gte, lte } from 'drizzle-orm'
 
 /**
  * Get all general inquiries with pagination, filtering, and sorting
@@ -14,12 +14,16 @@ export async function getInquiries(options: {
   limit?: number;
   status?: string;
   search?: string;
+  dateFrom?: string;
+  dateTo?: string;
 } = {}) {
   const { 
     page = 1, 
     limit = 10,
     status,
-    search
+    search,
+    dateFrom,
+    dateTo
   } = options;
   
   const offset = (page - 1) * limit;
@@ -35,6 +39,14 @@ export async function getInquiries(options: {
     conditions.push(
       sql`(${generalInquiries.name} ILIKE ${`%${search}%`} OR ${generalInquiries.email} ILIKE ${`%${search}%`})`
     );
+  }
+  
+  // Date range filters
+  if (dateFrom) {
+    conditions.push(gte(generalInquiries.createdAt, new Date(dateFrom)));
+  }
+  if (dateTo) {
+    conditions.push(lte(generalInquiries.createdAt, new Date(dateTo)));
   }
   
   // Execute query with conditions

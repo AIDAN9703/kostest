@@ -3,6 +3,7 @@
 const config = {
     apiUrl: process.env.NEXT_PUBLIC_API_URL!,
     databaseUrl: process.env.DATABASE_URL!,
+    baseUrl: process.env.NEXT_PUBLIC_BASE_URL!,
     stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
     stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY!,
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,

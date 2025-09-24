@@ -1,252 +1,254 @@
-import { Metadata } from "next";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { BarChart, CalendarClock, Ship, Users } from "lucide-react";
+import { 
+  Ship, 
+  Users, 
+  ArrowUpRight,
+  ArrowDownRight,
+  Star, 
+  Target,
+  BarChart,
+  ListChecks,
+  Activity,
+  CheckCircle
+} from "lucide-react";
 import Link from "next/link";
-import { getDashboardStats } from "@/features-admin/_shared/actions/dashboard";
+import { getDashboardStats, getDailyBookings, getDailyRevenue, getRecentActivity, ActivityItem } from "@/features-admin/_shared/actions/dashboard";
+import AdminTodo from "@/features-admin/dashboard/AdminTodo";
+import { cn, formatCurrency } from "@/shared/utils/general-utils";
 
 // Add route segment config for caching
 export const revalidate = 300; // Revalidate every 5 minutes
 
 
 export default async function AdminDashboardPage() {
-  // Fetch dashboard statistics
-  const stats = await getDashboardStats();
+  // Fetch dashboard statistics and activity
+  const [stats, dailyBookings, dailyRevenue, recentActivity] = await Promise.all([
+    getDashboardStats(),
+    getDailyBookings(90),
+    getDailyRevenue(90),
+    getRecentActivity(8)
+  ]);
   
   // Format numbers for display
   const formatNumber = (num: number) => new Intl.NumberFormat('en-US').format(num);
-  const formatCurrency = (num: number) => new Intl.NumberFormat('en-US', { 
-    style: 'currency', 
-    currency: 'USD',
-    maximumFractionDigits: 0
-  }).format(num);
   
   // Format trend numbers
   const formatTrend = (value: number) => {
     return value > 0 ? `+${value.toFixed(1)}%` : `${value.toFixed(1)}%`;
   };
 
+  
+  // Activity type icons and colors
+  const getActivityIcon = (type: ActivityItem['type']) => {
+    switch (type) {
+      case 'booking': return Ship;
+      case 'user': return Users;
+      case 'completion': return Target;
+      case 'inquiry': return Star;
+      default: return Activity;
+    }
+  };
+  
+  const getActivityColor = (type: ActivityItem['type']) => {
+    switch (type) {
+      case 'booking': return 'text-blue-600';
+      case 'user': return 'text-emerald-600';
+      case 'completion': return 'text-purple-600';
+      case 'inquiry': return 'text-amber-600';
+      default: return 'text-gray-600';
+    }
+  };
+  
+
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Top header: keep it minimal and welcoming */}
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">
-            {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </span>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome back 👋</h1>
+          <p className="text-sm text-gray-500">Here's what's happening across KOS today</p>
+        </div>
+        
+        {/* System Status - small and unobtrusive */}
+        <div className="flex items-center gap-2 px-2 py-2 text-green-500 text-sm">
+          <CheckCircle className="w-4 h-4" />
+          <span className="font-medium">All Systems Online</span>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard 
-          title="Total Boats" 
-          value={formatNumber(stats.totalBoats)} 
-          description="Active listings"
-          icon={<Ship className="h-5 w-5" />}
+      {/* Vibrant KPI tiles — flat, colorful, yacht-focused */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        <VibrantTile
+          title="Fleet Size"
+          value={formatNumber(stats.totalBoats)}
+          subtitle="Active yachts ready to sail"
+          icon="🛥️"
+          gradient="from-blue-500 via-cyan-500 to-blue-600"
           linkHref="/admin/boats"
-          trend={{
-            value: formatTrend(stats.comparisonStats.boatsTrend.value),
-            isPositive: stats.comparisonStats.boatsTrend.isPositive,
-            text: "from last month"
-          }}
-          color="blue"
+          trend={{ delta: formatTrend(stats.comparisonStats.boatsTrend.value), isPositive: stats.comparisonStats.boatsTrend.isPositive }}
         />
-        <StatsCard 
-          title="Active Users" 
-          value={formatNumber(stats.totalUsers)} 
-          description="Customer accounts"
-          icon={<Users className="h-5 w-5" />}
+        <VibrantTile
+          title="Happy Sailors"
+          value={formatNumber(stats.totalUsers)}
+          subtitle="Registered customers"
+          icon="👨🏻‍✈️"
+          gradient="from-emerald-500 via-teal-500 to-emerald-600"
           linkHref="/admin/users"
-          trend={{
-            value: formatTrend(stats.comparisonStats.usersTrend.value),
-            isPositive: stats.comparisonStats.usersTrend.isPositive,
-            text: "from last month"
-          }}
-          color="green"
+          trend={{ delta: formatTrend(stats.comparisonStats.usersTrend.value), isPositive: stats.comparisonStats.usersTrend.isPositive }}
         />
-        <StatsCard 
-          title="Bookings" 
-          value={formatNumber(stats.bookingsThisMonth)} 
-          description="This month"
-          icon={<CalendarClock className="h-5 w-5" />}
+        <VibrantTile
+          title="Ocean Adventures"
+          value={formatNumber(stats.bookingsThisMonth)}
+          subtitle="Charters this month"
+          icon="📅"
+          gradient="from-purple-500 via-pink-500 to-purple-600"
           linkHref="/admin/bookings"
-          trend={{
-            value: formatTrend(stats.comparisonStats.bookingsTrend.value),
-            isPositive: stats.comparisonStats.bookingsTrend.isPositive,
-            text: "from last month"
-          }}
-          color="purple"
+          trend={{ delta: formatTrend(stats.comparisonStats.bookingsTrend.value), isPositive: stats.comparisonStats.bookingsTrend.isPositive }}
         />
-        <StatsCard 
-          title="Revenue" 
-          value={formatCurrency(stats.revenueThisMonth)} 
-          description="This month"
-          icon={<BarChart className="h-5 w-5" />}
+        <VibrantTile
+          title="Golden Waves"
+          value={formatCurrency(stats.revenueThisMonth)}
+          subtitle="Monthly revenue"
+          icon="💵"
+          gradient="from-amber-400 via-yellow-500 to-orange-500"
           linkHref="/admin/finance"
-          trend={{
-            value: formatTrend(stats.comparisonStats.revenueTrend.value),
-            isPositive: stats.comparisonStats.revenueTrend.isPositive,
-            text: "from last month"
-          }}
-          color="amber"
+          trend={{ delta: formatTrend(stats.comparisonStats.revenueTrend.value), isPositive: stats.comparisonStats.revenueTrend.isPositive }}
         />
       </div>
 
-      {/* Main Content Area */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Latest platform activity</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center justify-center py-8 text-center">
-              <div className="rounded-full bg-gray-100 p-3 mb-4">
-                <CalendarClock className="h-6 w-6 text-gray-400" />
+      {/* Clean Dashboard Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left: Activity Feed and Charts */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Activity Feed */}
+          <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-6 h-6 bg-blue-500 rounded flex items-center justify-center">
+                  <Activity className="w-4 h-4 text-white" />
+                </div>
+                <h3 className="font-semibold text-gray-900">Recent Activity</h3>
               </div>
-              <h3 className="text-base font-medium text-gray-600">No Recent Activity</h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Activity logs will appear here as users interact with the platform
-              </p>
             </div>
-            <div className="mt-4 text-center">
-              <Link href="/admin/activity" className="text-sm text-primary hover:underline">
-                View all activity
-              </Link>
+            <div className="p-6">
+              <div className="space-y-4 max-h-120 overflow-y-auto">
+                {recentActivity.length > 0 ? (
+                  recentActivity.map((activity) => {
+                    const Icon = getActivityIcon(activity.type);
+                    const color = getActivityColor(activity.type);
+                    
+                    return (
+                      <div key={activity.id} className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Icon className={`w-5 h-5 ${color}`} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-medium text-gray-900">{activity.title}</div>
+                          <div className="text-sm text-gray-600 mt-1">{activity.description}</div>
+                          <div className="text-xs text-gray-500 mt-1">{activity.time}</div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <Activity className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm">No recent activity to display</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Common administrative tasks</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <ActionCard 
-                title="Add New Boat" 
-                description="Create a new boat listing"
-                href="/admin/boats/create"
-                icon={<Ship className="h-5 w-5" />}
-              />
-              <ActionCard 
-                title="Add New User" 
-                description="Create a user account"
-                href="/admin/users/create"
-                icon={<Users className="h-5 w-5" />}
-              />
-              <ActionCard 
-                title="Manage Bookings" 
-                description="Review and update bookings"
-                href="/admin/bookings"
-                icon={<CalendarClock className="h-5 w-5" />}
-              />
-              <ActionCard 
-                title="View Reports" 
-                description="Analytics and reporting"
-                href="/admin/reports"
-                icon={<BarChart className="h-5 w-5" />}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-}
-
-interface StatsCardProps {
-  title: string;
-  value: string;
-  description: string;
-  icon: React.ReactNode;
-  linkHref: string;
-  trend: {
-    value: string;
-    isPositive: boolean;
-    text: string;
-  };
-  color: "blue" | "green" | "red" | "purple" | "amber";
-}
-
-function StatsCard({ title, value, description, icon, linkHref, trend, color }: StatsCardProps) {
-  const colorClasses = {
-    blue: "bg-blue-50 text-blue-700",
-    green: "bg-green-50 text-green-700",
-    red: "bg-red-50 text-red-700",
-    purple: "bg-purple-50 text-purple-700",
-    amber: "bg-amber-50 text-amber-700",
-  };
-
-  return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="font-medium text-sm text-gray-500">{title}</div>
-          <div className={`p-2 rounded-full ${colorClasses[color]}`}>
-            {icon}
           </div>
         </div>
-        <div className="text-3xl font-bold mb-1">{value}</div>
-        <div className="text-sm text-gray-500">{description}</div>
-        <div className="mt-4 flex items-center text-sm">
-          <span className={trend.isPositive ? "text-green-600" : "text-red-600"}>
-            {trend.value}
-          </span>
-          <span className="ml-1 text-gray-500">{trend.text}</span>
+
+        {/* Right: Clean Todo Section */}
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden h-fit">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 bg-purple-500 rounded flex items-center justify-center">
+                <ListChecks className="w-4 h-4 text-white" />
+              </div>
+              <h3 className="font-semibold text-gray-900">Task Manager</h3>
+            </div>
+          </div>
+          <div className="p-6">
+            <AdminTodo />
+          </div>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface ActivityItemProps {
-  title: string;
-  description: string;
-  time: string;
-}
-
-function ActivityItem({ title, description, time }: ActivityItemProps) {
-  return (
-    <div className="flex items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0">
-      <div className="w-2 h-2 mt-1.5 rounded-full bg-blue-500 mr-3"></div>
-      <div className="flex-1">
-        <p className="font-medium text-sm">{title}</p>
-        <p className="text-gray-500 text-sm">{description}</p>
       </div>
-      <div className="text-xs text-gray-400 min-w-[80px] text-right">{time}</div>
     </div>
   );
 }
 
-interface ActionCardProps {
+interface VibrantTileProps {
   title: string;
-  description: string;
-  href: string;
-  icon: React.ReactNode;
+  value: string;
+  subtitle: string;
+  icon: string;
+  gradient: string;
+  linkHref: string;
+  trend?: { delta: string; isPositive: boolean };
 }
 
-function ActionCard({ title, description, href, icon }: ActionCardProps) {
+function VibrantTile({ title, value, subtitle, icon, gradient, linkHref, trend }: VibrantTileProps) {
   return (
-    <Link 
-      href={href}
-      className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors duration-150 flex items-start space-x-4"
-    >
-      <div className="mt-1 p-2 bg-primary/10 rounded-lg text-primary">
-        {icon}
-      </div>
-      <div>
-        <h3 className="font-medium text-sm">{title}</h3>
-        <p className="text-xs text-gray-500">{description}</p>
+    <Link href={linkHref} className="group block">
+      <div className={cn(
+        "relative overflow-hidden rounded-3xl p-6 text-white transition-all duration-300 group-hover:scale-[1.02] group-hover:shadow-2xl",
+        `bg-gradient-to-br ${gradient}`
+      )}>
+        {/* Background pattern */}
+        <div className="absolute inset-0 bg-white/10 opacity-30">
+          <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-white/20"></div>
+          <div className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full bg-white/10"></div>
+        </div>
+        
+        <div className="relative z-10">
+          <div className="flex items-start justify-between mb-4">
+            <div className="text-3xl opacity-90">{icon}</div>
+            {trend && (
+              <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-white/20 backdrop-blur-sm text-xs font-medium">
+                {trend.isPositive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+                {trend.delta}
+              </div>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium opacity-90">{title}</h3>
+            <div className="text-3xl font-bold leading-none">{value}</div>
+            <p className="text-sm opacity-75">{subtitle}</p>
+          </div>
+          
+          {/* Subtle hover indicator */}
+          <div className="mt-4 flex items-center text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+            <span>View details</span>
+            <ArrowUpRight className="h-3 w-3 ml-1" />
+          </div>
+        </div>
       </div>
     </Link>
   );
-} 
+}
+
+// Helper component for metric tiles
+interface MetricTileProps {
+  label: string;
+  value: string;
+  change: string;
+  isPositive: boolean;
+}
+
+function MetricTile({ label, value, change, isPositive }: MetricTileProps) {
+  return (
+    <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+      <div className="text-xs text-gray-600 mb-2">{label}</div>
+      <div className="text-lg font-bold text-gray-900 mb-1">{value}</div>
+      <div className={`text-xs flex items-center gap-1 ${isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
+        {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+        {change}
+      </div>
+    </div>
+  );
+}
+

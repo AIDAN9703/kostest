@@ -52,6 +52,7 @@ export const navigationData: {
     ],
     secondary: [
         { href: "/kos-yacht-club", label: "KOS Yacht Club" },
+        { href: "/events", label: "Events" },
         { href: "/faq", label: "FAQ" },
         { href: "/careers", label: "Careers" },
         { href: "https://kosyachts.myshopify.com/", label: "Store" },

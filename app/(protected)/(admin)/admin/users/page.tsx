@@ -1,76 +1,49 @@
-import { Suspense } from "react";
-import { getAllUsers } from "@/features-admin/users/actions/users";
-import { UsersTable } from "@/features-admin/users/components/UsersTable";
-import { UsersTableSkeleton } from "@/features-admin/users/components/UsersTableSkeleton";
-import { DataTablePagination } from "@/features-admin/_layout/DataTablePagination";
+"use client";
 
-// Constants
-const ITEMS_PER_PAGE = 10;
+import { CardHeader, CardTitle, CardDescription } from "@/shared/components/ui/card";
+import { UserStatsCards } from "@/features-admin/users/components/UserStatsCards";
+import { ModernUsersTable } from "@/features-admin/users/components/ModernUsersTable";
+import { useState } from "react";
+import { useUsers, useUserStats, useDeleteUser } from "@/features-admin/users/hooks/useUsersApi";
 
-// Types
-interface SearchParams {
-  page?: string;
-  limit?: string;
-}
-
-// This enables automatic revalidation every 30 seconds
-export const revalidate = 30;
-
-export default async function UsersPage({
-  searchParams,
-}: {
-  searchParams: Promise<SearchParams>;
-}) {
-  // Await searchParams before using its properties (Next.js 15 requirement)
-  const resolvedParams = await searchParams;
+export default function UsersPage() {
+  // TanStack Query hooks
+  const { data: users = [], isLoading: usersLoading } = useUsers();
+  const { data: stats = { totalUsers: 0, activeUsers: 0, adminUsers: 0, newUsersThisMonth: 0 }, isLoading: statsLoading } = useUserStats();
   
-  // Parse and validate page number and limit
-  const currentPage = resolvedParams.page ? Math.max(1, parseInt(resolvedParams.page)) : 1;
-  const limit = resolvedParams.limit ? Math.max(10, Math.min(100, parseInt(resolvedParams.limit))) : ITEMS_PER_PAGE;
+  // Mutations
+  const deleteUserMutation = useDeleteUser();
+
+  // Centralized error handler
+  const handleError = (error: unknown, action: string) => {
+    alert(`Error ${action}: ${(error as Error).message}`);
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+
+    try {
+      await deleteUserMutation.mutateAsync(userId);
+    } catch (error) {
+      handleError(error, 'deleting user');
+    }
+  };
 
   return (
-    <div className="space-y-5">
-      {/* Users Table with Suspense for progressive loading */}
-      <Suspense fallback={<UsersTableSkeleton />}>
-        <UserTableWithData 
-          page={currentPage}
-          limit={limit}
-        />
-      </Suspense>
+    <div className="p-6 space-y-6">
+      <CardHeader className="px-0">
+        <CardTitle>Users</CardTitle>
+        <CardDescription>Manage your platform users and their permissions</CardDescription>
+      </CardHeader>
+
+      <UserStatsCards stats={stats} loading={statsLoading} />
+      
+      <ModernUsersTable 
+        users={users} 
+        loading={usersLoading}
+        onDelete={handleDeleteUser}
+        onUpdateField={() => {}} // FieldDropdown handles updates internally
+      />
     </div>
-  );
-}
-
-// Separate component for data fetching to enable Suspense
-async function UserTableWithData({
-  page,
-  limit,
-}: {
-  page: number;
-  limit: number;
-}) {
-  const { users, totalCount, totalPages } = await getAllUsers({
-    page,
-    limit
-  });
-
-  return (
-    <>
-      {/* Users List */}
-      <UsersTable users={users} />
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <DataTablePagination
-          currentPage={page}
-          totalPages={totalPages}
-          totalCount={totalCount}
-          itemsPerPage={limit}
-          searchParams={{}}
-          baseUrl="/admin/users"
-          itemName="users"
-        />
-      )}
-    </>
   );
 } 

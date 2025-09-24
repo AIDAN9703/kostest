@@ -87,4 +87,174 @@ export const getDashboardStats = cache(async (): Promise<DashboardStats> => {
       revenueTrend: calculateTrend(currentRevenue, lastMonthRevenue)
     }
   };
-}); 
+});
+
+export type DailyPoint = { date: string; value: number };
+
+// Per-day bookings (last N days)
+export const getDailyBookings = cache(async (days: number): Promise<DailyPoint[]> => {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - (days - 1));
+
+  const rows = await db
+    .select({
+      date: sql<string>`date_trunc('day', ${bookings.createdAt})::date`.as('date'),
+      value: sql<number>`count(*)`.as('value'),
+    })
+    .from(bookings)
+    .where(gte(bookings.createdAt, startDate))
+    .groupBy(sql`date_trunc('day', ${bookings.createdAt})::date`)
+    .orderBy(sql`date_trunc('day', ${bookings.createdAt})::date`);
+
+  // Fill gaps with zeros to keep chart smooth
+  const map = new Map<string, number>();
+  rows.forEach((r) => map.set(String(r.date), Number(r.value)));
+
+  const out: DailyPoint[] = [];
+  for (let i = 0; i < days; i++) {
+    const d = new Date(startDate);
+    d.setDate(startDate.getDate() + i);
+    const key = d.toISOString().slice(0, 10);
+    out.push({ date: key, value: map.get(key) ?? 0 });
+  }
+  return out;
+});
+
+// Per-day revenue (last N days)
+export const getDailyRevenue = cache(async (days: number): Promise<DailyPoint[]> => {
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - (days - 1));
+
+  const rows = await db
+    .select({
+      date: sql<string>`date_trunc('day', ${bookings.createdAt})::date`.as('date'),
+      value: sql<number>`coalesce(sum(${bookings.totalAmount}), 0)`.as('value'),
+    })
+    .from(bookings)
+    .where(gte(bookings.createdAt, startDate))
+    .groupBy(sql`date_trunc('day', ${bookings.createdAt})::date`)
+    .orderBy(sql`date_trunc('day', ${bookings.createdAt})::date`);
+
+  const map = new Map<string, number>();
+  rows.forEach((r) => map.set(String(r.date), Number(r.value)));
+
+  const out: DailyPoint[] = [];
+  for (let i = 0; i < days; i++) {
+    const d = new Date(startDate);
+    d.setDate(startDate.getDate() + i);
+    const key = d.toISOString().slice(0, 10);
+    out.push({ date: key, value: map.get(key) ?? 0 });
+  }
+  return out;
+});
+
+export interface ActivityItem {
+  id: string;
+  type: 'booking' | 'user' | 'inquiry' | 'completion';
+  title: string;
+  description: string;
+  time: string;
+  createdAt: Date;
+}
+
+// Get recent activity feed - real data from database
+export const getRecentActivity = cache(async (limit: number = 10): Promise<ActivityItem[]> => {
+  const activities: ActivityItem[] = [];
+  
+  // Get recent bookings
+  const recentBookings = await db
+    .select({
+      id: bookings.id,
+      customerName: bookings.customerName,
+      boatName: boats.name,
+      createdAt: bookings.createdAt,
+      bookingStatus: bookings.bookingStatus,
+      totalAmount: bookings.totalAmount
+    })
+    .from(bookings)
+    .leftJoin(boats, sql`${bookings.boatId} = ${boats.id}`)
+    .orderBy(sql`${bookings.createdAt} desc`)
+    .limit(5);
+    
+  recentBookings.forEach(booking => {
+    activities.push({
+      id: `booking-${booking.id}`,
+      type: 'booking',
+      title: 'New Charter Booking',
+      description: `${booking.customerName} booked ${booking.boatName || 'a yacht'} for $${booking.totalAmount}`,
+      time: formatTimeAgo(booking.createdAt),
+      createdAt: booking.createdAt
+    });
+  });
+  
+  // Get recent user registrations
+  const recentUsers = await db
+    .select({
+      id: users.id,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      email: users.email,
+      createdAt: users.createdAt
+    })
+    .from(users)
+    .orderBy(sql`${users.createdAt} desc`)
+    .limit(3);
+    
+  recentUsers.forEach(user => {
+    activities.push({
+      id: `user-${user.id}`,
+      type: 'user',
+      title: 'New User Registration',
+      description: `${user.firstName} ${user.lastName} joined from ${user.email}`,
+      time: formatTimeAgo(user.createdAt),
+      createdAt: user.createdAt
+    });
+  });
+  
+  // Get completed bookings (status updated recently)
+  const completedBookings = await db
+    .select({
+      id: bookings.id,
+      customerName: bookings.customerName,
+      boatName: boats.name,
+      updatedAt: bookings.updatedAt,
+      bookingStatus: bookings.bookingStatus
+    })
+    .from(bookings)
+    .leftJoin(boats, sql`${bookings.boatId} = ${boats.id}`)
+    .where(sql`${bookings.bookingStatus} = 'COMPLETED'`)
+    .orderBy(sql`${bookings.updatedAt} desc`)
+    .limit(3);
+    
+  completedBookings.forEach(booking => {
+    activities.push({
+      id: `completion-${booking.id}`,
+      type: 'completion',
+      title: 'Charter Completed',
+      description: `${booking.customerName} completed their charter on ${booking.boatName || 'yacht'}`,
+      time: formatTimeAgo(booking.updatedAt || booking.updatedAt),
+      createdAt: booking.updatedAt || new Date()
+    });
+  });
+  
+  // Sort all activities by creation time and limit
+  return activities
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .slice(0, limit);
+});
+
+// Helper function to format time ago
+function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+  
+  if (diffInMinutes < 1) return 'just now';
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  if (diffInDays < 7) return `${diffInDays}d ago`;
+  
+  return date.toLocaleDateString();
+}

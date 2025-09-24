@@ -1,1 +1,0 @@
-ALTER TABLE "booking" DROP COLUMN "base_price";

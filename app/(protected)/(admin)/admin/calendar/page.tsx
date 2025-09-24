@@ -1,9 +1,6 @@
-import AdminCalendar from '@/features-admin/calendar/components/AdminCalendar';
+import { redirect } from "next/navigation";
 
-export default function AdminCalendarPage() {
-  return (
-    <div className="p-6">  
-      <AdminCalendar />
-    </div>
-  );
-} 
+// Redirect to the new unified booking portal with calendar tab
+export default async function AdminCalendarPage() {
+  redirect("/admin/bookings/portal?tab=calendar");
+}

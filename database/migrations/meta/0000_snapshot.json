@@ -1,5 +1,5 @@
 {
-  "id": "7f067617-8429-4532-ad52-1015e307060d",
+  "id": "fcb624f2-85a1-465b-8a17-e7ab95445036",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -40,6 +40,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "capacity": {
+          "name": "capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
         "active": {
           "name": "active",
           "type": "boolean",
@@ -60,14 +66,21 @@
           "primaryKey": false,
           "notNull": false
         },
+        "search_ranking_score": {
+          "name": "search_ranking_score",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
         "owner_id": {
           "name": "owner_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "owner_email": {
-          "name": "owner_email",
+        "owner_notes": {
+          "name": "owner_notes",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -96,18 +109,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "capacity": {
-          "name": "capacity",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "cabins": {
-          "name": "cabins",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "bathrooms": {
           "name": "bathrooms",
           "type": "integer",
@@ -126,48 +127,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "beam": {
-          "name": "beam",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "draft": {
-          "name": "draft",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "fuel_type": {
-          "name": "fuel_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "engine_type": {
-          "name": "engine_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "engine_power": {
-          "name": "engine_power",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "max_speed": {
-          "name": "max_speed",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "cruising_speed": {
-          "name": "cruising_speed",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
         "range": {
           "name": "range",
           "type": "integer",
@@ -179,12 +138,6 @@
           "type": "text[]",
           "primaryKey": false,
           "notNull": true
-        },
-        "amenities": {
-          "name": "amenities",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
         },
         "safety_equipment": {
           "name": "safety_equipment",
@@ -207,30 +160,6 @@
         "virtual_tour_url": {
           "name": "virtual_tour_url",
           "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "video_url": {
-          "name": "video_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "hourly_rate": {
-          "name": "hourly_rate",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "half_day_price": {
-          "name": "half_day_price",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "full_day_price": {
-          "name": "full_day_price",
-          "type": "double precision",
           "primaryKey": false,
           "notNull": false
         },
@@ -258,26 +187,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "tax_rate": {
-          "name": "tax_rate",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "seasonal_rates": {
-          "name": "seasonal_rates",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "home_port": {
-          "name": "home_port",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "current_location": {
-          "name": "current_location",
+        "location_label": {
+          "name": "location_label",
           "type": "text",
           "primaryKey": false,
           "notNull": false
@@ -285,6 +196,13 @@
         "location": {
           "name": "location",
           "type": "geometry(point)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "timezone",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": false
         },
@@ -319,12 +237,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": true
-        },
-        "crew_size": {
-          "name": "crew_size",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
         },
         "primary_captain_id": {
           "name": "primary_captain_id",
@@ -365,18 +277,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
-        },
-        "fuel_capacity": {
-          "name": "fuel_capacity",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "water_capacity": {
-          "name": "water_capacity",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
         },
         "rules": {
           "name": "rules",
@@ -420,12 +320,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "available_weekdays": {
-          "name": "available_weekdays",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
         "min_rental_hours": {
           "name": "min_rental_hours",
           "type": "integer",
@@ -441,12 +335,6 @@
         "advance_booking_days": {
           "name": "advance_booking_days",
           "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "seasonal_availability": {
-          "name": "seasonal_availability",
-          "type": "json",
           "primaryKey": false,
           "notNull": false
         },
@@ -467,6 +355,19 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "average_rating": {
+          "name": "average_rating",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_reviews": {
+          "name": "total_reviews",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
         },
         "created_at": {
           "name": "created_at",
@@ -529,21 +430,6 @@
           "method": "btree",
           "with": {}
         },
-        "boat_location_idx": {
-          "name": "boat_location_idx",
-          "columns": [
-            {
-              "expression": "home_port",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "boat_spatial_idx": {
           "name": "boat_spatial_idx",
           "columns": [
@@ -557,6 +443,42 @@
           "isUnique": false,
           "concurrently": false,
           "method": "gist",
+          "with": {}
+        },
+        "boat_featured_idx": {
+          "name": "boat_featured_idx",
+          "columns": [
+            {
+              "expression": "featured",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "featured_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "boat_ranking_idx": {
+          "name": "boat_ranking_idx",
+          "columns": [
+            {
+              "expression": "search_ranking_score",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
           "with": {}
         },
         "boat_search_name_idx": {
@@ -630,8 +552,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.booking": {
-      "name": "booking",
+    "public.user": {
+      "name": "user",
       "schema": "",
       "columns": {
         "id": {
@@ -641,224 +563,304 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "booking_type": {
-          "name": "booking_type",
-          "type": "BookingType",
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password": {
+          "name": "password",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "UserStatus",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'EXTERNAL_BOOKING'"
+          "default": "'ACTIVE'"
         },
-        "booking_status": {
-          "name": "booking_status",
-          "type": "BookingStatus",
+        "role": {
+          "name": "role",
+          "type": "UserRole",
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "default": "'PENDING'"
+          "default": "'USER'"
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
+        "first_name": {
+          "name": "first_name",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "boat_id": {
-          "name": "boat_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "captain_id": {
-          "name": "captain_id",
-          "type": "uuid",
+        "last_name": {
+          "name": "last_name",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "customer_name": {
-          "name": "customer_name",
+        "display_name": {
+          "name": "display_name",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "customer_email": {
-          "name": "customer_email",
+        "phone_number": {
+          "name": "phone_number",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "customer_phone": {
-          "name": "customer_phone",
+        "birthday": {
+          "name": "birthday",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bio": {
+          "name": "bio",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "is_multi_day": {
-          "name": "is_multi_day",
+        "profile_image": {
+          "name": "profile_image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cover_image": {
+          "name": "cover_image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email_verified": {
+          "name": "email_verified",
           "type": "boolean",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": false
         },
-        "needs_captain": {
-          "name": "needs_captain",
+        "phone_verified": {
+          "name": "phone_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "two_factor_enabled": {
+          "name": "two_factor_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "two_factor_secret": {
+          "name": "two_factor_secret",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "auth_provider": {
+          "name": "auth_provider",
+          "type": "AuthProvider",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'EMAIL'"
+        },
+        "provider_account_id": {
+          "name": "provider_account_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_login_at": {
+          "name": "last_login_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failed_login_attempts": {
+          "name": "failed_login_attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "account_locked_until": {
+          "name": "account_locked_until",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password_changed_at": {
+          "name": "password_changed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reset_password_token": {
+          "name": "reset_password_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reset_password_expires": {
+          "name": "reset_password_expires",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "force_password_change": {
+          "name": "force_password_change",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "email_notifications": {
+          "name": "email_notifications",
+          "type": "NotificationPreference",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'ALL'"
+        },
+        "sms_notifications": {
+          "name": "sms_notifications",
+          "type": "NotificationPreference",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'IMPORTANT_ONLY'"
+        },
+        "marketing_emails_enabled": {
+          "name": "marketing_emails_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "country": {
+          "name": "country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "city": {
+          "name": "city",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "postal_code": {
+          "name": "postal_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "identity_verified": {
+          "name": "identity_verified",
           "type": "boolean",
           "primaryKey": false,
           "notNull": false,
           "default": false
         },
-        "start_date": {
-          "name": "start_date",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "end_date": {
-          "name": "end_date",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "start_time": {
-          "name": "start_time",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "end_time": {
-          "name": "end_time",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "number_of_hours": {
-          "name": "number_of_hours",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "number_of_passengers": {
-          "name": "number_of_passengers",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "pickup_location": {
-          "name": "pickup_location",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "pickup_coordinates": {
-          "name": "pickup_coordinates",
-          "type": "geometry(point)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "dropoff_location": {
-          "name": "dropoff_location",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "dropoff_coordinates": {
-          "name": "dropoff_coordinates",
-          "type": "geometry(point)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "destination_details": {
-          "name": "destination_details",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "base_price": {
-          "name": "base_price",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "captain_fee": {
-          "name": "captain_fee",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "cleaning_fee": {
-          "name": "cleaning_fee",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "service_fee": {
-          "name": "service_fee",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "tax_amount": {
-          "name": "tax_amount",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "total_amount": {
-          "name": "total_amount",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "deposit_amount": {
-          "name": "deposit_amount",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "currency": {
-          "name": "currency",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'USD'"
-        },
-        "payment_status": {
-          "name": "payment_status",
-          "type": "PaymentStatus",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'PENDING'"
-        },
-        "payment_method": {
-          "name": "payment_method",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "payment_due_date": {
-          "name": "payment_due_date",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "deposit_paid": {
-          "name": "deposit_paid",
+        "government_id_verified": {
+          "name": "government_id_verified",
           "type": "boolean",
           "primaryKey": false,
           "notNull": false,
           "default": false
         },
-        "refund_amount": {
-          "name": "refund_amount",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "refund_status": {
-          "name": "refund_status",
+        "government_id_type": {
+          "name": "government_id_type",
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "boating_experience": {
+          "name": "boating_experience",
+          "type": "BoatingExperienceLevel",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'NONE'"
+        },
+        "boating_license_number": {
+          "name": "boating_license_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "boating_license_expiry": {
+          "name": "boating_license_expiry",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "boating_license_verified": {
+          "name": "boating_license_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "has_insurance": {
+          "name": "has_insurance",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "insurance_provider": {
+          "name": "insurance_provider",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insurance_policy_number": {
+          "name": "insurance_policy_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insurance_expiry_date": {
+          "name": "insurance_expiry_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "insurance_verified": {
+          "name": "insurance_verified",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
         },
         "stripe_customer_id": {
           "name": "stripe_customer_id",
@@ -866,105 +868,108 @@
           "primaryKey": false,
           "notNull": false
         },
-        "stripe_payment_intent_id": {
-          "name": "stripe_payment_intent_id",
+        "default_payment_method_id": {
+          "name": "default_payment_method_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "stripe_payment_link_id": {
-          "name": "stripe_payment_link_id",
+        "has_bank_account_connected": {
+          "name": "has_bank_account_connected",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "stripe_connect_account_id": {
+          "name": "stripe_connect_account_id",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "stripe_payment_link_url": {
-          "name": "stripe_payment_link_url",
+        "payout_preference": {
+          "name": "payout_preference",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": false,
+          "default": "'AUTOMATIC'"
         },
-        "stripe_payment_link_expires_at": {
-          "name": "stripe_payment_link_expires_at",
-          "type": "timestamp",
+        "is_boat_owner": {
+          "name": "is_boat_owner",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "owner_onboarding_complete": {
+          "name": "owner_onboarding_complete",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "total_boats_listed": {
+          "name": "total_boats_listed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "preferred_rental_types": {
+          "name": "preferred_rental_types",
+          "type": "text[]",
           "primaryKey": false,
           "notNull": false
         },
-        "special_requests": {
-          "name": "special_requests",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "occasion_type": {
-          "name": "occasion_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "add_ons": {
-          "name": "add_ons",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reviewed_by": {
-          "name": "reviewed_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reviewed_at": {
-          "name": "reviewed_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "review_notes": {
-          "name": "review_notes",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "cancelled_at": {
-          "name": "cancelled_at",
+        "terms_accepted_at": {
+          "name": "terms_accepted_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "cancellation_reason": {
-          "name": "cancellation_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "cancelled_by": {
-          "name": "cancelled_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "message_thread_id": {
-          "name": "message_thread_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_message_at": {
-          "name": "last_message_at",
+        "privacy_policy_accepted_at": {
+          "name": "privacy_policy_accepted_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
-        "renter_review_id": {
-          "name": "renter_review_id",
-          "type": "uuid",
+        "total_bookings": {
+          "name": "total_bookings",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "total_reviews": {
+          "name": "total_reviews",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "average_rating": {
+          "name": "average_rating",
+          "type": "double precision",
           "primaryKey": false,
           "notNull": false
         },
-        "owner_review_id": {
-          "name": "owner_review_id",
-          "type": "uuid",
+        "cancellation_rate": {
+          "name": "cancellation_rate",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "response_rate": {
+          "name": "response_rate",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "response_time": {
+          "name": "response_time",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -981,33 +986,14 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "is_deleted": {
-          "name": "is_deleted",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {
-        "booking_type_idx": {
-          "name": "booking_type_idx",
+        "email_idx": {
+          "name": "email_idx",
           "columns": [
             {
-              "expression": "booking_type",
+              "expression": "email",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1018,11 +1004,11 @@
           "method": "btree",
           "with": {}
         },
-        "booking_status_idx": {
-          "name": "booking_status_idx",
+        "status_idx": {
+          "name": "status_idx",
           "columns": [
             {
-              "expression": "booking_status",
+              "expression": "status",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1033,11 +1019,11 @@
           "method": "btree",
           "with": {}
         },
-        "booking_user_idx": {
-          "name": "booking_user_idx",
+        "role_idx": {
+          "name": "role_idx",
           "columns": [
             {
-              "expression": "user_id",
+              "expression": "role",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1048,11 +1034,11 @@
           "method": "btree",
           "with": {}
         },
-        "booking_boat_idx": {
-          "name": "booking_boat_idx",
+        "boating_exp_idx": {
+          "name": "boating_exp_idx",
           "columns": [
             {
-              "expression": "boat_id",
+              "expression": "boating_experience",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1063,32 +1049,17 @@
           "method": "btree",
           "with": {}
         },
-        "booking_captain_idx": {
-          "name": "booking_captain_idx",
+        "user_search_name_idx": {
+          "name": "user_search_name_idx",
           "columns": [
             {
-              "expression": "captain_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "booking_date_idx": {
-          "name": "booking_date_idx",
-          "columns": [
-            {
-              "expression": "start_date",
+              "expression": "first_name",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "end_date",
+              "expression": "last_name",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1099,47 +1070,11 @@
           "method": "btree",
           "with": {}
         },
-        "booking_pickup_idx": {
-          "name": "booking_pickup_idx",
+        "user_search_username_idx": {
+          "name": "user_search_username_idx",
           "columns": [
             {
-              "expression": "pickup_coordinates",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "gist",
-          "with": {}
-        },
-        "booking_dropoff_idx": {
-          "name": "booking_dropoff_idx",
-          "columns": [
-            {
-              "expression": "dropoff_coordinates",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "gist",
-          "with": {}
-        },
-        "booking_search_customer_idx": {
-          "name": "booking_search_customer_idx",
-          "columns": [
-            {
-              "expression": "customer_name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "customer_email",
+              "expression": "username",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1151,75 +1086,24 @@
           "with": {}
         }
       },
-      "foreignKeys": {
-        "booking_user_id_user_id_fk": {
-          "name": "booking_user_id_user_id_fk",
-          "tableFrom": "booking",
-          "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "booking_boat_id_boat_id_fk": {
-          "name": "booking_boat_id_boat_id_fk",
-          "tableFrom": "booking",
-          "tableTo": "boat",
-          "columnsFrom": [
-            "boat_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "booking_captain_id_captain_id_fk": {
-          "name": "booking_captain_id_captain_id_fk",
-          "tableFrom": "booking",
-          "tableTo": "captain",
-          "columnsFrom": [
-            "captain_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "booking_reviewed_by_user_id_fk": {
-          "name": "booking_reviewed_by_user_id_fk",
-          "tableFrom": "booking",
-          "tableTo": "user",
-          "columnsFrom": [
-            "reviewed_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "booking_cancelled_by_user_id_fk": {
-          "name": "booking_cancelled_by_user_id_fk",
-          "tableFrom": "booking",
-          "tableTo": "user",
-          "columnsFrom": [
-            "cancelled_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
+      "uniqueConstraints": {
+        "user_email_unique": {
+          "name": "user_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        },
+        "user_username_unique": {
+          "name": "user_username_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "username"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -1382,25 +1266,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "academy_qualified": {
-          "name": "academy_qualified",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "academy_status": {
-          "name": "academy_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "training_completed": {
-          "name": "training_completed",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
         "agreement_signed": {
           "name": "agreement_signed",
           "type": "boolean",
@@ -1530,8 +1395,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.notification": {
-      "name": "notification",
+    "public.booking": {
+      "name": "booking",
       "schema": "",
       "columns": {
         "id": {
@@ -1541,64 +1406,271 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
+        "booking_type": {
+          "name": "booking_type",
+          "type": "BookingType",
+          "typeSchema": "public",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "'EXTERNAL_BOOKING'"
         },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "body": {
-          "name": "body",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "channel": {
-          "name": "channel",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "text",
+        "booking_status": {
+          "name": "booking_status",
+          "type": "BookingStatus",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
           "default": "'PENDING'"
         },
-        "twilio_sid": {
-          "name": "twilio_sid",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "twilio_status": {
-          "name": "twilio_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "related_id": {
-          "name": "related_id",
+        "user_id": {
+          "name": "user_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
-        "related_type": {
-          "name": "related_type",
+        "boat_owner_id": {
+          "name": "boat_owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "boat_id": {
+          "name": "boat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "captain_id": {
+          "name": "captain_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pricing_tier_id": {
+          "name": "pricing_tier_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "customer_name": {
+          "name": "customer_name",
           "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_email": {
+          "name": "customer_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "customer_phone": {
+          "name": "customer_phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_multi_day": {
+          "name": "is_multi_day",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "needs_captain": {
+          "name": "needs_captain",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "start_datetime": {
+          "name": "start_datetime",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end_datetime": {
+          "name": "end_datetime",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "number_of_passengers": {
+          "name": "number_of_passengers",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pickup_location": {
+          "name": "pickup_location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dropoff_location": {
+          "name": "dropoff_location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "captain_fee": {
+          "name": "captain_fee",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cleaning_fee": {
+          "name": "cleaning_fee",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "service_fee": {
+          "name": "service_fee",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tax_amount": {
+          "name": "tax_amount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discount_amount": {
+          "name": "discount_amount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "total_amount": {
+          "name": "total_amount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deposit_amount": {
+          "name": "deposit_amount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'USD'"
+        },
+        "payment_status": {
+          "name": "payment_status",
+          "type": "PaymentStatus",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'AWAITING_PAYMENT'"
+        },
+        "payment_method": {
+          "name": "payment_method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payment_due_date": {
+          "name": "payment_due_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deposit_paid": {
+          "name": "deposit_paid",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "refund_amount": {
+          "name": "refund_amount",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "refund_status": {
+          "name": "refund_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stripe_customer_id": {
+          "name": "stripe_customer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stripe_payment_intent_id": {
+          "name": "stripe_payment_intent_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stripe_payment_link_id": {
+          "name": "stripe_payment_link_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "special_requests": {
+          "name": "special_requests",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "occasion_type": {
+          "name": "occasion_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "add_ons": {
+          "name": "add_ons",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewed_by": {
+          "name": "reviewed_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reviewed_at": {
+          "name": "reviewed_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "review_notes": {
+          "name": "review_notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cancelled_at": {
+          "name": "cancelled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cancellation_reason": {
+          "name": "cancellation_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cancelled_by": {
+          "name": "cancelled_by",
+          "type": "uuid",
           "primaryKey": false,
           "notNull": false
         },
@@ -1609,34 +1681,53 @@
           "notNull": true,
           "default": "now()"
         },
-        "sent_at": {
-          "name": "sent_at",
+        "updated_at": {
+          "name": "updated_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "now()"
         },
-        "delivered_at": {
-          "name": "delivered_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "read_at": {
-          "name": "read_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp",
           "primaryKey": false,
           "notNull": false
         }
       },
       "indexes": {
-        "notification_user_idx": {
-          "name": "notification_user_idx",
+        "booking_type_idx": {
+          "name": "booking_type_idx",
+          "columns": [
+            {
+              "expression": "booking_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "booking_status_idx": {
+          "name": "booking_status_idx",
+          "columns": [
+            {
+              "expression": "booking_status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "booking_user_idx": {
+          "name": "booking_user_idx",
           "columns": [
             {
               "expression": "user_id",
@@ -1650,11 +1741,11 @@
           "method": "btree",
           "with": {}
         },
-        "notification_status_idx": {
-          "name": "notification_status_idx",
+        "booking_boat_idx": {
+          "name": "booking_boat_idx",
           "columns": [
             {
-              "expression": "status",
+              "expression": "boat_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1665,11 +1756,11 @@
           "method": "btree",
           "with": {}
         },
-        "notification_type_idx": {
-          "name": "notification_type_idx",
+        "booking_captain_idx": {
+          "name": "booking_captain_idx",
           "columns": [
             {
-              "expression": "type",
+              "expression": "captain_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1680,17 +1771,38 @@
           "method": "btree",
           "with": {}
         },
-        "notification_related_idx": {
-          "name": "notification_related_idx",
+        "booking_datetime_idx": {
+          "name": "booking_datetime_idx",
           "columns": [
             {
-              "expression": "related_id",
+              "expression": "start_datetime",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "related_type",
+              "expression": "end_datetime",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "booking_search_customer_idx": {
+          "name": "booking_search_customer_idx",
+          "columns": [
+            {
+              "expression": "customer_name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "customer_email",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1703,12 +1815,90 @@
         }
       },
       "foreignKeys": {
-        "notification_user_id_user_id_fk": {
-          "name": "notification_user_id_user_id_fk",
-          "tableFrom": "notification",
+        "booking_user_id_user_id_fk": {
+          "name": "booking_user_id_user_id_fk",
+          "tableFrom": "booking",
           "tableTo": "user",
           "columnsFrom": [
             "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "booking_boat_owner_id_user_id_fk": {
+          "name": "booking_boat_owner_id_user_id_fk",
+          "tableFrom": "booking",
+          "tableTo": "user",
+          "columnsFrom": [
+            "boat_owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "booking_boat_id_boat_id_fk": {
+          "name": "booking_boat_id_boat_id_fk",
+          "tableFrom": "booking",
+          "tableTo": "boat",
+          "columnsFrom": [
+            "boat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "booking_captain_id_captain_id_fk": {
+          "name": "booking_captain_id_captain_id_fk",
+          "tableFrom": "booking",
+          "tableTo": "captain",
+          "columnsFrom": [
+            "captain_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "booking_pricing_tier_id_boat_pricing_tier_id_fk": {
+          "name": "booking_pricing_tier_id_boat_pricing_tier_id_fk",
+          "tableFrom": "booking",
+          "tableTo": "boat_pricing_tier",
+          "columnsFrom": [
+            "pricing_tier_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "booking_reviewed_by_user_id_fk": {
+          "name": "booking_reviewed_by_user_id_fk",
+          "tableFrom": "booking",
+          "tableTo": "user",
+          "columnsFrom": [
+            "reviewed_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "booking_cancelled_by_user_id_fk": {
+          "name": "booking_cancelled_by_user_id_fk",
+          "tableFrom": "booking",
+          "tableTo": "user",
+          "columnsFrom": [
+            "cancelled_by"
           ],
           "columnsTo": [
             "id"
@@ -2034,813 +2224,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.user": {
-      "name": "user",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "email": {
-          "name": "email",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "username": {
-          "name": "username",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "password": {
-          "name": "password",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "UserStatus",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'ACTIVE'"
-        },
-        "role": {
-          "name": "role",
-          "type": "UserRole",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'USER'"
-        },
-        "first_name": {
-          "name": "first_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_name": {
-          "name": "last_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "display_name": {
-          "name": "display_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "phone_number": {
-          "name": "phone_number",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "birthday": {
-          "name": "birthday",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "bio": {
-          "name": "bio",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "profile_image": {
-          "name": "profile_image",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "cover_image": {
-          "name": "cover_image",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "email_verified": {
-          "name": "email_verified",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "phone_verified": {
-          "name": "phone_verified",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "two_factor_enabled": {
-          "name": "two_factor_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "two_factor_secret": {
-          "name": "two_factor_secret",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "auth_provider": {
-          "name": "auth_provider",
-          "type": "AuthProvider",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'EMAIL'"
-        },
-        "provider_account_id": {
-          "name": "provider_account_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_login_at": {
-          "name": "last_login_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_login_ip": {
-          "name": "last_login_ip",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "last_login_device": {
-          "name": "last_login_device",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "failed_login_attempts": {
-          "name": "failed_login_attempts",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "account_locked_until": {
-          "name": "account_locked_until",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "password_changed_at": {
-          "name": "password_changed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reset_password_token": {
-          "name": "reset_password_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "reset_password_expires": {
-          "name": "reset_password_expires",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "force_password_change": {
-          "name": "force_password_change",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "language": {
-          "name": "language",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'en'"
-        },
-        "timezone": {
-          "name": "timezone",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'UTC'"
-        },
-        "currency": {
-          "name": "currency",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'USD'"
-        },
-        "theme": {
-          "name": "theme",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'light'"
-        },
-        "email_notifications": {
-          "name": "email_notifications",
-          "type": "NotificationPreference",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'ALL'"
-        },
-        "push_notifications": {
-          "name": "push_notifications",
-          "type": "NotificationPreference",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'ALL'"
-        },
-        "sms_notifications": {
-          "name": "sms_notifications",
-          "type": "NotificationPreference",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'IMPORTANT_ONLY'"
-        },
-        "marketing_emails_enabled": {
-          "name": "marketing_emails_enabled",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "country": {
-          "name": "country",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "state": {
-          "name": "state",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "city": {
-          "name": "city",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "address": {
-          "name": "address",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "postal_code": {
-          "name": "postal_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "identity_verified": {
-          "name": "identity_verified",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "verification_token": {
-          "name": "verification_token",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "verification_token_expires": {
-          "name": "verification_token_expires",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "government_id_verified": {
-          "name": "government_id_verified",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "government_id_type": {
-          "name": "government_id_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "government_id_expiry": {
-          "name": "government_id_expiry",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "background_check_status": {
-          "name": "background_check_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "background_check_date": {
-          "name": "background_check_date",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "boating_experience": {
-          "name": "boating_experience",
-          "type": "BoatingExperienceLevel",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'NONE'"
-        },
-        "boating_license_type": {
-          "name": "boating_license_type",
-          "type": "BoatingLicenseType",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'NONE'"
-        },
-        "boating_license_number": {
-          "name": "boating_license_number",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "boating_license_expiry": {
-          "name": "boating_license_expiry",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "boating_license_verified": {
-          "name": "boating_license_verified",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "boating_certifications": {
-          "name": "boating_certifications",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "has_insurance": {
-          "name": "has_insurance",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "insurance_provider": {
-          "name": "insurance_provider",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "insurance_policy_number": {
-          "name": "insurance_policy_number",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "insurance_expiry_date": {
-          "name": "insurance_expiry_date",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "insurance_verified": {
-          "name": "insurance_verified",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "stripe_customer_id": {
-          "name": "stripe_customer_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "default_payment_method_id": {
-          "name": "default_payment_method_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "has_bank_account_connected": {
-          "name": "has_bank_account_connected",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "stripe_connect_account_id": {
-          "name": "stripe_connect_account_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "payout_preference": {
-          "name": "payout_preference",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'AUTOMATIC'"
-        },
-        "is_boat_owner": {
-          "name": "is_boat_owner",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "owner_onboarding_complete": {
-          "name": "owner_onboarding_complete",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": false,
-          "default": false
-        },
-        "owner_verification_status": {
-          "name": "owner_verification_status",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "total_boats_listed": {
-          "name": "total_boats_listed",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "preferred_rental_types": {
-          "name": "preferred_rental_types",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "preferred_boat_types": {
-          "name": "preferred_boat_types",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "preferred_destinations": {
-          "name": "preferred_destinations",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "rental_history": {
-          "name": "rental_history",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "terms_accepted_at": {
-          "name": "terms_accepted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "privacy_policy_accepted_at": {
-          "name": "privacy_policy_accepted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "accepted_anchor_code": {
-          "name": "accepted_anchor_code",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "rental_agreement_accepted_at": {
-          "name": "rental_agreement_accepted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "liability_waiver_accepted_at": {
-          "name": "liability_waiver_accepted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "signup_complete": {
-          "name": "signup_complete",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "onboarding_step": {
-          "name": "onboarding_step",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 1
-        },
-        "profile_completion_percentage": {
-          "name": "profile_completion_percentage",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "last_active_at": {
-          "name": "last_active_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "total_bookings": {
-          "name": "total_bookings",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "total_reviews": {
-          "name": "total_reviews",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "average_rating": {
-          "name": "average_rating",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "total_trips_as_renter": {
-          "name": "total_trips_as_renter",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "total_trips_as_owner": {
-          "name": "total_trips_as_owner",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "cancellation_rate": {
-          "name": "cancellation_rate",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "response_rate": {
-          "name": "response_rate",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "response_time": {
-          "name": "response_time",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "referral_code": {
-          "name": "referral_code",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "referred_by_id": {
-          "name": "referred_by_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "total_referrals": {
-          "name": "total_referrals",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "referral_credits": {
-          "name": "referral_credits",
-          "type": "double precision",
-          "primaryKey": false,
-          "notNull": false,
-          "default": 0
-        },
-        "is_deleted": {
-          "name": "is_deleted",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "deleted_at": {
-          "name": "deleted_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "deletion_reason": {
-          "name": "deletion_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "email_idx": {
-          "name": "email_idx",
-          "columns": [
-            {
-              "expression": "email",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "status_idx": {
-          "name": "status_idx",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "role_idx": {
-          "name": "role_idx",
-          "columns": [
-            {
-              "expression": "role",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "boating_exp_idx": {
-          "name": "boating_exp_idx",
-          "columns": [
-            {
-              "expression": "boating_experience",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "referral_code_idx": {
-          "name": "referral_code_idx",
-          "columns": [
-            {
-              "expression": "referral_code",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "referred_by_idx": {
-          "name": "referred_by_idx",
-          "columns": [
-            {
-              "expression": "referred_by_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "user_search_name_idx": {
-          "name": "user_search_name_idx",
-          "columns": [
-            {
-              "expression": "first_name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "last_name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "user_search_username_idx": {
-          "name": "user_search_username_idx",
-          "columns": [
-            {
-              "expression": "username",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "user_email_unique": {
-          "name": "user_email_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
-        },
-        "user_username_unique": {
-          "name": "user_username_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.verification": {
       "name": "verification",
       "schema": "",
@@ -3057,6 +2440,2554 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
+    },
+    "public.notification": {
+      "name": "notification",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "channel": {
+          "name": "channel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PENDING'"
+        },
+        "twilio_sid": {
+          "name": "twilio_sid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "twilio_status": {
+          "name": "twilio_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "related_id": {
+          "name": "related_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "related_type": {
+          "name": "related_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "sent_at": {
+          "name": "sent_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivered_at": {
+          "name": "delivered_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "read_at": {
+          "name": "read_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "notification_user_idx": {
+          "name": "notification_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "notification_status_idx": {
+          "name": "notification_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "notification_type_idx": {
+          "name": "notification_type_idx",
+          "columns": [
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "notification_related_idx": {
+          "name": "notification_related_idx",
+          "columns": [
+            {
+              "expression": "related_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "related_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "notification_user_id_user_id_fk": {
+          "name": "notification_user_id_user_id_fk",
+          "tableFrom": "notification",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.general_inquiry": {
+      "name": "general_inquiry",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PENDING'"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time": {
+          "name": "time",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "budget": {
+          "name": "budget",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guests": {
+          "name": "guests",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assigned_to": {
+          "name": "assigned_to",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "terms_accepted": {
+          "name": "terms_accepted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "contacted_at": {
+          "name": "contacted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resolved_at": {
+          "name": "resolved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "inquiry_status_idx": {
+          "name": "inquiry_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "inquiry_email_idx": {
+          "name": "inquiry_email_idx",
+          "columns": [
+            {
+              "expression": "email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "inquiry_date_idx": {
+          "name": "inquiry_date_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "general_inquiry_assigned_to_user_id_fk": {
+          "name": "general_inquiry_assigned_to_user_id_fk",
+          "tableFrom": "general_inquiry",
+          "tableTo": "user",
+          "columnsFrom": [
+            "assigned_to"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.blog_post": {
+      "name": "blog_post",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "excerpt": {
+          "name": "excerpt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "PostStatus",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'DRAFT'"
+        },
+        "category": {
+          "name": "category",
+          "type": "PostCategory",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_featured": {
+          "name": "is_featured",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "featured_image": {
+          "name": "featured_image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_alt": {
+          "name": "image_alt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "meta_title": {
+          "name": "meta_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "meta_description": {
+          "name": "meta_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "author": {
+          "name": "author",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'KOS Team'"
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scheduled_for": {
+          "name": "scheduled_for",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "view_count": {
+          "name": "view_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "blog_post_status_idx": {
+          "name": "blog_post_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "blog_post_category_idx": {
+          "name": "blog_post_category_idx",
+          "columns": [
+            {
+              "expression": "category",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "blog_post_featured_idx": {
+          "name": "blog_post_featured_idx",
+          "columns": [
+            {
+              "expression": "is_featured",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "blog_post_published_idx": {
+          "name": "blog_post_published_idx",
+          "columns": [
+            {
+              "expression": "published_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "blog_post_author_idx": {
+          "name": "blog_post_author_idx",
+          "columns": [
+            {
+              "expression": "author",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "blog_post_slug_idx": {
+          "name": "blog_post_slug_idx",
+          "columns": [
+            {
+              "expression": "slug",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "blog_post_created_idx": {
+          "name": "blog_post_created_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "blog_post_slug_unique": {
+          "name": "blog_post_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.boat_pricing_tier": {
+      "name": "boat_pricing_tier",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "boat_id": {
+          "name": "boat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hours": {
+          "name": "hours",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price": {
+          "name": "price",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "is_default": {
+          "name": "is_default",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "boat_pricing_boat_idx": {
+          "name": "boat_pricing_boat_idx",
+          "columns": [
+            {
+              "expression": "boat_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "boat_pricing_hours_idx": {
+          "name": "boat_pricing_hours_idx",
+          "columns": [
+            {
+              "expression": "hours",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "boat_pricing_tier_boat_id_boat_id_fk": {
+          "name": "boat_pricing_tier_boat_id_boat_id_fk",
+          "tableFrom": "boat_pricing_tier",
+          "tableTo": "boat",
+          "columnsFrom": [
+            "boat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "boat_pricing_unique_idx": {
+          "name": "boat_pricing_unique_idx",
+          "nullsNotDistinct": false,
+          "columns": [
+            "boat_id",
+            "hours"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.boat_blocking": {
+      "name": "boat_blocking",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "boat_id": {
+          "name": "boat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "start_time": {
+          "name": "start_time",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end_time": {
+          "name": "end_time",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "blocking_type": {
+          "name": "blocking_type",
+          "type": "BlockingType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_recurring": {
+          "name": "is_recurring",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": false
+        },
+        "recurrence_pattern": {
+          "name": "recurrence_pattern",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "boat_blocking_boat_id_idx": {
+          "name": "boat_blocking_boat_id_idx",
+          "columns": [
+            {
+              "expression": "boat_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "boat_blocking_time_range_idx": {
+          "name": "boat_blocking_time_range_idx",
+          "columns": [
+            {
+              "expression": "start_time",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "end_time",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "boat_blocking_type_idx": {
+          "name": "boat_blocking_type_idx",
+          "columns": [
+            {
+              "expression": "blocking_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "boat_blocking_boat_id_boat_id_fk": {
+          "name": "boat_blocking_boat_id_boat_id_fk",
+          "tableFrom": "boat_blocking",
+          "tableTo": "boat",
+          "columnsFrom": [
+            "boat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.conversation": {
+      "name": "conversation",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "type": {
+          "name": "type",
+          "type": "ConversationType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'BOOKING'"
+        },
+        "status": {
+          "name": "status",
+          "type": "ConversationStatus",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ACTIVE'"
+        },
+        "booking_id": {
+          "name": "booking_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "initiated_by": {
+          "name": "initiated_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "participant_ids": {
+          "name": "participant_ids",
+          "type": "uuid[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject": {
+          "name": "subject",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_message_id": {
+          "name": "last_message_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_message_at": {
+          "name": "last_message_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "last_activity_at": {
+          "name": "last_activity_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "message_count": {
+          "name": "message_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "unread_count": {
+          "name": "unread_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "is_locked": {
+          "name": "is_locked",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "auto_close_at": {
+          "name": "auto_close_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "assigned_admin": {
+          "name": "assigned_admin",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "priority": {
+          "name": "priority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'NORMAL'"
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_archived": {
+          "name": "is_archived",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "archived_by": {
+          "name": "archived_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "conversation_booking_idx": {
+          "name": "conversation_booking_idx",
+          "columns": [
+            {
+              "expression": "booking_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_participants_idx": {
+          "name": "conversation_participants_idx",
+          "columns": [
+            {
+              "expression": "participant_ids",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
+        "conversation_status_idx": {
+          "name": "conversation_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_type_idx": {
+          "name": "conversation_type_idx",
+          "columns": [
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_last_message_idx": {
+          "name": "conversation_last_message_idx",
+          "columns": [
+            {
+              "expression": "last_message_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_last_activity_idx": {
+          "name": "conversation_last_activity_idx",
+          "columns": [
+            {
+              "expression": "last_activity_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_assigned_admin_idx": {
+          "name": "conversation_assigned_admin_idx",
+          "columns": [
+            {
+              "expression": "assigned_admin",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_priority_idx": {
+          "name": "conversation_priority_idx",
+          "columns": [
+            {
+              "expression": "priority",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_tags_idx": {
+          "name": "conversation_tags_idx",
+          "columns": [
+            {
+              "expression": "tags",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
+        "conversation_created_idx": {
+          "name": "conversation_created_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "conversation_booking_id_booking_id_fk": {
+          "name": "conversation_booking_id_booking_id_fk",
+          "tableFrom": "conversation",
+          "tableTo": "booking",
+          "columnsFrom": [
+            "booking_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "conversation_initiated_by_user_id_fk": {
+          "name": "conversation_initiated_by_user_id_fk",
+          "tableFrom": "conversation",
+          "tableTo": "user",
+          "columnsFrom": [
+            "initiated_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "conversation_assigned_admin_user_id_fk": {
+          "name": "conversation_assigned_admin_user_id_fk",
+          "tableFrom": "conversation",
+          "tableTo": "user",
+          "columnsFrom": [
+            "assigned_admin"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "conversation_archived_by_user_id_fk": {
+          "name": "conversation_archived_by_user_id_fk",
+          "tableFrom": "conversation",
+          "tableTo": "user",
+          "columnsFrom": [
+            "archived_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.message": {
+      "name": "message",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "conversation_id": {
+          "name": "conversation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sender_id": {
+          "name": "sender_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "message_type": {
+          "name": "message_type",
+          "type": "MessageType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'TEXT'"
+        },
+        "attachments": {
+          "name": "attachments",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "MessageStatus",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'SENT'"
+        },
+        "read_by": {
+          "name": "read_by",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "read_count": {
+          "name": "read_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "is_edited": {
+          "name": "is_edited",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "edited_at": {
+          "name": "edited_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_deleted": {
+          "name": "is_deleted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deleted_by": {
+          "name": "deleted_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "system_message_data": {
+          "name": "system_message_data",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_flagged": {
+          "name": "is_flagged",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "flag_reason": {
+          "name": "flag_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "flagged_by": {
+          "name": "flagged_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "flagged_at": {
+          "name": "flagged_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "message_conversation_idx": {
+          "name": "message_conversation_idx",
+          "columns": [
+            {
+              "expression": "conversation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "message_sender_idx": {
+          "name": "message_sender_idx",
+          "columns": [
+            {
+              "expression": "sender_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "message_conversation_created_idx": {
+          "name": "message_conversation_created_idx",
+          "columns": [
+            {
+              "expression": "conversation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "message_conversation_updated_idx": {
+          "name": "message_conversation_updated_idx",
+          "columns": [
+            {
+              "expression": "conversation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "updated_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "message_status_idx": {
+          "name": "message_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "message_type_idx": {
+          "name": "message_type_idx",
+          "columns": [
+            {
+              "expression": "message_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "message_flagged_idx": {
+          "name": "message_flagged_idx",
+          "columns": [
+            {
+              "expression": "is_flagged",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "message_deleted_idx": {
+          "name": "message_deleted_idx",
+          "columns": [
+            {
+              "expression": "is_deleted",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "message_created_idx": {
+          "name": "message_created_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "message_conversation_id_conversation_id_fk": {
+          "name": "message_conversation_id_conversation_id_fk",
+          "tableFrom": "message",
+          "tableTo": "conversation",
+          "columnsFrom": [
+            "conversation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "message_sender_id_user_id_fk": {
+          "name": "message_sender_id_user_id_fk",
+          "tableFrom": "message",
+          "tableTo": "user",
+          "columnsFrom": [
+            "sender_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "message_deleted_by_user_id_fk": {
+          "name": "message_deleted_by_user_id_fk",
+          "tableFrom": "message",
+          "tableTo": "user",
+          "columnsFrom": [
+            "deleted_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "message_flagged_by_user_id_fk": {
+          "name": "message_flagged_by_user_id_fk",
+          "tableFrom": "message",
+          "tableTo": "user",
+          "columnsFrom": [
+            "flagged_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.conversation_participant": {
+      "name": "conversation_participant",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "conversation_id": {
+          "name": "conversation_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ACTIVE'"
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PARTICIPANT'"
+        },
+        "is_archived": {
+          "name": "is_archived",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_muted": {
+          "name": "is_muted",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "custom_name": {
+          "name": "custom_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_read_at": {
+          "name": "last_read_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "last_read_message_id": {
+          "name": "last_read_message_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unread_count": {
+          "name": "unread_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "notifications_enabled": {
+          "name": "notifications_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "email_notifications": {
+          "name": "email_notifications",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "sms_notifications": {
+          "name": "sms_notifications",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "joined_at": {
+          "name": "joined_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "left_at": {
+          "name": "left_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "conversation_participant_conversation_idx": {
+          "name": "conversation_participant_conversation_idx",
+          "columns": [
+            {
+              "expression": "conversation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_participant_user_idx": {
+          "name": "conversation_participant_user_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_participant_status_idx": {
+          "name": "conversation_participant_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_participant_archived_idx": {
+          "name": "conversation_participant_archived_idx",
+          "columns": [
+            {
+              "expression": "is_archived",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_participant_muted_idx": {
+          "name": "conversation_participant_muted_idx",
+          "columns": [
+            {
+              "expression": "is_muted",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_participant_unread_idx": {
+          "name": "conversation_participant_unread_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "unread_count",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_participant_last_read_idx": {
+          "name": "conversation_participant_last_read_idx",
+          "columns": [
+            {
+              "expression": "last_read_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "conversation_participant_joined_idx": {
+          "name": "conversation_participant_joined_idx",
+          "columns": [
+            {
+              "expression": "joined_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "conversation_participant_conversation_id_conversation_id_fk": {
+          "name": "conversation_participant_conversation_id_conversation_id_fk",
+          "tableFrom": "conversation_participant",
+          "tableTo": "conversation",
+          "columnsFrom": [
+            "conversation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "conversation_participant_user_id_user_id_fk": {
+          "name": "conversation_participant_user_id_user_id_fk",
+          "tableFrom": "conversation_participant",
+          "tableTo": "user",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "conversation_participant_unique": {
+          "name": "conversation_participant_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "conversation_id",
+            "user_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.boat_google_calendars": {
+      "name": "boat_google_calendars",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "boat_id": {
+          "name": "boat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "calendar_id": {
+          "name": "calendar_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "calendar_name": {
+          "name": "calendar_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner_type": {
+          "name": "owner_type",
+          "type": "CalendarOwnerType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner_user_id": {
+          "name": "owner_user_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sync_enabled": {
+          "name": "sync_enabled",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "last_sync_at": {
+          "name": "last_sync_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_sync_status": {
+          "name": "last_sync_status",
+          "type": "CalendarSyncStatus",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "boat_google_calendars_boat_idx": {
+          "name": "boat_google_calendars_boat_idx",
+          "columns": [
+            {
+              "expression": "boat_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "boat_google_calendars_owner_idx": {
+          "name": "boat_google_calendars_owner_idx",
+          "columns": [
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "boat_google_calendars_boat_owner_idx": {
+          "name": "boat_google_calendars_boat_owner_idx",
+          "columns": [
+            {
+              "expression": "boat_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "owner_user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "boat_google_calendars_boat_id_boat_id_fk": {
+          "name": "boat_google_calendars_boat_id_boat_id_fk",
+          "tableFrom": "boat_google_calendars",
+          "tableTo": "boat",
+          "columnsFrom": [
+            "boat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "boat_google_calendars_owner_user_id_user_id_fk": {
+          "name": "boat_google_calendars_owner_user_id_user_id_fk",
+          "tableFrom": "boat_google_calendars",
+          "tableTo": "user",
+          "columnsFrom": [
+            "owner_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.external_google_calendar_sync_events": {
+      "name": "external_google_calendar_sync_events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "boat_id": {
+          "name": "boat_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "boat_calendar_id": {
+          "name": "boat_calendar_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "start_time": {
+          "name": "start_time",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end_time": {
+          "name": "end_time",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_available": {
+          "name": "is_available",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "source": {
+          "name": "source",
+          "type": "CalendarSource",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "booking_id": {
+          "name": "booking_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "last_synced_at": {
+          "name": "last_synced_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "external_google_calendar_sync_events_boat_idx": {
+          "name": "external_google_calendar_sync_events_boat_idx",
+          "columns": [
+            {
+              "expression": "boat_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "external_google_calendar_sync_events_boat_calendar_idx": {
+          "name": "external_google_calendar_sync_events_boat_calendar_idx",
+          "columns": [
+            {
+              "expression": "boat_calendar_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "external_google_calendar_sync_events_booking_idx": {
+          "name": "external_google_calendar_sync_events_booking_idx",
+          "columns": [
+            {
+              "expression": "booking_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "external_google_calendar_sync_events_event_idx": {
+          "name": "external_google_calendar_sync_events_event_idx",
+          "columns": [
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "external_google_calendar_sync_events_time_idx": {
+          "name": "external_google_calendar_sync_events_time_idx",
+          "columns": [
+            {
+              "expression": "start_time",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "end_time",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "external_google_calendar_sync_events_boat_id_boat_id_fk": {
+          "name": "external_google_calendar_sync_events_boat_id_boat_id_fk",
+          "tableFrom": "external_google_calendar_sync_events",
+          "tableTo": "boat",
+          "columnsFrom": [
+            "boat_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "external_google_calendar_sync_events_boat_calendar_id_boat_google_calendars_id_fk": {
+          "name": "external_google_calendar_sync_events_boat_calendar_id_boat_google_calendars_id_fk",
+          "tableFrom": "external_google_calendar_sync_events",
+          "tableTo": "boat_google_calendars",
+          "columnsFrom": [
+            "boat_calendar_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "external_google_calendar_sync_events_booking_id_booking_id_fk": {
+          "name": "external_google_calendar_sync_events_booking_id_booking_id_fk",
+          "tableFrom": "external_google_calendar_sync_events",
+          "tableTo": "booking",
+          "columnsFrom": [
+            "booking_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.event": {
+      "name": "event",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subtitle": {
+          "name": "subtitle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "banner_image": {
+          "name": "banner_image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cta_text": {
+          "name": "cta_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Buy Tickets'"
+        },
+        "start_at": {
+          "name": "start_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end_at": {
+          "name": "end_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "stripe_product_id": {
+          "name": "stripe_product_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stripe_price_id": {
+          "name": "stripe_price_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "max_capacity": {
+          "name": "max_capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "event_active_idx": {
+          "name": "event_active_idx",
+          "columns": [
+            {
+              "expression": "is_active",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "event_time_idx": {
+          "name": "event_time_idx",
+          "columns": [
+            {
+              "expression": "start_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "end_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "event_slug_unique_idx": {
+          "name": "event_slug_unique_idx",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.event_ticket": {
+      "name": "event_ticket",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "event_id": {
+          "name": "event_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purchaser_email": {
+          "name": "purchaser_email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "purchaser_name": {
+          "name": "purchaser_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "amount_paid": {
+          "name": "amount_paid",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'PAID'"
+        },
+        "confirmation_code": {
+          "name": "confirmation_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "event_ticket_event_idx": {
+          "name": "event_ticket_event_idx",
+          "columns": [
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "event_ticket_email_idx": {
+          "name": "event_ticket_email_idx",
+          "columns": [
+            {
+              "expression": "purchaser_email",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "event_ticket_event_id_event_id_fk": {
+          "name": "event_ticket_event_id_event_id_fk",
+          "tableFrom": "event_ticket",
+          "tableTo": "event",
+          "columnsFrom": [
+            "event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {
@@ -3068,135 +4999,6 @@
         "GOOGLE",
         "FACEBOOK",
         "APPLE"
-      ]
-    },
-    "public.BoatCategory": {
-      "name": "BoatCategory",
-      "schema": "public",
-      "values": [
-        "PONTOON",
-        "YACHT",
-        "SAILBOAT",
-        "FISHING",
-        "SPEEDBOAT",
-        "HOUSEBOAT",
-        "JET_SKI",
-        "OTHER"
-      ]
-    },
-    "public.BoatingExperienceLevel": {
-      "name": "BoatingExperienceLevel",
-      "schema": "public",
-      "values": [
-        "NONE",
-        "BEGINNER",
-        "INTERMEDIATE",
-        "ADVANCED",
-        "EXPERT",
-        "PROFESSIONAL"
-      ]
-    },
-    "public.BoatingLicenseType": {
-      "name": "BoatingLicenseType",
-      "schema": "public",
-      "values": [
-        "NONE",
-        "STATE_BOATING_LICENSE",
-        "USCG_LICENSE",
-        "INTERNATIONAL_LICENSE",
-        "OTHER"
-      ]
-    },
-    "public.BookingStatus": {
-      "name": "BookingStatus",
-      "schema": "public",
-      "values": [
-        "PENDING",
-        "APPROVED",
-        "AWAITING_PAYMENT",
-        "CONFIRMED",
-        "DENIED",
-        "EXPIRED",
-        "CANCELLED",
-        "COMPLETED",
-        "REFUNDED"
-      ]
-    },
-    "public.BookingType": {
-      "name": "BookingType",
-      "schema": "public",
-      "values": [
-        "DAY_REQUEST",
-        "INSTANT_BOOK",
-        "TERM_CHARTER",
-        "MULTI_DAY",
-        "EXTERNAL_BOOKING"
-      ]
-    },
-    "public.LineItemType": {
-      "name": "LineItemType",
-      "schema": "public",
-      "values": [
-        "CLEANING",
-        "CAPTAIN",
-        "VESSEL_FEE",
-        "BOOKING_FEE",
-        "TAX",
-        "TRANSACTION_FEE",
-        "OTHER"
-      ]
-    },
-    "public.LocationType": {
-      "name": "LocationType",
-      "schema": "public",
-      "values": [
-        "HOME_PORT",
-        "CURRENT_LOCATION",
-        "PICKUP_LOCATION",
-        "DROPOFF_LOCATION",
-        "DESTINATION"
-      ]
-    },
-    "public.NotificationPreference": {
-      "name": "NotificationPreference",
-      "schema": "public",
-      "values": [
-        "ALL",
-        "IMPORTANT_ONLY",
-        "NONE"
-      ]
-    },
-    "public.PaymentStatus": {
-      "name": "PaymentStatus",
-      "schema": "public",
-      "values": [
-        "PENDING",
-        "PAID",
-        "FAILED",
-        "REFUNDED",
-        "CHARGEBACK"
-      ]
-    },
-    "public.UserRole": {
-      "name": "UserRole",
-      "schema": "public",
-      "values": [
-        "USER",
-        "ADMIN",
-        "CAPTAIN",
-        "BROKER",
-        "OWNER"
-      ]
-    },
-    "public.UserStatus": {
-      "name": "UserStatus",
-      "schema": "public",
-      "values": [
-        "ACTIVE",
-        "INACTIVE",
-        "SUSPENDED",
-        "PENDING_VERIFICATION",
-        "BANNED"
       ]
     },
     "public.VerificationChannel": {
@@ -3228,6 +5030,245 @@
         "IDENTITY",
         "AGE",
         "PAYMENT_METHOD"
+      ]
+    },
+    "public.PostCategory": {
+      "name": "PostCategory",
+      "schema": "public",
+      "values": [
+        "FLEET_NEWS",
+        "CONSERVATION",
+        "TIPS_ADVICE",
+        "CASE_STUDY",
+        "COMPANY_NEWS",
+        "SAFETY",
+        "EVENTS"
+      ]
+    },
+    "public.PostStatus": {
+      "name": "PostStatus",
+      "schema": "public",
+      "values": [
+        "DRAFT",
+        "PUBLISHED",
+        "ARCHIVED",
+        "SCHEDULED"
+      ]
+    },
+    "public.BookingStatus": {
+      "name": "BookingStatus",
+      "schema": "public",
+      "values": [
+        "PENDING",
+        "APPROVED",
+        "CONFIRMED",
+        "DENIED",
+        "EXPIRED",
+        "CANCELLED",
+        "COMPLETED",
+        "REFUNDED"
+      ]
+    },
+    "public.BookingType": {
+      "name": "BookingType",
+      "schema": "public",
+      "values": [
+        "REQUEST",
+        "INSTANT_BOOK",
+        "EXTERNAL_BOOKING"
+      ]
+    },
+    "public.BoatCategory": {
+      "name": "BoatCategory",
+      "schema": "public",
+      "values": [
+        "PONTOON",
+        "YACHT",
+        "SAILBOAT",
+        "FISHING",
+        "SPEEDBOAT",
+        "HOUSEBOAT",
+        "JET_SKI",
+        "OTHER"
+      ]
+    },
+    "public.BoatingExperienceLevel": {
+      "name": "BoatingExperienceLevel",
+      "schema": "public",
+      "values": [
+        "NONE",
+        "BEGINNER",
+        "INTERMEDIATE",
+        "ADVANCED",
+        "EXPERT",
+        "PROFESSIONAL"
+      ]
+    },
+    "public.LocationType": {
+      "name": "LocationType",
+      "schema": "public",
+      "values": [
+        "HOME_PORT",
+        "CURRENT_LOCATION",
+        "PICKUP_LOCATION",
+        "DROPOFF_LOCATION",
+        "DESTINATION"
+      ]
+    },
+    "public.timezone": {
+      "name": "timezone",
+      "schema": "public",
+      "values": [
+        "America/New_York",
+        "America/Chicago",
+        "America/Denver",
+        "America/Los_Angeles",
+        "America/Phoenix",
+        "America/Anchorage",
+        "Pacific/Honolulu",
+        "America/Nassau",
+        "America/Jamaica",
+        "America/Santo_Domingo",
+        "America/Barbados",
+        "America/Cancun",
+        "America/Toronto",
+        "America/Vancouver"
+      ]
+    },
+    "public.ConversationStatus": {
+      "name": "ConversationStatus",
+      "schema": "public",
+      "values": [
+        "ACTIVE",
+        "ARCHIVED",
+        "CLOSED",
+        "SYSTEM_CLOSED"
+      ]
+    },
+    "public.ConversationType": {
+      "name": "ConversationType",
+      "schema": "public",
+      "values": [
+        "BOOKING",
+        "GENERAL",
+        "SUPPORT",
+        "ADMIN"
+      ]
+    },
+    "public.MessageStatus": {
+      "name": "MessageStatus",
+      "schema": "public",
+      "values": [
+        "SENT",
+        "DELIVERED",
+        "READ",
+        "FAILED"
+      ]
+    },
+    "public.MessageType": {
+      "name": "MessageType",
+      "schema": "public",
+      "values": [
+        "TEXT",
+        "IMAGE",
+        "DOCUMENT",
+        "SYSTEM",
+        "BOOKING_UPDATE",
+        "PAYMENT_UPDATE"
+      ]
+    },
+    "public.NotificationPreference": {
+      "name": "NotificationPreference",
+      "schema": "public",
+      "values": [
+        "ALL",
+        "IMPORTANT_ONLY",
+        "NONE"
+      ]
+    },
+    "public.LineItemType": {
+      "name": "LineItemType",
+      "schema": "public",
+      "values": [
+        "CLEANING",
+        "CAPTAIN",
+        "VESSEL_FEE",
+        "BOOKING_FEE",
+        "TAX",
+        "TRANSACTION_FEE",
+        "OTHER"
+      ]
+    },
+    "public.PaymentStatus": {
+      "name": "PaymentStatus",
+      "schema": "public",
+      "values": [
+        "AWAITING_PAYMENT",
+        "PAID",
+        "FAILED",
+        "REFUNDED",
+        "CHARGEBACK"
+      ]
+    },
+    "public.UserRole": {
+      "name": "UserRole",
+      "schema": "public",
+      "values": [
+        "USER",
+        "ADMIN",
+        "CAPTAIN",
+        "BROKER",
+        "OWNER"
+      ]
+    },
+    "public.UserStatus": {
+      "name": "UserStatus",
+      "schema": "public",
+      "values": [
+        "ACTIVE",
+        "INACTIVE",
+        "SUSPENDED",
+        "PENDING_VERIFICATION",
+        "BANNED"
+      ]
+    },
+    "public.BlockingType": {
+      "name": "BlockingType",
+      "schema": "public",
+      "values": [
+        "MAINTENANCE",
+        "OWNER_USE",
+        "WEATHER",
+        "ADMIN_BLOCK",
+        "HOLIDAY",
+        "SEASONAL",
+        "CUSTOM"
+      ]
+    },
+    "public.CalendarOwnerType": {
+      "name": "CalendarOwnerType",
+      "schema": "public",
+      "values": [
+        "ADMIN",
+        "OWNER"
+      ]
+    },
+    "public.CalendarSource": {
+      "name": "CalendarSource",
+      "schema": "public",
+      "values": [
+        "GOOGLE",
+        "MANUAL",
+        "BOOKING"
+      ]
+    },
+    "public.CalendarSyncStatus": {
+      "name": "CalendarSyncStatus",
+      "schema": "public",
+      "values": [
+        "PENDING",
+        "SUCCESS",
+        "FAILED"
       ]
     }
   },

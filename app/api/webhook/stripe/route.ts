@@ -3,7 +3,7 @@ import Stripe from "stripe";
 import { headers } from "next/headers";
 import { db } from "@/database/db";
 import { bookings, bookingTypeEnum, bookingStatusEnum, boats } from "@/database/schema";
-import { eq, or } from "drizzle-orm";
+import { eq, or, sql } from "drizzle-orm";
 import config from "@/shared/config/config";
 import { ghlWebhookService } from "@/shared/services/ghl-webhook.service";
 
@@ -51,6 +51,8 @@ export async function POST(request: NextRequest) {
         // Check if this is an instant booking
         if (metadata.bookingType === "INSTANT_BOOK") {
           await handleInstantBookingPayment(session);
+        } else if (metadata.type === 'EVENT_TICKET' && metadata.eventId) {
+          await handleEventTicketPurchase(session);
         }
         
         break;
@@ -71,6 +73,82 @@ export async function POST(request: NextRequest) {
       { success: false, error: "Webhook processing failed" },
       { status: 500 }
     );
+  }
+}
+/**
+ * Handle event ticket purchase from Stripe checkout
+ */
+async function handleEventTicketPurchase(session: Stripe.Checkout.Session) {
+  try {
+    const metadata = session.metadata || {};
+    const eventId = parseInt(metadata.eventId);
+    const customerEmail = metadata.customerEmail || session.customer_details?.email || '';
+    const customerName = metadata.customerName || session.customer_details?.name || '';
+    
+    if (!eventId || !customerEmail) {
+      console.error('Missing event ID or customer email in webhook');
+      return;
+    }
+
+    // Parse tickets data from metadata
+    let ticketsData;
+    try {
+      ticketsData = JSON.parse(metadata.ticketsData || '[]');
+    } catch (error) {
+      console.error('Error parsing tickets data:', error);
+      return;
+    }
+
+    if (!ticketsData || ticketsData.length === 0) {
+      console.error('No tickets data found in metadata');
+      return;
+    }
+
+    const amountPaid = session.amount_total ? session.amount_total / 100 : 0; // Convert from cents
+    const confirmationCode = `EVT-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+
+    // Import the tables we need
+    const { eventTicketPurchases, eventTickets, ticketTiers } = await import('@/database/schema');
+
+    // Create the purchase record
+    const [purchase] = await db.insert(eventTicketPurchases).values({
+      eventId,
+      buyerName: customerName,
+      buyerEmail: customerEmail,
+      totalAmount: amountPaid.toString(),
+      stripePaymentIntentId: session.payment_intent as string,
+      isPaid: true,
+    }).returning();
+
+    // Create individual tickets
+    for (const ticketData of ticketsData) {
+      // Generate individual tickets for this tier
+      for (let i = 0; i < ticketData.quantity; i++) {
+        const ticketCode = `${confirmationCode}-${ticketData.tierId}-${i + 1}`;
+        
+        await db.insert(eventTickets).values({
+          purchaseId: purchase.id,
+          tierId: ticketData.tierId,
+          ticketCode,
+          attendeeName: customerName, // Default to buyer name
+        });
+      }
+
+      // Update sold quantity for this tier
+      await db.update(ticketTiers)
+        .set({
+          soldQuantity: sql`${ticketTiers.soldQuantity} + ${ticketData.quantity}`,
+        })
+        .where(eq(ticketTiers.id, ticketData.tierId));
+    }
+
+    console.log(`Successfully processed event ticket purchase: ${confirmationCode}`);
+
+    // TODO: Send confirmation email to customer
+    // TODO: Send GHL webhook if needed
+
+  } catch (error) {
+    console.error('Error processing event ticket purchase:', error);
   }
 }
 

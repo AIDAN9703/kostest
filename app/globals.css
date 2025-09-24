@@ -301,6 +301,10 @@
     animation: marquee-reverse 40s linear infinite;
   }
 
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
   @media (max-width: 640px) {
     .animate-marquee {
       animation: marquee 30s linear infinite;

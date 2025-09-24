@@ -15,7 +15,8 @@ import {
   HelpCircle,
   FileText,
   PenTool,
-  Calendar
+  Calendar,
+  PartyPopper
 } from "lucide-react";
 import { cn } from "@/shared/utils/general-utils";
 import Image from "next/image";
@@ -33,29 +34,24 @@ const navItems: NavItem[] = [
     icon: <LayoutDashboard className="h-5 w-5" />
   },
   {
-    label: "Boats",
-    href: "/admin/boats",
-    icon: <Ship className="h-5 w-5" />
-  },
-  {
     label: "Users",
     href: "/admin/users",
     icon: <Users className="h-5 w-5" />
   },
   {
+    label: "Events",
+    href: "/admin/events",
+    icon: <PartyPopper className="h-5 w-5" />
+  },
+  {
+    label: "Boats",
+    href: "/admin/boats",
+    icon: <Ship className="h-5 w-5" />
+  },
+  {
     label: "Bookings",
-    href: "/admin/bookings",
+    href: "/admin/bookings/portal",
     icon: <CalendarDays className="h-5 w-5" />
-  },
-  {
-    label: "Calendar",
-    href: "/admin/calendar",
-    icon: <Calendar className="h-5 w-5" />
-  },
-  {
-    label: "Inquiries",
-    href: "/admin/inquiries",
-    icon: <MessageSquare className="h-5 w-5" />
   },
   {
     label: "Blog Posts",
@@ -80,11 +76,11 @@ export default function AdminSidebar() {
 
     return (
     <div className={cn(
-      "bg-white border-r border-gray-200 flex flex-col h-screen transition-all duration-300 ease-in-out",
+      "flex flex-col h-screen transition-all duration-300 ease-in-out bg-gold text-white rounded-tr-3xl rounded-br-3xl",
       isCollapsed ? "w-16" : "w-64"
     )}>
       {/* Logo Section - Fixed Height */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 h-16">
+      <div className="flex items-center justify-between p-4 h-16">
         {!isCollapsed && (
           <Link href="/" className="flex items-center">
             <Image
@@ -94,46 +90,38 @@ export default function AdminSidebar() {
               height={32}
               className="mr-3"
             />
-            <span className="text-lg font-semibold text-gray-900">KOS Admin</span>
+            <span className="text-lg font-semibold font-poppins">KOS Admin</span>
           </Link>
         )}
-        {isCollapsed && (
-          <Link href="/admin" className="mx-auto">
-            <Image
-              src="/icons/logo.png"
-              alt="KOS"
-              width={32}
-              height={32}
-            />
-          </Link>
-        )}
+
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+          className="p-1.5 rounded-md hover:bg-white/10 transition-colors"
         >
           <ChevronLeft className={cn(
-            "h-4 w-4 text-gray-600 transition-transform duration-300",
+            "h-4 w-4 text-white/80 transition-transform duration-300",
             isCollapsed && "rotate-180"
           )} />
         </button>
       </div>
 
       {/* Navigation - Scrollable if needed */}
-      <nav className="flex-1 py-4 px-2 overflow-y-auto">
+      <nav className="flex-1 pl-2 overflow-y-auto font-poppins">
         <ul className="space-y-1">
           {navItems.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
                 className={cn(
-                  "flex items-center px-3 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors",
-                  pathname === item.href && "text-gray-900 font-bold border-b-2 border-r-2 border-primary",
+                  "relative isolate flex items-center px-3 py-2.5 text-white/85 hover:bg-white/10 rounded-tl-3xl rounded-bl-3xl transition-colors",
+                  pathname === item.href &&
+                    "text-gold bg-white hover:bg-white px z-20 transition-none before:transition-none after:transition-none before:content-[''] after:content-[''] before:absolute after:absolute before:pointer-events-none after:pointer-events-none before:right-0 before:-top-8 after:right-0 after:-bottom-8 before:h-8 before:w-8 after:h-8 after:w-8 before:rounded-full after:rounded-full before:shadow-[16px_16px_0_0_white] after:shadow-[16px_-16px_0_0_white]",
                   isCollapsed ? "justify-center" : "justify-start"
                 )}
               >
                 <div className={cn(
                   "shrink-0",
-                  pathname === item.href ? "text-gray-900 font-bold" : "text-gray-600"
+                  pathname === item.href ? "text-gold" : "text-white/80"
                 )}>
                   {item.icon}
                 </div>
@@ -147,13 +135,13 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Footer - Fixed Height */}
-      <div className="border-t border-gray-200 p-4">
+      <div className="p-4">
         <ul className="space-y-1">
           <li>
             <Link
               href="/admin/help"
               className={cn(
-                "flex items-center px-3 py-2.5 rounded-md text-gray-700 hover:bg-gray-50 transition-colors",
+                "flex items-center px-3 py-2.5 rounded-md text-white/85 hover:bg-white/10 transition-colors",
                 isCollapsed ? "justify-center" : "justify-start"
               )}
             >
@@ -165,7 +153,7 @@ export default function AdminSidebar() {
             <Link
               href="/api/auth/signout"
               className={cn(
-                "flex items-center px-3 py-2.5 rounded-md text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors",
+                "flex items-center px-3 py-2.5 rounded-md text-white/85 hover:bg-red-500/10 hover:text-white transition-colors",
                 isCollapsed ? "justify-center" : "justify-start"
               )}
             >

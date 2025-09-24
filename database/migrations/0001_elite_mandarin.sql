@@ -1,1 +1,0 @@
-ALTER TABLE "boat" DROP COLUMN "water_capacity";
