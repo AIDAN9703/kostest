@@ -43,7 +43,7 @@ export default function StorySection() {
               {/* Floating accent image */}
               <div className="absolute -bottom-8 -left-8 w-32 h-32 sm:w-40 sm:h-40 rounded-xl overflow-hidden shadow-lg border-4 border-white bg-white">
                 <Image
-                  src="/images/herooption17.jpeg"
+                  src="/clients/fishing.jpeg"
                   alt="Yacht detail"
                   fill
                   className="object-cover"

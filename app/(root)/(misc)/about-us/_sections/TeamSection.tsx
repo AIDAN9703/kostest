@@ -45,6 +45,12 @@ const teamMembers = [
     description: "Driving our growth and development initiatives to expand our reach and impact."
   },
   {
+    name: "Jacqueline Sadiki",
+    position: "Director of Operations CT",
+    image: "/images/team/jacqueline-sadiki.jpg",
+    description: "Overseeing operations and ensuring smooth execution of our charter services within our Connecticut branch."
+  },
+  {
     name: "Lindsey Robison",
     position: "Marketing Director",
     image: "/images/team/Lindsey 4.jpeg",
@@ -79,9 +85,7 @@ const teamMembers = [
     position: "Operations Assistant",
     image: "/images/team/vincent-avila.jpeg",
     description: "Assisting with operations and ensuring smooth execution of our charter services."
-  },
-  
-  
+  }
 ]
 
 export default function TeamSection() {
