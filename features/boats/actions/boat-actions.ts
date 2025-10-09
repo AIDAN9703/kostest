@@ -2,15 +2,17 @@
 
 import { db } from "@/database/db";
 import { boats, boatPricingTiers } from "@/database/schema";
-import { Boat } from "@/shared/types/types";
 import { eq } from "drizzle-orm";
 import { cache } from "react";
+import { BoatWithTiers } from "../boat.types";
+
+
 
 /**
  * Get boat by ID with pricing tiers
  * This is boat-specific functionality that belongs in the boats feature
  */
-export const getBoatById = cache(async (id: string): Promise<Boat | null> => {
+export const getBoatById = cache(async (id: string): Promise<BoatWithTiers | null> => {
   try {
     const [boatResult, pricingTiers] = await Promise.all([
       db.select().from(boats).where(eq(boats.id, id)).limit(1),
@@ -23,8 +25,8 @@ export const getBoatById = cache(async (id: string): Promise<Boat | null> => {
 
     return {
       ...boatResult[0],
-      pricingTiers: pricingTiers
-    } as Boat;
+      pricingTiers
+    };
   } catch (error) {
     console.error(`Error fetching boat with ID ${id}:`, error);
     return null;

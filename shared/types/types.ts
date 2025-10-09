@@ -29,30 +29,6 @@ export interface LocationData {
   isValid: boolean;
 }
 
-export interface UserProfile {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string;
-  phoneNumber?: string | null;
-  bio?: string | null;
-  city?: string | null;
-  state?: string | null;
-  country?: string | null;
-  boatingExperience?: BoatingExperience;
-  profileImage?: string | null;
-  coverImage?: string | null;
-  emailVerified?: boolean;
-  phoneVerified?: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface ProfileUpdateResponse {
-  success?: boolean;
-  error?: string;
-  fieldErrors?: Record<string, string[]>;
-}
 
 // Define the Pricing Tier type separately for clarity
 export interface PricingTier {

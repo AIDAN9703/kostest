@@ -1,9 +1,9 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getUserById } from "@/features-admin/users/actions/users";
-import { UserProfileHeader } from "@/features-admin/users/components/UserProfileHeader";
-import { UserDetails } from "@/features-admin/users/components/UserDetails";
+import { userService } from "@/features/users/users.service";
+import { UserProfileHeader } from "@/features/users/components/UserProfileHeader";
+import { UserDetails } from "@/features/users/components/UserDetails";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -17,7 +17,7 @@ export const revalidate = 30;
 
 export async function generateMetadata({ params }: UserDetailPageProps): Promise<Metadata> {
   const resolvedParams = await params;
-  const user = await getUserById(resolvedParams.id).catch(() => null);
+  const user = await userService.getUserById(resolvedParams.id).catch(() => null);
   
   const userName = user 
     ? user.displayName || user.username || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User' 
@@ -59,7 +59,7 @@ export default async function UserDetailPage({ params }: UserDetailPageProps) {
 
 // Separate component for data fetching to enable Suspense
 async function UserProfile({ userId }: { userId: string }) {
-  const user = await getUserById(userId).catch(() => null);
+  const user = await userService.getUserById(userId).catch(() => null);
   
   if (!user) {
     notFound();

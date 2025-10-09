@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { Button } from "@/shared/components/ui/button";
-import { FieldDropdown } from "@/features-admin/_shared/FieldDropdown";
+import { FieldDropdown } from "@/shared/components/FieldDropdown";
 
 // Type for inquiry with details
 type InquiryWithDetails = {

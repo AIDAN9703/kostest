@@ -5,7 +5,7 @@ import { Plus } from 'lucide-react';
 import { getBlogPosts } from '@/features-admin/blog/actions/admin-blog-actions';
 import BlogTable from '@/features-admin/blog/components/BlogTable';
 import BlogTableSkeleton from '@/features-admin/blog/components/BlogTableSkeleton';
-import { DataTablePagination } from '@/features-admin/_layout/DataTablePagination';
+import { DataTablePagination } from '@/shared/layouts/DataTablePagination';
 
 // Constants
 const ITEMS_PER_PAGE = 10;

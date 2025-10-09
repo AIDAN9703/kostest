@@ -78,7 +78,7 @@ export async function generateMetadata({
          })()
        : 'Contact for pricing';
 
-    const description = `Charter the ${boat.name}, a ${boat.lengthFt}ft ${boat.category} in ${boat.homePort}. ${priceRange}. ${boat.description?.substring(0, 100) || ''} Book your luxury yacht experience today.`;
+    const description = `Charter the ${boat.name}, a ${boat.lengthFt}ft ${boat.category}${boat.locationLabel ? ` in ${boat.locationLabel}` : ''}. ${priceRange}. ${boat.description?.substring(0, 100) || ''} Book your luxury yacht experience today.`;
 
     return {
       title: `${boat.name} - ${boat.lengthFt}ft ${boat.category} Charter | KOS Yachts`,
@@ -88,10 +88,10 @@ export async function generateMetadata({
         boat.category,
         'yacht charter',
         'boat rental', 
-        boat.homePort,
+        boat.locationLabel,
         'luxury yacht',
         'Miami yacht charter'
-      ].join(', '),
+      ].filter(Boolean).join(', '),
       openGraph: {
         title: `${boat.name} - Luxury Yacht Charter`,
         description,
@@ -182,8 +182,8 @@ export default async function BoatPage({ params }: BoatPageProps) {
                 },
                 {
                   "@type": "PropertyValue",
-                  "name": "Home Port",
-                  "value": boat.homePort
+                  "name": "Location",
+                  "value": boat.locationLabel || "Contact for details"
                 }
               ]
             })

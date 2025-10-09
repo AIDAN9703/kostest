@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import BoatCalendar from "@/features-admin/boats/components/BoatCalendar";
-import BoatCalendarManager from "@/features-admin/boats/components/BoatCalendarManager";
+import BoatCalendar from "@/features/boats/components/BoatCalendar";
+import BoatCalendarManager from "@/features/boats/components/BoatCalendarManager";
 
 interface BoatCalendar {
   id: string;

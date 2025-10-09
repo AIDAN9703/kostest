@@ -1,9 +1,7 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { getBoatById } from "@/features-admin/boats/actions/boats";
 import { notFound } from "next/navigation";
-import { CreateBoatInput, PricingTierInput } from "@/features-admin/_validation/boats";
-import AdminAddUpdateBoatForm from "@/features-admin/boats/components/forms/admin-add-update-boat-form";
+import { getBoatById } from "@/features/boats/actions/boat-actions";
+import { type CreateBoatInput, type PricingTierInput } from "@/features/boats/boats.validation";
+import AdminAddUpdateBoatForm from "@/features/boats/components/forms/admin-add-update-boat-form";
 
 interface BoatEditPageProps {
   params: Promise<{ id: string }>;
@@ -13,13 +11,13 @@ export default async function BoatEditPage({ params }: BoatEditPageProps) {
   const resolvedParams = await params;
   const boatId = resolvedParams.id;
   
-  const boatData = await getBoatById(boatId).catch(() => null);
+  const boatData = await getBoatById(boatId);
   
   if (!boatData) {
     notFound();
   }
   
-  // Convert pricing tiers to match expected form input schema
+  // Format pricing tiers to match form input schema
   const formattedPricingTiers: PricingTierInput[] = boatData.pricingTiers?.map(tier => ({
     id: tier.id,
     hours: tier.hours,
@@ -30,13 +28,13 @@ export default async function BoatEditPage({ params }: BoatEditPageProps) {
     isDefault: tier.isDefault || false,
   })) || [];
   
-  // Transform database boat to match the form's expected format
+  // Transform database boat to form input format
   const boat: CreateBoatInput = {
     // Core Information
     name: boatData.name,
     displayTitle: boatData.displayTitle || null,
     description: boatData.description || null,
-    category: boatData.category,
+    category: boatData.category!,
     active: boatData.active ?? false,
     featured: boatData.featured ?? false,
     featuredOrder: boatData.featuredOrder || null,
@@ -75,7 +73,7 @@ export default async function BoatEditPage({ params }: BoatEditPageProps) {
     
     // Location
     locationLabel: boatData.locationLabel || null,
-    locationCoordinates: boatData.locationCoordinates || null,
+    locationCoordinates: null, // TODO: Parse from geometry field if needed
     availableDestinations: boatData.availableDestinations || [],
     dockInfo: boatData.dockInfo || null,
     parkingInfo: boatData.parkingInfo || null,
@@ -111,11 +109,5 @@ export default async function BoatEditPage({ params }: BoatEditPageProps) {
     maintenanceNotes: boatData.maintenanceNotes || null,
   };
   
-  return (
-    <div className="space-y-6">
-      
-      {/* Boat Edit Form */}
-      <AdminAddUpdateBoatForm boat={boat} boatId={boatId} />
-    </div>
-  );
-} 
+  return <AdminAddUpdateBoatForm boat={boat} boatId={boatId} />;
+}

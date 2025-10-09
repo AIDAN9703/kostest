@@ -86,6 +86,28 @@ export const BOOKING_STATUS_COLORS = {
   EXPIRED: { bg: "#F3F4F6", text: "#374151", border: "#6B7280" }
 };
 
+// Admin Dashboard Color Themes
+export const COLOR_THEMES = {
+  blue: {
+    border: "hover:border-blue-200",
+    value: "text-blue-700",
+  },
+  emerald: {
+    border: "hover:border-emerald-200",
+    value: "text-emerald-700",
+  },
+  purple: {
+    border: "hover:border-purple-200",
+    value: "text-purple-700",
+  },
+  amber: {
+    border: "hover:border-amber-200",
+    value: "text-amber-700",
+  },
+} as const;
+
+export type ColorTheme = keyof typeof COLOR_THEMES;
+
 export const BOOKING_TIME_SLOTS = [
   { value: "09:00", label: "9:00 AM" },
   { value: "10:00", label: "10:00 AM" },

@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { getUserById } from "@/features-admin/users/actions/users";
-import { UserForm } from "@/features-admin/users/components/UserForm";
+import { userService } from "@/features/users/users.service";
+import { UserForm } from "@/features/users/components/UserForm";
 import { notFound } from "next/navigation";
-import { type UpdateUserInput } from "@/features-admin/_validation/users";
+import { type UpdateUserInput } from "@/features/users/users.validation";
 import { Suspense } from "react";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
@@ -44,7 +44,7 @@ export default async function UserEditPage({ params }: UserEditPageProps) {
 
 // Separate component for data fetching to enable Suspense
 async function UserFormWithData({ userId }: { userId: string }) {
-  const userData = await getUserById(userId).catch(() => null);
+  const userData = await userService.getUserById(userId).catch(() => null);
   
   if (!userData) {
     notFound();

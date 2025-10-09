@@ -1,49 +1,70 @@
 "use client";
 
-import { CardHeader, CardTitle, CardDescription } from "@/shared/components/ui/card";
-import { UserStatsCards } from "@/features-admin/users/components/UserStatsCards";
-import { ModernUsersTable } from "@/features-admin/users/components/ModernUsersTable";
-import { useState } from "react";
-import { useUsers, useUserStats, useDeleteUser } from "@/features-admin/users/hooks/useUsersApi";
+import { UserFilters } from '@/features/users/components/UserFilters';
+import { ModernUsersTable } from "@/features/users/components/ModernUsersTable";
+import { useQueryStates, parseAsString, parseAsInteger } from 'nuqs';
+import { useUsers } from "@/features/users/hooks/useUsers";
+import { useDeleteUser } from "@/features/users/hooks/useUserMutations";
+import { type UserFilterInput } from '@/features/users/users.validation';
 
 export default function UsersPage() {
-  // TanStack Query hooks
-  const { data: users = [], isLoading: usersLoading } = useUsers();
-  const { data: stats = { totalUsers: 0, activeUsers: 0, adminUsers: 0, newUsersThisMonth: 0 }, isLoading: statsLoading } = useUserStats();
-  
-  // Mutations
-  const deleteUserMutation = useDeleteUser();
-
-  // Centralized error handler
-  const handleError = (error: unknown, action: string) => {
-    alert(`Error ${action}: ${(error as Error).message}`);
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
-
-    try {
-      await deleteUserMutation.mutateAsync(userId);
-    } catch (error) {
-      handleError(error, 'deleting user');
+  const [filters, setFilters] = useQueryStates(
+    {
+      search: parseAsString.withDefault(''),
+      status: parseAsString,
+      role: parseAsString,
+      page: parseAsInteger.withDefault(1),
+    },
+    {
+      clearOnDefault: true,
     }
+  );
+  
+  const apiFilters: UserFilterInput = Object.fromEntries(
+    Object.entries({ ...filters, limit: 10 })
+      .map(([key, value]) => [key, value ?? undefined])
+  ) as UserFilterInput;
+  
+  const { data, isLoading, error } = useUsers(apiFilters);
+  const deleteUser = useDeleteUser();
+
+  const handleDelete = (userId: string) => {
+    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    deleteUser.mutate(userId);
   };
+
+  const handlePageChange = (page: number) => {
+    setFilters({ page });
+  };
+
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-red-600">Failed to load users. Please try again.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      <CardHeader className="px-0">
-        <CardTitle>Users</CardTitle>
-        <CardDescription>Manage your platform users and their permissions</CardDescription>
-      </CardHeader>
+    <div className="h-full flex flex-col overflow-hidden bg-white rounded-3xl shadow-xs border border-gray-200/70">
+      {/* Filters */}
+      <UserFilters filters={filters} setFilters={setFilters} />
 
-      <UserStatsCards stats={stats} loading={statsLoading} />
-      
-      <ModernUsersTable 
-        users={users} 
-        loading={usersLoading}
-        onDelete={handleDeleteUser}
-        onUpdateField={() => {}} // FieldDropdown handles updates internally
+      {/* Table */}
+      <ModernUsersTable
+        users={data?.users || []}
+        pagination={{
+          page: data?.page || 1,
+          limit: data?.limit || 10,
+          totalCount: data?.totalCount || 0,
+          totalPages: data?.totalPages || 0,
+        }}
+        loading={isLoading}
+        onDelete={handleDelete}
+        onPageChange={handlePageChange}
       />
     </div>
   );
-} 
+}

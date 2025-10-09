@@ -7,7 +7,7 @@ import ProfileSettingsForm from "@/features/profile/components/ProfileSettingsFo
 import { Settings, LogOut } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { signOutAction } from "@/features/auth/actions/sign-out";
-import { UserProfile } from "@/shared/types/types";
+import { UserProfile } from "@/features/users/user.types";
 import { redirect } from "next/navigation";
 
 // Sign Out Section Component

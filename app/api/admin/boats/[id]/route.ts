@@ -1,46 +1,99 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
-import { db } from '@/database/db';
-import { boats } from '@/database/schema';
-import { eq } from 'drizzle-orm';
+import { NextRequest } from "next/server";
+import { auth } from "@/auth";
+import { boatService } from "@/features/boats/boats.service";
+import { updateBoatSchema } from "@/features/boats/boats.validation";
+import { apiSuccess, apiSuccessNoData, apiError } from "@/shared/utils/api-response";
 
+/**
+ * GET /api/admin/boats/[id]
+ * Fetch single boat by ID
+ */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+    
     // Admin authentication
     const session = await auth();
     if (!session?.user || session.user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+      return apiError("Admin access required", 403);
     }
 
-    const { id } = await params;
+    const boat = await boatService.getBoatById(id);
 
-    // Fetch boat by ID
-    const boatData = await db
-      .select({
-        id: boats.id,
-        name: boats.name,
-        displayTitle: boats.displayTitle,
-        active: boats.active,
-        timezone: boats.timezone
-      })
-      .from(boats)
-      .where(eq(boats.id, id))
-      .limit(1);
-
-    if (!boatData.length) {
-      return NextResponse.json({ error: 'Boat not found' }, { status: 404 });
+    if (!boat) {
+      return apiError("Boat not found", 404);
     }
 
-    return NextResponse.json(boatData[0]);
+    return apiSuccess(boat);
 
   } catch (error) {
-    console.error('Error fetching boat:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch boat' }, 
-      { status: 500 }
-    );
+    console.error("Error fetching boat:", error);
+    return apiError("Failed to fetch boat");
+  }
+}
+
+/**
+ * PATCH /api/admin/boats/[id]
+ * Update boat
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    
+    // Admin authentication
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return apiError("Admin access required", 403);
+    }
+
+    const body = await request.json();
+    
+    // Validate with Zod
+    const validation = updateBoatSchema.safeParse(body);
+    
+    if (!validation.success) {
+      return apiError("Invalid boat data", 400);
+    }
+
+    const updatedBoat = await boatService.updateBoat(id, validation.data);
+
+    return apiSuccess(updatedBoat);
+
+  } catch (error) {
+    console.error("Error updating boat:", error);
+    return apiError("Failed to update boat");
+  }
+}
+
+/**
+ * DELETE /api/admin/boats/[id]
+ * Delete boat
+ */
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    
+    // Admin authentication
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return apiError("Admin access required", 403);
+    }
+
+    await boatService.deleteBoat(id);
+
+    return apiSuccessNoData("Boat deleted successfully");
+
+  } catch (error) {
+    console.error("Error deleting boat:", error);
+    return apiError("Failed to delete boat");
   }
 }

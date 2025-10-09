@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { auth } from "@/auth";
-import AdminSidebar from "@/features-admin/_layout/AdminSidebar";
-import AdminHeader from "@/features-admin/_layout/AdminHeader";
+import AdminSidebar from "@/shared/layouts/AdminSidebar";
+import AdminHeader from "@/shared/layouts/AdminHeader";
 import { QueryProvider } from "@/shared/providers/QueryProvider";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
@@ -26,14 +26,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         </div>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden">
-          <div className="p-6 min-h-full">
-            <div className="mx-auto bg-white rounded-3xl shadow-xs border border-gray-200/70 p-6">
-              <QueryProvider>
-                {children}
-              </QueryProvider>
-            </div>
-          </div>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden p-6">
+          <QueryProvider>
+            {children}
+          </QueryProvider>
         </div>
       </div>
     </div>

@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { db } from "@/database/db";
 import { users } from "@/database/schema";
 import { eq } from "drizzle-orm";
+import { apiSuccess, apiError } from "@/shared/utils/api-response";
 
 // Add dynamic configuration for Next.js 15
 export const dynamic = 'force-dynamic';
@@ -11,10 +12,7 @@ export async function GET(req: NextRequest) {
     const email = req.nextUrl.searchParams.get("email");
     
     if (!email) {
-      return NextResponse.json(
-        { success: false, error: "Email is required" },
-        { status: 400 }
-      );
+      return apiError("Email is required", 400);
     }
     
     // Find the user by email
@@ -29,22 +27,13 @@ export async function GET(req: NextRequest) {
       .limit(1);
     
     if (userRecord.length === 0) {
-      return NextResponse.json(
-        { success: false, error: "User not found" },
-        { status: 404 }
-      );
+      return apiError("User not found", 404);
     }
     
-    // Return the user data
-    return NextResponse.json({
-      success: true,
-      user: userRecord[0],
-    });
+    return apiSuccess(userRecord[0]);
+    
   } catch (error) {
     console.error("Error finding user:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to find user" },
-      { status: 500 }
-    );
+    return apiError("Failed to find user");
   }
-} 
+}

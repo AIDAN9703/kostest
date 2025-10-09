@@ -38,7 +38,6 @@ export interface SafeBoatData {
   locationLabel: string | null;
   timezone?: string | null; // Required for proper boat time display
 }
-
 /**
  * Database booking record (from admin/backend contexts)
  */

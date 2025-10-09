@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Toaster } from '@/shared/components/ui/toaster';
-import Navigation from '@/shared/components/layout/Navigation';
+import Navigation from '@/shared/layouts/Navigation';
 import BackToDashboard from '@/features/profile/components/BackToDashboard';
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {

@@ -1,5 +1,5 @@
 import { InquiriesTable } from "@/features-admin/inquiries/components/InquiriesTable";
-import { DataTablePagination } from "@/features-admin/_layout/DataTablePagination";
+import { DataTablePagination } from "@/shared/layouts/DataTablePagination";
 
 interface InquiriesTabProps {
   searchParams: {

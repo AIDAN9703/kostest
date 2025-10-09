@@ -1,7 +1,7 @@
-import Navigation from '@/shared/components/layout/Navigation';
-import PageWrapper from '@/shared/components/layout/PageWrapper';
+import Navigation from '@/shared/layouts/Navigation';
+import PageWrapper from '@/shared/layouts/PageWrapper';
 import { ReactNode } from 'react'
-import Footer from '@/shared/components/layout/Footer';
+import Footer from '@/shared/layouts/Footer';
 
 interface LayoutProps {
   children: ReactNode;

@@ -25,10 +25,11 @@ import {
 } from "@/shared/components/ui/select";
 import { useToast } from "@/shared/hooks/use-toast";
 import { Loader2, User, Image as ImageIcon } from "lucide-react";
-import { UserProfile } from "@/shared/types/types";
+import { UserProfile } from "@/features/users/user.types";
 import { ImageUpload } from "@/shared/components/ui/image-upload";
 import { Image as IKImage } from "@imagekit/next";
 import { getImageKitProps } from "@/shared/services/imagekit.service";
+import { BoatingExperience } from "@/database/types";
 
 interface ProfileSettingsFormProps {
   user: UserProfile;

@@ -1,5 +1,5 @@
 import { BookingsTable } from "@/features-admin/bookings/components/BookingsTable";
-import { DataTablePagination } from "@/features-admin/_layout/DataTablePagination";
+import { DataTablePagination } from "@/shared/layouts/DataTablePagination";
 
 interface AllBookingsTabProps {
   searchParams: {
