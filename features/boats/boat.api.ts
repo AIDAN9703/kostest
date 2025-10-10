@@ -4,7 +4,7 @@
  */
 
 import { type Boat } from '@/database/types';
-import { type BoatFilterInput } from '@/features/boats/boats.validation';
+import { type BoatFilterInput } from '@/features/boats/boat.validation';
 import { type PaginatedBoatsResponse, type BoatWithTiers } from '@/features/boats/boat.types';
 import { type ApiResponse, type PaginatedApiResponse } from '@/shared/types/api.types';
 

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Trash } from "lucide-react"
 import { toast } from "@/shared/hooks/use-toast"
-import { deleteUser } from "@/features/users/mutations"
+import { deleteUser } from "@/features/users/user.mutations"
 import { DropdownMenuItem } from "@/shared/components/ui/dropdown-menu"
 import { useRouter } from "next/navigation"
 

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getBoatById } from "@/features/boats/actions/boat-actions";
-import { type CreateBoatInput, type PricingTierInput } from "@/features/boats/boats.validation";
+import { type CreateBoatInput, type PricingTierInput } from "@/features/boats/boat.validation";
 import AdminAddUpdateBoatForm from "@/features/boats/components/forms/admin-add-update-boat-form";
 
 interface BoatEditPageProps {

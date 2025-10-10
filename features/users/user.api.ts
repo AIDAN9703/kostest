@@ -4,7 +4,7 @@
  */
 
 import { type User } from '@/database/types';
-import { type UserFilterInput } from '@/features/users/users.validation';
+import { type UserFilterInput } from '@/features/users/user.validation';
 import { type PaginatedUsersResponse } from '@/features/users/user.types';
 import { type ApiResponse, type PaginatedApiResponse } from '@/shared/types/api.types';
 

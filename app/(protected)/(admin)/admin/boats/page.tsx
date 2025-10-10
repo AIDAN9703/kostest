@@ -10,7 +10,7 @@ import { useBoats } from "@/features/boats/hooks/useBoats";
 import { useDeleteBoat } from "@/features/boats/hooks/useBoatMutations";
 
 // Types
-import { type BoatFilterInput } from '@/features/boats/boats.validation';
+import { type BoatFilterInput } from '@/features/boats/boat.validation';
 
 //-----------------------------------------------------------------------------------
 

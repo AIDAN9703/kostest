@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
-import { userService } from "@/features/users/users.service";
-import { userFilterSchema, createUserSchema } from "@/features/users/users.validation";
+import { userService } from "@/features/users/user.service";
+import { userFilterSchema, createUserSchema } from "@/features/users/user.validation";
 import { apiPaginated, apiSuccess, apiError } from "@/shared/utils/api-response";
 
 /**

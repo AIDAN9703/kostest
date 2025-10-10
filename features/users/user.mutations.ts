@@ -8,8 +8,8 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { type User } from "@/database/types";
 import { type ActionResponse } from "@/shared/types/types";
-import { type CreateUserInput, type UpdateUserInput } from "@/features/users/users.validation";
-import { userService } from "@/features/users/users.service";
+import { type CreateUserInput, type UpdateUserInput } from "@/features/users/user.validation";
+import { userService } from "@/features/users/user.service";
 
 // ========================================
 // CORE CUD OPERATIONS

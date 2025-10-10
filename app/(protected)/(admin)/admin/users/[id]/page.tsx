@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { userService } from "@/features/users/users.service";
+import { userService } from "@/features/users/user.service";
 import { UserProfileHeader } from "@/features/users/components/UserProfileHeader";
 import { UserDetails } from "@/features/users/components/UserDetails";
 import { notFound } from "next/navigation";

@@ -6,7 +6,7 @@ import { getTableColumns } from 'drizzle-orm';
 import { type Boat } from '@/database/types';
 
 //types
-import { type BoatFilterInput, type CreateBoatInput, type UpdateBoatInput, type PricingTierInput } from '@/features/boats/boats.validation';
+import { type BoatFilterInput, type CreateBoatInput, type UpdateBoatInput, type PricingTierInput } from '@/features/boats/boat.validation';
 import { type PaginatedBoatsResponse } from '@/features/boats/boat.types';
 import { z } from 'zod';
 

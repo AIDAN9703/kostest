@@ -5,7 +5,7 @@ import { and, count, eq, desc, or, ilike, inArray, gte } from 'drizzle-orm';
 import { type User, type UserStatus } from '@/database/types';
 
 //types
-import { type UserFilterInput, type CreateUserInput, type UpdateUserInput } from '@/features/users/users.validation';
+import { type UserFilterInput, type CreateUserInput, type UpdateUserInput } from '@/features/users/user.validation';
 import { type PaginatedUsersResponse } from '@/features/users/user.types';
 
 //bcrypt

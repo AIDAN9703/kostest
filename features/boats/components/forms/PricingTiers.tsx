@@ -29,7 +29,7 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { pricingTierSchema, PricingTierInput } from "@/features/boats/boats.validation";
+import { pricingTierSchema, PricingTierInput } from "@/features/boats/boat.validation";
 import { Plus, Edit, Trash, Clock, DollarSign, Check } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 

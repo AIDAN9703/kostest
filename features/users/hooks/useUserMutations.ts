@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createUser, updateUser, deleteUser, bulkUpdateUsers } from "../mutations";
+import { createUser, updateUser, deleteUser, bulkUpdateUsers } from "../user.mutations";
 import { type User } from "@/database/types";
-import { type CreateUserInput, type UpdateUserInput } from "@/features/users/users.validation";
+import { type CreateUserInput, type UpdateUserInput } from "@/features/users/user.validation";
 
 export function useCreateUser() {
   const queryClient = useQueryClient();

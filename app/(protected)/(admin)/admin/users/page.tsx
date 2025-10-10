@@ -5,7 +5,7 @@ import { ModernUsersTable } from "@/features/users/components/ModernUsersTable";
 import { useQueryStates, parseAsString, parseAsInteger } from 'nuqs';
 import { useUsers } from "@/features/users/hooks/useUsers";
 import { useDeleteUser } from "@/features/users/hooks/useUserMutations";
-import { type UserFilterInput } from '@/features/users/users.validation';
+import { type UserFilterInput } from '@/features/users/user.validation';
 
 export default function UsersPage() {
   const [filters, setFilters] = useQueryStates(

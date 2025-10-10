@@ -1,6 +1,6 @@
 'use server';
 
-import { userService } from "@/features/users/users.service";
+import { userService } from "@/features/users/user.service";
 
 export async function getBoatOwners(query: string) {
   if (!query || query.length < 2) {

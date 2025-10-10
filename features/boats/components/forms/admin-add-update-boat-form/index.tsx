@@ -8,7 +8,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { useToast } from "@/shared/hooks/use-toast";
-import { createBoatSchema, updateBoatSchema, type CreateBoatInput, type UpdateBoatInput } from "@/features/boats/boats.validation";
+import { createBoatSchema, updateBoatSchema, type CreateBoatInput, type UpdateBoatInput } from "@/features/boats/boat.validation";
 import { createBoat, updateBoat } from "@/features/boats/boat.mutations";
 import { boatCategoryEnum } from "@/database/schema";
 import { MediaSection } from "./sections/MediaSection";

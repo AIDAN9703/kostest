@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { usersApi } from "../api";
-import { type UserFilterInput } from "@/features/users/users.validation";
+import { usersApi } from "../user.api";
+import { type UserFilterInput } from "@/features/users/user.validation";
 
 /**
  * Fetch paginated and filtered users list

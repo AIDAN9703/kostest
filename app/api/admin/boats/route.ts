@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
-import { boatService } from "@/features/boats/boats.service";
-import { boatFilterSchema, createBoatSchema } from "@/features/boats/boats.validation";
+import { boatService } from "@/features/boats/boat.service";
+import { boatFilterSchema, createBoatSchema } from "@/features/boats/boat.validation";
 import { apiPaginated, apiSuccess, apiError } from "@/shared/utils/api-response";
 
 /**

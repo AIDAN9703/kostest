@@ -335,7 +335,7 @@ export interface BoatFilters {
 
 ### **Step 3: Create Service Layer**
 ```typescript
-// shared/services/boats.service.ts
+// shared/services/boat.service.ts
 export class BoatService {
   async getAllBoats(filters?: BoatFilters): Promise<PaginatedBoatsResponse> {
     // Drizzle queries

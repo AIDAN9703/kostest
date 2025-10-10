@@ -24,14 +24,14 @@ import {
 } from "@/shared/components/ui/card";
 import { toast } from "@/shared/hooks/use-toast";
 import { Checkbox } from "@/shared/components/ui/checkbox";
-import { updateUser, createUser } from "@/features/users/mutations";
+import { updateUser, createUser } from "@/features/users/user.mutations";
 import { userRoleEnum, userStatusEnum, boatingExperienceLevelEnum } from "@/database/schema";
 import { 
   createUserSchema, 
   updateUserSchema, 
   type CreateUserInput, 
   type UpdateUserInput 
-} from "@/features/users/users.validation";
+} from "@/features/users/user.validation";
 import {
   Form,
   FormControl,

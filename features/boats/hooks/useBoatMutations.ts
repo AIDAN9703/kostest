@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createBoat, updateBoat, deleteBoat, toggleBoatActive } from "../boat.mutations";
-import { type CreateBoatInput, type UpdateBoatInput } from "@/features/boats/boats.validation";
+import { type CreateBoatInput, type UpdateBoatInput } from "@/features/boats/boat.validation";
 
 export function useCreateBoat() {
   const queryClient = useQueryClient();

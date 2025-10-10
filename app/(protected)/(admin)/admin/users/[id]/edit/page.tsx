@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { userService } from "@/features/users/users.service";
+import { userService } from "@/features/users/user.service";
 import { UserForm } from "@/features/users/components/UserForm";
 import { notFound } from "next/navigation";
-import { type UpdateUserInput } from "@/features/users/users.validation";
+import { type UpdateUserInput } from "@/features/users/user.validation";
 import { Suspense } from "react";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { boatsApi } from "../api";
-import { type BoatFilterInput } from "@/features/boats/boats.validation";
+import { boatsApi } from "../boat.api";
+import { type BoatFilterInput } from "@/features/boats/boat.validation";
 
 /**
  * Fetch paginated and filtered boats list
