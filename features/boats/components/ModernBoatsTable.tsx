@@ -13,8 +13,8 @@ import {
 } from "@tanstack/react-table";
 import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
-import { 
-  ChevronUp, 
+import {
+  ChevronUp,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -26,7 +26,7 @@ import {
   Trash2,
   FileText,
   Download,
-  X
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -50,12 +50,12 @@ interface ModernBoatsTableProps {
 
 const columnHelper = createColumnHelper<BoatListItem>();
 
-export function ModernBoatsTable({ 
-  boats, 
+export function ModernBoatsTable({
+  boats,
   pagination,
   loading = false,
   onDelete,
-  onPageChange 
+  onPageChange,
 }: ModernBoatsTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -67,14 +67,18 @@ export function ModernBoatsTable({
 
   // Handle export to quote
   const handleExportToQuote = () => {
-    console.log('Selected boats for quote:', selectedBoats);
+    console.log("Selected boats for quote:", selectedBoats);
     // TODO: Navigate to quote builder with selected boats
-    alert(`Selected ${selectedBoats.length} boats for quote. Quote builder coming soon!`);
+    alert(
+      `Selected ${selectedBoats.length} boats for quote. Quote builder coming soon!`
+    );
   };
 
   // Handle export as list
   const handleExportList = () => {
-    const boatList = selectedBoats.map(b => `${b.name} - ${b.category} - ${b.lengthFt}ft`).join('\n');
+    const boatList = selectedBoats
+      .map((b) => `${b.name} - ${b.category} - ${b.lengthFt}ft`)
+      .join("\n");
     navigator.clipboard.writeText(boatList);
     alert(`Copied ${selectedBoats.length} boats to clipboard!`);
   };
@@ -84,11 +88,13 @@ export function ModernBoatsTable({
     () => [
       // Selection column
       columnHelper.display({
-        id: 'select',
+        id: "select",
         header: ({ table }) => (
           <Checkbox
             checked={table.getIsAllPageRowsSelected()}
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
             aria-label="Select all"
           />
         ),
@@ -100,8 +106,8 @@ export function ModernBoatsTable({
           />
         ),
       }),
-      columnHelper.accessor('name', {
-        header: 'Boat',
+      columnHelper.accessor("name", {
+        header: "Boat",
         cell: (info) => {
           const boat = info.row.original;
           return (
@@ -122,44 +128,47 @@ export function ModernBoatsTable({
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="font-medium text-gray-900 truncate">{boat.name}</div>
+                <div className="font-medium text-gray-900 truncate">
+                  {boat.name}
+                </div>
                 <div className="text-sm text-gray-500 truncate">
-                  {boat.lengthFt ? `${boat.lengthFt}ft` : 'No length'} • {boat.capacity ? `${boat.capacity} guests` : 'No capacity'}
+                  {boat.lengthFt ? `${boat.lengthFt}ft` : "No length"} •{" "}
+                  {boat.capacity ? `${boat.capacity} guests` : "No capacity"}
                 </div>
               </div>
             </div>
           );
         },
       }),
-      columnHelper.accessor('category', {
-        header: 'Category',
+      columnHelper.accessor("category", {
+        header: "Category",
         cell: (info) => (
           <div className="text-sm text-gray-900 capitalize">
-            {info.getValue()?.toLowerCase().replace(/_/g, ' ') || 'N/A'}
+            {info.getValue()?.toLowerCase().replace(/_/g, " ") || "N/A"}
           </div>
         ),
       }),
-      columnHelper.accessor('ownerName', {
-        header: 'Owner',
+      columnHelper.accessor("ownerName", {
+        header: "Owner",
         cell: (info) => (
           <div className="text-sm text-gray-900">
-            {info.getValue() || 'No owner'}
+            {info.getValue() || "No owner"}
           </div>
         ),
       }),
-      columnHelper.accessor('basePrice', {
-        header: 'Base Price',
+      columnHelper.accessor("basePrice", {
+        header: "Base Price",
         cell: (info) => {
           const price = info.getValue();
           return (
             <div className="text-sm font-medium text-gray-900">
-              {price ? formatCurrency(price) : 'No pricing'}
+              {price ? formatCurrency(price) : "No pricing"}
             </div>
           );
         },
       }),
-      columnHelper.accessor('active', {
-        header: 'Status',
+      columnHelper.accessor("active", {
+        header: "Status",
         cell: (info) => {
           const active = info.getValue();
           const featured = info.row.original.featured;
@@ -172,26 +181,34 @@ export function ModernBoatsTable({
         },
       }),
       columnHelper.display({
-        id: 'actions',
+        id: "actions",
         header: () => <div className="text-right">Actions</div>,
         cell: (info) => {
           const boat = info.row.original;
           return (
             <div className="flex items-center justify-end gap-1">
-              <Link href={`/admin/boats/${boat.id}`}>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100">
+              <Link href={`/admin/boats/${boat.id}`} prefetch={false}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 hover:bg-slate-100"
+                >
                   <Eye className="h-4 w-4 text-slate-600" />
                 </Button>
               </Link>
-              <Link href={`/admin/boats/${boat.id}/edit`}>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 hover:bg-slate-100">
+              <Link href={`/admin/boats/${boat.id}/edit`} prefetch={false}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 hover:bg-slate-100"
+                >
                   <Edit className="h-4 w-4 text-slate-600" />
                 </Button>
               </Link>
               {onDelete && (
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
+                <Button
+                  variant="ghost"
+                  size="sm"
                   className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                   onClick={() => onDelete(boat.id)}
                 >
@@ -238,8 +255,12 @@ export function ModernBoatsTable({
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="text-center">
           <Anchor className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No boats found</h3>
-          <p className="text-sm text-gray-500">Try adjusting your filters or add a new boat.</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            No boats found
+          </h3>
+          <p className="text-sm text-gray-500">
+            Try adjusting your filters or add a new boat.
+          </p>
         </div>
       </div>
     );
@@ -252,7 +273,8 @@ export function ModernBoatsTable({
         <div className="flex-shrink-0 bg-slate-700 text-white px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium">
-              {selectedBoats.length} boat{selectedBoats.length !== 1 ? 's' : ''} selected
+              {selectedBoats.length} boat{selectedBoats.length !== 1 ? "s" : ""}{" "}
+              selected
             </span>
             <Button
               onClick={() => setRowSelection({})}
@@ -301,8 +323,8 @@ export function ModernBoatsTable({
                       <div
                         className={
                           header.column.getCanSort()
-                            ? 'flex items-center gap-2 cursor-pointer select-none group'
-                            : ''
+                            ? "flex items-center gap-2 cursor-pointer select-none group"
+                            : ""
                         }
                         onClick={header.column.getToggleSortingHandler()}
                       >
@@ -329,7 +351,10 @@ export function ModernBoatsTable({
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-slate-50/50 transition-colors">
+              <tr
+                key={row.id}
+                className="hover:bg-slate-50/50 transition-colors"
+              >
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -346,11 +371,21 @@ export function ModernBoatsTable({
         <div className="flex-shrink-0 border-t border-gray-200 px-6 py-3 bg-white">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Showing <span className="font-medium">{((pagination.page - 1) * pagination.limit) + 1}</span> to{' '}
-              <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.totalCount)}</span> of{' '}
-              <span className="font-medium">{pagination.totalCount}</span> boats
+              Showing{" "}
+              <span className="font-medium">
+                {(pagination.page - 1) * pagination.limit + 1}
+              </span>{" "}
+              to{" "}
+              <span className="font-medium">
+                {Math.min(
+                  pagination.page * pagination.limit,
+                  pagination.totalCount
+                )}
+              </span>{" "}
+              of <span className="font-medium">{pagination.totalCount}</span>{" "}
+              boats
             </div>
-            
+
             <div className="flex items-center gap-1">
               <Button
                 variant="outline"
@@ -370,11 +405,11 @@ export function ModernBoatsTable({
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              
+
               <span className="text-sm text-gray-700 px-3">
                 Page {pagination.page} of {pagination.totalPages}
               </span>
-              
+
               <Button
                 variant="outline"
                 size="sm"

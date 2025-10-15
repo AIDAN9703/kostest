@@ -1,6 +1,6 @@
 /**
  * Shared Badge Utilities
- * 
+ *
  * This file contains reusable badge styling utilities for consistent
  * status badges across the entire application.
  */
@@ -29,33 +29,39 @@ export const STATUS_COLORS = {
   SUSPENDED: "red",
   PENDING_VERIFICATION: "yellow",
   BANNED: "red",
-  
+
   // Booking Status
   PENDING: "yellow",
   APPROVED: "blue",
-  AWAITING_PAYMENT: "blue",
   CONFIRMED: "green",
   DENIED: "red",
   CANCELLED: "red",
   COMPLETED: "purple",
   EXPIRED: "gray",
   REFUNDED: "amber",
-  
+
+  // Booking Type
+  INSTANT_BOOK: "green",
+  REQUEST: "blue",
+  INQUIRY: "yellow",
+
   // Payment Status
   PAID: "green",
+  AWAITING_PAYMENT: "yellow",
+  PARTIALLY_PAID: "amber",
   FAILED: "red",
   CHARGEBACK: "red",
-  
+
   // Quote Status
   DRAFT: "gray",
   SENT: "blue",
   ACCEPTED: "green",
   REJECTED: "red",
-  
+
   // Boolean Status
   true: "green",
   false: "gray",
-  
+
   // Special Status
   FEATURED: "amber",
 } as const;
@@ -72,14 +78,16 @@ export const ROLE_COLORS = {
 /**
  * Get badge style classes for a given status
  */
-export function getStatusBadgeClass(status: string | boolean | undefined | null): string {
+export function getStatusBadgeClass(
+  status: string | boolean | undefined | null
+): string {
   if (status === null || status === undefined) return BADGE_STYLES.gray;
-  
+
   // Handle boolean values directly
   if (typeof status === "boolean") {
     return status ? BADGE_STYLES.green : BADGE_STYLES.gray;
   }
-  
+
   const statusKey = String(status).toUpperCase();
   const color = (STATUS_COLORS as any)[statusKey] || "gray";
   return BADGE_STYLES[color as BadgeColor];
@@ -90,7 +98,7 @@ export function getStatusBadgeClass(status: string | boolean | undefined | null)
  */
 export function getRoleBadgeClass(role: string | undefined | null): string {
   if (!role) return BADGE_STYLES.gray;
-  
+
   const roleKey = role.toUpperCase();
   const color = (ROLE_COLORS as any)[roleKey] || "blue";
   return BADGE_STYLES[color as BadgeColor];
@@ -99,10 +107,12 @@ export function getRoleBadgeClass(role: string | undefined | null): string {
 /**
  * Format status text for display (replace underscores with spaces, capitalize)
  */
-export function formatStatusText(status: string | boolean | undefined | null): string {
+export function formatStatusText(
+  status: string | boolean | undefined | null
+): string {
   if (status === null || status === undefined) return "Unknown";
   if (typeof status === "boolean") return status ? "Active" : "Inactive";
-  
+
   return String(status)
     .replace(/_/g, " ")
     .toLowerCase()
@@ -152,4 +162,3 @@ export function RoleBadge({ role, className }: RoleBadgeProps) {
     </span>
   );
 }
-
