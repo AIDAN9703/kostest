@@ -1,9 +1,21 @@
-import React from 'react';
-import { HeroSection, TestimonialsSection, BrandsCarousel, FeaturedFleet, PopularExperiences, RequestToBook, ClientsShowcase, LocationsSection } from "@/features/_marketing/landing/components";
-import { getFeaturedBoats, getTestimonials } from "@/features/_marketing/landing/actions";
+import React from "react";
+import {
+  HeroSection,
+  TestimonialsSection,
+  BrandsCarousel,
+  FeaturedFleet,
+  PopularExperiences,
+  RequestToBook,
+  ClientsShowcase,
+  LocationsSection,
+} from "@/features/_marketing/landing/components";
+import {
+  getFeaturedBoats,
+  getTestimonials,
+} from "@/features/_marketing/landing/actions";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
-import LazyChatbot from '@/features/chatbot/LazyChatbot';
+import LazyChatbot from "@/features/chatbot/LazyChatbot";
 
 // This component wraps all the content that needs data
 async function HomeContent() {
@@ -11,37 +23,43 @@ async function HomeContent() {
     // Fetch all data in parallel
     const [boatsResponse, reviewsResponse] = await Promise.all([
       getFeaturedBoats(),
-      getTestimonials()
+      getTestimonials(),
     ]);
-    
+
     return (
       <>
         <HeroSection />
         <div className="w-full">
-          {boatsResponse.success && boatsResponse.data && boatsResponse.data.length > 0 && (
-            <FeaturedFleet boats={boatsResponse.data} />
-          )}
+          {boatsResponse.success &&
+            boatsResponse.data &&
+            boatsResponse.data.length > 0 && (
+              <FeaturedFleet boats={boatsResponse.data} />
+            )}
           <ClientsShowcase />
           <LocationsSection />
           <BrandsCarousel />
           <PopularExperiences />
-          {reviewsResponse.success && reviewsResponse.data && reviewsResponse.data.length > 0 && (
-            <TestimonialsSection reviews={reviewsResponse.data} />
-          )}
+          {reviewsResponse.success &&
+            reviewsResponse.data &&
+            reviewsResponse.data.length > 0 && (
+              <TestimonialsSection reviews={reviewsResponse.data} />
+            )}
           <RequestToBook />
           <LazyChatbot />
         </div>
       </>
     );
   } catch (error) {
-    console.error('Error loading home page content:', error);
+    console.error("Error loading home page content:", error);
     // Return a minimal version of the page if data fetching fails
     return (
       <>
         <HeroSection />
         <div className="space-y-20 w-full">
           <div className="text-center py-12">
-            <p className="text-gray-600">Unable to load content. Please try again later.</p>
+            <p className="text-gray-600">
+              Unable to load content. Please try again later.
+            </p>
           </div>
         </div>
       </>
@@ -52,7 +70,7 @@ async function HomeContent() {
 export default function Home() {
   return (
     <main className="flex flex-col">
-      <Suspense 
+      <Suspense
         fallback={
           <div className="flex justify-center items-center min-h-screen">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />

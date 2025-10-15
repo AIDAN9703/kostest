@@ -1,60 +1,55 @@
-"use client"
+"use client";
 
-import React, { useMemo } from 'react'
-import { cn } from '@/shared/utils/general-utils'
-import { FaYoutube, FaTiktok, FaInstagram } from 'react-icons/fa'
+import React from "react";
+import {
+  FaYoutube,
+  FaTiktok,
+  FaInstagram,
+  FaInstagramSquare,
+} from "react-icons/fa";
 
-interface SocialLinksProps {
-    isHomePage: boolean;
-    scrolled: boolean;
-}
+const SocialLinks: React.FC = () => {
+  // Unified styling system
+  const styles = {
+    container: "hidden md:flex items-center gap-2",
+    link: "transition-all duration-200 hover:scale-110 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50 rounded-sm p-1 hover:-translate-y-0.5 text-gray-700 hover:text-primary",
+    icon: "w-5 h-5",
+  };
 
-const SocialLinks: React.FC<SocialLinksProps> = ({
-    isHomePage,
-    scrolled
-}) => {
-    // Memoized social link style
-    const socialLinkStyle = useMemo(() => cn(
-        "transition-all duration-200 hover:scale-110",
-        "focus:outline-hidden focus-visible:ring-2",
-        "focus-visible:ring-primary/50 rounded-sm p-1",
-        "hover:-translate-y-0.5",
-        isHomePage && !scrolled
-            ? "text-white hover:text-white/80"
-            : "text-gray-700 hover:text-primary"
-    ), [isHomePage, scrolled]);
+  const socialLinks = [
+    {
+      href: "https://instagram.com/kosyachts",
+      icon: FaInstagramSquare,
+      label: "Instagram",
+    },
+    {
+      href: "https://www.tiktok.com/@kosyachts",
+      icon: FaTiktok,
+      label: "TikTok",
+    },
+    {
+      href: "https://www.youtube.com/@Kosyachts",
+      icon: FaYoutube,
+      label: "YouTube",
+    },
+  ];
 
-    return (
-        <div className="hidden md:flex items-center gap-4">
-            <a 
-                href="https://instagram.com/kosyachts" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className={socialLinkStyle}
-            >
-                <FaInstagram className="w-5 h-5" />
-                <span className="sr-only">Instagram</span>
-            </a>
-            <a 
-                href="https://www.tiktok.com/@kosyachts" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className={socialLinkStyle}
-            >
-                <FaTiktok className="w-5 h-5" />
-                <span className="sr-only">TikTok</span>
-            </a>
-            <a 
-                href="https://www.youtube.com/@Kosyachts" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className={socialLinkStyle}
-            >
-                <FaYoutube className="w-5 h-5" />
-                <span className="sr-only">YouTube</span>
-            </a>
-        </div>
-    )
-}
+  return (
+    <div className={styles.container}>
+      {socialLinks.map(({ href, icon: Icon, label }) => (
+        <a
+          key={label}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.link}
+        >
+          <Icon className={styles.icon} />
+          <span className="sr-only">{label}</span>
+        </a>
+      ))}
+    </div>
+  );
+};
 
-export default React.memo(SocialLinks) 
+export default React.memo(SocialLinks);

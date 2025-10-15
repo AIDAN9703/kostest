@@ -9,7 +9,6 @@ import { ImageKitProvider } from "@imagekit/next";
 import CookiesConsent from "@/shared/components/CookiesConsent";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 
-
 const openSans = localFont({
   src: [
     { path: "/fonts/OpenSans-Regular.ttf", style: "normal" },
@@ -24,20 +23,55 @@ const openSans = localFont({
 
 const poppins = localFont({
   src: [
-    { path: "/fonts/Poppins/Poppins-Regular.ttf", weight: "400", style: "normal" },
-    { path: "/fonts/Poppins/Poppins-Italic.ttf", weight: "400", style: "italic" },
+    {
+      path: "/fonts/Poppins/Poppins-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "/fonts/Poppins/Poppins-Italic.ttf",
+      weight: "400",
+      style: "italic",
+    },
     { path: "/fonts/Poppins/Poppins-Bold.ttf", weight: "700", style: "normal" },
-    { path: "/fonts/Poppins/Poppins-BoldItalic.ttf", weight: "700", style: "italic" },
-    { path: "/fonts/Poppins/Poppins-Light.ttf", weight: "300", style: "normal" },
-    { path: "/fonts/Poppins/Poppins-LightItalic.ttf", weight: "300", style: "italic" },
-    { path: "/fonts/Poppins/Poppins-Medium.ttf", weight: "500", style: "normal" },
-    { path: "/fonts/Poppins/Poppins-MediumItalic.ttf", weight: "500", style: "italic" },
-    { path: "/fonts/Poppins/Poppins-SemiBold.ttf", weight: "600", style: "normal" },
-    { path: "/fonts/Poppins/Poppins-SemiBoldItalic.ttf", weight: "600", style: "italic" },
+    {
+      path: "/fonts/Poppins/Poppins-BoldItalic.ttf",
+      weight: "700",
+      style: "italic",
+    },
+    {
+      path: "/fonts/Poppins/Poppins-Light.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "/fonts/Poppins/Poppins-LightItalic.ttf",
+      weight: "300",
+      style: "italic",
+    },
+    {
+      path: "/fonts/Poppins/Poppins-Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "/fonts/Poppins/Poppins-MediumItalic.ttf",
+      weight: "500",
+      style: "italic",
+    },
+    {
+      path: "/fonts/Poppins/Poppins-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "/fonts/Poppins/Poppins-SemiBoldItalic.ttf",
+      weight: "600",
+      style: "italic",
+    },
   ],
   variable: "--font-poppins",
 });
-
 
 const bebasNeue = localFont({
   src: [
@@ -49,12 +83,13 @@ const bebasNeue = localFont({
 export const metadata: Metadata = {
   title: {
     default: "Kings Of The Sea Yachts | Luxury Yacht Charters",
-    template: "%s | KOS Yachts"
+    template: "%s | KOS Yachts",
   },
-  description: "Set sail with Kings of the Sea Yachts' international fleet. From Miami luxury charters to worldwide parties & events, book unforgettable adventures.",
+  description:
+    "Set sail with Kings of the Sea Yachts' international fleet. From Miami luxury charters to worldwide parties & events, book unforgettable adventures.",
   keywords: [
     "yacht charter Miami",
-    "boat rental Miami", 
+    "boat rental Miami",
     "luxury yacht Miami",
     "fishing charter Miami",
     "private yacht Miami",
@@ -64,7 +99,7 @@ export const metadata: Metadata = {
     "boat charter Miami",
     "yacht charter Fort Lauderdale",
     "luxury boat rental",
-    "private yacht charter"
+    "private yacht charter",
   ],
   authors: [{ name: "Kings Of The Sea Yachts" }],
   creator: "Kings Of The Sea Yachts",
@@ -79,7 +114,8 @@ export const metadata: Metadata = {
     url: "https://www.kosyachts.com",
     siteName: "Kings Of The Sea Yachts",
     title: "Kings Of The Sea Yachts - Luxury Yacht Charters Miami",
-    description: "Experience luxury yacht charters in Miami with Kings Of The Sea Yachts. Premium boat rentals and private yacht experiences.",
+    description:
+      "Experience luxury yacht charters in Miami with Kings Of The Sea Yachts. Premium boat rentals and private yacht experiences.",
     images: [
       {
         url: "https://www.kosyachts.com/images/herooption22.jpg",
@@ -98,17 +134,18 @@ export const metadata: Metadata = {
         width: 1600,
         height: 900,
         alt: "Luxury yacht interior with panoramic Miami views - Kings Of The Sea Yachts",
-      }
+      },
     ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Kings Of The Sea Yachts - Luxury Yacht Charters Miami",
-    description: "Experience luxury yacht charters in Miami with Kings Of The Sea Yachts. Premium boat rentals and private yacht experiences.",
+    description:
+      "Experience luxury yacht charters in Miami with Kings Of The Sea Yachts. Premium boat rentals and private yacht experiences.",
     images: [
       "https://www.kosyachts.com/images/herooption22.jpg",
       "https://www.kosyachts.com/clients/koshat.jpeg",
-      "https://www.kosyachts.com/clients/niceyacht.jpg"
+      "https://www.kosyachts.com/clients/niceyacht.jpg",
     ],
   },
   robots: {
@@ -132,65 +169,66 @@ export const metadata: Metadata = {
     "application/ld+json": JSON.stringify({
       "@context": "https://schema.org",
       "@type": "LocalBusiness",
-      "name": "Kings Of The Sea Yachts",
-      "alternateName": "KOS Yachts",
-      "description": "Luxury yacht charters in Miami with premium boat rentals and private yacht experiences",
-      "url": "https://www.kosyachts.com",
-      "logo": "https://www.kosyachts.com/logo.png",
-      "image": [
+      name: "Kings Of The Sea Yachts",
+      alternateName: "KOS Yachts",
+      description:
+        "Luxury yacht charters in Miami with premium boat rentals and private yacht experiences",
+      url: "https://www.kosyachts.com",
+      logo: "https://www.kosyachts.com/logo.png",
+      image: [
         "https://www.kosyachts.com/images/herooption22.jpg",
         "https://www.kosyachts.com/clients/koshat.jpeg",
-        "https://www.kosyachts.com/clients/niceyacht.jpg"
+        "https://www.kosyachts.com/clients/niceyacht.jpg",
       ],
-      "category": "Yacht Charter",
-      "address": {
+      category: "Yacht Charter",
+      address: {
         "@type": "PostalAddress",
-        "addressLocality": "Miami",
-        "addressRegion": "FL",
-        "addressCountry": "US"
+        addressLocality: "Miami",
+        addressRegion: "FL",
+        addressCountry: "US",
       },
-      "telephone": "+1-305-XXX-XXXX",
-      "priceRange": "$$$",
-      "serviceArea": {
+      telephone: "+1-305-XXX-XXXX",
+      priceRange: "$$$",
+      serviceArea: {
         "@type": "GeoCircle",
-        "geoMidpoint": {
+        geoMidpoint: {
           "@type": "GeoCoordinates",
-          "latitude": 25.7617,
-          "longitude": -80.1918
+          latitude: 25.7617,
+          longitude: -80.1918,
         },
-        "geoRadius": "50000"
+        geoRadius: "50000",
       },
-      "hasOfferCatalog": {
+      hasOfferCatalog: {
         "@type": "OfferCatalog",
-        "name": "Yacht Charter Services",
-        "itemListElement": [
+        name: "Yacht Charter Services",
+        itemListElement: [
           {
             "@type": "Offer",
-            "itemOffered": {
+            itemOffered: {
               "@type": "Service",
-              "name": "Luxury Yacht Charters",
-              "description": "Premium yacht charters in Miami"
-            }
+              name: "Luxury Yacht Charters",
+              description: "Premium yacht charters in Miami",
+            },
           },
           {
             "@type": "Offer",
-            "itemOffered": {
+            itemOffered: {
               "@type": "Service",
-              "name": "Fishing Charters",
-              "description": "Professional fishing charters in Miami waters"
-            }
+              name: "Fishing Charters",
+              description: "Professional fishing charters in Miami waters",
+            },
           },
           {
             "@type": "Offer",
-            "itemOffered": {
+            itemOffered: {
               "@type": "Service",
-              "name": "Private Yacht Experiences",
-              "description": "Exclusive private yacht charters"
-            }
-          }
-        ]
-      }
-    })
+              name: "Private Yacht Experiences",
+              description: "Exclusive private yacht charters",
+            },
+          },
+        ],
+      },
+    }),
   },
 };
 
@@ -207,22 +245,26 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
       <head>
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         {/* Google Tag Manager */}
-        <script dangerouslySetInnerHTML={{
-          __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
 j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-PQTQNKBB');`
-        }} />
+})(window,document,'script','dataLayer','GTM-PQTQNKBB');`,
+          }}
+        />
         {/* End Google Tag Manager */}
         <GoogleMapsScript />
       </head>
-      <body className={`${openSans.className} ${bebasNeue.variable} ${openSans.variable} ${poppins.variable} antialiased`}>
-        <ImageKitProvider urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || ''}>
+      <body
+        className={`${openSans.className} ${bebasNeue.variable} ${openSans.variable} ${poppins.variable} antialiased`}
+      >
+        <ImageKitProvider
+          urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || ""}
+        >
           <SessionProvider>
-            <NuqsAdapter>
-              {children}
-            </NuqsAdapter>
+            <NuqsAdapter>{children}</NuqsAdapter>
             <Toaster />
             <CookiesConsent />
           </SessionProvider>
@@ -230,7 +272,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       </body>
     </html>
   );
-}
+};
 
 export default RootLayout;
-

@@ -1,24 +1,30 @@
-'use client'
+"use client";
 
-import { useEffect, useRef } from 'react';
-import Image from 'next/image';
-import { useSearchStore } from '@/features/search/store/useSearchStore';
-import SearchBar from '@/shared/layouts/sub-components/SearchBar';
-import { TypeAnimation } from 'react-type-animation';
+import { useEffect, useRef } from "react";
+import Image from "next/image";
+import { useSearchStore } from "@/features/search/store/useSearchStore";
+import SearchBar from "@/shared/layouts/sub-components/SearchBar";
+import { TypeAnimation } from "react-type-animation";
 
 // Pre-compute the sequence once outside component
 const TYPE_SEQUENCE = [
-  "Yacht", 5000,
-  "Boat", 5000, 
-  "Luxury", 5000,
-  "Family", 5000,
-  "Corporate", 5000,
-  "Birthday", 3000,
+  "Yacht",
+  5000,
+  "Boat",
+  5000,
+  "Luxury",
+  5000,
+  "Family",
+  5000,
+  "Corporate",
+  5000,
+  "Birthday",
+  3000,
 ] as (string | number)[];
 
 export default function HeroSection() {
   const { setIsExpanded, resetSearchExpansion } = useSearchStore();
-  
+
   // Reset search expansion on mount
   useEffect(() => {
     resetSearchExpansion();
@@ -30,27 +36,27 @@ export default function HeroSection() {
       // Hero section height
       const isDesktop = window.innerWidth >= 640;
       const heroHeight = window.innerHeight * (isDesktop ? 0.8 : 0.75);
-      
-      // Search bar is roughly 70% down the hero due to centering + spacing
-      const searchBarPosition = heroHeight * 0.7;
-      
+
+      // Search bar transition happens earlier to avoid overlap
+      const searchBarPosition = heroHeight * 0.75;
+
       setIsExpanded(window.scrollY >= searchBarPosition);
     };
 
     handleScroll();
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [setIsExpanded]);
 
   return (
-    <section 
-      className="relative w-full h-[75vh] sm:h-[80vh] overflow-hidden" 
+    <section
+      className="relative w-full h-[75vh] sm:h-[80vh] overflow-hidden"
       aria-label="Hero Section"
     >
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
-        <Image 
-          src="/images/herooption22.jpg" 
+        <Image
+          src="/images/herooption22.jpg"
           alt="Luxury yachts in crystal clear waters"
           fill
           className="object-cover"
@@ -81,19 +87,20 @@ export default function HeroSection() {
                   cursor={false}
                   preRenderFirstString={true}
                 />
-                {' Experience'}
+                {" Experience"}
               </span>
             </h1>
           </div>
-          
+
           {/* Search Bar */}
           <div className="w-full mt-8 sm:mt-12 md:mt-16 lg:mt-24">
             <SearchBar variant="hero" />
           </div>
-          
+
           {/* Subtitle */}
           <p className="text-sm sm:text-base md:text-lg max-w-xs sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl text-white mt-2 sm:mt-4 md:mt-6">
-            Discover unforgettable boat and yacht charters with experienced crew worldwide
+            Discover unforgettable boat and yacht charters with experienced crew
+            worldwide
           </p>
         </div>
       </div>

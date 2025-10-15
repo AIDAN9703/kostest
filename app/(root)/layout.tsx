@@ -1,7 +1,6 @@
-import Navigation from '@/shared/layouts/Navigation';
-import PageWrapper from '@/shared/layouts/PageWrapper';
-import { ReactNode } from 'react'
-import Footer from '@/shared/layouts/Footer';
+import Navigation from "@/shared/layouts/Navigation";
+import { ReactNode } from "react";
+import Footer from "@/shared/layouts/Footer";
 
 interface LayoutProps {
   children: ReactNode;
@@ -13,11 +12,7 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <>
       <Navigation />
-      <main>
-        <PageWrapper>
-          {children}
-        </PageWrapper>
-      </main>
+      <main>{children}</main>
       <Footer />
     </>
   );
