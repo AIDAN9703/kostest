@@ -310,3 +310,22 @@ export const ADMIN_USER_MENU_ITEMS = [
     icon: <HelpCircle className="h-4 w-4" />,
   },
 ] as const;
+
+export const ADMIN_FOOTER_NAV_ITEMS = [
+  {
+    label: "Settings",
+    href: "/admin/settings",
+    icon: <SettingsIcon className="h-5 w-5" />,
+  },
+  {
+    label: "Help",
+    href: "/admin/help",
+    icon: <HelpCircle className="h-5 w-5" />,
+  },
+  {
+    label: "Sign Out",
+    href: "/api/auth/signout",
+    icon: <LogOut className="h-5 w-5" />,
+    variant: "danger" as const,
+  },
+] as const;
