@@ -44,6 +44,7 @@ export const STATUS_COLORS = {
   INSTANT_BOOK: "green",
   REQUEST: "blue",
   INQUIRY: "yellow",
+  EXTERNAL_BOOKING: "purple",
 
   // Payment Status
   PAID: "green",

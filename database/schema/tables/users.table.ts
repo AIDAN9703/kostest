@@ -1,5 +1,5 @@
 import { pgTable, text, integer, boolean, doublePrecision, uuid, timestamp, index } from "drizzle-orm/pg-core";
-import { userStatusEnum, userRoleEnum, boatingExperienceLevelEnum, notificationPreferenceEnum, authProviderEnum } from "@/database/schema/enums";
+import { userStatusEnum, userRoleEnum, notificationPreferenceEnum, authProviderEnum } from "@/database/schema/enums";
 
 
 
@@ -63,13 +63,6 @@ export const users = pgTable(
       governmentIdVerified: boolean("government_id_verified").default(false),
       governmentIdType: text("government_id_type"),
       
-      // Boating Qualifications
-      boatingExperience: boatingExperienceLevelEnum("boating_experience").default("NONE"),
-      boatingLicenseNumber: text("boating_license_number"),
-      boatingLicenseExpiry: timestamp("boating_license_expiry", { mode: "date" }),
-      boatingLicenseVerified: boolean("boating_license_verified").default(false),
-      
-      
       // Insurance Information
       hasInsurance: boolean("has_insurance").default(false),
       insuranceProvider: text("insurance_provider"),
@@ -112,7 +105,6 @@ export const users = pgTable(
       index("email_idx").on(table.email),
       index("status_idx").on(table.status),
       index("role_idx").on(table.role),
-      index("boating_exp_idx").on(table.boatingExperience),
       // Search-specific indexes
       index("user_search_name_idx").on(table.firstName, table.lastName),
       index("user_search_username_idx").on(table.username),

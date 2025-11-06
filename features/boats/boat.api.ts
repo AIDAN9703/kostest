@@ -5,7 +5,7 @@
 
 import { type Boat } from '@/database/types';
 import { type BoatFilterInput } from '@/features/boats/boat.validation';
-import { type PaginatedBoatsResponse, type BoatWithTiers } from '@/features/boats/boat.types';
+import { type BoatWithTiers, type BoatListItem } from '@/features/boats/boat.types';
 import { type ApiResponse, type PaginatedApiResponse } from '@/shared/types/api.types';
 
 export const boatsApi = {
@@ -17,7 +17,7 @@ export const boatsApi = {
    * Fetch boats with filtering and pagination (Admin)
    * Calls: GET /api/admin/boats
    */
-  async getBoats(filters: BoatFilterInput = {}): Promise<PaginatedBoatsResponse> {
+  async getBoats(filters: BoatFilterInput = {}): Promise<PaginatedApiResponse<BoatListItem>> {
     // Build query string from all defined filters
     const params = new URLSearchParams(
       Object.entries(filters)
@@ -31,16 +31,7 @@ export const boatsApi = {
       throw new Error(`Failed to fetch boats: ${response.statusText}`);
     }
 
-    const json: PaginatedApiResponse<any> = await response.json();
-    
-    if (!json.success) {
-      throw new Error(json.error || 'Failed to fetch boats');
-    }
-
-    return {
-      boats: json.data,
-      ...json.meta.pagination,
-    };
+    return response.json();
   },
 
   /**

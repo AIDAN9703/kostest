@@ -6,7 +6,7 @@ import { auth } from "@/auth";
 import { bookingRequestSchema, BookingRequest } from "@/features/_validation/validations";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { calculateEndDateTime } from "@/shared/utils/booking-utils";
+import { calculateEndDateTime } from "@/shared/utils/date-helpers";
 import { eq } from "drizzle-orm";
 import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
 import { ghlWebhookService } from "@/shared/services/ghl-webhook.service";

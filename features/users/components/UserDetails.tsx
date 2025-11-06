@@ -162,22 +162,6 @@ export function UserDetails({ user }: UserDetailsProps) {
             <p className="text-sm font-medium text-gray-500">Government ID Verified</p>
             <BooleanStatus value={Boolean(user.governmentIdVerified)} />
           </div>
-          {user.boatingLicenseNumber && (
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-500">Boating License Number</p>
-              <p>{user.boatingLicenseNumber}</p>
-            </div>
-          )}
-          {user.boatingLicenseExpiry && (
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-gray-500">Boating License Expiry</p>
-              <p>{formatDate(user.boatingLicenseExpiry)}</p>
-            </div>
-          )}
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-gray-500">Boating License Verified</p>
-            <BooleanStatus value={Boolean(user.boatingLicenseVerified)} />
-          </div>
         </CardContent>
       </Card>
       

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { BookingRequest } from "@/features/_validation/validations";
-import { parseISODateTimeInBoatTimezone, calculateEndDateTime, createDateTimeISO } from "@/shared/utils/booking-utils";
+import { parseDateTimeInBoatTimezone, calculateEndDateTime, createDateTimeISO } from "@/shared/utils/date-helpers";
 import { Boat, PricingTier } from "@/shared/types/types";
 import { calculateBookingPrice, BookingPriceBreakdown } from "@/shared/utils/pricing-utils";
 import { getActivePricingTiers } from "./usePriceCalculation";
@@ -63,7 +63,7 @@ export function useBookingFormState({
   
   // Memoized parsed datetime in boat's timezone
   const parsedDateTime = useMemo(() => 
-    parseISODateTimeInBoatTimezone(selectedStartDateTime || "", boat), 
+    parseDateTimeInBoatTimezone(selectedStartDateTime || "", boat), 
     [selectedStartDateTime, boat]
   );
   

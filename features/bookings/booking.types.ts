@@ -1,14 +1,9 @@
 /**
  * Application-level types for bookings
- * These extend or derive from the base database types
+ * Dates are Date objects everywhere (SuperJSON handles serialization)
  */
 
-/**
- * Booking list item - optimized for table display
- * Note: Dates come as ISO strings from the API, not Date objects
- */
 export interface BookingListItem {
-  // Booking core fields
   id: string;
   bookingType: string;
   bookingStatus: string;
@@ -16,25 +11,51 @@ export interface BookingListItem {
   customerName: string | null;
   customerEmail: string | null;
   customerPhone: string | null;
-  startDateTime: Date | string | null; // Can be Date from DB or string from API
-  endDateTime: Date | string | null; // Can be Date from DB or string from API
+  startDateTime: Date | null;
+  endDateTime: Date | null;
   numberOfPassengers: number | null;
   totalAmount: number | null;
   needsCaptain: boolean | null;
-  createdAt: Date | string | null; // Can be Date from DB or string from API
+  createdAt: Date | null;
   
-  // Joined boat info
   boatId: string | null;
   boatName: string | null;
   boatCategory: string | null;
   boatMainImage: string | null;
   
-  // Joined user info
   userId: string | null;
   userFirstName: string | null;
   userLastName: string | null;
   userEmail: string | null;
   userProfileImage: string | null;
+}
+
+export interface BookingDetails extends BookingListItem {
+  paymentMethod: string | null;
+  specialRequests: string | null;
+  updatedAt: Date | null;
+  captainFee: number | null;
+  cleaningFee: number | null;
+  serviceFee: number | null;
+  taxAmount: number | null;
+  discountAmount: number | null;
+  depositAmount: number | null;
+  refundAmount: number | null;
+  currency: string | null;
+  paymentDueDate: Date | null;
+  depositPaid: boolean | null;
+  isMultiDay: boolean | null;
+  pickupLocation: string | null;
+  dropoffLocation: string | null;
+  cancellationReason: string | null;
+  cancelledAt: Date | null;
+  expiresAt: Date | null;
+  
+  boatCapacity: number | null;
+  boatOwnerId: string | null;
+  boatOwnerFirstName: string | null;
+  boatOwnerLastName: string | null;
+  boatOwnerEmail: string | null;
 }
 
 /**

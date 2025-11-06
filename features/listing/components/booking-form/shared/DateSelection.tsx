@@ -8,7 +8,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Calendar, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/shared/utils/general-utils";
-import { createDateTimeISO } from "@/shared/utils/booking-utils";
+import { createDateTimeISO } from "@/shared/utils/date-helpers";
 import { BookingRequest } from "@/features/_validation/validations";
 import { CustomCalendar } from "./CustomCalendar";
 
@@ -17,11 +17,13 @@ export function DateSelection({
   currentDate,
   boatId,
   onDateSelected,
+  boat,
 }: { 
   control: Control<BookingRequest>; 
   currentDate: Date | null;
   boatId: string;
   onDateSelected?: (date: Date) => void;
+  boat?: { timezone?: string | null };
 }) {
   const [dateOpen, setDateOpen] = useState(false);
   
@@ -64,7 +66,7 @@ export function DateSelection({
                           onDateSelected(date);
                         } else {
                           const currentTime = currentDate ? format(currentDate, "HH:mm") : "09:00";
-                          const newDateTimeISO = createDateTimeISO(date, currentTime);
+                          const newDateTimeISO = createDateTimeISO(date, currentTime, boat);
                           field.onChange(newDateTimeISO);
                         }
                       }

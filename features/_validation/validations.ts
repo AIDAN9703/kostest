@@ -1,4 +1,3 @@
-import { boatingExperienceLevelEnum } from "@/database/schema/enums";
 import { z } from "zod";
 
 /**
@@ -43,7 +42,6 @@ export const profileUpdateSchema = z.object({
   city: z.string().max(100).optional().nullable(),
   state: z.string().max(100).optional().nullable(),
   country: z.string().max(100).optional().nullable(),
-  boatingExperience: z.enum(boatingExperienceLevelEnum.enumValues).optional().nullable(),
   profileImage: z.union([
     z.string().url("Invalid URL format"),
     z.string().length(0), // Allow empty string

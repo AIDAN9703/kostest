@@ -50,12 +50,6 @@ async function UserFormWithData({ userId }: { userId: string }) {
     notFound();
   }
   
-  // Format the license expiry date if it exists
-  const formatLicenseExpiry = (date: Date | null): string | null => {
-    if (!date) return null;
-    return date.toISOString().split('T')[0]; // Format as YYYY-MM-DD for date input
-  };
-  
   // Transform database user to match the form's expected format
   // Only include fields that are in the UpdateUserInput type
   const user: Partial<UpdateUserInput> = {
@@ -81,10 +75,6 @@ async function UserFormWithData({ userId }: { userId: string }) {
     phoneVerified: userData.phoneVerified,
     identityVerified: userData.identityVerified || false,
     governmentIdVerified: userData.governmentIdVerified || false,
-    boatingExperience: userData.boatingExperience,
-    boatingLicenseNumber: userData.boatingLicenseNumber || null,
-    boatingLicenseExpiry: formatLicenseExpiry(userData.boatingLicenseExpiry),
-    boatingLicenseVerified: userData.boatingLicenseVerified || false,
     stripeCustomerId: userData.stripeCustomerId || null,
     stripeConnectAccountId: userData.stripeConnectAccountId || null,
     hasBankAccountConnected: userData.hasBankAccountConnected || false,

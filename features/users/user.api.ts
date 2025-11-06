@@ -5,7 +5,6 @@
 
 import { type User } from '@/database/types';
 import { type UserFilterInput } from '@/features/users/user.validation';
-import { type PaginatedUsersResponse } from '@/features/users/user.types';
 import { type ApiResponse, type PaginatedApiResponse } from '@/shared/types/api.types';
 
 export const usersApi = {
@@ -17,7 +16,7 @@ export const usersApi = {
    * Fetch users with filtering and pagination (Admin)
    * Calls: GET /api/admin/users
    */
-  async getUsers(filters: UserFilterInput = {}): Promise<PaginatedUsersResponse> {
+  async getUsers(filters: UserFilterInput = {}): Promise<PaginatedApiResponse<User>> {
     const searchParams = new URLSearchParams();
     
     if (filters.search) searchParams.set('search', filters.search);
@@ -32,16 +31,7 @@ export const usersApi = {
       throw new Error(`Failed to fetch users: ${response.statusText}`);
     }
 
-    const json: PaginatedApiResponse<User> = await response.json();
-    
-    if (!json.success) {
-      throw new Error(json.error || 'Failed to fetch users');
-    }
-
-    return {
-      users: json.data,
-      ...json.meta.pagination,
-    };
+    return response.json();
   },
 
   /**

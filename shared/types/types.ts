@@ -1,10 +1,7 @@
 import { boatCategoryEnum } from "@/database/schema";
 import { z } from "zod";
 import { LucideIcon } from 'lucide-react';
-import { SupportedTimezones } from "../utils/booking-utils";
-
-// User profile types
-export type BoatingExperience = "BEGINNER" | "INTERMEDIATE" | "ADVANCED" | "EXPERT" | null;
+import { SupportedTimezones } from "../utils/date-helpers";
 
 // Location data for map and search
 export interface LocationData {

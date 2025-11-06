@@ -4,7 +4,7 @@ import { PricingTier } from "@/shared/types/types";
 import { CalendarIcon, UsersIcon } from "lucide-react";
 import { ClockIcon } from "lucide-react";
 import { formatDate, formatTime12Hour } from "@/shared/utils/general-utils";
-import { parseISODateTimeInBoatTimezone } from "@/shared/utils/booking-utils";
+import { parseDateTimeInBoatTimezone } from "@/shared/utils/date-helpers";
 
 // Safe boat data interface - only includes necessary and safe properties
 interface SafeBoatData {
@@ -36,7 +36,7 @@ export default function BookingSummary({
     if (!bookingData.startDateTime) return { date: 'TBD', time: 'TBD' };
     
     // Parse in boat's timezone to match the "vessel's local time" promise
-    const { date: boatDate, time: boatTime } = parseISODateTimeInBoatTimezone(
+    const { date: boatDate, time: boatTime } = parseDateTimeInBoatTimezone(
       bookingData.startDateTime, 
       boat
     );

@@ -6,6 +6,8 @@ import { bookings, bookingTypeEnum, bookingStatusEnum, boats } from "@/database/
 import { eq, or, sql } from "drizzle-orm";
 import config from "@/shared/config/config";
 import { ghlWebhookService } from "@/shared/services/ghl-webhook.service";
+import { bookingService } from '@/features/bookings/booking.service';
+import { sendBookingConfirmationEmail } from '@/shared/services/email.service';
 
 // Use config for Stripe configuration
 const stripe = new Stripe(config.stripeSecretKey, {
@@ -53,6 +55,9 @@ export async function POST(request: NextRequest) {
           await handleInstantBookingPayment(session);
         } else if (metadata.type === 'EVENT_TICKET' && metadata.eventId) {
           await handleEventTicketPurchase(session);
+        } else if (metadata.bookingType === "REQUEST") {
+          // Handle payment link payment for request booking
+          await handleRequestBookingPayment(session);
         }
         
         break;
@@ -324,4 +329,59 @@ async function sendGHLWebhookForInstantBooking(metadata: any, sessionId: string)
   } catch (error) {
     console.error("Error sending GHL webhook for instant booking:", error);
   }
-} 
+}
+
+/**
+ * Handle payment for request booking (payment link)
+ */
+async function handleRequestBookingPayment(session: Stripe.Checkout.Session) {
+  try {
+    const metadata = session.metadata || {};
+    const bookingId = metadata.bookingId;
+    
+    if (!bookingId) {
+      console.error("Missing booking ID in payment link metadata");
+      return;
+    }
+    
+    // Get the booking
+    const booking = await bookingService.getBookingById(bookingId);
+    
+    if (!booking) {
+      console.error(`Booking not found: ${bookingId}`);
+      return;
+    }
+    
+    // Verify this is a request booking
+    if (booking.bookingType !== 'REQUEST') {
+      console.error(`Booking ${bookingId} is not a request booking`);
+      return;
+    }
+    
+    // Get payment intent ID
+    const paymentIntentId = session.payment_intent as string;
+    
+    // Update booking status to CONFIRMED and payment to PAID
+    await db.update(bookings)
+      .set({
+        paymentStatus: "PAID",
+        bookingStatus: "CONFIRMED",
+        stripePaymentIntentId: paymentIntentId,
+        updatedAt: new Date()
+      })
+      .where(eq(bookings.id, bookingId));
+    
+    console.log(`Updated request booking ${bookingId} to CONFIRMED after payment`);
+    
+    // Send confirmation email
+    const updatedBooking = await bookingService.getBookingById(bookingId);
+    if (updatedBooking) {
+      await sendBookingConfirmationEmail(updatedBooking).catch(error => {
+        console.warn('Failed to send confirmation email:', error);
+      });
+    }
+    
+  } catch (error) {
+    console.error("Error processing request booking payment:", error);
+  }
+}

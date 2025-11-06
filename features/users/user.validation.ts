@@ -2,7 +2,6 @@ import * as z from "zod";
 import { 
   userRoleEnum, 
   userStatusEnum, 
-  boatingExperienceLevelEnum, 
   authProviderEnum
 } from "@/database/schema";
 
@@ -56,12 +55,6 @@ const userBaseSchema = z.object({
   phoneVerified: z.boolean().default(false),
   identityVerified: z.boolean().default(false),
   governmentIdVerified: z.boolean().default(false),
-  
-  // Boating Information
-  boatingExperience: z.enum(boatingExperienceLevelEnum.enumValues).optional().nullable(),
-  boatingLicenseNumber: z.string().max(50, "License number must be less than 50 characters").optional().nullable(),
-  boatingLicenseExpiry: z.string().optional().nullable(),
-  boatingLicenseVerified: z.boolean().default(false),
   
   // Stripe Information
   stripeCustomerId: z.string().optional().nullable(),

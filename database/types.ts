@@ -35,7 +35,6 @@ import {
   
   // Boat enums
   boatCategoryEnum,
-  boatingExperienceLevelEnum,
   locationTypeEnum,
   timezoneEnum,
   
@@ -83,7 +82,6 @@ export type NewUser = typeof users.$inferInsert;
 // User enums
 export type UserStatus = typeof userStatusEnum.enumValues[number];
 export type UserRole = typeof userRoleEnum.enumValues[number];
-export type BoatingExperience = typeof boatingExperienceLevelEnum.enumValues[number];
 
 // ========================================
 // BOAT TYPES

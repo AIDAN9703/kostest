@@ -1,16 +1,16 @@
 "use client";
 
-import { UserFilters } from '@/features/users/components/UserFilters';
+import { UserFilters } from "@/features/users/components/UserFilters";
 import { ModernUsersTable } from "@/features/users/components/ModernUsersTable";
-import { useQueryStates, parseAsString, parseAsInteger } from 'nuqs';
+import { useQueryStates, parseAsString, parseAsInteger } from "nuqs";
 import { useUsers } from "@/features/users/hooks/useUsers";
 import { useDeleteUser } from "@/features/users/hooks/useUserMutations";
-import { type UserFilterInput } from '@/features/users/user.validation';
+import { type UserFilterInput } from "@/features/users/user.validation";
 
 export default function UsersPage() {
   const [filters, setFilters] = useQueryStates(
     {
-      search: parseAsString.withDefault(''),
+      search: parseAsString.withDefault(""),
       status: parseAsString,
       role: parseAsString,
       page: parseAsInteger.withDefault(1),
@@ -19,17 +19,24 @@ export default function UsersPage() {
       clearOnDefault: true,
     }
   );
-  
+
   const apiFilters: UserFilterInput = Object.fromEntries(
-    Object.entries({ ...filters, limit: 10 })
-      .map(([key, value]) => [key, value ?? undefined])
+    Object.entries({ ...filters, limit: 10 }).map(([key, value]) => [
+      key,
+      value ?? undefined,
+    ])
   ) as UserFilterInput;
-  
+
   const { data, isLoading, error } = useUsers(apiFilters);
   const deleteUser = useDeleteUser();
 
   const handleDelete = (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return;
+    if (
+      !confirm(
+        "Are you sure you want to delete this user? This action cannot be undone."
+      )
+    )
+      return;
     deleteUser.mutate(userId);
   };
 
@@ -41,7 +48,9 @@ export default function UsersPage() {
     return (
       <div className="p-6">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600">Failed to load users. Please try again.</p>
+          <p className="text-red-600">
+            Failed to load users. Please try again.
+          </p>
         </div>
       </div>
     );
@@ -54,12 +63,12 @@ export default function UsersPage() {
 
       {/* Table */}
       <ModernUsersTable
-        users={data?.users || []}
+        users={data?.data || []}
         pagination={{
-          page: data?.page || 1,
-          limit: data?.limit || 10,
-          totalCount: data?.totalCount || 0,
-          totalPages: data?.totalPages || 0,
+          page: data?.meta?.pagination?.page || 1,
+          limit: data?.meta?.pagination?.limit || 10,
+          totalCount: data?.meta?.pagination?.totalCount || 0,
+          totalPages: data?.meta?.pagination?.totalPages || 0,
         }}
         loading={isLoading}
         onDelete={handleDelete}

@@ -72,7 +72,6 @@ export async function updateUserProfile(formData: Partial<ProfileFormValues>): P
       city: formData.city ?? currentUser.city,
       state: formData.state ?? currentUser.state,
       country: formData.country ?? currentUser.country,
-      boatingExperience: formData.boatingExperience ?? currentUser.boatingExperience,
       profileImage: formData.profileImage ?? currentUser.profileImage,
       coverImage: formData.coverImage ?? currentUser.coverImage,
     };
@@ -92,7 +91,6 @@ export async function updateUserProfile(formData: Partial<ProfileFormValues>): P
     if (formData.city !== undefined) updateData.city = validatedData.city || null;
     if (formData.state !== undefined) updateData.state = validatedData.state || null;
     if (formData.country !== undefined) updateData.country = validatedData.country || null;
-    if (formData.boatingExperience !== undefined) updateData.boatingExperience = validatedData.boatingExperience || null;
     if (formData.profileImage !== undefined) updateData.profileImage = validatedData.profileImage === "" ? null : validatedData.profileImage;
     if (formData.coverImage !== undefined) updateData.coverImage = validatedData.coverImage === "" ? null : validatedData.coverImage;
 
@@ -152,7 +150,6 @@ function calculateProfileCompletion(user: Partial<UserProfile>): number {
     "city", 
     "state", 
     "country", 
-    "boatingExperience", 
     "profileImage"
   ] as const;
   

@@ -101,7 +101,7 @@ export const boatBaseSchema = z.object({
   registrationNumber: z.string().optional().nullable(),
   hullId: z.string().optional().nullable(),
   insuranceInfo: z.string().optional().nullable(),
-  insuranceExpiry: z.date().optional().nullable(),
+  insuranceExpiry: z.string().datetime().optional().nullable().or(z.literal("")),
   
   // Availability
   minRentalHours: z.number().int().nonnegative().optional().nullable(),
@@ -109,8 +109,8 @@ export const boatBaseSchema = z.object({
   advanceBookingDays: z.number().int().nonnegative().optional().nullable(),
   
   // Maintenance
-  lastMaintenanceDate: z.date().optional().nullable(),
-  nextMaintenanceDate: z.date().optional().nullable(),
+  lastMaintenanceDate: z.string().datetime().optional().nullable().or(z.literal("")),
+  nextMaintenanceDate: z.string().datetime().optional().nullable().or(z.literal("")),
   maintenanceNotes: z.string().optional().nullable(),
 });
 

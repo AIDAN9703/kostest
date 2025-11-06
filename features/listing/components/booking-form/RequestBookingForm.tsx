@@ -95,6 +95,7 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
             currentDate={formState.uiDate}
             boatId={boat.id}
             onDateSelected={(date) => formState.setDate?.(date)}
+            boat={boat}
           />
 
           <PricingDisplay
@@ -110,6 +111,7 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
             selectedDate={formState.uiDate}
             duration={formState.selectedPricingTier?.hours}
             onTimeSelected={(time) => formState.setTime?.(time)}
+            boat={boat}
           />
 
           <PassengerSelection 

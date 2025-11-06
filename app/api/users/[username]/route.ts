@@ -35,7 +35,6 @@ export async function GET(
         city: users.city,
         state: users.state,
         country: users.country,
-        boatingExperience: users.boatingExperience,
         averageRating: users.averageRating,
         totalReviews: users.totalReviews,
         isBoatOwner: users.isBoatOwner,

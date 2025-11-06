@@ -22,15 +22,6 @@ export const locationTypeEnum = pgEnum("LocationType", [
     "DESTINATION",
   ]);
 
-  export const boatingExperienceLevelEnum = pgEnum("BoatingExperienceLevel", [
-    "NONE",
-    "BEGINNER",
-    "INTERMEDIATE",
-    "ADVANCED",
-    "EXPERT",
-    "PROFESSIONAL"
-  ]);
-
   // Timezone enum - Major IANA timezone identifiers
 export const timezoneEnum = pgEnum('timezone', [
   // Major US Timezones

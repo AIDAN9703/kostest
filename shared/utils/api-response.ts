@@ -6,42 +6,43 @@
  */
 
 import { NextResponse } from 'next/server';
+import superjson from 'superjson';
 
 /**
- * Success response with data
+ * Success response with data (uses SuperJSON for Date serialization)
  * Usage: return apiSuccess(user)
  */
 export function apiSuccess<T>(data: T, status: number = 200) {
   return NextResponse.json(
-    {
+    superjson.serialize({
       success: true,
       data,
-    },
+    }),
     { status }
   );
 }
 
 /**
- * Success response with data and metadata
+ * Success response with data and metadata (uses SuperJSON)
  * Usage: return apiSuccessWithMeta(users, { pagination: {...} })
  */
 export function apiSuccessWithMeta<T>(
   data: T,
-  meta: Record<string, any>,
+  meta: Record<string, unknown>,
   status: number = 200
 ) {
   return NextResponse.json(
-    {
+    superjson.serialize({
       success: true,
       data,
       meta,
-    },
+    }),
     { status }
   );
 }
 
 /**
- * Paginated response helper
+ * Paginated response helper (uses SuperJSON)
  * Usage: return apiPaginated(users, { page: 1, limit: 10, totalCount: 100, totalPages: 10 })
  */
 export function apiPaginated<T>(
@@ -55,11 +56,11 @@ export function apiPaginated<T>(
   status: number = 200
 ) {
   return NextResponse.json(
-    {
+    superjson.serialize({
       success: true,
       data,
       meta: { pagination },
-    },
+    }),
     { status }
   );
 }

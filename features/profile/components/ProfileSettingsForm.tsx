@@ -29,7 +29,6 @@ import { UserProfile } from "@/features/users/user.types";
 import { ImageUpload } from "@/shared/components/ui/image-upload";
 import { Image as IKImage } from "@imagekit/next";
 import { getImageKitProps } from "@/shared/services/imagekit.service";
-import { BoatingExperience } from "@/database/types";
 
 interface ProfileSettingsFormProps {
   user: UserProfile;
@@ -196,33 +195,6 @@ const ProfileDetailsSection = ({ form }: { form: any }) => (
         )}
       />
     </div>
-
-    <FormField
-      control={form.control}
-      name="boatingExperience"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Boating Experience (Optional)</FormLabel>
-          <Select 
-            onValueChange={(value) => field.onChange(value || null)}
-            value={field.value || undefined}
-          >
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Select your experience level" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              <SelectItem value="BEGINNER">Beginner</SelectItem>
-              <SelectItem value="INTERMEDIATE">Intermediate</SelectItem>
-              <SelectItem value="ADVANCED">Advanced</SelectItem>
-              <SelectItem value="EXPERT">Expert</SelectItem>
-            </SelectContent>
-          </Select>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
   </div>
 );
 
@@ -335,7 +307,6 @@ export default function ProfileSettingsForm({ user }: ProfileSettingsFormProps) 
       city: user?.city || "",
       state: user?.state || "",
       country: user?.country || "",
-      boatingExperience: user?.boatingExperience || null,
       profileImage: user?.profileImage || "",
       coverImage: user?.coverImage || "",
     },
@@ -373,18 +344,7 @@ export default function ProfileSettingsForm({ user }: ProfileSettingsFormProps) 
     if (formValues.country !== initialValues.country) 
       changedFields.country = formValues.country;
     
-    // Special handling for boatingExperience enum
-    if (formValues.boatingExperience !== initialValues.boatingExperience) {
-      // Only assign valid enum values or null
-      const value = formValues.boatingExperience;
-      if (value === "BEGINNER" || value === "INTERMEDIATE" || 
-          value === "ADVANCED" || value === "EXPERT") {
-        changedFields.boatingExperience = value;
-      } else {
-        changedFields.boatingExperience = null;
-      }
-    }
-    
+    // All other fields are handled above
     if (formValues.profileImage !== initialValues.profileImage) 
       changedFields.profileImage = formValues.profileImage;
     

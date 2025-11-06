@@ -1,8 +1,8 @@
 "use client";
 
 // Components
-import { BookingFilters } from "@/features-admin/bookings/components/BookingFilters";
-import { ModernBookingsTable } from "@/features-admin/bookings/components/ModernBookingsTable";
+import { BookingFilters } from "@/features/bookings/components/BookingFilters";
+import { AdminBookingsTable } from "@/features/bookings/components/AdminBookingsTable";
 import {
   useQueryStates,
   parseAsString,
@@ -11,11 +11,12 @@ import {
 } from "nuqs";
 
 // Hooks
-import { useBookings } from "@/features-admin/bookings/hooks/useBookings";
-import { useDeleteBooking } from "@/features-admin/bookings/hooks/useBookingMutations";
+import { useBookings } from "@/features/bookings/hooks/useBookings";
+import { useDeleteBooking } from "@/features/bookings/hooks/useBookingMutations";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Types
-import { type BookingFilterInput } from "@/features-admin/bookings/booking.validation";
+import { type BookingFilterInput } from "@/features/bookings/booking.validation";
 
 //-----------------------------------------------------------------------------------
 
@@ -50,6 +51,7 @@ export default function BookingsPage() {
 
   const { data, isLoading, error } = useBookings(apiFilters);
   const deleteBooking = useDeleteBooking();
+  const queryClient = useQueryClient();
 
   const handleDelete = (bookingId: string) => {
     if (
@@ -63,6 +65,11 @@ export default function BookingsPage() {
 
   const handlePageChange = (page: number) => {
     setFilters({ page });
+  };
+
+  const handleRefresh = () => {
+    // Invalidate and refetch bookings
+    queryClient.invalidateQueries({ queryKey: ["bookings", "list"] });
   };
 
   if (error) {
@@ -83,17 +90,18 @@ export default function BookingsPage() {
       <BookingFilters filters={filters} setFilters={setFilters} />
 
       {/* Table */}
-      <ModernBookingsTable
-        bookings={data?.bookings || []}
+      <AdminBookingsTable
+        bookings={data?.data || []}
         pagination={{
-          page: data?.page || 1,
-          limit: data?.limit || 10,
-          totalCount: data?.totalCount || 0,
-          totalPages: data?.totalPages || 0,
+          page: data?.meta?.pagination?.page || 1,
+          limit: data?.meta?.pagination?.limit || 10,
+          totalCount: data?.meta?.pagination?.totalCount || 0,
+          totalPages: data?.meta?.pagination?.totalPages || 0,
         }}
         loading={isLoading}
         onDelete={handleDelete}
         onPageChange={handlePageChange}
+        onRefresh={handleRefresh}
       />
     </div>
   );

@@ -40,7 +40,6 @@ export type UserProfile = Pick<User,
   | 'city'
   | 'state'
   | 'country'
-  | 'boatingExperience'
   | 'createdAt'
 >;
 

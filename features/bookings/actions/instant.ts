@@ -5,7 +5,7 @@ import { boats, boatPricingTiers, bookings } from "@/database/schema";
 import { auth } from "@/auth";
 import { bookingRequestSchema, BookingRequest } from "@/features/_validation/validations";
 import { z } from "zod";
-import { calculateEndDateTime } from "@/shared/utils/booking-utils";
+import { calculateEndDateTime } from "@/shared/utils/date-helpers";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 import { calculateBookingPrice } from "@/shared/utils/pricing-utils";

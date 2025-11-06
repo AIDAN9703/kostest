@@ -5,11 +5,11 @@
 
 import { db } from '@/database/db';
 import { bookings, boats, users, boatPricingTiers } from '@/database/schema';
-import { and, count, eq, desc, or, ilike, SQL, sql, gte, lte } from 'drizzle-orm';
+import { and, count, eq, desc, or, ilike, sql, gte, lte } from 'drizzle-orm';
 import { getTableColumns } from 'drizzle-orm';
 
 import { type BookingFilterInput } from './booking.validation';
-import { type PaginatedBookingsResponse, type BookingListItem } from './booking.types';
+import { type PaginatedBookingsResponse, type BookingListItem, type BookingDetails } from './booking.types';
 
 // UUID validation helper
 function isValidUUID(uuid: string): boolean {
@@ -149,7 +149,7 @@ export class BookingService {
   /**
    * Get single booking by ID with full details
    */
-  async getBookingById(id: string): Promise<any | null> {
+  async getBookingById(id: string): Promise<BookingDetails | null> {
     if (!isValidUUID(id)) {
       throw new Error(`Invalid UUID format: ${id}`);
     }
@@ -162,11 +162,15 @@ export class BookingService {
         boatCategory: boats.category,
         boatMainImage: boats.mainImage,
         boatCapacity: boats.capacity,
-        // User information
+        // User information (customer)
         userFirstName: users.firstName,
         userLastName: users.lastName,
         userEmail: users.email,
         userProfileImage: users.profileImage,
+        // Boat owner information (via subquery)
+        boatOwnerFirstName: sql<string | null>`(SELECT first_name FROM ${users} WHERE id = ${bookings.boatOwnerId})`,
+        boatOwnerLastName: sql<string | null>`(SELECT last_name FROM ${users} WHERE id = ${bookings.boatOwnerId})`,
+        boatOwnerEmail: sql<string | null>`(SELECT email FROM ${users} WHERE id = ${bookings.boatOwnerId})`,
       })
       .from(bookings)
       .leftJoin(boats, eq(bookings.boatId, boats.id))
@@ -174,7 +178,7 @@ export class BookingService {
       .where(eq(bookings.id, id))
       .limit(1);
 
-    return booking || null;
+    return booking as BookingDetails | null;
   }
 
   /**
@@ -215,6 +219,23 @@ export class BookingService {
       .returning();
 
     return booking;
+  }
+
+  /**
+   * Update payment link ID
+   */
+  async updatePaymentLinkId(id: string, paymentLinkId: string): Promise<void> {
+    if (!isValidUUID(id)) {
+      throw new Error(`Invalid UUID format: ${id}`);
+    }
+
+    await db
+      .update(bookings)
+      .set({ 
+        stripePaymentLinkId: paymentLinkId,
+        updatedAt: new Date()
+      })
+      .where(eq(bookings.id, id));
   }
 
   /**

@@ -10,6 +10,9 @@ import { type BoatFilterInput, type CreateBoatInput, type UpdateBoatInput, type 
 import { type PaginatedBoatsResponse } from '@/features/boats/boat.types';
 import { z } from 'zod';
 
+//utils
+import { toDateOrNull } from '@/shared/utils/date-helpers';
+
 // Original Drizzle inferred type for insert
 type DrizzleBoatInsert = typeof boats.$inferInsert;
 
@@ -164,7 +167,7 @@ export class BoatService {
   /**
    * Get single boat by ID with pricing tiers
    */
-  async getBoatById(id: string): Promise<any | null> {
+  async getBoatById(id: string): Promise<import('./boat.types').BoatWithTiers | null> {
     if (!isValidUUID(id)) {
       throw new Error(`Invalid UUID format: ${id}`);
     }
@@ -236,31 +239,32 @@ export class BoatService {
   }
 
   /**
-   * Create a new boat
+   * Create a new boat with pricing tiers (atomic transaction)
    */
-  async createBoat(boatData: CreateBoatInput): Promise<any> {
+  async createBoat(boatData: CreateBoatInput): Promise<import('./boat.types').BoatWithTiers> {
     // Extract pricing tiers and location data
     const { pricingTiers, locationCoordinates, ...boatValues } = boatData;
 
-    // Prepare insert data
-    const insertData: Partial<BoatManipulationPayload> = {
-      ...boatValues,
-      insuranceExpiry: boatValues.insuranceExpiry ? new Date(boatValues.insuranceExpiry) : null,
-      lastMaintenanceDate: boatValues.lastMaintenanceDate ? new Date(boatValues.lastMaintenanceDate) : null,
-      nextMaintenanceDate: boatValues.nextMaintenanceDate ? new Date(boatValues.nextMaintenanceDate) : null,
-    };
+    // Use transaction to ensure atomicity - either everything succeeds or everything fails
+    return await db.transaction(async (tx) => {
+      // Prepare insert data - convert ISO string dates to Date objects for database
+      const insertData: Partial<BoatManipulationPayload> = {
+        ...boatValues,
+        // Convert date strings from validation to Date objects for database
+        insuranceExpiry: toDateOrNull(boatValues.insuranceExpiry),
+        lastMaintenanceDate: toDateOrNull(boatValues.lastMaintenanceDate),
+        nextMaintenanceDate: toDateOrNull(boatValues.nextMaintenanceDate),
+      };
 
-    // Add PostGIS point if coordinates provided
-    if (locationCoordinates?.lat && locationCoordinates?.lng) {
-      insertData.location = sql`ST_SetSRID(ST_MakePoint(${locationCoordinates.lng}, ${locationCoordinates.lat}), 4326)`;
-    }
+      // Add PostGIS point if coordinates provided
+      if (locationCoordinates?.lat && locationCoordinates?.lng) {
+        insertData.location = sql`ST_SetSRID(ST_MakePoint(${locationCoordinates.lng}, ${locationCoordinates.lat}), 4326)`;
+      }
 
-    // Insert boat
-    const [boatRow] = await db.insert(boats).values(insertData as DrizzleBoatInsert).returning();
+      // Insert boat within transaction
+      const [boatRow] = await tx.insert(boats).values(insertData as DrizzleBoatInsert).returning();
 
-    let tiersInserted = false;
-    try {
-      // Insert pricing tiers if provided
+      // Insert pricing tiers if provided (within same transaction)
       if (pricingTiers && pricingTiers.length > 0) {
         const tiersWithBoatId = pricingTiers.map((tier) => ({
           ...tier,
@@ -268,18 +272,17 @@ export class BoatService {
           createdAt: new Date(),
           updatedAt: new Date(),
         }));
-        await db.insert(boatPricingTiers).values(tiersWithBoatId);
+        await tx.insert(boatPricingTiers).values(tiersWithBoatId);
       }
-      tiersInserted = true;
-    } finally {
-      // Rollback: if tier insertion failed, remove the boat to keep data consistent
-      if (!tiersInserted) {
-        await db.delete(boats).where(eq(boats.id, boatRow.id));
-      }
-    }
 
-    // Return the complete boat with tiers
-    return await this.getBoatById(boatRow.id);
+      // Return the boat ID, we'll fetch complete data outside transaction
+      return boatRow.id;
+    }).then(async (boatId) => {
+      // Fetch complete boat with tiers after transaction commits
+      const boat = await this.getBoatById(boatId);
+      if (!boat) throw new Error('Failed to retrieve created boat');
+      return boat;
+    });
   }
 
   /**
@@ -293,13 +296,14 @@ export class BoatService {
     // Extract pricing tiers and location data
     const { pricingTiers, locationCoordinates, ...boatValues } = data;
 
-    // Prepare update data
+    // Prepare update data - convert ISO string dates to Date objects for database
     const updateData: Partial<BoatManipulationPayload> = {
       ...boatValues,
-      insuranceExpiry: boatValues.insuranceExpiry ? new Date(boatValues.insuranceExpiry) : null,
-      lastMaintenanceDate: boatValues.lastMaintenanceDate ? new Date(boatValues.lastMaintenanceDate) : null,
-      nextMaintenanceDate: boatValues.nextMaintenanceDate ? new Date(boatValues.nextMaintenanceDate) : null,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      // Convert date strings from validation to Date objects for database
+      insuranceExpiry: boatValues.insuranceExpiry !== undefined ? toDateOrNull(boatValues.insuranceExpiry) : undefined,
+      lastMaintenanceDate: boatValues.lastMaintenanceDate !== undefined ? toDateOrNull(boatValues.lastMaintenanceDate) : undefined,
+      nextMaintenanceDate: boatValues.nextMaintenanceDate !== undefined ? toDateOrNull(boatValues.nextMaintenanceDate) : undefined,
     };
 
     // Handle map coordinates

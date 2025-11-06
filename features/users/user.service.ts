@@ -93,16 +93,10 @@ export class UserService {
     // Hash password before storage (CRITICAL!)
     const hashedPassword = await hash(userData.password, 10);
 
-    // Transform date strings to Date objects for database
-    const transformedData: any = { ...userData };
-    if (transformedData.boatingLicenseExpiry) {
-      transformedData.boatingLicenseExpiry = new Date(transformedData.boatingLicenseExpiry);
-    }
-
     const [newUser] = await db
       .insert(users)
       .values({
-        ...transformedData,
+        ...userData,
         password: hashedPassword,
       })
       .returning();
@@ -114,17 +108,15 @@ export class UserService {
    * Update user (partial updates allowed)
    */
   async updateUser(id: string, data: Partial<UpdateUserInput>): Promise<User> {
-    // Transform and prepare update data
-    const updateData: any = { ...data };
+    // Prepare update data
+    const updateData: Partial<typeof users.$inferInsert> = {
+      ...data,
+      updatedAt: new Date(),
+    };
     
     // Hash password if being updated
     if (data.password) {
       updateData.password = await hash(data.password, 10);
-    }
-
-    // Transform date strings to Date objects
-    if (updateData.boatingLicenseExpiry) {
-      updateData.boatingLicenseExpiry = new Date(updateData.boatingLicenseExpiry);
     }
 
     const [updatedUser] = await db

@@ -25,7 +25,7 @@ import {
 import { toast } from "@/shared/hooks/use-toast";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { updateUser, createUser } from "@/features/users/user.mutations";
-import { userRoleEnum, userStatusEnum, boatingExperienceLevelEnum } from "@/database/schema";
+import { userRoleEnum, userStatusEnum } from "@/database/schema";
 import { 
   createUserSchema, 
   updateUserSchema, 
@@ -75,7 +75,6 @@ export function UserForm({ user, userId }: UserFormProps) {
       phoneVerified: false,
       identityVerified: false,
       governmentIdVerified: false,
-      boatingLicenseVerified: false,
       twoFactorEnabled: false,
       hasBankAccountConnected: false,
     },
@@ -571,62 +570,6 @@ export function UserForm({ user, userId }: UserFormProps) {
                       </FormLabel>
                       <FormDescription>
                         User has verified their government ID
-                      </FormDescription>
-                    </div>
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="boatingLicenseNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Boating License Number</FormLabel>
-                    <FormControl>
-                      <Input {...field} value={field.value || ''} placeholder="Boating license number" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="boatingLicenseExpiry"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>License Expiry Date</FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        value={field.value || ''} 
-                        type="date"
-                        placeholder="License expiry date" 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="boatingLicenseVerified"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0 pt-2">
-                    <FormControl>
-                      <Checkbox 
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        Boating License Verified
-                      </FormLabel>
-                      <FormDescription>
-                        User has verified their boating license
                       </FormDescription>
                     </div>
                   </FormItem>

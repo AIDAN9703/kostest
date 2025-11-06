@@ -13,10 +13,19 @@ interface TimeSlotsDisplayProps {
   duration?: number; // Duration in hours from pricing tier
 }
 
-export function TimeSlotsDisplay({ date, boatId, selectedTime, onTimeSelect, duration = 4 }: TimeSlotsDisplayProps) {
+export function TimeSlotsDisplay({
+  date,
+  boatId,
+  selectedTime,
+  onTimeSelect,
+  duration = 4,
+}: TimeSlotsDisplayProps) {
   const { timeSlots, loading } = useTimeSlots({ date, boatId, duration });
 
-  const handleTimeSelect = useCallback((time: string) => onTimeSelect(time), [onTimeSelect]);
+  const handleTimeSelect = useCallback(
+    (time: string) => onTimeSelect(time),
+    [onTimeSelect]
+  );
 
   // Render all options (available and unavailable) as clean cards
   const timeSlotButtons = useMemo(() => {
@@ -32,8 +41,11 @@ export function TimeSlotsDisplay({ date, boatId, selectedTime, onTimeSelect, dur
           className={cn(
             "h-12 w-full rounded-lg border text-sm font-medium transition-colors",
             isSelected && "bg-blue-50 border-blue-200 text-blue-700",
-            !isSelected && !isDisabled && "bg-white border-gray-200 text-gray-700 hover:bg-gray-50",
-            isDisabled && "bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed"
+            !isSelected &&
+              !isDisabled &&
+              "bg-white border-gray-200 text-gray-700 hover:bg-gray-50",
+            isDisabled &&
+              "bg-gray-50 border-gray-200 text-gray-300 cursor-not-allowed"
           )}
           title={slot.conflictReason}
         >
@@ -44,11 +56,19 @@ export function TimeSlotsDisplay({ date, boatId, selectedTime, onTimeSelect, dur
   }, [timeSlots, selectedTime, handleTimeSelect]);
 
   // Memoized formatted date
-  const formattedDate = useMemo(() => new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', year: 'numeric' }).format(date), [date]);
+  const formattedDate = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }).format(date),
+    [date]
+  );
 
   // Memoized no availability message
   const noAvailabilityMessage = useMemo(() => {
-    return timeSlots.every(slot => !slot.isAvailable);
+    return timeSlots.every((slot) => !slot.isAvailable);
   }, [timeSlots]);
 
   if (loading) {
@@ -67,13 +87,12 @@ export function TimeSlotsDisplay({ date, boatId, selectedTime, onTimeSelect, dur
       <div className="mb-3 rounded-md bg-slate-50 text-slate-600 text-sm px-4 py-2 text-center">
         Times shown reflect current availability.
         <div className="text-xs text-slate-500 mt-1">
-          All times shown in vessel's <span className="font-bold">local</span> time
+          All times shown in vessel's <span className="font-bold">local</span>{" "}
+          time
         </div>
       </div>
       <div className="max-h-72 overflow-y-auto pr-1">
-        <div className="grid grid-cols-2 gap-3">
-          {timeSlotButtons}
-        </div>
+        <div className="grid grid-cols-2 gap-3">{timeSlotButtons}</div>
       </div>
       {noAvailabilityMessage && (
         <div className="mt-3 text-sm text-red-600">
@@ -82,4 +101,4 @@ export function TimeSlotsDisplay({ date, boatId, selectedTime, onTimeSelect, dur
       )}
     </div>
   );
-} 
+}
