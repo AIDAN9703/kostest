@@ -75,9 +75,9 @@ function transformBooking(dbBooking: {
 function getBookingDisplayStatus(dbStatus: string): string {
   const statusMap: Record<string, string> = {
     PENDING: "pending",
-    APPROVED: "confirmed",
+    APPROVED: "approved", // Changed: APPROVED should show as "approved", not "confirmed"
     AWAITING_PAYMENT: "pending",
-    CONFIRMED: "confirmed",
+    CONFIRMED: "confirmed", // Only CONFIRMED shows as "confirmed"
     DENIED: "cancelled",
     EXPIRED: "cancelled",
     CANCELLED: "cancelled",

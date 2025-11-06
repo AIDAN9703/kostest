@@ -50,14 +50,36 @@ export async function POST(request: NextRequest) {
         // Extract metadata from the session
         const metadata = session.metadata || {};
         
+        // For Payment Links, metadata might not be on the session
+        // Try to get it from the payment link if session.metadata is empty
+        let bookingId: string | undefined = metadata.bookingId;
+        
+        if (!bookingId && session.payment_link) {
+          // If metadata is missing, try to find booking by payment link ID
+          const paymentLinkId = typeof session.payment_link === 'string' 
+            ? session.payment_link 
+            : session.payment_link.id;
+          
+          const bookingByLink = await db
+            .select({ id: bookings.id })
+            .from(bookings)
+            .where(eq(bookings.stripePaymentLinkId, paymentLinkId))
+            .limit(1);
+          
+          if (bookingByLink.length > 0) {
+            bookingId = bookingByLink[0].id;
+          }
+        }
+        
         // Check if this is an instant booking
         if (metadata.bookingType === "INSTANT_BOOK") {
           await handleInstantBookingPayment(session);
         } else if (metadata.type === 'EVENT_TICKET' && metadata.eventId) {
           await handleEventTicketPurchase(session);
-        } else if (metadata.bookingType === "REQUEST") {
+        } else if (metadata.bookingType === "REQUEST" || bookingId) {
           // Handle payment link payment for request booking
-          await handleRequestBookingPayment(session);
+          // Pass bookingId if we found it via payment link lookup
+          await handleRequestBookingPayment(session, bookingId);
         }
         
         break;
@@ -334,12 +356,34 @@ async function sendGHLWebhookForInstantBooking(metadata: any, sessionId: string)
 /**
  * Handle payment for request booking (payment link)
  */
-async function handleRequestBookingPayment(session: Stripe.Checkout.Session) {
+async function handleRequestBookingPayment(session: Stripe.Checkout.Session, bookingIdOverride?: string) {
   try {
     const metadata = session.metadata || {};
-    const bookingId = metadata.bookingId;
+    const bookingId = bookingIdOverride || metadata.bookingId;
     
     if (!bookingId) {
+      // Last resort: try to find booking by payment link ID
+      const paymentLinkId = typeof session.payment_link === 'string' 
+        ? session.payment_link 
+        : session.payment_link?.id;
+      
+      if (paymentLinkId) {
+        const bookingByLink = await db
+          .select({ id: bookings.id })
+          .from(bookings)
+          .where(eq(bookings.stripePaymentLinkId, paymentLinkId))
+          .limit(1);
+        
+        if (bookingByLink.length === 0) {
+          console.error("Missing booking ID in payment link metadata and could not find booking by payment link ID");
+          return;
+        }
+        
+        // Use the found booking ID
+        const foundBookingId = bookingByLink[0].id;
+        return await handleRequestBookingPayment(session, foundBookingId);
+      }
+      
       console.error("Missing booking ID in payment link metadata");
       return;
     }

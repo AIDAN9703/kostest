@@ -55,9 +55,20 @@ export default function PaymentSuccessPage() {
       return;
     }
 
-    // Fetch booking details
+    // Fetch booking details and verify payment
     const fetchBooking = async () => {
       try {
+        // First, try to verify payment status (this will update booking if webhook hasn't fired)
+        try {
+          await fetch(`/api/bookings/${bookingId}/verify-payment`, {
+            method: 'POST',
+          });
+        } catch (verifyError) {
+          // Don't fail if verification fails, just log it
+          console.warn("Payment verification failed:", verifyError);
+        }
+
+        // Then fetch booking details
         const response = await fetch(`/api/bookings/${bookingId}`);
 
         if (!response.ok) {
