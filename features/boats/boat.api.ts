@@ -3,6 +3,7 @@
  * Handles all data fetching via API routes
  */
 
+import superjson from 'superjson';
 import { type Boat } from '@/database/types';
 import { type BoatFilterInput } from '@/features/boats/boat.validation';
 import { type BoatWithTiers, type BoatListItem } from '@/features/boats/boat.types';
@@ -31,7 +32,8 @@ export const boatsApi = {
       throw new Error(`Failed to fetch boats: ${response.statusText}`);
     }
 
-    return response.json();
+    const json = await response.json();
+    return superjson.deserialize(json);
   },
 
   /**
@@ -45,13 +47,14 @@ export const boatsApi = {
       throw new Error(`Failed to fetch boat: ${response.statusText}`);
     }
 
-    const json: ApiResponse<BoatWithTiers> = await response.json();
+    const json = await response.json();
+    const parsed = superjson.deserialize<ApiResponse<BoatWithTiers>>(json);
     
-    if (!json.success || !json.data) {
-      throw new Error(json.error || 'Failed to fetch boat');
+    if (!parsed.success || !parsed.data) {
+      throw new Error(parsed.error || 'Failed to fetch boat');
     }
 
-    return json.data;
+    return parsed.data;
   },
 
   // ========================================
@@ -69,13 +72,14 @@ export const boatsApi = {
       throw new Error(`Failed to fetch featured boats: ${response.statusText}`);
     }
 
-    const json: ApiResponse<Boat[]> = await response.json();
+    const json = await response.json();
+    const parsed = superjson.deserialize<ApiResponse<Boat[]>>(json);
     
-    if (!json.success || !json.data) {
-      throw new Error(json.error || 'Failed to fetch featured boats');
+    if (!parsed.success || !parsed.data) {
+      throw new Error(parsed.error || 'Failed to fetch featured boats');
     }
 
-    return json.data;
+    return parsed.data;
   },
 
   /**
@@ -89,13 +93,14 @@ export const boatsApi = {
       throw new Error(`Failed to fetch boat: ${response.statusText}`);
     }
 
-    const json: ApiResponse<BoatWithTiers> = await response.json();
+    const json = await response.json();
+    const parsed = superjson.deserialize<ApiResponse<BoatWithTiers>>(json);
     
-    if (!json.success || !json.data) {
-      throw new Error(json.error || 'Failed to fetch boat');
+    if (!parsed.success || !parsed.data) {
+      throw new Error(parsed.error || 'Failed to fetch boat');
     }
 
-    return json.data;
+    return parsed.data;
   },
 };
 

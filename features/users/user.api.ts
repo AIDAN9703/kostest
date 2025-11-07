@@ -3,6 +3,7 @@
  * Handles all data fetching via API routes
  */
 
+import superjson from 'superjson';
 import { type User } from '@/database/types';
 import { type UserFilterInput } from '@/features/users/user.validation';
 import { type ApiResponse, type PaginatedApiResponse } from '@/shared/types/api.types';
@@ -31,7 +32,8 @@ export const usersApi = {
       throw new Error(`Failed to fetch users: ${response.statusText}`);
     }
 
-    return response.json();
+    const json = await response.json();
+    return superjson.deserialize(json);
   },
 
   /**
@@ -45,13 +47,14 @@ export const usersApi = {
       throw new Error(`Failed to fetch user: ${response.statusText}`);
     }
 
-    const json: ApiResponse<User> = await response.json();
+    const json = await response.json();
+    const parsed = superjson.deserialize<ApiResponse<User>>(json);
     
-    if (!json.success || !json.data) {
-      throw new Error(json.error || 'Failed to fetch user');
+    if (!parsed.success || !parsed.data) {
+      throw new Error(parsed.error || 'Failed to fetch user');
     }
 
-    return json.data;
+    return parsed.data;
   },
 
   /**
@@ -88,15 +91,16 @@ export const usersApi = {
       throw new Error(`Failed to find user: ${response.statusText}`);
     }
 
-    const json: ApiResponse<User> = await response.json();
+    const json = await response.json();
+    const parsed = superjson.deserialize<ApiResponse<User>>(json);
     
-    if (!json.success || !json.data) {
+    if (!parsed.success || !parsed.data) {
       return { exists: false };
     }
 
     return {
       exists: true,
-      user: json.data,
+      user: parsed.data,
     };
   },
 
@@ -111,13 +115,14 @@ export const usersApi = {
       throw new Error(`Failed to fetch profile: ${response.statusText}`);
     }
 
-    const json: ApiResponse<User> = await response.json();
+    const json = await response.json();
+    const parsed = superjson.deserialize<ApiResponse<User>>(json);
     
-    if (!json.success || !json.data) {
-      throw new Error(json.error || 'Failed to fetch profile');
+    if (!parsed.success || !parsed.data) {
+      throw new Error(parsed.error || 'Failed to fetch profile');
     }
 
-    return json.data;
+    return parsed.data;
   },
 
   /**
@@ -131,12 +136,13 @@ export const usersApi = {
       throw new Error(`Failed to fetch user: ${response.statusText}`);
     }
 
-    const json: ApiResponse<User> = await response.json();
+    const json = await response.json();
+    const parsed = superjson.deserialize<ApiResponse<User>>(json);
     
-    if (!json.success || !json.data) {
-      throw new Error(json.error || 'Failed to fetch user');
+    if (!parsed.success || !parsed.data) {
+      throw new Error(parsed.error || 'Failed to fetch user');
     }
 
-    return json.data;
+    return parsed.data;
   },
 };
