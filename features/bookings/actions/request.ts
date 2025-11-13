@@ -137,17 +137,6 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
       updatedAt: now
     }).returning();
     
-    // Create conversation for this booking
-    let conversationId: string | null = null;
-    try {
-      const { createBookingConversation } = await import("@/features/messaging/services/booking-integration");
-      const conversationResult = await createBookingConversation(booking[0].id);
-      conversationId = conversationResult?.conversationId || null;
-    } catch (error) {
-      console.error("Failed to create booking conversation:", error);
-      // Don't fail the booking if conversation creation fails
-    }
-    
     // Send GHL webhook for booking request (async, don't block the response)
     sendGHLWebhookForBookingRequest(booking[0], boat, pricingTier, startDateTime, endDateTime, session.user).catch(error => {
       console.warn('GHL booking request webhook failed:', error);
@@ -156,12 +145,10 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
     // Revalidate relevant paths
     revalidatePath("/profile/bookings");
     revalidatePath(`/boats/${data.boatId}`);
-    revalidatePath("/messages");
     
     return { 
       success: true, 
       booking: booking[0],
-      conversationId: conversationId,
       message: "Booking request submitted successfully"
     };
     

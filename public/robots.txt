@@ -4,7 +4,6 @@ Allow: /
 Disallow: /admin/
 Disallow: /profile/
 Disallow: /bookings/
-Disallow: /messages/
 Disallow: /api/
 Disallow: /auth/
 Disallow: /sign-in
@@ -23,7 +22,6 @@ Allow: /
 Disallow: /admin/
 Disallow: /profile/
 Disallow: /bookings/
-Disallow: /messages/
 Disallow: /api/
 Disallow: /auth/
 
@@ -33,7 +31,6 @@ Allow: /
 Disallow: /admin/
 Disallow: /profile/
 Disallow: /bookings/
-Disallow: /messages/
 Disallow: /api/
 Disallow: /auth/
 

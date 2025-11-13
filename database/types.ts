@@ -18,9 +18,6 @@ import {
   boatBlocking,
   boatGoogleCalendars,
   externalGoogleCalendarSyncEvents,
-  conversations,
-  messages,
-  conversationParticipants,
   events,
   ticketTiers,
   eventTicketPurchases,
@@ -51,12 +48,6 @@ import {
   verificationTypeEnum,
   verificationStatusEnum,
   verificationChannelEnum,
-  
-  // Messaging enums
-  conversationTypeEnum,
-  conversationStatusEnum,
-  messageTypeEnum,
-  messageStatusEnum,
   
   // Blog enums
   postCategoryEnum,
@@ -176,25 +167,6 @@ export type NewBlogPost = typeof blogPosts.$inferInsert;
 // Blog enums
 export type PostCategory = typeof postCategoryEnum.enumValues[number];
 export type PostStatus = typeof postStatusEnum.enumValues[number];
-
-// ========================================
-// MESSAGING TYPES
-// ========================================
-
-export type Conversation = typeof conversations.$inferSelect;
-export type NewConversation = typeof conversations.$inferInsert;
-
-export type Message = typeof messages.$inferSelect;
-export type NewMessage = typeof messages.$inferInsert;
-
-export type ConversationParticipant = typeof conversationParticipants.$inferSelect;
-export type NewConversationParticipant = typeof conversationParticipants.$inferInsert;
-
-// Messaging enums
-export type ConversationType = typeof conversationTypeEnum.enumValues[number];
-export type ConversationStatus = typeof conversationStatusEnum.enumValues[number];
-export type MessageType = typeof messageTypeEnum.enumValues[number];
-export type MessageStatus = typeof messageStatusEnum.enumValues[number];
 
 // ========================================
 // EVENT TYPES

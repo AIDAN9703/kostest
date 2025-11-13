@@ -12,7 +12,6 @@ module.exports = {
     '/admin/*',
     '/profile/*', 
     '/bookings/*',
-    '/messages/*',
     
     // Auth routes
     '/auth/*',
@@ -47,7 +46,6 @@ module.exports = {
           '/admin/',
           '/profile/',
           '/bookings/',
-          '/messages/',
           '/api/',
           '/auth/',
           '/sign-in',
@@ -69,7 +67,6 @@ module.exports = {
           '/admin/',
           '/profile/',
           '/bookings/',
-          '/messages/',
           '/api/',
           '/auth/',
         ],
@@ -81,7 +78,6 @@ module.exports = {
           '/admin/',
           '/profile/',
           '/bookings/',
-          '/messages/',
           '/api/',
           '/auth/',
         ],

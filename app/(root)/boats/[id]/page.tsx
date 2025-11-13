@@ -217,12 +217,6 @@ export default async function BoatPage({ params }: BoatPageProps) {
                       <RequestBookingForm boat={boat} />
                     )}
                   </div>
-                  <div className="text-center text-sm text-gray-600 mt-4 px-4 py-3">
-                    Don't see what you're looking for?{' '}
-                    <Link href={`/boats/${boat.id}/inquiry`} className="text-primary hover:text-primary/80 font-medium underline">
-                      Send a custom inquiry here
-                    </Link>
-                  </div>
                 </div>
               </aside>
             </div>

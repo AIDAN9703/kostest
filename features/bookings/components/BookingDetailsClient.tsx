@@ -96,7 +96,6 @@ export default function BookingDetailsClient({ user }: { user: Session['user'] |
           type: 'request',
           bookingId: result.booking.id || '',
           boatName: boat.name || '',
-          conversationId: ('conversationId' in result) ? (result.conversationId || '') : '',
           boatImage: boat.mainImage || '',
           startDateTime: startDateTime!,
           hours: String(selectedTier!.hours || ''),

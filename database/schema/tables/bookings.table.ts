@@ -70,6 +70,10 @@ export const bookings = pgTable("booking", {
     reviewedAt: timestamp("reviewed_at", { mode: "date" }),
     reviewNotes: text("review_notes"),
     
+    // Admin Assignment (for contacted flow - use conversations table for full history)
+    assignedAdminId: uuid("assigned_admin_id").references(() => users.id), // Admin assigned to handle this booking
+    contactedAt: timestamp("contacted_at", { mode: "date", withTimezone: true }), // When admin first contacted customer
+    
     // Cancellation
     cancelledAt: timestamp("cancelled_at", { mode: "date", withTimezone: true }),
     cancellationReason: text("cancellation_reason"),
@@ -87,6 +91,8 @@ export const bookings = pgTable("booking", {
     index("booking_boat_idx").on(table.boatId),
     index("booking_captain_idx").on(table.captainId),
     index("booking_datetime_idx").on(table.startDateTime, table.endDateTime),
+    // Admin assignment index (for filtering "my bookings" in admin dashboard)
+    index("booking_assigned_admin_idx").on(table.assignedAdminId),
     // Search-specific indexes
     index("booking_search_customer_idx").on(table.customerName, table.customerEmail),
   ]);
