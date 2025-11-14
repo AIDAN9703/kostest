@@ -247,6 +247,31 @@ export class UserService {
     
     return owners;
   }
+
+  /**
+   * Get list of admin users
+   * Returns active admin users for assignment dropdowns
+   */
+  async getAdmins() {
+    const admins = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        username: users.username,
+        profileImage: users.profileImage,
+      })
+      .from(users)
+      .where(and(
+        eq(users.role, 'ADMIN'),
+        eq(users.status, 'ACTIVE')
+      ))
+      .orderBy(desc(users.createdAt))
+      .limit(50);
+    
+    return admins;
+  }
 }
 
 // Export singleton instance

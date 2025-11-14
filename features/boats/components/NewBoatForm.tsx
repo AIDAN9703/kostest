@@ -249,7 +249,7 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
       });
       
       // Redirect to the boats list
-      router.push('/profile/boats');
+      router.push('/profile');
       router.refresh();
     } catch (error) {
       console.error('Error saving boat:', error);

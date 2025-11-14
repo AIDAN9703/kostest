@@ -1,17 +1,8 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/shared/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
 import {
   Avatar,
   AvatarFallback,
@@ -20,7 +11,6 @@ import {
 import { Session } from "next-auth";
 import { SimpleNavItem } from "@/shared/constants/navigation-data";
 import { getUserInitialsFromName } from "@/shared/utils/user-utils";
-import { signOut } from "next-auth/react";
 
 interface UserMenuProps {
   user: Session["user"] | undefined | null;
@@ -31,75 +21,87 @@ interface UserMenuProps {
 
 const UserMenu: React.FC<UserMenuProps> = ({ user, navigationData }) => {
   const router = useRouter();
-
   const navigateToSignIn = useCallback(() => router.push("/sign-in"), [router]);
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  // Ultra-simple styling
-  const styles = {
-    avatarButton:
-      "p-0.5 h-10 w-10 sm:h-11 sm:w-11 rounded-full hover:scale-105 transition-all focus-visible:ring-2 focus-visible:ring-primary/50",
-    avatar: "h-full w-full ring-2 sm:ring-[2.5px] ring-gray-300/90 bg-white/5",
-    avatarFallback:
-      "text-xs sm:text-sm font-semibold bg-primary/10 text-primary",
-    signInButton:
-      "text-[15px] font-medium border-2 border-primary text-primary hover:bg-primary hover:text-white rounded-md px-2 py-1 transition-all hover:scale-105",
-    dropdownContent:
-      "w-64 p-2 bg-white/95 backdrop-blur-xs rounded-lg shadow-lg",
-    menuItem:
-      "flex items-center gap-2 px-2 py-2 text-sm rounded-md hover:bg-primary/5 transition-colors",
-  };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isOpen]);
 
   if (user) {
     return (
-      <DropdownMenu modal={true}>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className={styles.avatarButton}>
-            <Avatar className={styles.avatar}>
-              <AvatarImage
-                src={user?.profileImage || user?.image || ""}
-                className="object-cover"
-              />
-              <AvatarFallback className={styles.avatarFallback}>
-                {getUserInitialsFromName(user.name, user.email)}
-              </AvatarFallback>
-            </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent
-          align="end"
-          sideOffset={8}
-          className={styles.dropdownContent}
-          forceMount
+      <div className="relative" ref={menuRef}>
+        <button
+          type="button"
+          className="h-9 w-9 rounded-full p-0 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-none focus-visible:outline-none hover:bg-transparent cursor-pointer"
+          onClick={() => setIsOpen(!isOpen)}
         >
-          <DropdownMenuLabel className="px-2 py-2">
-            <div className="flex flex-col space-y-1">
-              <p className="text-sm font-medium leading-none">{user.name}</p>
-              <p className="text-xs leading-none text-muted-foreground">
-                {user.email}
-              </p>
-            </div>
-          </DropdownMenuLabel>
+          <Avatar className="h-9 w-9">
+            <AvatarImage
+              src={user?.profileImage || user?.image || ""}
+              alt={user.name || "User"}
+            />
+            <AvatarFallback className="text-xs bg-primary/10 text-primary">
+              {getUserInitialsFromName(user.name, user.email)}
+            </AvatarFallback>
+          </Avatar>
+        </button>
 
-          <DropdownMenuSeparator className="my-2" />
-
-          <div className="flex flex-col space-y-1">
-            {navigationData.user.map((item) => (
-              <DropdownMenuItem key={item.href} asChild>
-                <Link href={item.href} className={styles.menuItem}>
-                  {item.icon && <item.icon className="h-4 w-4" />}
-                  {item.label}
+        {isOpen && (
+          <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-md border shadow-md z-50">
+            <div className="p-2">
+              <div className="flex flex-col px-2 py-1.5">
+                <p className="text-md text-gold font-semibold">{user.name}</p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+                <Link
+                  href="/profile"
+                  className="text-xs text-primary underline w-fit mt-1"
+                  onClick={() => setIsOpen(false)}
+                >
+                  View Profile
                 </Link>
-              </DropdownMenuItem>
-            ))}
+              </div>
+            </div>
+            <div className="h-px bg-muted -mx-1" />
+            <div className="p-1">
+              {navigationData.user.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center gap-2 px-2 py-1 text-sm text-gray-600 rounded-sm hover:bg-accent"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {Icon && <Icon className="h-4 w-4" />}
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        )}
+      </div>
     );
   }
 
   return (
-    <button onClick={navigateToSignIn} className={styles.signInButton}>
+    <button
+      type="button"
+      className="px-4 py-2 text-sm font-bold font-poppins border-2 border-primary bg-transparent text-primary rounded-lg hover:bg-primary/5 transition-colors"
+      onClick={navigateToSignIn}
+    >
       Sign In
     </button>
   );

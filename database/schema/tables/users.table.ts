@@ -24,7 +24,6 @@ export const users = pgTable(
       
       // Profile Media
       profileImage: text("profile_image"),
-      coverImage: text("cover_image"),
       
       // Authentication & Security
       emailVerified: boolean("email_verified").default(false).notNull(),

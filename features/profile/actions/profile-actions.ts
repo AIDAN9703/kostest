@@ -73,7 +73,6 @@ export async function updateUserProfile(formData: Partial<ProfileFormValues>): P
       state: formData.state ?? currentUser.state,
       country: formData.country ?? currentUser.country,
       profileImage: formData.profileImage ?? currentUser.profileImage,
-      coverImage: formData.coverImage ?? currentUser.coverImage,
     };
 
     // Validate the merged data
@@ -92,7 +91,6 @@ export async function updateUserProfile(formData: Partial<ProfileFormValues>): P
     if (formData.state !== undefined) updateData.state = validatedData.state || null;
     if (formData.country !== undefined) updateData.country = validatedData.country || null;
     if (formData.profileImage !== undefined) updateData.profileImage = validatedData.profileImage === "" ? null : validatedData.profileImage;
-    if (formData.coverImage !== undefined) updateData.coverImage = validatedData.coverImage === "" ? null : validatedData.coverImage;
 
     // If no fields were provided, return early
     if (Object.keys(updateData).length === 0) {

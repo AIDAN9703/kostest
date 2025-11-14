@@ -33,6 +33,7 @@ export default function BookingsPage() {
       needsCaptain: parseAsBoolean,
       minAmount: parseAsInteger,
       maxAmount: parseAsInteger,
+      assignedAdminId: parseAsString,
       page: parseAsInteger.withDefault(1),
     },
     {

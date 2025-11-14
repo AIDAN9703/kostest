@@ -28,6 +28,12 @@ export interface BookingListItem {
   userLastName: string | null;
   userEmail: string | null;
   userProfileImage: string | null;
+  
+  assignedAdminId: string | null;
+  assignedAdminFirstName: string | null;
+  assignedAdminLastName: string | null;
+  assignedAdminEmail: string | null;
+  contactedAt: Date | null;
 }
 
 export interface BookingDetails extends BookingListItem {
@@ -56,6 +62,12 @@ export interface BookingDetails extends BookingListItem {
   boatOwnerFirstName: string | null;
   boatOwnerLastName: string | null;
   boatOwnerEmail: string | null;
+  
+  assignedAdminId: string | null;
+  assignedAdminFirstName: string | null;
+  assignedAdminLastName: string | null;
+  assignedAdminEmail: string | null;
+  contactedAt: Date | null;
 }
 
 /**

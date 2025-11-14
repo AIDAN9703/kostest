@@ -4,10 +4,8 @@ import { useState, useMemo, useCallback } from "react";
 import {
   useReactTable,
   getCoreRowModel,
-  getSortedRowModel,
   flexRender,
   createColumnHelper,
-  type SortingState,
   type ColumnDef,
 } from "@tanstack/react-table";
 import { Button } from "@/shared/components/ui/button";
@@ -20,8 +18,6 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import {
-  ChevronUp,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -73,7 +69,6 @@ export function AdminBookingsTable({
   onPageChange,
   onRefresh,
 }: AdminBookingsTableProps) {
-  const [sorting, setSorting] = useState<SortingState>([]);
   const { toast } = useToast();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
@@ -219,8 +214,9 @@ export function AdminBookingsTable({
           if (!startDateTime)
             return <span className="text-sm text-gray-400">—</span>;
 
-          const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(startDateTime);
-          const { time: endTime } = endDateTime 
+          const { date: startDate, time: startTime } =
+            parseDateTimeInBoatTimezone(startDateTime);
+          const { time: endTime } = endDateTime
             ? parseDateTimeInBoatTimezone(endDateTime)
             : { time: null };
 
@@ -250,6 +246,32 @@ export function AdminBookingsTable({
                   status={booking.paymentStatus}
                   className="border border-gray-300 bg-white"
                 />
+              )}
+            </div>
+          );
+        },
+      }),
+      columnHelper.display({
+        id: "assignedAdmin",
+        header: "Assigned Admin",
+        cell: ({ row }) => {
+          const booking = row.original;
+          if (!booking.assignedAdminId) {
+            return <span className="text-sm text-gray-400">—</span>;
+          }
+          const adminName =
+            booking.assignedAdminFirstName || booking.assignedAdminLastName
+              ? `${booking.assignedAdminFirstName || ""} ${booking.assignedAdminLastName || ""}`.trim()
+              : booking.assignedAdminEmail || "Unknown";
+          return (
+            <div className="text-sm">
+              <div className="font-medium text-gray-900 truncate">
+                {adminName}
+              </div>
+              {booking.contactedAt && (
+                <div className="text-xs text-gray-500">
+                  Contacted {format(new Date(booking.contactedAt), "MMM d")}
+                </div>
               )}
             </div>
           );
@@ -362,10 +384,7 @@ export function AdminBookingsTable({
   const table = useReactTable({
     data: bookings,
     columns,
-    state: { sorting },
-    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
     manualPagination: true,
     pageCount: pagination.totalPages,
   });
@@ -410,23 +429,10 @@ export function AdminBookingsTable({
                     className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     {header.isPlaceholder ? null : (
-                      <div
-                        className={
-                          header.column.getCanSort()
-                            ? "cursor-pointer select-none flex items-center gap-1 hover:text-gray-700"
-                            : ""
-                        }
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
+                      <div>
                         {flexRender(
                           header.column.columnDef.header,
                           header.getContext()
-                        )}
-                        {header.column.getIsSorted() === "asc" && (
-                          <ChevronUp className="h-3.5 w-3.5" />
-                        )}
-                        {header.column.getIsSorted() === "desc" && (
-                          <ChevronDown className="h-3.5 w-3.5" />
                         )}
                       </div>
                     )}

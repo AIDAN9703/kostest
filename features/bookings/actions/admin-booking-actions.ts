@@ -253,3 +253,116 @@ export async function modifyBookingRequest(
   }
 }
 
+/**
+ * Assign admin to booking
+ */
+export async function assignAdminToBooking(
+  bookingId: string,
+  adminId: string
+) {
+  try {
+    // Check admin authentication
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        error: 'Admin access required',
+      };
+    }
+
+    // Validate inputs
+    if (!bookingId || !adminId) {
+      return {
+        success: false,
+        error: 'Booking ID and Admin ID are required',
+      };
+    }
+
+    // Assign admin
+    await bookingService.assignAdmin(bookingId, adminId);
+
+    // Revalidate paths
+    revalidatePath('/admin/bookings');
+    revalidatePath(`/admin/bookings/${bookingId}`);
+
+    return {
+      success: true,
+      message: 'Admin assigned successfully',
+    };
+  } catch (error) {
+    console.error('Error assigning admin:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to assign admin',
+    };
+  }
+}
+
+/**
+ * Unassign admin from booking
+ */
+export async function unassignAdminFromBooking(bookingId: string) {
+  try {
+    // Check admin authentication
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        error: 'Admin access required',
+      };
+    }
+
+    // Unassign admin
+    await bookingService.unassignAdmin(bookingId);
+
+    // Revalidate paths
+    revalidatePath('/admin/bookings');
+    revalidatePath(`/admin/bookings/${bookingId}`);
+
+    return {
+      success: true,
+      message: 'Admin unassigned successfully',
+    };
+  } catch (error) {
+    console.error('Error unassigning admin:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to unassign admin',
+    };
+  }
+}
+
+/**
+ * Mark booking as contacted
+ */
+export async function markBookingAsContacted(bookingId: string) {
+  try {
+    // Check admin authentication
+    const session = await auth();
+    if (!session?.user || session.user.role !== 'ADMIN') {
+      return {
+        success: false,
+        error: 'Admin access required',
+      };
+    }
+
+    // Mark as contacted
+    await bookingService.markAsContacted(bookingId);
+
+    // Revalidate paths
+    revalidatePath('/admin/bookings');
+    revalidatePath(`/admin/bookings/${bookingId}`);
+
+    return {
+      success: true,
+      message: 'Booking marked as contacted',
+    };
+  } catch (error) {
+    console.error('Error marking booking as contacted:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to mark as contacted',
+    };
+  }
+}
+

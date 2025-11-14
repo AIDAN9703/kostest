@@ -5,7 +5,7 @@
 
 import { db } from '@/database/db';
 import { bookings, boats, users, boatPricingTiers } from '@/database/schema';
-import { and, count, eq, desc, or, ilike, sql, gte, lte } from 'drizzle-orm';
+import { and, count, eq, desc, or, ilike, sql, gte, lte, aliasedTable } from 'drizzle-orm';
 import { getTableColumns } from 'drizzle-orm';
 
 import { type BookingFilterInput } from './booking.validation';
@@ -73,6 +73,11 @@ export class BookingService {
       whereConditions.push(eq(bookings.userId, filters.customerId));
     }
 
+    // Assigned admin filter
+    if (filters?.assignedAdminId) {
+      whereConditions.push(eq(bookings.assignedAdminId, filters.assignedAdminId));
+    }
+
     // Captain required filter
     if (filters?.needsCaptain !== undefined) {
       whereConditions.push(eq(bookings.needsCaptain, filters.needsCaptain));
@@ -87,6 +92,9 @@ export class BookingService {
     }
 
     const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+    // Create alias for assigned admin user
+    const assignedAdmin = aliasedTable(users, 'assignedAdmin');
 
     // Select fields for listing (optimized)
     const selectFields = {
@@ -108,12 +116,18 @@ export class BookingService {
       boatName: boats.name,
       boatCategory: boats.category,
       boatMainImage: boats.mainImage,
-      // Joined user info
+      // Joined user info (customer)
       userId: bookings.userId,
       userFirstName: users.firstName,
       userLastName: users.lastName,
       userEmail: users.email,
       userProfileImage: users.profileImage,
+      // Assigned admin info
+      assignedAdminId: bookings.assignedAdminId,
+      assignedAdminFirstName: assignedAdmin.firstName,
+      assignedAdminLastName: assignedAdmin.lastName,
+      assignedAdminEmail: assignedAdmin.email,
+      contactedAt: bookings.contactedAt,
     };
 
     // Execute query
@@ -121,6 +135,7 @@ export class BookingService {
       .from(bookings)
       .leftJoin(boats, eq(bookings.boatId, boats.id))
       .leftJoin(users, eq(bookings.userId, users.id))
+      .leftJoin(assignedAdmin, eq(bookings.assignedAdminId, assignedAdmin.id))
       .where(whereClause)
       .limit(limit)
       .offset(offset)
@@ -154,6 +169,10 @@ export class BookingService {
       throw new Error(`Invalid UUID format: ${id}`);
     }
 
+    // Create alias for assigned admin user
+    const assignedAdmin = aliasedTable(users, 'assignedAdmin');
+    const boatOwner = aliasedTable(users, 'boatOwner');
+
     const [booking] = await db
       .select({
         ...getTableColumns(bookings),
@@ -167,14 +186,20 @@ export class BookingService {
         userLastName: users.lastName,
         userEmail: users.email,
         userProfileImage: users.profileImage,
-        // Boat owner information (via subquery)
-        boatOwnerFirstName: sql<string | null>`(SELECT first_name FROM ${users} WHERE id = ${bookings.boatOwnerId})`,
-        boatOwnerLastName: sql<string | null>`(SELECT last_name FROM ${users} WHERE id = ${bookings.boatOwnerId})`,
-        boatOwnerEmail: sql<string | null>`(SELECT email FROM ${users} WHERE id = ${bookings.boatOwnerId})`,
+        // Boat owner information
+        boatOwnerFirstName: boatOwner.firstName,
+        boatOwnerLastName: boatOwner.lastName,
+        boatOwnerEmail: boatOwner.email,
+        // Assigned admin information
+        assignedAdminFirstName: assignedAdmin.firstName,
+        assignedAdminLastName: assignedAdmin.lastName,
+        assignedAdminEmail: assignedAdmin.email,
       })
       .from(bookings)
       .leftJoin(boats, eq(bookings.boatId, boats.id))
       .leftJoin(users, eq(bookings.userId, users.id))
+      .leftJoin(boatOwner, eq(bookings.boatOwnerId, boatOwner.id))
+      .leftJoin(assignedAdmin, eq(bookings.assignedAdminId, assignedAdmin.id))
       .where(eq(bookings.id, id))
       .limit(1);
 
@@ -247,6 +272,66 @@ export class BookingService {
     }
 
     await db.delete(bookings).where(eq(bookings.id, id));
+  }
+
+  /**
+   * Assign admin to booking
+   */
+  async assignAdmin(bookingId: string, adminId: string): Promise<any> {
+    if (!isValidUUID(bookingId) || !isValidUUID(adminId)) {
+      throw new Error(`Invalid UUID format`);
+    }
+
+    const [booking] = await db
+      .update(bookings)
+      .set({ 
+        assignedAdminId: adminId,
+        updatedAt: new Date()
+      })
+      .where(eq(bookings.id, bookingId))
+      .returning();
+
+    return booking;
+  }
+
+  /**
+   * Unassign admin from booking
+   */
+  async unassignAdmin(bookingId: string): Promise<any> {
+    if (!isValidUUID(bookingId)) {
+      throw new Error(`Invalid UUID format: ${bookingId}`);
+    }
+
+    const [booking] = await db
+      .update(bookings)
+      .set({ 
+        assignedAdminId: null,
+        updatedAt: new Date()
+      })
+      .where(eq(bookings.id, bookingId))
+      .returning();
+
+    return booking;
+  }
+
+  /**
+   * Mark booking as contacted
+   */
+  async markAsContacted(bookingId: string): Promise<any> {
+    if (!isValidUUID(bookingId)) {
+      throw new Error(`Invalid UUID format: ${bookingId}`);
+    }
+
+    const [booking] = await db
+      .update(bookings)
+      .set({ 
+        contactedAt: new Date(),
+        updatedAt: new Date()
+      })
+      .where(eq(bookings.id, bookingId))
+      .returning();
+
+    return booking;
   }
 
   /**

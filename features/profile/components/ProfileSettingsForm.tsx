@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { useToast } from "@/shared/hooks/use-toast";
-import { Loader2, User, Image as ImageIcon } from "lucide-react";
+import { Loader2, User } from "lucide-react";
 import { UserProfile } from "@/features/users/user.types";
 import { ImageUpload } from "@/shared/components/ui/image-upload";
 import { Image as IKImage } from "@imagekit/next";
@@ -200,7 +200,6 @@ const ProfileDetailsSection = ({ form }: { form: any }) => (
 
 const ProfileImagesSection = ({ form, user }: { form: any; user: any }) => {
   const [profilePreview, setProfilePreview] = useState<string | null>(user?.profileImage || null);
-  const [coverPreview, setCoverPreview] = useState<string | null>(user?.coverImage || null);
 
   return (
     <div className="space-y-6">
@@ -246,47 +245,6 @@ const ProfileImagesSection = ({ form, user }: { form: any; user: any }) => {
           multiple={false}
         />
       </div>
-      
-      <div className="space-y-2">
-        <p className="text-sm font-medium">Cover Image</p>
-        <div className="w-full h-32 overflow-hidden rounded-md border-2 border-primary/20">
-          {coverPreview ? (
-            (() => {
-              const props = getImageKitProps(coverPreview, 'secondary');
-              return (
-                <IKImage
-                  src={props.src}
-                  width={props.width}
-                  height={props.height}
-                  alt="Cover preview"
-                  className="w-full h-full object-cover"
-                  sizes={props.sizes}
-                  loading={props.loading}
-                  fetchPriority={props.fetchPriority}
-                  transformation={props.transformation}
-                />
-              );
-            })()
-          ) : (
-            <div className="bg-gray-100 h-full w-full flex items-center justify-center">
-              <ImageIcon className="h-8 w-8 text-gray-400" />
-            </div>
-          )}
-        </div>
-        
-        <ImageUpload
-          type="cover"
-          entityId={user.id}
-          onUploadComplete={(url: string) => {
-            form.setValue("coverImage", url);
-            setCoverPreview(url);
-          }}
-          buttonText="Change Cover Image"
-          variant="outline"
-          size="sm"
-          multiple={false}
-        />
-      </div>
     </div>
   );
 };
@@ -308,7 +266,6 @@ export default function ProfileSettingsForm({ user }: ProfileSettingsFormProps) 
       state: user?.state || "",
       country: user?.country || "",
       profileImage: user?.profileImage || "",
-      coverImage: user?.coverImage || "",
     },
     mode: "onBlur"
   });
@@ -347,9 +304,6 @@ export default function ProfileSettingsForm({ user }: ProfileSettingsFormProps) 
     // All other fields are handled above
     if (formValues.profileImage !== initialValues.profileImage) 
       changedFields.profileImage = formValues.profileImage;
-    
-    if (formValues.coverImage !== initialValues.coverImage) 
-      changedFields.coverImage = formValues.coverImage;
     
     return changedFields;
   };

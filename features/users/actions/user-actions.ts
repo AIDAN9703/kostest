@@ -17,3 +17,7 @@ export async function getUserById(userId: string) {
   
   return await userService.getUserById(userId);
 }
+
+export async function getAdmins() {
+  return await userService.getAdmins();
+}

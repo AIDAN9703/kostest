@@ -174,12 +174,6 @@ export const navigationData = {
       icon: Calendar,
     },
     {
-      href: "/profile/boats",
-      label: "My Boats",
-      type: "link" as const,
-      icon: Ship,
-    },
-    {
       href: "/profile/favorites",
       label: "Favorites",
       type: "link" as const,

@@ -47,11 +47,6 @@ export const profileUpdateSchema = z.object({
     z.string().length(0), // Allow empty string
     z.null(), // Allow null
   ]).optional().nullable(),
-  coverImage: z.union([
-    z.string().url("Invalid URL format"),
-    z.string().length(0), // Allow empty string
-    z.null(), // Allow null
-  ]).optional().nullable(),
 });
 
 /**

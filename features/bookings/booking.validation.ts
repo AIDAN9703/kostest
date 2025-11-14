@@ -45,6 +45,7 @@ export const bookingFilterSchema = z.object({
   // Related entities
   boatId: z.string().uuid("Invalid boat ID").optional(),
   customerId: z.string().uuid("Invalid customer ID").optional(),
+  assignedAdminId: z.string().uuid("Invalid admin ID").optional(),
   
   // Boolean filters
   needsCaptain: z.coerce.boolean().optional(),

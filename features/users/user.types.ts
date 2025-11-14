@@ -31,7 +31,6 @@ export type UserProfile = Pick<User,
   | 'lastName' 
   | 'displayName'
   | 'profileImage'
-  | 'coverImage'
   | 'bio'
   | 'role'
   | 'status'

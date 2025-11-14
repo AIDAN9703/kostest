@@ -30,7 +30,6 @@ export async function GET(
         lastName: users.lastName,
         displayName: users.displayName,
         profileImage: users.profileImage,
-        coverImage: users.coverImage,
         bio: users.bio,
         city: users.city,
         state: users.state,

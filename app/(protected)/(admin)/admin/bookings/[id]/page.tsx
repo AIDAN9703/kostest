@@ -18,6 +18,7 @@ import { type BookingDetails } from "@/features/bookings/booking.types";
 import { format } from "date-fns";
 import { parseDateTimeInBoatTimezone } from "@/shared/utils/date-helpers";
 import { formatTime12Hour } from "@/shared/utils/general-utils";
+import { AdminAssignmentCard } from "@/features/bookings/components/AdminAssignmentCard";
 
 export const metadata: Metadata = {
   title: "Booking Details | Admin Dashboard",
@@ -285,6 +286,16 @@ export default async function BookingDetailsPage({
               </div>
             </CardContent>
           </Card>
+
+          {/* Admin Assignment Card */}
+          <AdminAssignmentCard
+            bookingId={booking.id}
+            assignedAdminId={booking.assignedAdminId}
+            assignedAdminFirstName={booking.assignedAdminFirstName}
+            assignedAdminLastName={booking.assignedAdminLastName}
+            assignedAdminEmail={booking.assignedAdminEmail}
+            contactedAt={booking.contactedAt}
+          />
         </div>
       </div>
     </div>

@@ -10,6 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import { useQuery } from "@tanstack/react-query";
+import { getAdmins } from "@/features/users/actions/user-actions";
 import {
   Search,
   X,
@@ -32,6 +34,7 @@ interface BookingFiltersProps {
     needsCaptain: boolean | null;
     minAmount: number | null;
     maxAmount: number | null;
+    assignedAdminId: string | null;
     page: number;
   };
   setFilters: (filters: any) => void;
@@ -40,6 +43,13 @@ interface BookingFiltersProps {
 export function BookingFilters({ filters, setFilters }: BookingFiltersProps) {
   // Defer search value to avoid excessive updates
   const deferredSearch = useDeferredValue(filters.search);
+
+  // Fetch admins for dropdown
+  const { data: admins } = useQuery({
+    queryKey: ["admins"],
+    queryFn: getAdmins,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   const updateFilter = (updates: Partial<typeof filters>) => {
     setFilters({ ...updates, page: 1 });
@@ -61,6 +71,7 @@ export function BookingFilters({ filters, setFilters }: BookingFiltersProps) {
       filters.bookingStatus ||
       filters.paymentStatus ||
       filters.bookingType ||
+      filters.assignedAdminId ||
       activeAdvancedFilters > 0
     );
   }, [
@@ -68,6 +79,7 @@ export function BookingFilters({ filters, setFilters }: BookingFiltersProps) {
     filters.bookingStatus,
     filters.paymentStatus,
     filters.bookingType,
+    filters.assignedAdminId,
     activeAdvancedFilters,
   ]);
 
@@ -82,6 +94,7 @@ export function BookingFilters({ filters, setFilters }: BookingFiltersProps) {
       needsCaptain: null,
       minAmount: null,
       maxAmount: null,
+      assignedAdminId: null,
       page: 1,
     });
   };
@@ -158,6 +171,34 @@ export function BookingFilters({ filters, setFilters }: BookingFiltersProps) {
               <SelectItem value="INSTANT_BOOK">Instant Book</SelectItem>
               <SelectItem value="REQUEST">Request</SelectItem>
               <SelectItem value="INQUIRY">Inquiry</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Assigned Admin Filter */}
+          <Select
+            value={filters.assignedAdminId || "all"}
+            onValueChange={(value) =>
+              updateFilter({
+                assignedAdminId: value === "all" ? null : value,
+              })
+            }
+          >
+            <SelectTrigger className="h-9 w-[180px] border-gray-200/70">
+              <SelectValue placeholder="All Admins" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Admins</SelectItem>
+              {admins?.map((admin) => {
+                const adminName =
+                  admin.firstName || admin.lastName
+                    ? `${admin.firstName || ""} ${admin.lastName || ""}`.trim()
+                    : admin.email || admin.username || "Unknown";
+                return (
+                  <SelectItem key={admin.id} value={admin.id}>
+                    {adminName}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
 

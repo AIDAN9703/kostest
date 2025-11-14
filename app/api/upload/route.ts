@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { imagekit } from '@/shared/services/imagekit.service';
 
-type UploadType = 'profile' | 'cover' | 'boat' | 'misc' | 'blog';
+type UploadType = 'profile' | 'boat' | 'misc' | 'blog';
 
 interface UploadOptions {
   type: UploadType;
@@ -50,10 +50,6 @@ export async function POST(request: Request) {
     switch (type) {
       case 'profile':
         folder = `/users/${session.user.id}/profile`;
-        tags.push(`user_${session.user.id}`);
-        break;
-      case 'cover':
-        folder = `/users/${session.user.id}/cover`;
         tags.push(`user_${session.user.id}`);
         break;
       case 'boat':
