@@ -59,7 +59,7 @@ This is a comprehensive **boat rental platform** built with:
 - `shared/components/` - All reusable UI components
   - `shared/components/ui/` - shadcn/ui base components
   - `shared/components/layout/` - Navigation, Footer, PageWrapper
-- `features/` - Feature-specific components (chatbot, messaging)
+- `features/` - Feature-specific components (messaging)
 - `features-admin/` - Admin dashboard components and layouts
 
 #### Data Layer Architecture

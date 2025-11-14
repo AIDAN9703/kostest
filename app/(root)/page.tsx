@@ -15,7 +15,6 @@ import {
 } from "@/features/_marketing/landing/actions";
 import { Suspense } from "react";
 import { Loader2 } from "lucide-react";
-import LazyChatbot from "@/features/chatbot/LazyChatbot";
 
 // This component wraps all the content that needs data
 async function HomeContent() {
@@ -45,7 +44,6 @@ async function HomeContent() {
               <TestimonialsSection reviews={reviewsResponse.data} />
             )}
           <RequestToBook />
-          <LazyChatbot />
         </div>
       </>
     );
