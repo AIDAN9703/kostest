@@ -43,7 +43,7 @@ export async function createPaymentLinkForBooking(bookingId: string): Promise<st
           currency: 'usd',
           product_data: {
             name: `Booking for ${booking.boatName || 'Boat'}`,
-            description: `Booking date: ${booking.startDateTime ? booking.startDateTime.toLocaleDateString() : 'TBD'}`,
+            description: `Booking date: ${booking.startDateTime.toLocaleDateString()}`,
           },
           unit_amount: Math.round(booking.totalAmount * 100), // Convert to cents
         },

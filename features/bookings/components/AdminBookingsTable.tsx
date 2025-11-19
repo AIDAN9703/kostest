@@ -16,6 +16,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import {
   ChevronLeft,
@@ -29,7 +32,8 @@ import {
   MoreVertical,
   CheckCircle2,
   XCircle,
-  Edit,
+  UserCheck,
+  Phone,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -41,9 +45,12 @@ import { StatusBadge } from "@/shared/utils/badge-utils";
 import {
   approveBookingRequest,
   denyBookingRequest,
-  modifyBookingRequest,
+  assignAdminToBooking,
+  markBookingAsContacted,
 } from "@/features/bookings/actions/admin-booking-actions";
 import { useToast } from "@/shared/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { getAdmins } from "@/features/users/actions/user-actions";
 
 interface AdminBookingsTableProps {
   bookings: BookingListItem[];
@@ -61,6 +68,14 @@ interface AdminBookingsTableProps {
 
 const columnHelper = createColumnHelper<BookingListItem>();
 
+interface Admin {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  username: string | null;
+}
+
 export function AdminBookingsTable({
   bookings,
   pagination,
@@ -71,6 +86,13 @@ export function AdminBookingsTable({
 }: AdminBookingsTableProps) {
   const { toast } = useToast();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // Use TanStack Query to fetch admins (shared cache with BookingFilters)
+  const { data: admins = [], isLoading: loadingAdmins } = useQuery({
+    queryKey: ["admins"],
+    queryFn: getAdmins,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   const handleAction = useCallback(
     async (
@@ -128,14 +150,23 @@ export function AdminBookingsTable({
     [handleAction]
   );
 
-  const handleModify = useCallback(
-    (bookingId: string) => {
-      const notes = prompt("Modification notes:");
-      if (!notes?.trim()) return;
+  const handleAssignAdmin = useCallback(
+    (bookingId: string, adminId: string) => {
       setActionLoading(bookingId);
       handleAction(
-        () => modifyBookingRequest(bookingId, {}, notes),
-        "Booking Modified"
+        () => assignAdminToBooking(bookingId, adminId),
+        "Admin Assigned"
+      ).finally(() => setActionLoading(null));
+    },
+    [handleAction]
+  );
+
+  const handleMarkContacted = useCallback(
+    (bookingId: string) => {
+      setActionLoading(bookingId);
+      handleAction(
+        () => markBookingAsContacted(bookingId),
+        "Marked as Contacted"
       ).finally(() => setActionLoading(null));
     },
     [handleAction]
@@ -211,14 +242,12 @@ export function AdminBookingsTable({
           const startDateTime = booking.startDateTime;
           const endDateTime = booking.endDateTime;
 
-          if (!startDateTime)
-            return <span className="text-sm text-gray-400">—</span>;
-
+          // startDateTime is NOT NULL in database, so no null check needed
           const { date: startDate, time: startTime } =
             parseDateTimeInBoatTimezone(startDateTime);
           const { time: endTime } = endDateTime
             ? parseDateTimeInBoatTimezone(endDateTime)
-            : { time: null };
+            : { time: "" };
 
           return (
             <div className="text-sm">
@@ -269,8 +298,9 @@ export function AdminBookingsTable({
                 {adminName}
               </div>
               {booking.contactedAt && (
-                <div className="text-xs text-gray-500">
-                  Contacted {format(new Date(booking.contactedAt), "MMM d")}
+                <div className="text-xs text-gray-500 mt-0.5">
+                  Contacted{" "}
+                  {format(new Date(booking.contactedAt), "MMM d, h:mma")}
                 </div>
               )}
             </div>
@@ -329,14 +359,6 @@ export function AdminBookingsTable({
                       <XCircle className="mr-2 h-4 w-4" />
                       Deny
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleModify(booking.id)}
-                      disabled={isLoading}
-                      className="cursor-pointer"
-                    >
-                      <Edit className="mr-2 h-4 w-4" />
-                      Modify
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
                 )}
@@ -349,6 +371,53 @@ export function AdminBookingsTable({
                     View Details
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger disabled={loadingAdmins || isLoading}>
+                    <UserCheck className="mr-2 h-4 w-4" />
+                    Assign Admin
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    {admins.length === 0 ? (
+                      <DropdownMenuItem disabled>
+                        No admins available
+                      </DropdownMenuItem>
+                    ) : (
+                      admins.map((admin) => {
+                        const adminName =
+                          admin.firstName || admin.lastName
+                            ? `${admin.firstName || ""} ${admin.lastName || ""}`.trim()
+                            : admin.email;
+                        const isAssigned = booking.assignedAdminId === admin.id;
+                        return (
+                          <DropdownMenuItem
+                            key={admin.id}
+                            onClick={() =>
+                              handleAssignAdmin(booking.id, admin.id)
+                            }
+                            disabled={isLoading || isAssigned}
+                            className={isAssigned ? "opacity-50" : ""}
+                          >
+                            {adminName}
+                            {isAssigned && (
+                              <CheckCircle2 className="ml-auto h-4 w-4 text-green-600" />
+                            )}
+                          </DropdownMenuItem>
+                        );
+                      })
+                    )}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                {!booking.contactedAt && (
+                  <DropdownMenuItem
+                    onClick={() => handleMarkContacted(booking.id)}
+                    disabled={isLoading}
+                    className="cursor-pointer"
+                  >
+                    <Phone className="mr-2 h-4 w-4" />
+                    Mark as Contacted
+                  </DropdownMenuItem>
+                )}
                 {booking.customerEmail && (
                   <DropdownMenuItem asChild>
                     <a
@@ -378,7 +447,16 @@ export function AdminBookingsTable({
         },
       }),
     ],
-    [handleApprove, handleDeny, handleModify, actionLoading, onDelete]
+    [
+      handleApprove,
+      handleDeny,
+      handleAssignAdmin,
+      handleMarkContacted,
+      actionLoading,
+      onDelete,
+      admins,
+      loadingAdmins,
+    ]
   );
 
   const table = useReactTable({

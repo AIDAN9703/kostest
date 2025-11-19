@@ -2,8 +2,8 @@
 
 import { auth } from "@/auth";
 import { db } from "@/database/db";
-import { users } from "@/database/schema";
-import { eq } from "drizzle-orm";
+import { users, bookings } from "@/database/schema";
+import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { profileUpdateSchema, ProfileFormValues } from "@/features/_validation/validations";
@@ -165,4 +165,41 @@ function calculateProfileCompletion(user: Partial<UserProfile>): number {
   
   // Calculate percentage
   return Math.round((filledFields / totalFields) * 100);
+}
+
+/**
+ * Get user statistics for the profile welcome page
+ */
+export async function getUserStats() {
+  const session = await auth();
+  
+  if (!session?.user?.id) {
+    return { error: "Not authenticated" };
+  }
+
+  try {
+    const [stats] = await db
+      .select({
+        totalBookings: sql<number>`COUNT(*)`,
+        completedBookings: sql<number>`COUNT(CASE WHEN ${bookings.bookingStatus} = 'COMPLETED' THEN 1 END)`,
+        upcomingBookings: sql<number>`COUNT(CASE WHEN ${bookings.bookingStatus} IN ('PENDING', 'CONFIRMED') AND ${bookings.startDateTime} > NOW() THEN 1 END)`,
+        totalSpent: sql<number>`COALESCE(SUM(CASE WHEN ${bookings.bookingStatus} = 'COMPLETED' THEN ${bookings.totalAmount} ELSE 0 END), 0)`,
+      })
+      .from(bookings)
+      .where(eq(bookings.userId, session.user.id));
+
+    // Calculate loyalty points (1 point per $1 spent)
+    const loyaltyPoints = Math.floor(Number(stats.totalSpent) || 0);
+
+    return {
+      totalBookings: Number(stats.totalBookings) || 0,
+      completedBookings: Number(stats.completedBookings) || 0,
+      upcomingBookings: Number(stats.upcomingBookings) || 0,
+      totalSpent: Number(stats.totalSpent) || 0,
+      loyaltyPoints,
+    };
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    return { error: "Failed to fetch user stats" };
+  }
 } 

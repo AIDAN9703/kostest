@@ -41,7 +41,7 @@ export default function BookingSummary({
       boat
     );
     
-    if (!boatDate) return { date: 'TBD', time: 'TBD' };
+    if (!boatDate || !boatTime) return { date: 'TBD', time: 'TBD' };
     
     const date = formatDate(boatDate);
     const time = formatTime12Hour(boatTime);

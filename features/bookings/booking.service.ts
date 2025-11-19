@@ -264,6 +264,64 @@ export class BookingService {
   }
 
   /**
+   * Update booking fields (partial update)
+   */
+  async updateBooking(
+    id: string,
+    updates: {
+      customerName?: string;
+      customerEmail?: string;
+      customerPhone?: string;
+      numberOfPassengers?: number;
+      startDateTime?: Date | string;
+      endDateTime?: Date | string | null;
+      totalAmount?: number;
+      captainFee?: number | null;
+      cleaningFee?: number | null;
+      serviceFee?: number | null;
+      taxAmount?: number | null;
+      specialRequests?: string | null;
+      pickupLocation?: string | null;
+      dropoffLocation?: string | null;
+      needsCaptain?: boolean;
+    }
+  ): Promise<any> {
+    if (!isValidUUID(id)) {
+      throw new Error(`Invalid UUID format: ${id}`);
+    }
+
+    // Prepare update data
+    const updateData: any = {
+      updatedAt: new Date()
+    };
+
+    // Add only provided fields
+    if (updates.customerName !== undefined) updateData.customerName = updates.customerName;
+    if (updates.customerEmail !== undefined) updateData.customerEmail = updates.customerEmail;
+    if (updates.customerPhone !== undefined) updateData.customerPhone = updates.customerPhone;
+    if (updates.numberOfPassengers !== undefined) updateData.numberOfPassengers = updates.numberOfPassengers;
+    if (updates.startDateTime !== undefined) updateData.startDateTime = updates.startDateTime instanceof Date ? updates.startDateTime : new Date(updates.startDateTime);
+    if (updates.endDateTime !== undefined) updateData.endDateTime = updates.endDateTime === null ? null : (updates.endDateTime instanceof Date ? updates.endDateTime : new Date(updates.endDateTime));
+    if (updates.totalAmount !== undefined) updateData.totalAmount = updates.totalAmount;
+    if (updates.captainFee !== undefined) updateData.captainFee = updates.captainFee;
+    if (updates.cleaningFee !== undefined) updateData.cleaningFee = updates.cleaningFee;
+    if (updates.serviceFee !== undefined) updateData.serviceFee = updates.serviceFee;
+    if (updates.taxAmount !== undefined) updateData.taxAmount = updates.taxAmount;
+    if (updates.specialRequests !== undefined) updateData.specialRequests = updates.specialRequests;
+    if (updates.pickupLocation !== undefined) updateData.pickupLocation = updates.pickupLocation;
+    if (updates.dropoffLocation !== undefined) updateData.dropoffLocation = updates.dropoffLocation;
+    if (updates.needsCaptain !== undefined) updateData.needsCaptain = updates.needsCaptain;
+
+    const [booking] = await db
+      .update(bookings)
+      .set(updateData)
+      .where(eq(bookings.id, id))
+      .returning();
+
+    return booking;
+  }
+
+  /**
    * Delete a booking
    */
   async deleteBooking(id: string): Promise<void> {

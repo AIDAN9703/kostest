@@ -11,12 +11,12 @@ export interface BookingListItem {
   customerName: string | null;
   customerEmail: string | null;
   customerPhone: string | null;
-  startDateTime: Date | null;
-  endDateTime: Date | null;
-  numberOfPassengers: number | null;
-  totalAmount: number | null;
+  startDateTime: Date; // NOT NULL in database
+  endDateTime: Date | null; // Nullable in database
+  numberOfPassengers: number; // NOT NULL in database
+  totalAmount: number; // NOT NULL in database
   needsCaptain: boolean | null;
-  createdAt: Date | null;
+  createdAt: Date; // NOT NULL in database
   
   boatId: string | null;
   boatName: string | null;
@@ -39,7 +39,7 @@ export interface BookingListItem {
 export interface BookingDetails extends BookingListItem {
   paymentMethod: string | null;
   specialRequests: string | null;
-  updatedAt: Date | null;
+  updatedAt: Date; // NOT NULL in database
   captainFee: number | null;
   cleaningFee: number | null;
   serviceFee: number | null;

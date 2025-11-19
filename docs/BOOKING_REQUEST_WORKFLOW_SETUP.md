@@ -6,7 +6,6 @@ This implementation automates the booking request workflow:
 
 1. Admin clicks **Approve** → Payment link generated → Email sent → Customer pays → Auto-confirmed
 2. Admin clicks **Deny** → Reason collected → Email sent → Booking denied
-3. Admin clicks **Modify** → Notes collected → Email sent → Booking remains pending
 
 ## Environment Variables Required
 
@@ -65,7 +64,7 @@ The webhook handler at `/api/webhook/stripe` will automatically:
 - `shared/utils/base-url.ts` - Base URL utility
 - `features/bookings/actions/stripe-payment-links.ts` - Stripe payment link creation
 - `features-admin/bookings/actions/admin-booking-actions.ts` - Admin action functions
-- `features-admin/bookings/components/BookingActionButtons.tsx` - UI component for approve/deny/modify
+- `features-admin/bookings/components/BookingActionButtons.tsx` - UI component for approve/deny
 
 ### Modified Files
 
@@ -95,14 +94,6 @@ The webhook handler at `/api/webhook/stripe` will automatically:
 4. Booking status updated to DENIED
 5. Email sent to customer with denial reason
 
-### Modify Flow
-
-1. Admin clicks "Modify" button
-2. Dialog opens asking for modification notes
-3. Admin enters notes
-4. Email sent to customer with modification details
-5. Booking remains PENDING (allows further changes)
-
 ## Testing
 
 ### Test Email Service
@@ -130,7 +121,7 @@ console.log("Payment Link:", paymentLink);
 1. Create a test booking request
 2. Go to admin bookings page
 3. Find PENDING REQUEST booking
-4. Click Approve/Deny/Modify buttons
+4. Click Approve/Deny buttons
 5. Check email inbox for sent emails
 
 ## Troubleshooting

@@ -54,11 +54,12 @@ export function createDateTimeISO(
 /**
  * Parse Date object or ISO string and return date/time in boat's timezone
  * Used for displaying booking times
+ * Returns null date if input is invalid, but time is always a string (empty if invalid)
  */
 export function parseDateTimeInBoatTimezone(
-  dateTime: Date | string | null,
+  dateTime: Date | string | null | undefined,
   boat?: { timezone?: SupportedTimezones | string | null; }
-) {
+): { date: Date | null; time: string } {
   if (!dateTime) return { date: null, time: "" };
   
   const timezone = boat ? getBoatTimezone(boat) : DEFAULT_TIMEZONE;

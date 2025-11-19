@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -20,6 +20,7 @@ import {
 import { getAdmins } from "@/features/users/actions/user-actions";
 import { useToast } from "@/shared/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 
 interface Admin {
@@ -48,31 +49,17 @@ export function AdminAssignmentCard({
   assignedAdminEmail,
   contactedAt,
 }: AdminAssignmentCardProps) {
-  const [admins, setAdmins] = useState<Admin[]>([]);
   const [selectedAdminId, setSelectedAdminId] = useState<string>(assignedAdminId || "");
   const [loading, setLoading] = useState(false);
-  const [loadingAdmins, setLoadingAdmins] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
 
-  useEffect(() => {
-    async function fetchAdmins() {
-      try {
-        const adminList = await getAdmins();
-        setAdmins(adminList);
-      } catch (error) {
-        console.error("Error fetching admins:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load admin users",
-          variant: "destructive",
-        });
-      } finally {
-        setLoadingAdmins(false);
-      }
-    }
-    fetchAdmins();
-  }, [toast]);
+  // Use TanStack Query to fetch admins (shared cache with other components)
+  const { data: admins = [], isLoading: loadingAdmins } = useQuery({
+    queryKey: ["admins"],
+    queryFn: getAdmins,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   const handleAssign = async () => {
     if (!selectedAdminId) {

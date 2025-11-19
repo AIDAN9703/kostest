@@ -97,3 +97,51 @@ export async function updatePaymentStatus(
   }
 }
 
+/**
+ * Update booking fields (partial update)
+ */
+export async function updateBooking(
+  id: string,
+  updates: {
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+    numberOfPassengers?: number;
+    startDateTime?: Date | string;
+    endDateTime?: Date | string | null;
+    totalAmount?: number;
+    captainFee?: number | null;
+    cleaningFee?: number | null;
+    serviceFee?: number | null;
+    taxAmount?: number | null;
+    specialRequests?: string | null;
+    pickupLocation?: string | null;
+    dropoffLocation?: string | null;
+    needsCaptain?: boolean;
+  }
+): Promise<ActionResponse<{ booking: any }>> {
+  const session = await auth();
+  
+  if (!session?.user) {
+    return { success: false, error: "Authentication required" };
+  }
+
+  // Only admins can update bookings
+  if (session.user.role !== 'ADMIN') {
+    return { success: false, error: "Admin access required" };
+  }
+
+  try {
+    const updatedBooking = await bookingService.updateBooking(id, updates);
+    revalidatePath('/admin/bookings');
+    revalidatePath(`/admin/bookings/${id}`);
+    return { success: true, data: { booking: updatedBooking } };
+  } catch (error) {
+    console.error("Error updating booking:", error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : "Failed to update booking" 
+    };
+  }
+}
+

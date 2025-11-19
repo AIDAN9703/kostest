@@ -109,6 +109,7 @@ export interface Boat {
   dayCharter: boolean;
   termCharter: boolean;
   minimumCharterDays?: number | null;
+  minRentalHours?: number | null;
   fuelIncluded: boolean;
   fuelCapacity?: number | null;
   waterCapacity?: number | null;

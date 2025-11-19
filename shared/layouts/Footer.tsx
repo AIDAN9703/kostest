@@ -47,16 +47,17 @@ export default function Footer() {
     wrapper: "max-w-9xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20",
 
     // New layout: left + middle bunched + right
-    mainGrid: "grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-8 lg:gap-4",
+    mainGrid:
+      "grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-8 lg:gap-4 items-start",
     leftSection: "flex flex-col",
     middleSection: "flex flex-col",
     rightSection: "flex flex-col",
 
     // Typography
     heading:
-      "text-lg font-semibold font-poppins tracking-wide text-primary mb-6",
-    link: "block text-sm text-gray-600 hover:text-primary transition-colors font-medium py-1",
-    linkList: "space-y-1",
+      "text-lg font-semibold font-poppins tracking-wide text-primary mb-4",
+    link: "block text-sm text-gray-600 hover:text-primary transition-colors font-medium",
+    linkList: "space-y-4",
 
     // Brand section (left)
     logo: "rounded-full mb-6 transition-transform hover:scale-105",
@@ -71,15 +72,12 @@ export default function Footer() {
     linkSections: "grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8",
     linkSection: "flex flex-col",
 
-    // Newsletter (right)
-    newsletter: "bg-white rounded-xl p-8",
-    newsletterTitle: "text-xl font-semibold font-poppins text-primary mb-3",
-    newsletterDesc: "text-gray-600 mb-6 text-sm leading-relaxed",
-    newsletterForm: "flex flex-col gap-3",
+    // Newsletter (right) - matches other sections structure
+    newsletterForm: "flex flex-col gap-3 mt-2",
     newsletterInput:
       "bg-gray-50 border-gray-200 focus:border-gold focus:ring-gold/20 h-12",
     newsletterButton:
-      "bg-gold hover:bg-gold/90 text-white h-12 font-medium flex items-center justify-center gap-2",
+      "bg-primary text-white h-12 font-medium flex items-center justify-center gap-2",
 
     // Bottom bar
     bottomBar: "mt-16 pt-8 border-t border-gray-100",
@@ -204,24 +202,22 @@ export default function Footer() {
 
           {/* Right: Newsletter section */}
           <div className={styles.rightSection}>
-            <div className={styles.newsletter}>
-              <h3 className={styles.newsletterTitle}>Stay Connected</h3>
-              <p className={styles.newsletterDesc}>
-                Get exclusive updates on new charters, special offers, and
-                luxury yacht experiences.
-              </p>
-              <form className={styles.newsletterForm}>
-                <Input
-                  type="email"
-                  placeholder="Your email address"
-                  className={styles.newsletterInput}
-                />
-                <Button type="submit" className={styles.newsletterButton}>
-                  <Send className="w-4 h-4" />
-                  Subscribe
-                </Button>
-              </form>
-            </div>
+            <h3 className={styles.heading}>Stay Connected</h3>
+            <p className="text-sm text-gray-600">
+              Get exclusive updates on new charters, special offers, and luxury
+              yacht experiences.
+            </p>
+            <form className={styles.newsletterForm}>
+              <Input
+                type="email"
+                placeholder="Your email address"
+                className={styles.newsletterInput}
+              />
+              <Button type="submit" className={styles.newsletterButton}>
+                <Send className="w-4 h-4" />
+                Subscribe
+              </Button>
+            </form>
           </div>
         </div>
 

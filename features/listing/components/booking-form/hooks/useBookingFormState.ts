@@ -22,7 +22,7 @@ interface BookingFormState {
   // Computed values
   parsedDateTime: {
     date: Date | null;
-    time: string;
+    time: string; // Always a string (empty if invalid)
   };
   selectedPricingTier: PricingTier | null;
   endDateTime: Date | null;

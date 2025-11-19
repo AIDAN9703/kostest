@@ -1,6 +1,6 @@
 /**
  * Admin Booking Actions
- * Server actions for admin to approve, deny, or modify booking requests
+ * Server actions for admin to approve or deny booking requests
  */
 
 "use server";
@@ -11,7 +11,6 @@ import { createPaymentLinkForBooking } from '@/features/bookings/actions/stripe-
 import {
   sendBookingApprovalEmail,
   sendBookingDenialEmail,
-  sendBookingModificationEmail,
 } from '@/shared/services/email.service';
 import { revalidatePath } from 'next/cache';
 
@@ -162,93 +161,6 @@ export async function denyBookingRequest(
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to deny booking',
-    };
-  }
-}
-
-/**
- * Modify a booking request
- * Updates booking details and emails customer
- */
-export async function modifyBookingRequest(
-  bookingId: string,
-  modifications: {
-    totalAmount?: number;
-    startDateTime?: Date | string;
-    endDateTime?: Date | string;
-    numberOfPassengers?: number;
-    notes?: string;
-  },
-  modificationNotes: string
-) {
-  try {
-    // Check admin authentication
-    const session = await auth();
-    if (!session?.user || session.user.role !== 'ADMIN') {
-      return {
-        success: false,
-        error: 'Admin access required',
-      };
-    }
-
-    // Validate modifications
-    if (!modificationNotes || modificationNotes.trim().length === 0) {
-      return {
-        success: false,
-        error: 'Please provide notes explaining the modifications',
-      };
-    }
-
-    // Get booking
-    const booking = await bookingService.getBookingById(bookingId);
-    if (!booking) {
-      return {
-        success: false,
-        error: 'Booking not found',
-      };
-    }
-
-    // Verify booking is a request and pending
-    if (booking.bookingType !== 'REQUEST') {
-      return {
-        success: false,
-        error: 'Only request bookings can be modified',
-      };
-    }
-
-    if (booking.bookingStatus !== 'PENDING') {
-      return {
-        success: false,
-        error: `Booking is already ${booking.bookingStatus.toLowerCase()}`,
-      };
-    }
-
-    // TODO: Update booking with modifications
-    // For now, we'll just send the email with modification notes
-    // You'll need to add an updateBooking method to bookingService that handles partial updates
-
-    // Send modification email
-    const emailSent = await sendBookingModificationEmail(
-      booking,
-      modificationNotes
-    );
-
-    // Revalidate paths
-    revalidatePath('/admin/bookings');
-    revalidatePath(`/admin/bookings/${bookingId}`);
-
-    return {
-      success: true,
-      emailSent,
-      message: emailSent
-        ? 'Booking modification sent successfully. Customer has been notified.'
-        : 'Booking modified successfully, but email failed to send. Please notify customer manually.',
-    };
-  } catch (error) {
-    console.error('Error modifying booking:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to modify booking',
     };
   }
 }

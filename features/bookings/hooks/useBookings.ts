@@ -17,12 +17,19 @@ export function useBookings(filters: BookingFilterInput = {}) {
 /**
  * Fetch single booking by ID
  */
-export function useBooking(id: string) {
+export function useBooking(
+  id: string,
+  options?: {
+    initialData?: any;
+    staleTime?: number;
+  }
+) {
   return useQuery({
     queryKey: ['bookings', 'detail', id],
     queryFn: () => bookingsApi.getBooking(id),
     enabled: !!id,
-    staleTime: 2 * 60 * 1000,
+    initialData: options?.initialData,
+    staleTime: options?.staleTime ?? 2 * 60 * 1000,
   });
 }
 
