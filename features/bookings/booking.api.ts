@@ -6,7 +6,7 @@
 import superjson from 'superjson';
 import { type BookingFilterInput } from './booking.validation';
 import { type BookingListItem, type BookingDetails } from './booking.types';
-import { type ApiResponse, type PaginatedApiResponse } from '@/shared/types/api.types';
+import { type ApiResponse, type PaginatedApiResponse } from '@/shared/lib/types/api.types';
 
 export const bookingsApi = {
   /**

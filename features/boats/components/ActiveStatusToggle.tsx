@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Switch } from "@/shared/components/ui/switch";
 import { Loader2 } from "lucide-react";
-import { toast } from "@/shared/hooks/use-toast";
+import { toast } from "@/shared/lib/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
 interface ActiveStatusToggleProps {
@@ -11,9 +11,9 @@ interface ActiveStatusToggleProps {
   initialStatus: boolean;
 }
 
-export default function ActiveStatusToggle({ 
-  boatId, 
-  initialStatus 
+export default function ActiveStatusToggle({
+  boatId,
+  initialStatus,
 }: ActiveStatusToggleProps) {
   const [isActive, setIsActive] = useState(initialStatus);
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +39,7 @@ export default function ActiveStatusToggle({
         title: "Status updated",
         description: `Boat has been ${checked ? "activated" : "deactivated"}.`,
       });
-      
+
       // Refresh the page to reflect updated status
       router.refresh();
     } catch (error) {
@@ -69,10 +69,12 @@ export default function ActiveStatusToggle({
             <Loader2 className="h-3 w-3 animate-spin" />
             Updating...
           </div>
+        ) : isActive ? (
+          "Active"
         ) : (
-          isActive ? "Active" : "Inactive"
+          "Inactive"
         )}
       </span>
     </div>
   );
-} 
+}

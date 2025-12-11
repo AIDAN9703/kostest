@@ -13,16 +13,16 @@ export const boatGoogleCalendars = pgTable("boat_google_calendars", {
   
   // Ownership
   ownerType: calendarOwnerTypeEnum("owner_type").notNull(), // ADMIN or OWNER
-  ownerUserId: uuid("owner_user_id").notNull().references(() => users.id),
+  ownerUserId: uuid("owner_user_id").notNull().references(() => users.id, { onDelete: "restrict" }), // Can't delete user if owns calendar
   
   // Sync configuration
   syncEnabled: boolean("sync_enabled").default(true).notNull(),
-  lastSyncAt: timestamp("last_sync_at", { withTimezone: true }),
+  lastSyncAt: timestamp("last_sync_at", { mode: "date", withTimezone: true }),
   lastSyncStatus: calendarSyncStatusEnum("last_sync_status"),
   
   // Metadata
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
   
 }, (table) => [
   index("boat_google_calendars_boat_idx").on(table.boatId),

@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import {
   Select,
@@ -18,7 +23,7 @@ import {
   markBookingAsContacted,
 } from "@/features/bookings/actions/admin-booking-actions";
 import { getAdmins } from "@/features/users/actions/user-actions";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/shared/lib/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
@@ -49,7 +54,9 @@ export function AdminAssignmentCard({
   assignedAdminEmail,
   contactedAt,
 }: AdminAssignmentCardProps) {
-  const [selectedAdminId, setSelectedAdminId] = useState<string>(assignedAdminId || "");
+  const [selectedAdminId, setSelectedAdminId] = useState<string>(
+    assignedAdminId || ""
+  );
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -155,9 +162,10 @@ export function AdminAssignmentCard({
     }
   };
 
-  const assignedAdminName = assignedAdminFirstName || assignedAdminLastName
-    ? `${assignedAdminFirstName || ""} ${assignedAdminLastName || ""}`.trim()
-    : assignedAdminEmail || "Unknown";
+  const assignedAdminName =
+    assignedAdminFirstName || assignedAdminLastName
+      ? `${assignedAdminFirstName || ""} ${assignedAdminLastName || ""}`.trim()
+      : assignedAdminEmail || "Unknown";
 
   return (
     <Card>
@@ -247,7 +255,12 @@ export function AdminAssignmentCard({
           </Select>
           <Button
             onClick={handleAssign}
-            disabled={loading || loadingAdmins || !selectedAdminId || selectedAdminId === assignedAdminId}
+            disabled={
+              loading ||
+              loadingAdmins ||
+              !selectedAdminId ||
+              selectedAdminId === assignedAdminId
+            }
             className="w-full"
             size="sm"
           >
@@ -259,4 +272,3 @@ export function AdminAssignmentCard({
     </Card>
   );
 }
-

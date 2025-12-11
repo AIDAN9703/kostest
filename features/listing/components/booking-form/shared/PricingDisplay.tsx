@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { PricingTier } from "@/shared/types/types";
-import { cn, formatCurrency } from "@/shared/utils/general-utils";
+import { PricingTier } from "@/shared/lib/types/types";
+import { cn, formatCurrency } from "@/shared/lib/utils/general-utils";
 import { FormField, FormItem, FormMessage } from "@/shared/components/ui/form";
 import { Control } from "react-hook-form";
 import { BookingRequest } from "@/features/_validation/validations";

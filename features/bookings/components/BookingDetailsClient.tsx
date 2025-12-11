@@ -2,7 +2,12 @@
 
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useQueryStates, parseAsString, parseAsInteger, parseAsBoolean } from "nuqs";
+import {
+  useQueryStates,
+  parseAsString,
+  parseAsInteger,
+  parseAsBoolean,
+} from "nuqs";
 import BookingSummary from "./BookingSummary";
 import BookingAuthSection from "./BookingAuthSection";
 import KnowBeforeYouGo from "./KnowBeforeYouGo";
@@ -10,13 +15,17 @@ import BookingPricingSection from "./BookingPricingSection";
 import BookingSubmitButton from "./BookingSubmitButton";
 import CharterDetailsForm from "./CharterDetailsForm";
 import { useBoat } from "./BoatProvider";
-import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
+import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
 import { BookingRequest } from "@/features/_validation/validations";
 import { createInstantBooking } from "@/features/bookings/actions/instant";
 import { createBookingRequest } from "@/features/bookings/actions/request";
 import type { Session } from "next-auth";
 
-export default function BookingDetailsClient({ user }: { user: Session['user'] | null }) {
+export default function BookingDetailsClient({
+  user,
+}: {
+  user: Session["user"] | null;
+}) {
   const router = useRouter();
   const boat = useBoat();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,14 +38,19 @@ export default function BookingDetailsClient({ user }: { user: Session['user'] |
     needsCaptain: parseAsBoolean.withDefault(false),
   });
 
-  const { startDateTime, pricingTierId, numberOfPassengers, needsCaptain } = bookingState;
-  const isFormComplete = !!(startDateTime && pricingTierId && numberOfPassengers);
+  const { startDateTime, pricingTierId, numberOfPassengers, needsCaptain } =
+    bookingState;
+  const isFormComplete = !!(
+    startDateTime &&
+    pricingTierId &&
+    numberOfPassengers
+  );
 
   // Simple redirect if no booking data
   useEffect(() => {
     if (!isFormComplete) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('❌ No booking data found, redirecting to boat page');
+      if (process.env.NODE_ENV === "development") {
+        console.log("❌ No booking data found, redirecting to boat page");
       }
       router.push(`/boats/${boat.id}`);
     }
@@ -48,71 +62,92 @@ export default function BookingDetailsClient({ user }: { user: Session['user'] |
 
   const priceBreakdown = useMemo(() => {
     if (!selectedTier || !boat) return null;
-    return calculateBookingPrice(
-      selectedTier.price,
-      boat.cleaningFee || 0,
-      0
-    );
+    return calculateBookingPrice(selectedTier.price, boat.cleaningFee || 0, 0);
   }, [selectedTier, boat]);
 
-  const safeBoat = useMemo(() => ({
-    id: boat.id,
-    name: boat.name,
-    mainImage: boat.mainImage ?? null,
-    instantBook: !!boat.instantBook,
-    cleaningFee: boat.cleaningFee ?? null,
-    locationLabel: boat.locationLabel ?? null,
-    timezone: (boat.timezone as string | null) ?? null,
-  }), [boat]);
+  const safeBoat = useMemo(
+    () => ({
+      id: boat.id,
+      name: boat.name,
+      mainImage: boat.mainImage ?? null,
+      instantBook: !!boat.instantBook,
+      cleaningFee: boat.cleaningFee ?? null,
+      locationLabel: boat.locationLabel ?? null,
+      timezone: (boat.timezone as string | null) ?? null,
+    }),
+    [boat]
+  );
 
-  const handleBookingSubmit = useCallback(async (paymentMethod: 'request' | 'instant') => {
-    if (!isFormComplete || !user || !boat || !priceBreakdown) {
-      router.push('/sign-in');
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    try {
-      const payload: BookingRequest & { boatId: string } = {
-        startDateTime: startDateTime!,
-        pricingTierId: selectedTier!.id,
-        numberOfPassengers: numberOfPassengers!,
-        needsCaptain: !!needsCaptain,
-        boatId: boat.id,
-      };
-
-    const result = paymentMethod === 'instant'
-      ? await createInstantBooking(payload)
-      : await createBookingRequest(payload);
-
-    if (result?.success) {
-      if (paymentMethod === 'instant' && 'paymentUrl' in result && result.paymentUrl) {
-        // For instant bookings, redirect to Stripe (stateless flow)
-        window.location.href = result.paymentUrl;
-      } else if (paymentMethod === 'request' && 'booking' in result && result.booking) {
-        // For request bookings, go to success page with booking data
-        const params = new URLSearchParams({
-          type: 'request',
-          bookingId: result.booking.id || '',
-          boatName: boat.name || '',
-          boatImage: boat.mainImage || '',
-          startDateTime: startDateTime!,
-          hours: String(selectedTier!.hours || ''),
-          basePrice: String(priceBreakdown.basePrice),
-          cleaningFee: String(priceBreakdown.cleaningFee),
-          serviceFee: String(priceBreakdown.serviceFee),
-          totalAmount: String(priceBreakdown.totalPrice),
-        });
-        router.push(`/bookings/${boat.id}/success?${params.toString()}`);
+  const handleBookingSubmit = useCallback(
+    async (paymentMethod: "request" | "instant") => {
+      if (!isFormComplete || !user || !boat || !priceBreakdown) {
+        router.push("/sign-in");
+        return;
       }
-    }
-    } catch (error) {
-      console.error('Booking submission error:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [isFormComplete, user, boat, startDateTime, selectedTier, numberOfPassengers, needsCaptain, router, priceBreakdown]);
+
+      setIsSubmitting(true);
+
+      try {
+        const payload: BookingRequest & { boatId: string } = {
+          startDateTime: startDateTime!,
+          pricingTierId: selectedTier!.id,
+          numberOfPassengers: numberOfPassengers!,
+          needsCaptain: !!needsCaptain,
+          boatId: boat.id,
+        };
+
+        const result =
+          paymentMethod === "instant"
+            ? await createInstantBooking(payload)
+            : await createBookingRequest(payload);
+
+        if (result?.success) {
+          if (
+            paymentMethod === "instant" &&
+            "paymentUrl" in result &&
+            result.paymentUrl
+          ) {
+            // For instant bookings, redirect to Stripe (stateless flow)
+            window.location.href = result.paymentUrl;
+          } else if (
+            paymentMethod === "request" &&
+            "booking" in result &&
+            result.booking
+          ) {
+            // For request bookings, go to success page with booking data
+            const params = new URLSearchParams({
+              type: "request",
+              bookingId: result.booking.id || "",
+              boatName: boat.name || "",
+              boatImage: boat.mainImage || "",
+              startDateTime: startDateTime!,
+              hours: String(selectedTier!.hours || ""),
+              basePrice: String(priceBreakdown.basePrice),
+              cleaningFee: String(priceBreakdown.cleaningFee),
+              serviceFee: String(priceBreakdown.serviceFee),
+              totalAmount: String(priceBreakdown.totalPrice),
+            });
+            router.push(`/bookings/${boat.id}/success?${params.toString()}`);
+          }
+        }
+      } catch (error) {
+        console.error("Booking submission error:", error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [
+      isFormComplete,
+      user,
+      boat,
+      startDateTime,
+      selectedTier,
+      numberOfPassengers,
+      needsCaptain,
+      router,
+      priceBreakdown,
+    ]
+  );
 
   // Show loading while nuqs initializes or if missing data
   if (!isFormComplete) {
@@ -128,7 +163,9 @@ export default function BookingDetailsClient({ user }: { user: Session['user'] |
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)]">
       <div className="max-w-7xl 2xl:max-w-8xl mx-auto w-full flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6 sm:py-8 lg:py-10 xl:py-12 2xl:py-16">
-        <h1 className="text-sm font-bold font-poppins text-gray-900 mb-4 sm:mb-6 xl:mb-8">You're almost done!</h1>
+        <h1 className="text-sm font-bold font-poppins text-gray-900 mb-4 sm:mb-6 xl:mb-8">
+          You're almost done!
+        </h1>
         <div className="grid grid-cols-1 xl:grid-cols-3 2xl:grid-cols-4 gap-6 lg:gap-8 xl:gap-12 2xl:gap-16 items-start">
           <div className="w-full xl:col-span-2 2xl:col-span-3">
             <BookingSummary
@@ -136,7 +173,7 @@ export default function BookingDetailsClient({ user }: { user: Session['user'] |
               selectedTier={selectedTier}
               bookingData={{
                 startDateTime: startDateTime!,
-                numberOfPassengers: numberOfPassengers!
+                numberOfPassengers: numberOfPassengers!,
               }}
             />
 
@@ -153,7 +190,7 @@ export default function BookingDetailsClient({ user }: { user: Session['user'] |
               selectedTier={selectedTier!}
               bookingData={{
                 needsCaptain: !!needsCaptain,
-                numberOfPassengers: numberOfPassengers!
+                numberOfPassengers: numberOfPassengers!,
               }}
             />
             <div className="hidden xl:block">

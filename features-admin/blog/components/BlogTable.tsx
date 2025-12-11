@@ -1,29 +1,29 @@
 "use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { 
-  Edit, 
-  Trash2, 
-  Eye, 
-  Search, 
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Edit,
+  Trash2,
+  Eye,
+  Search,
   Filter,
   Star,
-  Calendar
-} from 'lucide-react';
-import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
-import { 
+  Calendar,
+} from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/shared/components/ui/select';
-import { Badge } from '@/shared/components/ui/badge';
-import { 
+} from "@/shared/components/ui/select";
+import { Badge } from "@/shared/components/ui/badge";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -31,10 +31,13 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/shared/components/ui/dialog';
-import { deleteBlogPost, type BlogPost } from '@/features-admin/blog/actions/admin-blog-actions';
-import { formatDate } from '@/shared/utils/general-utils';
-import { useToast } from '@/shared/hooks/use-toast';
+} from "@/shared/components/ui/dialog";
+import {
+  deleteBlogPost,@/shared/lib/utils/general-utils
+  type BlogPost,
+} from "@/features-admin/blog/actions/admin-blog-actions";
+import { formatDate } from "@/shared/utils/general-utils";
+import { useToast } from "@/shared/lib/hooks/use-toast";
 
 interface BlogTableProps {
   posts: any[];
@@ -44,20 +47,20 @@ interface BlogTableProps {
 }
 
 const statusColors = {
-  DRAFT: 'bg-gray-100 text-gray-800',
-  PUBLISHED: 'bg-green-100 text-green-800',
-  ARCHIVED: 'bg-yellow-100 text-yellow-800',
-  SCHEDULED: 'bg-blue-100 text-blue-800',
+  DRAFT: "bg-gray-100 text-gray-800",
+  PUBLISHED: "bg-green-100 text-green-800",
+  ARCHIVED: "bg-yellow-100 text-yellow-800",
+  SCHEDULED: "bg-blue-100 text-blue-800",
 };
 
 const categoryLabels = {
-  FLEET_NEWS: 'Fleet News',
-  CONSERVATION: 'Conservation',
-  TIPS_ADVICE: 'Tips & Advice',
-  CASE_STUDY: 'Case Study',
-  COMPANY_NEWS: 'Company News',
-  SAFETY: 'Safety',
-  EVENTS: 'Events',
+  FLEET_NEWS: "Fleet News",
+  CONSERVATION: "Conservation",
+  TIPS_ADVICE: "Tips & Advice",
+  CASE_STUDY: "Case Study",
+  COMPANY_NEWS: "Company News",
+  SAFETY: "Safety",
+  EVENTS: "Events",
 };
 
 export default function BlogTable({
@@ -71,7 +74,10 @@ export default function BlogTable({
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [postToDelete, setPostToDelete] = useState<{ id: string; title: string } | null>(null);
+  const [postToDelete, setPostToDelete] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
 
   // Update URL with new search params
   const updateSearchParams = (key: string, value: string | null) => {
@@ -81,26 +87,24 @@ export default function BlogTable({
     } else {
       params.delete(key);
     }
-    params.delete('page'); // Reset to first page when filtering
+    params.delete("page"); // Reset to first page when filtering
     router.push(`/admin/blog?${params.toString()}`);
   };
 
   // Handle search
   const handleSearch = (searchTerm: string) => {
-    updateSearchParams('search', searchTerm || null);
+    updateSearchParams("search", searchTerm || null);
   };
 
   // Handle status filter
   const handleStatusFilter = (status: string) => {
-    updateSearchParams('status', status === 'all' ? null : status);
+    updateSearchParams("status", status === "all" ? null : status);
   };
 
   // Handle category filter
   const handleCategoryFilter = (category: string) => {
-    updateSearchParams('category', category === 'all' ? null : category);
+    updateSearchParams("category", category === "all" ? null : category);
   };
-
-
 
   // Handle delete
   const handleDelete = async (id: string, title: string) => {
@@ -109,7 +113,7 @@ export default function BlogTable({
       const result = await deleteBlogPost(id);
       if (result.success) {
         toast({
-          title: 'Success',
+          title: "Success",
           description: `"${title}" has been deleted.`,
         });
         router.refresh();
@@ -118,9 +122,9 @@ export default function BlogTable({
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to delete blog post. Please try again.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to delete blog post. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setIsDeleting(null);
@@ -137,14 +141,17 @@ export default function BlogTable({
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Search posts..."
-              defaultValue={currentSearch || ''}
+              defaultValue={currentSearch || ""}
               onChange={(e) => handleSearch(e.target.value)}
               className="pl-10"
             />
           </div>
 
           {/* Status Filter */}
-          <Select value={currentStatus || 'all'} onValueChange={handleStatusFilter}>
+          <Select
+            value={currentStatus || "all"}
+            onValueChange={handleStatusFilter}
+          >
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -158,7 +165,10 @@ export default function BlogTable({
           </Select>
 
           {/* Category Filter */}
-          <Select value={currentCategory || 'all'} onValueChange={handleCategoryFilter}>
+          <Select
+            value={currentCategory || "all"}
+            onValueChange={handleCategoryFilter}
+          >
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -182,12 +192,20 @@ export default function BlogTable({
           <thead>
             <tr className="border-b border-gray-200">
               <th className="text-left p-4 font-medium text-gray-900">Post</th>
-              <th className="text-left p-4 font-medium text-gray-900">Status</th>
-              <th className="text-left p-4 font-medium text-gray-900">Category</th>
-              <th className="text-left p-4 font-medium text-gray-900">Author</th>
+              <th className="text-left p-4 font-medium text-gray-900">
+                Status
+              </th>
+              <th className="text-left p-4 font-medium text-gray-900">
+                Category
+              </th>
+              <th className="text-left p-4 font-medium text-gray-900">
+                Author
+              </th>
               <th className="text-left p-4 font-medium text-gray-900">Date</th>
               <th className="text-left p-4 font-medium text-gray-900">Views</th>
-              <th className="text-right p-4 font-medium text-gray-900">Actions</th>
+              <th className="text-right p-4 font-medium text-gray-900">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -199,7 +217,10 @@ export default function BlogTable({
               </tr>
             ) : (
               posts.map((post) => (
-                <tr key={post.id} className="border-b border-gray-100 hover:bg-gray-50">
+                <tr
+                  key={post.id}
+                  className="border-b border-gray-100 hover:bg-gray-50"
+                >
                   {/* Post */}
                   <td className="p-4">
                     <div className="flex items-start space-x-3">
@@ -215,11 +236,13 @@ export default function BlogTable({
                           />
                         ) : (
                           <div className="w-15 h-10 bg-gray-200 rounded flex items-center justify-center">
-                            <span className="text-gray-400 text-xs">No image</span>
+                            <span className="text-gray-400 text-xs">
+                              No image
+                            </span>
                           </div>
                         )}
                       </div>
-                      
+
                       {/* Title and Excerpt */}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2">
@@ -239,7 +262,11 @@ export default function BlogTable({
 
                   {/* Status */}
                   <td className="p-4">
-                    <Badge className={statusColors[post.status as keyof typeof statusColors]}>
+                    <Badge
+                      className={
+                        statusColors[post.status as keyof typeof statusColors]
+                      }
+                    >
                       {post.status}
                     </Badge>
                   </td>
@@ -247,21 +274,25 @@ export default function BlogTable({
                   {/* Category */}
                   <td className="p-4">
                     <span className="text-sm text-gray-600">
-                      {categoryLabels[post.category as keyof typeof categoryLabels]}
+                      {
+                        categoryLabels[
+                          post.category as keyof typeof categoryLabels
+                        ]
+                      }
                     </span>
                   </td>
 
                   {/* Author */}
                   <td className="p-4">
                     <span className="text-sm text-gray-600">
-                      {post.author || 'Unknown'}
+                      {post.author || "Unknown"}
                     </span>
                   </td>
 
                   {/* Date */}
                   <td className="p-4">
                     <div className="text-sm text-gray-600">
-                      {post.status === 'PUBLISHED' && post.publishedAt ? (
+                      {post.status === "PUBLISHED" && post.publishedAt ? (
                         <>
                           <Calendar className="inline h-3 w-3 mr-1" />
                           {formatDate(post.publishedAt)}
@@ -288,9 +319,9 @@ export default function BlogTable({
                           <Edit className="h-4 w-4" />
                         </Button>
                       </Link>
-                      
-                      <Button 
-                        variant="outline" 
+
+                      <Button
+                        variant="outline"
                         size="sm"
                         className="text-red-600 hover:text-red-700"
                         disabled={isDeleting === post.id}
@@ -316,7 +347,7 @@ export default function BlogTable({
           <DialogHeader>
             <DialogTitle>Delete Blog Post</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{postToDelete?.title}&quot;? 
+              Are you sure you want to delete &quot;{postToDelete?.title}&quot;?
               This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
@@ -338,11 +369,11 @@ export default function BlogTable({
               }}
               disabled={isDeleting === postToDelete?.id}
             >
-              {isDeleting === postToDelete?.id ? 'Deleting...' : 'Delete'}
+              {isDeleting === postToDelete?.id ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
-} 
+}

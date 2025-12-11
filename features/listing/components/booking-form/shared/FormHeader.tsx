@@ -1,7 +1,7 @@
 "use client";
 
 import React, { memo } from "react";
-import { formatCurrency } from "@/shared/utils/general-utils";
+import { formatCurrency } from "@/shared/lib/utils/general-utils";
 
 interface FormHeaderProps {
   price?: number; // base price excluding fees
@@ -34,4 +34,3 @@ function FormHeaderComponent({ price, hours }: FormHeaderProps) {
 export const FormHeader = memo(FormHeaderComponent);
 
 export default FormHeader;
-

@@ -1,12 +1,15 @@
 "use client";
 
-import { Boat } from "@/shared/types/types";
+import { Boat } from "@/shared/lib/types/types";
 import { Button } from "@/shared/components/ui/button";
 import { Form } from "@/shared/components/ui/form";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { bookingRequestSchema, BookingRequest } from "@/features/_validation/validations";
+import {
+  bookingRequestSchema,
+  BookingRequest,
+} from "@/features/_validation/validations";
 import { MessageCircle } from "lucide-react";
 
 // Import components
@@ -39,7 +42,7 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
       numberOfPassengers: 1,
       needsCaptain: boat.crewRequired,
     },
-    mode: "onChange"
+    mode: "onChange",
   });
 
   // Temporarily disable form persistence to avoid incorrect default overrides
@@ -47,7 +50,7 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
   // Consolidated form state and pricing calculations
   const formState = useBookingFormState({
     form,
-    boat
+    boat,
   });
 
   if (activePricingTiers.length === 0) {
@@ -56,16 +59,20 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
         <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
           <MessageCircle className="h-6 w-6 text-gray-400" />
         </div>
-        <h3 className="font-semibold text-gray-900 mb-2">No pricing available</h3>
-        <p className="text-gray-600 text-sm">No pricing options are currently available for this boat</p>
+        <h3 className="font-semibold text-gray-900 mb-2">
+          No pricing available
+        </h3>
+        <p className="text-gray-600 text-sm">
+          No pricing options are currently available for this boat
+        </p>
       </div>
     );
   }
 
   const handleSubmit = (data: BookingRequest) => {
     if (!formState.selectedPricingTier) {
-      form.setError("pricingTierId", { 
-        message: "Please select a duration option" 
+      form.setError("pricingTierId", {
+        message: "Please select a duration option",
       });
       return;
     }
@@ -77,20 +84,23 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
       numberOfPassengers: String(data.numberOfPassengers),
       needsCaptain: String(data.needsCaptain || false),
     });
-    
+
     router.push(`/bookings/${boat.id}/details?${params.toString()}`);
   };
-  
+
   return (
-    <div className="bg-white p-7 w-full max-w-[560px]" style={{ fontFamily: 'Poppins, var(--font-sans)' }}>
-      <FormHeader 
+    <div
+      className="bg-white p-7 w-full max-w-[560px]"
+      style={{ fontFamily: "Poppins, var(--font-sans)" }}
+    >
+      <FormHeader
         price={formState.selectedPricingTier?.price}
         hours={formState.selectedPricingTier?.hours}
       />
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-          <DateSelection 
+          <DateSelection
             control={form.control}
             currentDate={formState.uiDate}
             boatId={boat.id}
@@ -104,7 +114,7 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
             selectedPricingTier={formState.selectedPricingTier}
           />
 
-          <TimeSelection 
+          <TimeSelection
             control={form.control}
             currentTime={formState.parsedDateTime.time}
             boatId={boat.id}
@@ -114,27 +124,36 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
             boat={boat}
           />
 
-          <PassengerSelection 
-            boat={boat} 
+          <PassengerSelection
+            boat={boat}
             control={form.control}
             setValue={form.setValue}
-            show={!!(formState.parsedDateTime.date && formState.parsedDateTime.time && formState.selectedPricingTier)}
+            show={
+              !!(
+                formState.parsedDateTime.date &&
+                formState.parsedDateTime.time &&
+                formState.selectedPricingTier
+              )
+            }
           />
 
-          <CaptainSelection 
-            boat={boat} 
-            control={form.control}
-          />
+          <CaptainSelection boat={boat} control={form.control} />
 
-          <PriceSummary 
+          <PriceSummary
             boat={boat}
             selectedPricingTier={formState.selectedPricingTier}
-            show={!!(formState.parsedDateTime.date && formState.parsedDateTime.time && formState.selectedPricingTier)}
+            show={
+              !!(
+                formState.parsedDateTime.date &&
+                formState.parsedDateTime.time &&
+                formState.selectedPricingTier
+              )
+            }
           />
 
           <div className="pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full h-12 font-semibold text-white transition-colors text-sm rounded-xl bg-gray-800 hover:bg-gray-900 focus:outline-hidden focus:ring-0"
               disabled={!formState.isFormValid}
             >

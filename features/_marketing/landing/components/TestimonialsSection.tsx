@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import Image from 'next/image';
-import { FaStar } from 'react-icons/fa';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { FaGoogle } from 'react-icons/fa';
+import React, { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
+import { FaStar } from "react-icons/fa";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { FaGoogle } from "react-icons/fa";
 
 interface Review {
   author_name: string;
@@ -22,15 +22,15 @@ interface TestimonialsSectionProps {
 const StarRating = React.memo(({ rating }: { rating: number }) => (
   <div className="flex">
     {[...Array(5)].map((_, i) => (
-      <FaStar 
-        key={i} 
-        className={`w-4 h-4 ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`} 
+      <FaStar
+        key={i}
+        className={`w-4 h-4 ${i < rating ? "text-yellow-400" : "text-gray-300"}`}
       />
     ))}
   </div>
 ));
 
-StarRating.displayName = 'StarRating';
+StarRating.displayName = "StarRating";
 
 // Simple review card component
 const ReviewCard = React.memo(({ review }: { review: Review }) => (
@@ -45,24 +45,32 @@ const ReviewCard = React.memo(({ review }: { review: Review }) => (
         />
       </div>
       <div className="flex-1">
-        <h3 className="text-lg font-medium text-gray-900">{review.author_name}</h3>
-        <p className="text-sm text-gray-600">{review.relative_time_description}</p>
+        <h3 className="text-lg font-medium text-gray-900">
+          {review.author_name}
+        </h3>
+        <p className="text-sm text-gray-600">
+          {review.relative_time_description}
+        </p>
       </div>
     </div>
-    
+
     <div className="flex-1">
-      <p className="text-gray-700 leading-relaxed mb-4 line-clamp-4">{review.text}</p>
+      <p className="text-gray-700 leading-relaxed mb-4 line-clamp-4">
+        {review.text}
+      </p>
       <StarRating rating={review.rating} />
     </div>
   </div>
 ));
 
-ReviewCard.displayName = 'ReviewCard';
+ReviewCard.displayName = "ReviewCard";
 
-export default function TestimonialsSection({ reviews }: TestimonialsSectionProps) {
+export default function TestimonialsSection({
+  reviews,
+}: TestimonialsSectionProps) {
   const [startIndex, setStartIndex] = useState(0);
   const [visibleCount, setVisibleCount] = useState(3);
-  
+
   // Simple responsive logic
   useEffect(() => {
     const updateVisibleCount = () => {
@@ -70,21 +78,21 @@ export default function TestimonialsSection({ reviews }: TestimonialsSectionProp
       else if (window.innerWidth >= 768) setVisibleCount(2);
       else setVisibleCount(1);
     };
-    
+
     updateVisibleCount();
-    window.addEventListener('resize', updateVisibleCount);
-    return () => window.removeEventListener('resize', updateVisibleCount);
+    window.addEventListener("resize", updateVisibleCount);
+    return () => window.removeEventListener("resize", updateVisibleCount);
   }, []);
 
   const maxIndex = Math.max(0, reviews.length - visibleCount);
   const visibleReviews = reviews.slice(startIndex, startIndex + visibleCount);
 
   const nextSlide = useCallback(() => {
-    setStartIndex(prev => prev >= maxIndex ? 0 : prev + 1);
+    setStartIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
   }, [maxIndex]);
 
   const prevSlide = useCallback(() => {
-    setStartIndex(prev => prev <= 0 ? maxIndex : prev - 1);
+    setStartIndex((prev) => (prev <= 0 ? maxIndex : prev - 1));
   }, [maxIndex]);
 
   const goToSlide = useCallback((index: number) => {
@@ -106,33 +114,37 @@ export default function TestimonialsSection({ reviews }: TestimonialsSectionProp
     <section className="relative bg-primary text-white overflow-hidden py-16">
       {/* Background Logo */}
       <div className="absolute bottom-0 left-0 w-48 h-48 md:w-64 md:h-64 opacity-10">
-        <Image 
-          src="/icons/kosupdatedlogo.webp" 
+        <Image
+          src="/icons/transparent-white-logo.webp"
           alt="KOS Background Logo"
           fill
           className="object-contain"
         />
       </div>
-      
+
       <div className="max-w-7xl mx-auto px-4 relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">What Our Clients Say</h2>
-          <p className="text-xl opacity-90">Real experiences from real customers</p>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            What Our Clients Say
+          </h2>
+          <p className="text-xl opacity-90">
+            Real experiences from real customers
+          </p>
         </div>
 
         <div className="relative">
           {/* Navigation buttons - only show if needed */}
           {reviews.length > visibleCount && (
             <>
-              <button 
+              <button
                 onClick={prevSlide}
                 className="absolute -left-4 md:-left-12 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
                 aria-label="Previous reviews"
               >
                 <ChevronLeft className="w-6 h-6 text-white" />
               </button>
-              
-              <button 
+
+              <button
                 onClick={nextSlide}
                 className="absolute -right-4 md:-right-12 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
                 aria-label="Next reviews"
@@ -145,7 +157,10 @@ export default function TestimonialsSection({ reviews }: TestimonialsSectionProp
           {/* Reviews grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {visibleReviews.map((review, index) => (
-              <div key={`${startIndex}-${index}`} className="opacity-0 animate-fade-in-up">
+              <div
+                key={`${startIndex}-${index}`}
+                className="opacity-0 animate-fade-in-up"
+              >
                 <ReviewCard review={review} />
               </div>
             ))}
@@ -159,9 +174,9 @@ export default function TestimonialsSection({ reviews }: TestimonialsSectionProp
                   key={index}
                   onClick={() => goToSlide(index)}
                   className={`h-2 rounded-full transition-all ${
-                    startIndex === index 
-                      ? 'bg-white w-6' 
-                      : 'bg-white/40 w-2 hover:bg-white/60'
+                    startIndex === index
+                      ? "bg-white w-6"
+                      : "bg-white/40 w-2 hover:bg-white/60"
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />
@@ -183,7 +198,7 @@ export default function TestimonialsSection({ reviews }: TestimonialsSectionProp
           </div>
         </div>
       </div>
-      
+
       <style jsx>{`
         @keyframes fade-in-up {
           from {
@@ -201,4 +216,4 @@ export default function TestimonialsSection({ reviews }: TestimonialsSectionProp
       `}</style>
     </section>
   );
-} 
+}

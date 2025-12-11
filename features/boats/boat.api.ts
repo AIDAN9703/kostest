@@ -7,7 +7,7 @@ import superjson from 'superjson';
 import { type Boat } from '@/database/types';
 import { type BoatFilterInput } from '@/features/boats/boat.validation';
 import { type BoatWithTiers, type BoatListItem } from '@/features/boats/boat.types';
-import { type ApiResponse, type PaginatedApiResponse } from '@/shared/types/api.types';
+import { type ApiResponse, type PaginatedApiResponse } from '@/shared/lib/types/api.types';
 
 export const boatsApi = {
   // ========================================

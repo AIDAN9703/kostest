@@ -11,7 +11,7 @@ import { createPaymentLinkForBooking } from '@/features/bookings/actions/stripe-
 import {
   sendBookingApprovalEmail,
   sendBookingDenialEmail,
-} from '@/shared/services/email.service';
+} from '@/shared/lib/services/email.service';
 import { revalidatePath } from 'next/cache';
 
 /**

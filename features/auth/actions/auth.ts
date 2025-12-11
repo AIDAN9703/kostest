@@ -5,10 +5,10 @@ import { db } from "@/database/db";
 import { users } from "@/database/schema";
 import { hash, compare } from "bcryptjs";
 import { signIn } from "@/auth";
-import { ActionResponse } from "@/shared/types/types";
-import { formatPhoneNumberE164 } from '@/shared/utils/general-utils';
+import { ActionResponse } from "@/shared/lib/types/types";
+import { formatPhoneNumberE164 } from '@/shared/lib/utils/general-utils';
 import { SignInData, SignUpData } from "@/features/_validation/validations";
-import { checkVerification } from "@/shared/services/twilio.service";
+import { checkVerification } from "@/shared/lib/services/twilio.service";
 
 /**
  * Check if a user exists with the given email address

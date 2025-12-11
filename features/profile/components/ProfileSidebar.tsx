@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Calendar, Bookmark, User, LayoutDashboard } from "lucide-react";
-import { cn } from "@/shared/utils/general-utils";
+import { cn } from "@/shared/lib/utils/general-utils";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@/shared/components/ui/avatar";
-import { getUserInitialsFromName } from "@/shared/utils/user-utils";
+import { getUserInitialsFromName } from "@/shared/lib/utils/user-utils";
 
 interface ProfileSidebarProps {
   user: {
@@ -84,7 +84,7 @@ export function ProfileSidebar({ user }: ProfileSidebarProps) {
         {sidebarItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
-          
+
           return (
             <Link
               key={item.href}
@@ -105,4 +105,3 @@ export function ProfileSidebar({ user }: ProfileSidebarProps) {
     </aside>
   );
 }
-

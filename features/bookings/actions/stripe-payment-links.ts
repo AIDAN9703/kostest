@@ -5,7 +5,7 @@
 
 import Stripe from 'stripe';
 import { bookingService } from '@/features/bookings/booking.service';
-import { getBaseUrl } from '@/shared/utils/base-url';
+import { getBaseUrl } from '@/shared/lib/utils/base-url';
 
 // Initialize Stripe
 const stripe = new Stripe(

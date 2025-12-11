@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { toast } from '../../../shared/hooks/use-toast';
+import { toast } from '../../../shared/lib/hooks/use-toast';
 
 type AuthAction<T> = (data: T) => Promise<{
   success: boolean;

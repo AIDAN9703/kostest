@@ -23,7 +23,7 @@ import {
 } from "@/shared/components/ui/form";
 import { Input } from "@/shared/components/ui/input";
 import Link from "next/link";
-import { FIELD_NAMES, FIELD_TYPES } from "@/shared/constants";
+import { FIELD_NAMES, FIELD_TYPES } from "@/shared/lib/constants";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { googleSignIn } from "@/features/auth/actions/google-auth";
@@ -32,7 +32,13 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 interface Props<T extends FieldValues> {
   schema: ZodType<T>;
   defaultValues: T;
-  onSubmit: (data: T) => Promise<{ success: boolean; error?: string; data?: { redirectUrl?: string; message: string } }>;
+  onSubmit: (
+    data: T
+  ) => Promise<{
+    success: boolean;
+    error?: string;
+    data?: { redirectUrl?: string; message: string };
+  }>;
   type: "SIGN_IN" | "SIGN_UP";
 }
 
@@ -45,10 +51,10 @@ const AuthForm = <T extends FieldValues>({
   const searchParams = useSearchParams();
   const isSignIn = type === "SIGN_IN";
   const { isSubmitting, handleAuth } = useAuth<T>();
-  
+
   // Basic callbackUrl support for NextAuth (keep this for general auth flows)
   const callbackUrl = searchParams.get("callbackUrl") || "/";
-  
+
   // Get pre-filled data from URL params (from booking flow)
   const prefilledEmail = searchParams.get("email") || "";
   const prefilledPhone = searchParams.get("phone") || "";
@@ -69,7 +75,7 @@ const AuthForm = <T extends FieldValues>({
     const successMessage = isSignIn
       ? "You have successfully signed in."
       : "You have successfully signed up.";
-      
+
     await handleAuth(data, onSubmit, callbackUrl, successMessage);
   };
 
@@ -118,7 +124,7 @@ const AuthForm = <T extends FieldValues>({
                           }
                           {...field}
                           className="h-12 bg-white border border-gray-200 rounded-lg focus:border-primary focus:ring-1 focus:ring-primary"
-                          placeholder={`Enter your ${((FIELD_NAMES[field.name as keyof typeof FIELD_NAMES] ?? field.name) || '').toLowerCase()}`}
+                          placeholder={`Enter your ${((FIELD_NAMES[field.name as keyof typeof FIELD_NAMES] ?? field.name) || "").toLowerCase()}`}
                         />
                       </FormControl>
                       <FormMessage className="text-red-500 text-sm mt-1" />
@@ -128,8 +134,8 @@ const AuthForm = <T extends FieldValues>({
               ))}
             </div>
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isSubmitting}
               className="bg-primary text-white h-12 rounded-lg w-full
                        hover:bg-primary/90 transition-all duration-300
@@ -138,10 +144,14 @@ const AuthForm = <T extends FieldValues>({
               {isSubmitting ? (
                 <div className="flex items-center justify-center">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  <span>{isSignIn ? "Signing in..." : "Creating account..."}</span>
+                  <span>
+                    {isSignIn ? "Signing in..." : "Creating account..."}
+                  </span>
                 </div>
+              ) : isSignIn ? (
+                "Sign In"
               ) : (
-                isSignIn ? "Sign In" : "Create Account"
+                "Create Account"
               )}
             </Button>
           </form>
@@ -161,9 +171,16 @@ const AuthForm = <T extends FieldValues>({
               className="flex items-center justify-center gap-2 h-12 w-full border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-300"
             >
               <div className="relative w-5 h-5">
-                <Image src="/icons/google.svg" alt="Google" fill className="object-contain" />
+                <Image
+                  src="/icons/google.svg"
+                  alt="Google"
+                  fill
+                  className="object-contain"
+                />
               </div>
-              <span className="text-gray-700 text-sm font-medium">Continue with Google</span>
+              <span className="text-gray-700 text-sm font-medium">
+                Continue with Google
+              </span>
             </button>
           </form>
 
@@ -171,7 +188,10 @@ const AuthForm = <T extends FieldValues>({
             <p className="text-sm text-gray-600">
               {isSignIn ? "New to KOS Yachts? " : "Already have an account? "}
               <Link
-                href={(isSignIn ? "/sign-up" : "/sign-in") + `?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+                href={
+                  (isSignIn ? "/sign-up" : "/sign-in") +
+                  `?callbackUrl=${encodeURIComponent(callbackUrl)}`
+                }
                 className="font-medium text-primary hover:text-primary/80 transition-colors"
               >
                 {isSignIn ? "Create an account" : "Sign in"}

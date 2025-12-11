@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { BookingRequest } from "@/features/_validation/validations";
-import { parseDateTimeInBoatTimezone, calculateEndDateTime, createDateTimeISO } from "@/shared/utils/date-helpers";
-import { Boat, PricingTier } from "@/shared/types/types";
-import { calculateBookingPrice, BookingPriceBreakdown } from "@/shared/utils/pricing-utils";
+import { parseDateTimeInBoatTimezone, calculateEndDateTime, createDateTimeISO } from "@/shared/lib/utils/date-helpers";
+import { Boat, PricingTier } from "@/shared/lib/types/types";
+import { calculateBookingPrice, BookingPriceBreakdown } from "@/shared/lib/utils/pricing-utils";
 import { getActivePricingTiers } from "./usePriceCalculation";
 
 interface UseBookingFormStateProps {

@@ -1,6 +1,6 @@
 "use client";
 
-import { Boat } from "@/shared/types/types";
+import { Boat } from "@/shared/lib/types/types";
 import { Button } from "@/shared/components/ui/button";
 import { Form } from "@/shared/components/ui/form";
 import { useRouter } from "next/navigation";

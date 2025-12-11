@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useSearchStore } from "@/features/search/store/useSearchStore";
-import SearchBar from "@/shared/layouts/sub-components/SearchBar";
+import SearchBar from "@/shared/components/layouts/sub-components/SearchBar";
 import { TypeAnimation } from "react-type-animation";
 
 // Pre-compute the sequence once outside component

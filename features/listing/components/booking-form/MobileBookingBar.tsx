@@ -1,9 +1,9 @@
 "use client";
 
-import { Boat } from "@/shared/types/types";
+import { Boat } from "@/shared/lib/types/types";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/shared/components/ui/dialog";
-import { getBoatStartingHourlyLabel } from "@/shared/utils/pricing-utils";
+import { getBoatStartingHourlyLabel } from "@/shared/lib/utils/pricing-utils";
 import { useState } from "react";
 import { RequestBookingForm, InstantBookingForm } from ".";
 import { useSession } from "next-auth/react";

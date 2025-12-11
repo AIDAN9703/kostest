@@ -6,10 +6,10 @@ import { auth } from "@/auth";
 import { bookingRequestSchema, BookingRequest } from "@/features/_validation/validations";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { calculateEndDateTime } from "@/shared/utils/date-helpers";
+import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { eq } from "drizzle-orm";
-import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
-import { ghlWebhookService } from "@/shared/services/ghl-webhook.service";
+import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
+import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 
 /**
  * Creates a booking request using pricing tiers

@@ -1,10 +1,10 @@
 "use client";
 
-import { Boat } from "@/shared/types/types";
+import { Boat } from "@/shared/lib/types/types";
 import { FormField, FormItem, FormLabel, FormMessage } from "@/shared/components/ui/form";
 import { Control } from "react-hook-form";
 import { BookingRequest } from "@/features/_validation/validations";
-import { cn } from "@/shared/utils/general-utils";
+import { cn } from "@/shared/lib/utils/general-utils";
 
 interface CaptainSelectionProps {
   boat: Boat;

@@ -38,17 +38,20 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { type BookingListItem } from "../booking.types";
-import { formatCurrency, formatTime12Hour } from "@/shared/utils/general-utils";
-import { parseDateTimeInBoatTimezone } from "@/shared/utils/date-helpers";
+import {
+  formatCurrency,
+  formatTime12Hour,
+} from "@/shared/lib/utils/general-utils";
+import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
 import { format } from "date-fns";
-import { StatusBadge } from "@/shared/utils/badge-utils";
+import { StatusBadge } from "@/shared/lib/utils/badge-utils";
 import {
   approveBookingRequest,
   denyBookingRequest,
   assignAdminToBooking,
   markBookingAsContacted,
 } from "@/features/bookings/actions/admin-booking-actions";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/shared/lib/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { getAdmins } from "@/features/users/actions/user-actions";
 

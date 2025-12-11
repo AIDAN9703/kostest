@@ -1,11 +1,11 @@
 "use client";
 
-import { Boat } from "@/shared/types/types";
+import { Boat } from "@/shared/lib/types/types";
 import { Button } from "@/shared/components/ui/button";
 import { useState } from "react";
 import { Info } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/shared/utils/general-utils";
+import { cn } from "@/shared/lib/utils/general-utils";
 
 interface DescriptionProps {
   boat: Boat;

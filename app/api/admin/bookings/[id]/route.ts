@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { bookingService } from '@/features/bookings/booking.service';
-import { apiSuccess, apiError } from '@/shared/utils/api-response';
+import { apiSuccess, apiError } from '@/shared/lib/utils/api-helpers';
 import { auth } from '@/auth';
 
 /**

@@ -3,8 +3,23 @@
 import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Calendar, MapPin, Ship, Users, Clock, ArrowRight, Ticket } from "lucide-react";
-import { formatEventDate, formatEventTime, getLowestTicketPrice, getAvailableTicketsCount, getEventStatus, handleEventError } from "@/shared/utils/event-utils";
+import {
+  Calendar,
+  MapPin,
+  Ship,
+  Users,
+  Clock,
+  ArrowRight,
+  Ticket,
+} from "lucide-react";
+import {
+  formatEventDate,
+  formatEventTime,
+  getLowestTicketPrice,
+  getAvailableTicketsCount,
+  getEventStatus,
+  handleEventError,
+} from "@/shared/lib/utils/event-utils";
 import { EventsGridSkeleton } from "@/shared/components/ui/event-loading";
 import { EmptyState } from "@/shared/components/ui/empty-state";
 import type { EventWithTiers } from "@/database/schema/tables/events/events.relations";
@@ -12,20 +27,25 @@ import type { EventWithTiers } from "@/database/schema/tables/events/events.rela
 async function getActiveEvent(): Promise<EventWithTiers | null> {
   try {
     const response = await fetch(`/api/events/active`, {
-      cache: 'no-store', // Always get fresh data
+      cache: "no-store", // Always get fresh data
     });
     const data = await response.json();
     // Return the first active event since we only show one
     return data.success && data.events.length > 0 ? data.events[0] : null;
   } catch (error) {
-    handleEventError(error, 'fetching event', false); // Don't show alert, handle gracefully
+    handleEventError(error, "fetching event", false); // Don't show alert, handle gracefully
     return null;
   }
 }
 
 // Countdown Timer Component
 function CountdownTimer({ eventDate }: { eventDate: Date }) {
-  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -36,7 +56,9 @@ function CountdownTimer({ eventDate }: { eventDate: Date }) {
       if (difference > 0) {
         setTimeLeft({
           days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          hours: Math.floor(
+            (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+          ),
           minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
           seconds: Math.floor((difference % (1000 * 60)) / 1000),
         });
@@ -51,15 +73,15 @@ function CountdownTimer({ eventDate }: { eventDate: Date }) {
   return (
     <div className="grid grid-cols-4 gap-3">
       {[
-        { label: 'Days', value: timeLeft.days },
-        { label: 'Hours', value: timeLeft.hours },
-        { label: 'Minutes', value: timeLeft.minutes },
-        { label: 'Seconds', value: timeLeft.seconds },
+        { label: "Days", value: timeLeft.days },
+        { label: "Hours", value: timeLeft.hours },
+        { label: "Minutes", value: timeLeft.minutes },
+        { label: "Seconds", value: timeLeft.seconds },
       ].map((item, index) => (
         <div key={item.label} className="text-center">
           <div className="bg-white/10 backdrop-blur-sm rounded-lg px-2 py-3 border border-white/20">
             <div className="text-xl lg:text-2xl font-bold text-white">
-              {item.value.toString().padStart(2, '0')}
+              {item.value.toString().padStart(2, "0")}
             </div>
             <div className="text-xs text-white/70 font-medium uppercase tracking-wide">
               {item.label}
@@ -79,15 +101,17 @@ function FeaturedEvent({ event }: { event: EventWithTiers }) {
 
   // Get event image based on type
   const getEventImage = () => {
-    if (event.title.toLowerCase().includes('sunset')) return '/images/experiences/sunset.jpg';
-    if (event.title.toLowerCase().includes('corporate')) return '/images/experiences/corporateevents.webp';
-    if (event.title.toLowerCase().includes('bachelor')) return '/images/experiences/bachellorette2.png';
-    return '/images/partyflyer.jpg'; // Default
+    if (event.title.toLowerCase().includes("sunset"))
+      return "/images/experiences/sunset.jpg";
+    if (event.title.toLowerCase().includes("corporate"))
+      return "/images/experiences/corporateevents.webp";
+    if (event.title.toLowerCase().includes("bachelor"))
+      return "/images/experiences/bachellorette2.png";
+    return "/images/partyflyer.jpg"; // Default
   };
 
   return (
     <div className="min-h-screen bg-gray-900 overflow-hidden">
-
       {/* Split Screen Layout */}
       <div className="min-h-screen flex flex-col lg:flex-row">
         {/* Left Side - Event Flyer */}
@@ -111,7 +135,6 @@ function FeaturedEvent({ event }: { event: EventWithTiers }) {
         {/* Right Side - Content */}
         <div className="lg:w-1/2 w-full flex flex-col justify-center px-6 lg:px-8 xl:px-12 py-8 lg:py-12 bg-primary text-white">
           <div className="max-w-lg mx-auto lg:mx-0 w-full space-y-6">
-            
             {/* Header Section */}
             <div className="space-y-3">
               <div className="inline-block">
@@ -123,9 +146,7 @@ function FeaturedEvent({ event }: { event: EventWithTiers }) {
                 {event.title}
               </h1>
               {event.description && (
-                <p className="text-base leading-relaxed">
-                  {event.description}
-                </p>
+                <p className="text-base leading-relaxed">{event.description}</p>
               )}
             </div>
 
@@ -176,11 +197,16 @@ function FeaturedEvent({ event }: { event: EventWithTiers }) {
               {lowestPrice && (
                 <div className="flex flex-col lg:flex-row lg:items-baseline lg:justify-between gap-2">
                   <div>
-                <span className="text-2xl font-bold">From ${lowestPrice}</span>
+                    <span className="text-2xl font-bold">
+                      From ${lowestPrice}
+                    </span>
                     <span className="ml-2 text-sm">per ticket</span>
                   </div>
                   <div className="text-left lg:text-right text-sm">
-                    <div>{availableTickets} available of {event.totalCapacity} total</div>
+                    <div>
+                      {availableTickets} available of {event.totalCapacity}{" "}
+                      total
+                    </div>
                   </div>
                 </div>
               )}
@@ -199,7 +225,7 @@ function FeaturedEvent({ event }: { event: EventWithTiers }) {
                   disabled
                   className="w-full bg-gray-600 text-gray-300 px-8 py-3.5 rounded-xl font-semibold text-base cursor-not-allowed flex items-center justify-center"
                 >
-                  {status === 'passed' ? 'Event Has Passed' : 'Sold Out'}
+                  {status === "passed" ? "Event Has Passed" : "Sold Out"}
                 </button>
               )}
 
@@ -208,14 +234,12 @@ function FeaturedEvent({ event }: { event: EventWithTiers }) {
                 <p>Secure checkout • Instant confirmation • Mobile tickets</p>
               </div>
             </div>
-
           </div>
         </div>
       </div>
     </div>
   );
 }
-
 
 function EventContent() {
   const [event, setEvent] = useState<EventWithTiers | null>(null);
@@ -249,9 +273,12 @@ function EventContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-6">
           <Ship className="h-16 w-16 text-gray-400 mx-auto mb-6" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">No Active Events</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            No Active Events
+          </h1>
           <p className="text-gray-600 mb-8">
-            We don't have any active events at the moment. Check back soon for exciting boat party experiences!
+            We don't have any active events at the moment. Check back soon for
+            exciting boat party experiences!
           </p>
           <Link
             href="/"
@@ -270,7 +297,7 @@ function EventContent() {
 
 export default function EventsPage() {
   return (
-    <Suspense 
+    <Suspense
       fallback={
         <div className="min-h-screen bg-gray-900 flex items-center justify-center">
           <div className="text-white text-center">

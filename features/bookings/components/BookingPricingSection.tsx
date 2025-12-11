@@ -1,10 +1,10 @@
 "use client";
 
 import React from "react";
-import { formatCurrency } from "@/shared/utils/general-utils";
-import { SafeBoatData } from "@/shared/types/booking.types";
-import { PricingTier } from "@/shared/types/types";
-import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
+import { formatCurrency } from "@/shared/lib/utils/general-utils";
+import { SafeBoatData } from "@/shared/lib/types/booking.types";
+import { PricingTier } from "@/shared/lib/types/types";
+import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
 
 interface BookingPricingSectionProps {
   boat: SafeBoatData;

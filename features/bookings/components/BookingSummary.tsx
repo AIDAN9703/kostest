@@ -1,10 +1,10 @@
 "use client";
 
-import { PricingTier } from "@/shared/types/types";
+import { PricingTier } from "@/shared/lib/types/types";
 import { CalendarIcon, UsersIcon } from "lucide-react";
 import { ClockIcon } from "lucide-react";
-import { formatDate, formatTime12Hour } from "@/shared/utils/general-utils";
-import { parseDateTimeInBoatTimezone } from "@/shared/utils/date-helpers";
+import { formatDate, formatTime12Hour } from "@/shared/lib/utils/general-utils";
+import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
 
 // Safe boat data interface - only includes necessary and safe properties
 interface SafeBoatData {

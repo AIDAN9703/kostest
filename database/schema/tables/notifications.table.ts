@@ -4,7 +4,7 @@ import { users } from "@/database/schema/tables";
 export const notifications = pgTable("notification", {
     // Core Information
     id: uuid("id").defaultRandom().notNull().primaryKey(),
-    userId: uuid("user_id").notNull().references(() => users.id),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }), // Delete notifications when user deleted
     
     // Notification Content
     title: text("title").notNull(),

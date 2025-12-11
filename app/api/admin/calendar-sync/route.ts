@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { icalSyncService } from '@/shared/services/ical-sync.service';
+import { icalSyncService } from '@/shared/lib/services/ical-sync.service';
 
 export async function POST(request: NextRequest) {
   try {

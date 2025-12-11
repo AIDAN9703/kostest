@@ -19,7 +19,7 @@ export const users = pgTable(
       lastName: text("last_name"),
       displayName: text("display_name"),
       phoneNumber: text("phone_number"),
-      birthday: timestamp("birthday", { mode: "date" }),
+      birthday: timestamp("birthday", { mode: "date", withTimezone: true }),
       bio: text("bio"),
       
       // Profile Media
@@ -41,7 +41,7 @@ export const users = pgTable(
       // Password Management
       passwordChangedAt: timestamp("password_changed_at", { mode: "date", withTimezone: true }),
       resetPasswordToken: text("reset_password_token"),
-      resetPasswordExpires: timestamp("reset_password_expires", { mode: "date" }),
+      resetPasswordExpires: timestamp("reset_password_expires", { mode: "date", withTimezone: true }),
       forcePasswordChange: boolean("force_password_change").default(false).notNull(),
       
       
@@ -66,7 +66,7 @@ export const users = pgTable(
       hasInsurance: boolean("has_insurance").default(false),
       insuranceProvider: text("insurance_provider"),
       insurancePolicyNumber: text("insurance_policy_number"),
-      insuranceExpiryDate: timestamp("insurance_expiry_date", { mode: "date" }),
+      insuranceExpiryDate: timestamp("insurance_expiry_date", { mode: "date", withTimezone: true }),
       insuranceVerified: boolean("insurance_verified").default(false),
       
       // Payment Information

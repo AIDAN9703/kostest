@@ -5,7 +5,7 @@ import { Control } from "react-hook-form";
 import { FormField, FormItem, FormMessage } from "@/shared/components/ui/form";
 import { BookingRequest } from "@/features/_validation/validations";
 import { TimeSlotsDisplay } from "./TimeSlotsDisplay";
-import { createDateTimeISO } from "@/shared/utils/date-helpers";
+import { createDateTimeISO } from "@/shared/lib/utils/date-helpers";
 import { AlarmClockPlus } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -13,7 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/shared/components/ui/popover";
-import { cn } from "@/shared/utils/general-utils";
+import { cn } from "@/shared/lib/utils/general-utils";
 
 export function TimeSelection({
   control,

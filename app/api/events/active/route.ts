@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getActiveEvents } from "@/shared/services/events.service";
+import { getActiveEvents } from "@/shared/lib/services/events.service";
 
 export async function GET() {
   try {

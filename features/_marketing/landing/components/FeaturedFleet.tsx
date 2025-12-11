@@ -3,8 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Boat } from "@/shared/types/types";
-import { formatCurrency } from "@/shared/utils/general-utils";
+import { Boat } from "@/shared/lib/types/types";
+import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { Button } from "@/shared/components/ui/button";
 import BoatCard from "@/shared/components/ui/boat-card";
 import {

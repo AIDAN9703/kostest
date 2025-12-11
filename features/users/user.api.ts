@@ -6,7 +6,7 @@
 import superjson from 'superjson';
 import { type User } from '@/database/types';
 import { type UserFilterInput } from '@/features/users/user.validation';
-import { type ApiResponse, type PaginatedApiResponse } from '@/shared/types/api.types';
+import { type ApiResponse, type PaginatedApiResponse } from '@/shared/lib/types/api.types';
 
 export const usersApi = {
   // ========================================

@@ -31,8 +31,8 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { type BoatListItem } from "@/features/boats/boat.types";
-import { formatCurrency } from "@/shared/utils/general-utils";
-import { StatusBadge } from "@/shared/utils/badge-utils";
+import { formatCurrency } from "@/shared/lib/utils/general-utils";
+import { StatusBadge } from "@/shared/lib/utils/badge-utils";
 
 // Props interface
 interface ModernBoatsTableProps {

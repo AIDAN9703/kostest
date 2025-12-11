@@ -5,10 +5,10 @@ import { boats, boatPricingTiers, bookings } from "@/database/schema";
 import { auth } from "@/auth";
 import { bookingRequestSchema, BookingRequest } from "@/features/_validation/validations";
 import { z } from "zod";
-import { calculateEndDateTime } from "@/shared/utils/date-helpers";
+import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
-import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
+import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
 
 /**
  * Helper function to ensure we have a proper base URL with scheme

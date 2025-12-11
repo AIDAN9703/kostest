@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Boat } from "@/shared/types/types";
+import { Boat } from "@/shared/lib/types/types";
 import { Button } from "@/shared/components/ui/button";
 import { Star, ThumbsUp, Loader2 } from "lucide-react";
-import { getBoatReviews, ReviewWithUser } from "@/features/reviews/actions/reviews";
+import {
+  getBoatReviews,
+  ReviewWithUser,
+} from "@/features/reviews/actions/reviews";
 import { format } from "date-fns";
 
 interface ReviewsProps {
@@ -15,12 +18,12 @@ export function Reviews({ boat }: ReviewsProps) {
   const [reviews, setReviews] = useState<ReviewWithUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [reviewsLoaded, setReviewsLoaded] = useState(false);
-  
+
   const hasReviews = boat.totalReviews && boat.totalReviews > 0;
 
   const handleLoadReviews = async () => {
     if (reviewsLoaded) return;
-    
+
     try {
       setIsLoading(true);
       const reviewData = await getBoatReviews(boat.id, 10);
@@ -32,50 +35,49 @@ export function Reviews({ boat }: ReviewsProps) {
       setIsLoading(false);
     }
   };
-  
+
   return (
     <div className="space-y-8">
       {/* Header with Star Rating */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-gray-900">Reviews</h2>
         <div className="flex items-center gap-1.5">
-          <Star className={`w-5 h-5 ${hasReviews ? 'fill-emerald-400 text-emerald-400' : 'fill-gray-300 text-gray-300'}`} />
+          <Star
+            className={`w-5 h-5 ${hasReviews ? "fill-emerald-400 text-emerald-400" : "fill-gray-300 text-gray-300"}`}
+          />
           <span className="font-medium">
             {boat.averageRating ? Number(boat.averageRating).toFixed(1) : "--"}
           </span>
           <span className="text-gray-500">
-            ({boat.totalReviews || 0} {boat.totalReviews === 1 ? 'review' : 'reviews'})
+            ({boat.totalReviews || 0}{" "}
+            {boat.totalReviews === 1 ? "review" : "reviews"})
           </span>
         </div>
       </div>
-      
+
       {hasReviews ? (
         <>
           {/* Review metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-            <MetricCard 
-              title="Listing Accuracy"
-              rating="Excellent"
-            />
-            <MetricCard 
-              title="Communication"
-              rating="Excellent"
-            />
-            <MetricCard 
-              title="Experience"
-              rating="Excellent"
-            />
+            <MetricCard title="Listing Accuracy" rating="Excellent" />
+            <MetricCard title="Communication" rating="Excellent" />
+            <MetricCard title="Experience" rating="Excellent" />
           </div>
-          
+
           {!reviewsLoaded ? (
             /* Load reviews placeholder */
             <div className="text-center py-8 bg-gray-50 rounded-lg">
               <div className="text-gray-600 mb-2">Reviews available</div>
               <p className="text-sm text-gray-500 mb-4">
-                This boat has {boat.totalReviews} review{boat.totalReviews === 1 ? '' : 's'} with an average rating of {boat.averageRating ? Number(boat.averageRating).toFixed(1) : '--'} stars.
+                This boat has {boat.totalReviews} review
+                {boat.totalReviews === 1 ? "" : "s"} with an average rating of{" "}
+                {boat.averageRating
+                  ? Number(boat.averageRating).toFixed(1)
+                  : "--"}{" "}
+                stars.
               </p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="border-gray-300 hover:bg-gray-100 text-gray-700"
                 onClick={handleLoadReviews}
                 disabled={isLoading}
@@ -86,7 +88,7 @@ export function Reviews({ boat }: ReviewsProps) {
                     Loading Reviews...
                   </>
                 ) : (
-                  'Load Reviews'
+                  "Load Reviews"
                 )}
               </Button>
             </div>
@@ -95,7 +97,10 @@ export function Reviews({ boat }: ReviewsProps) {
             <div className="space-y-8">
               {reviews.length > 0 ? (
                 reviews.map((review) => (
-                  <div key={review.id} className="border-b border-gray-200 pb-8 last:border-0">
+                  <div
+                    key={review.id}
+                    className="border-b border-gray-200 pb-8 last:border-0"
+                  >
                     <div className="flex gap-4 mb-4">
                       <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center shrink-0 text-gray-700 font-medium">
                         {getReviewerInitial(review)}
@@ -110,14 +115,13 @@ export function Reviews({ boat }: ReviewsProps) {
                               Verified
                             </div>
                           )}
-                          
                         </div>
                         <div className="flex items-center gap-2 mb-2">
                           <div className="flex">
                             {[...Array(5)].map((_, i) => (
-                              <Star 
-                                key={i} 
-                                className={`w-4 h-4 ${i < review.rating ? 'fill-emerald-400 text-emerald-400' : 'text-gray-300'}`} 
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${i < review.rating ? "fill-emerald-400 text-emerald-400" : "text-gray-300"}`}
                               />
                             ))}
                           </div>
@@ -126,15 +130,21 @@ export function Reviews({ boat }: ReviewsProps) {
                           </span>
                         </div>
                         {review.title && (
-                          <h4 className="font-medium text-gray-900 mb-2">{review.title}</h4>
+                          <h4 className="font-medium text-gray-900 mb-2">
+                            {review.title}
+                          </h4>
                         )}
                         {review.content && (
-                          <p className="text-gray-700 leading-relaxed">{review.content}</p>
+                          <p className="text-gray-700 leading-relaxed">
+                            {review.content}
+                          </p>
                         )}
                         {review.helpfulCount && review.helpfulCount > 0 && (
                           <div className="flex items-center gap-1 mt-3 text-sm text-gray-500">
                             <ThumbsUp className="w-3 h-3" />
-                            <span>{review.helpfulCount} found this helpful</span>
+                            <span>
+                              {review.helpfulCount} found this helpful
+                            </span>
                           </div>
                         )}
                       </div>
@@ -153,7 +163,9 @@ export function Reviews({ boat }: ReviewsProps) {
         // No reviews state
         <div className="text-center py-12">
           <div className="text-gray-500 mb-2">No reviews yet</div>
-          <p className="text-sm text-gray-400">Be the first to leave a review for this boat!</p>
+          <p className="text-sm text-gray-400">
+            Be the first to leave a review for this boat!
+          </p>
         </div>
       )}
     </div>
@@ -188,7 +200,7 @@ function getReviewerDisplayName(review: ReviewWithUser): string {
 }
 
 // Helper component for review metrics
-function MetricCard({ title, rating }: { title: string, rating: string }) {
+function MetricCard({ title, rating }: { title: string; rating: string }) {
   return (
     <div className="bg-gray-50 rounded-lg p-4">
       <div className="flex items-center gap-2 mb-1">
@@ -198,4 +210,4 @@ function MetricCard({ title, rating }: { title: string, rating: string }) {
       <p className="text-emerald-400 font-medium">{rating}</p>
     </div>
   );
-} 
+}

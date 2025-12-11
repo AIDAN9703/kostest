@@ -3,7 +3,7 @@ import { db } from '@/database/db';
 import { bookings } from '@/database/schema';
 import { eq } from 'drizzle-orm';
 import Stripe from 'stripe';
-import config from '@/shared/config/config';
+import config from '@/shared/lib/config';
 
 const stripe = new Stripe(config.stripeSecretKey, {
   apiVersion: '2025-07-30.basil',

@@ -2,7 +2,7 @@
 
 import { db } from "@/database/db";
 import { boats } from "@/database/schema";
-import { SearchParamsType, SearchResults } from "@/shared/types/types";
+import { SearchParamsType, SearchResults } from "@/shared/lib/types/types";
 import { sql, eq, desc } from "drizzle-orm";
 import { cache } from "react";
 import { SearchQueryBuilder } from "../services/query-builder";

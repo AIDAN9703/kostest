@@ -1,31 +1,28 @@
-import React from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
-import { notFound } from 'next/navigation'
-import { Metadata } from 'next'
-import { 
-  Calendar, 
-  User, 
-  ArrowLeft, 
-  Clock,
-  Tag,
-  Eye
-} from 'lucide-react'
-import { Button } from '@/shared/components/ui/button'
-import { Badge } from '@/shared/components/ui/badge'
-import { getBlogPostBySlug, incrementViewCount, getPublishedBlogPosts } from '@/features-admin/blog/actions/admin-blog-actions'
-import { formatDate } from '@/shared/utils/general-utils'
-import SocialShare from '@/shared/components/ui/social-share'
+import React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { notFound } from "next/navigation";
+import { Metadata } from "next";
+import { Calendar, User, ArrowLeft, Clock, Tag, Eye } from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
+import { Badge } from "@/shared/components/ui/badge";
+import {
+  getBlogPostBySlug,
+  incrementViewCount,
+  getPublishedBlogPosts,
+} from "@/features-admin/blog/actions/admin-blog-actions";
+import { formatDate } from "@/shared/lib/utils/general-utils";
+import SocialShare from "@/shared/components/ui/social-share";
 
 // Category display names mapping
 const categoryLabels = {
-  FLEET_NEWS: 'Fleet News',
-  CONSERVATION: 'Conservation',
-  TIPS_ADVICE: 'Tips & Advice',
-  CASE_STUDY: 'Case Study',
-  COMPANY_NEWS: 'Company News',
-  SAFETY: 'Safety',
-  EVENTS: 'Events',
+  FLEET_NEWS: "Fleet News",
+  CONSERVATION: "Conservation",
+  TIPS_ADVICE: "Tips & Advice",
+  CASE_STUDY: "Case Study",
+  COMPANY_NEWS: "Company News",
+  SAFETY: "Safety",
+  EVENTS: "Events",
 } as const;
 
 interface BlogPostPageProps {
@@ -33,14 +30,16 @@ interface BlogPostPageProps {
 }
 
 // Generate metadata for SEO
-export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await getBlogPostBySlug(slug);
 
   if (!post) {
     return {
-      title: 'Post Not Found | KOS Yachts',
-      description: 'The requested blog post could not be found.',
+      title: "Post Not Found | KOS Yachts",
+      description: "The requested blog post could not be found.",
     };
   }
 
@@ -54,12 +53,12 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
       title: post.title,
       description: post.excerpt,
       images: post.featuredImage ? [post.featuredImage] : [],
-      type: 'article',
+      type: "article",
       publishedTime: post.publishedAt?.toISOString(),
       authors: [post.author],
     },
     twitter: {
-      card: 'summary_large_image',
+      card: "summary_large_image",
       title: post.title,
       description: post.excerpt,
       images: post.featuredImage ? [post.featuredImage] : [],
@@ -69,10 +68,10 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  
+
   // Fetch the blog post
   const post = await getBlogPostBySlug(slug);
-  
+
   // Handle 404
   if (!post) {
     notFound();
@@ -82,22 +81,24 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   incrementViewCount(post.id).catch(console.error);
 
   // Fetch related posts (same category, excluding current post)
-  const relatedPostsData = await getPublishedBlogPosts({ 
-    category: post.category, 
-    limit: 3 
+  const relatedPostsData = await getPublishedBlogPosts({
+    category: post.category,
+    limit: 3,
   });
-  const relatedPosts = relatedPostsData.filter(p => p.id !== post.id).slice(0, 3);
+  const relatedPosts = relatedPostsData
+    .filter((p) => p.id !== post.id)
+    .slice(0, 3);
 
   // Estimate reading time (rough calculation: 200 words per minute)
-  const wordCount = post.content.split(' ').length;
+  const wordCount = post.content.split(" ").length;
   const readingTime = Math.ceil(wordCount / 200);
 
   return (
     <div className="w-full">
       {/* Back to News */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-        <Link 
-          href="/news" 
+        <Link
+          href="/news"
           className="inline-flex items-center text-primary hover:text-primary/80 transition-colors"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -107,7 +108,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
       {/* Article Header */}
       <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
         {/* Title */}
         <h1 className="text-4xl md:text-5xl font-bold text-primary leading-tight mb-4">
           {post.title}
@@ -162,15 +162,15 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
         {/* Content */}
         <div className="prose prose-lg max-w-none mb-12">
-          <div 
+          <div
             className="text-gray-800 leading-relaxed"
             style={{
-              lineHeight: '1.8',
-              fontSize: '1.125rem',
+              lineHeight: "1.8",
+              fontSize: "1.125rem",
             }}
-            dangerouslySetInnerHTML={{ 
-              __html: post.content.replace(/\n/g, '<br />') 
-            }} 
+            dangerouslySetInnerHTML={{
+              __html: post.content.replace(/\n/g, "<br />"),
+            }}
           />
         </div>
 
@@ -182,10 +182,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       {relatedPosts.length > 0 && (
         <section className="bg-gray-50 py-16">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-primary mb-8">Related Posts</h2>
+            <h2 className="text-3xl font-bold text-primary mb-8">
+              Related Posts
+            </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {relatedPosts.map((relatedPost) => (
-                <Link 
+                <Link
                   key={relatedPost.id}
                   href={`/news/${relatedPost.slug}`}
                   className="group"
@@ -194,36 +196,46 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     {/* Image */}
                     <div className="relative h-48">
                       <Image
-                        src={relatedPost.featuredImage || "/images/experiences/yachtparty.jpg"}
+                        src={
+                          relatedPost.featuredImage ||
+                          "/images/experiences/yachtparty.jpg"
+                        }
                         alt={relatedPost.title}
                         fill
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                         sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       />
                       <div className="absolute top-4 left-4">
-                        <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-primary">
+                        <Badge
+                          variant="secondary"
+                          className="bg-white/90 backdrop-blur-sm text-primary"
+                        >
                           {categoryLabels[relatedPost.category]}
                         </Badge>
                       </div>
                     </div>
-                    
+
                     {/* Content */}
                     <div className="p-6">
                       <div className="flex items-center gap-4 mb-3 text-sm text-gray-500">
                         <div className="flex items-center">
                           <Calendar className="h-4 w-4 mr-1" />
-                          <span>{formatDate(relatedPost.publishedAt || relatedPost.createdAt)}</span>
+                          <span>
+                            {formatDate(
+                              relatedPost.publishedAt || relatedPost.createdAt
+                            )}
+                          </span>
                         </div>
                         <div className="flex items-center">
                           <User className="h-4 w-4 mr-1" />
                           <span>{relatedPost.author}</span>
                         </div>
                       </div>
-                      
+
                       <h3 className="text-xl font-medium text-primary mb-3 leading-tight group-hover:text-primary/80 transition-colors">
                         {relatedPost.title}
                       </h3>
-                      
+
                       <p className="text-gray-600 font-light leading-relaxed line-clamp-3">
                         {relatedPost.excerpt}
                       </p>

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteBooking, updateBookingStatus, updatePaymentStatus, updateBooking } from "../booking.mutations";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/shared/lib/hooks/use-toast";
 
 /**
  * Delete booking mutation

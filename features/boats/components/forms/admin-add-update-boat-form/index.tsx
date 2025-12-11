@@ -7,8 +7,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/shared/components/ui/button";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { AlertCircle } from "lucide-react";
-import { useToast } from "@/shared/hooks/use-toast";
-import { createBoatSchema, updateBoatSchema, type CreateBoatInput, type UpdateBoatInput } from "@/features/boats/boat.validation";
+import { useToast } from "@/shared/lib/hooks/use-toast";
+import {
+  createBoatSchema,
+  updateBoatSchema,
+  type CreateBoatInput,
+  type UpdateBoatInput,
+} from "@/features/boats/boat.validation";
 import { createBoat, updateBoat } from "@/features/boats/boat.mutations";
 import { boatCategoryEnum } from "@/database/schema";
 import { MediaSection } from "./sections/MediaSection";
@@ -21,13 +26,19 @@ import { LocationSection } from "./sections/LocationSection";
 import { CharterOptionsSection } from "./sections/CharterOptionsSection";
 import { OwnerSection } from "./sections/OwnerSection";
 
-export interface AdminBoatFormProps { boat?: CreateBoatInput; boatId?: string; }
+export interface AdminBoatFormProps {
+  boat?: CreateBoatInput;
+  boatId?: string;
+}
 
-export default function AdminAddUpdateBoatForm({ boat, boatId }: AdminBoatFormProps) {
+export default function AdminAddUpdateBoatForm({
+  boat,
+  boatId,
+}: AdminBoatFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
-  
+
   // Determine if we're creating or updating
   const isCreating = !boatId;
   const formSchema = isCreating ? createBoatSchema : updateBoatSchema;
@@ -42,7 +53,7 @@ export default function AdminAddUpdateBoatForm({ boat, boatId }: AdminBoatFormPr
       capacity: 0,
       features: ["Standard features"],
       pricingTiers: [],
-      
+
       // Boolean fields
       active: false,
       featured: false,
@@ -62,7 +73,13 @@ export default function AdminAddUpdateBoatForm({ boat, boatId }: AdminBoatFormPr
   const { formState } = methods;
   const { isSubmitting } = formState;
 
-  const { images, updateFormImages, handleUpload, handleDragEnd, handleDelete } = useBoatImages(methods, {
+  const {
+    images,
+    updateFormImages,
+    handleUpload,
+    handleDragEnd,
+    handleDelete,
+  } = useBoatImages(methods, {
     mainImage: boat?.mainImage,
     galleryImages: boat?.galleryImages,
   });
@@ -73,7 +90,7 @@ export default function AdminAddUpdateBoatForm({ boat, boatId }: AdminBoatFormPr
       setError(null);
       // Ensure form has latest image data
       updateFormImages(images);
-      
+
       if (isCreating) {
         // Creating a new boat
         await createBoat(data as CreateBoatInput);
@@ -81,7 +98,7 @@ export default function AdminAddUpdateBoatForm({ boat, boatId }: AdminBoatFormPr
           title: "Success",
           description: "Boat created successfully.",
         });
-        router.push('/admin/boats');
+        router.push("/admin/boats");
       } else {
         // Updating an existing boat
         await updateBoat(boatId!, data);
@@ -91,7 +108,7 @@ export default function AdminAddUpdateBoatForm({ boat, boatId }: AdminBoatFormPr
         });
         router.push(`/admin/boats/${boatId}`);
       }
-      
+
       router.refresh();
     } catch (error: any) {
       setError(error.message || "Failed to save boat. Please try again.");
@@ -125,7 +142,7 @@ export default function AdminAddUpdateBoatForm({ boat, boatId }: AdminBoatFormPr
           onDragEnd={handleDragEnd}
           onDelete={handleDelete}
           boatId={boatId}
-          boatName={methods.getValues('name' as any) || 'boat'}
+          boatName={methods.getValues("name" as any) || "boat"}
         />
         <PricingSection />
         <LocationSection />
@@ -133,20 +150,26 @@ export default function AdminAddUpdateBoatForm({ boat, boatId }: AdminBoatFormPr
 
         {/* Submit buttons */}
         <div className="flex justify-between">
-          <Button 
-            variant="outline" 
-            type="button" 
-            onClick={() => boatId ? router.push(`/admin/boats/${boatId}`) : router.push('/admin/boats')}
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() =>
+              boatId
+                ? router.push(`/admin/boats/${boatId}`)
+                : router.push("/admin/boats")
+            }
           >
             Cancel
           </Button>
           <Button className="text-white" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving...' : (boatId ? 'Update Boat' : 'Create Boat')}
+            {isSubmitting
+              ? "Saving..."
+              : boatId
+                ? "Update Boat"
+                : "Create Boat"}
           </Button>
         </div>
       </form>
     </FormProvider>
   );
 }
-
-

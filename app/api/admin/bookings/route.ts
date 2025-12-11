@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { bookingService } from '@/features/bookings/booking.service';
 import { bookingFilterSchema } from '@/features/bookings/booking.validation';
-import { apiPaginated, apiError } from '@/shared/utils/api-response';
+import { apiPaginated, apiError } from '@/shared/lib/utils/api-helpers';
 import { auth } from '@/auth';
 
 /**

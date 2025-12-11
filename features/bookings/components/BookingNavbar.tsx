@@ -11,7 +11,6 @@ export default function BookingNavbar() {
       {/* Container: Responsive max-width with proper padding */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 sm:h-16">
-          
           {/* Left: Logo and Back Button */}
           <div className="flex items-center gap-2 sm:gap-4">
             {/* Back Button - Hide text on mobile */}
@@ -20,7 +19,9 @@ export default function BookingNavbar() {
               className="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 hidden sm:inline" />
-              <span className="hidden sm:inline text-sm font-medium">Back to all boats</span>
+              <span className="hidden sm:inline text-sm font-medium">
+                Back to all boats
+              </span>
             </Link>
 
             {/* Divider - Hide on mobile */}
@@ -29,7 +30,7 @@ export default function BookingNavbar() {
             {/* Logo */}
             <Link href="/" className="flex items-center">
               <Image
-                src="/icons/updatekoslogo-branded.png"
+                src="/icons/transparent-logo.png"
                 alt="KOS Logo"
                 width={28}
                 height={28}

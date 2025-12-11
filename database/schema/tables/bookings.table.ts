@@ -12,11 +12,11 @@ export const bookings = pgTable("booking", {
     bookingStatus: bookingStatusEnum("booking_status").default("PENDING").notNull(),
     
     // User Information
-    userId: uuid("user_id").references(() => users.id), // Renamed from renterId, optional for non-logged in requests
-    boatOwnerId: uuid("boat_owner_id").references(() => users.id), // The owner of the boat - NEW!
-    boatId: uuid("boat_id").notNull().references(() => boats.id),
-    captainId: uuid("captain_id").references(() => captains.id),
-    pricingTierId: uuid("pricing_tier_id").references(() => boatPricingTiers.id),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }), // Optional for non-logged in requests
+    boatOwnerId: uuid("boat_owner_id").references(() => users.id, { onDelete: "set null" }), // The owner of the boat
+    boatId: uuid("boat_id").notNull().references(() => boats.id, { onDelete: "restrict" }), // Can't delete boat with bookings
+    captainId: uuid("captain_id").references(() => captains.id, { onDelete: "set null" }), // Booking can exist without captain
+    pricingTierId: uuid("pricing_tier_id").references(() => boatPricingTiers.id, { onDelete: "set null" }), // Preserve booking, nullify tier reference
     // promoCodeId removed
     
     // Customer Information (needed even when userId exists)
@@ -50,7 +50,6 @@ export const bookings = pgTable("booking", {
     // Payment Information
     paymentStatus: paymentStatusEnum("payment_status").default("AWAITING_PAYMENT"),
     paymentMethod: text("payment_method"),
-    paymentDueDate: timestamp("payment_due_date", { mode: "date" }),
     depositPaid: boolean("deposit_paid").default(false),
     refundAmount: doublePrecision("refund_amount"),
     refundStatus: text("refund_status"),
@@ -66,23 +65,24 @@ export const bookings = pgTable("booking", {
     addOns: json("add_ons"),
     
     // Status Management (keep minimal admin fields)
-    reviewedBy: uuid("reviewed_by").references(() => users.id),
-    reviewedAt: timestamp("reviewed_at", { mode: "date" }),
+    reviewedBy: uuid("reviewed_by").references(() => users.id, { onDelete: "set null" }),
+    reviewedAt: timestamp("reviewed_at", { mode: "date", withTimezone: true }),
     reviewNotes: text("review_notes"),
     
     // Admin Assignment (for contacted flow - use conversations table for full history)
-    assignedAdminId: uuid("assigned_admin_id").references(() => users.id), // Admin assigned to handle this booking
+    assignedAdminId: uuid("assigned_admin_id").references(() => users.id, { onDelete: "set null" }), // Admin assigned to handle this booking
     contactedAt: timestamp("contacted_at", { mode: "date", withTimezone: true }), // When admin first contacted customer
     
     // Cancellation
     cancelledAt: timestamp("cancelled_at", { mode: "date", withTimezone: true }),
     cancellationReason: text("cancellation_reason"),
-    cancelledBy: uuid("cancelled_by").references(() => users.id),
+    cancelledBy: uuid("cancelled_by").references(() => users.id, { onDelete: "set null" }),
     
     // Timestamps
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
-    expiresAt: timestamp("expires_at", { mode: "date" }), // When a request or payment link expires
+    expiresAt: timestamp("expires_at", { mode: "date", withTimezone: true }), // When a request or payment link expires
+    paymentDueDate: timestamp("payment_due_date", { mode: "date", withTimezone: true }),
   }, (table) => [
     // Indexes for common queries
     index("booking_type_idx").on(table.bookingType),

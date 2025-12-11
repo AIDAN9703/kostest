@@ -17,7 +17,7 @@ export const boats = pgTable("boat",{
     searchRankingScore: doublePrecision("search_ranking_score").default(0), // For advanced search algorithms
     
     // Owner Information
-    ownerId: uuid("owner_id").notNull().references(() => users.id),
+    ownerId: uuid("owner_id").notNull().references(() => users.id, { onDelete: "restrict" }), // Can't delete user if owns boats
     ownerNotes: text("owner_notes"), // Added owner notes for internal use
     
     // Boat Specifications
@@ -56,7 +56,7 @@ export const boats = pgTable("boat",{
     // Charter Options
     crewRequired: boolean("crew_required").default(true).notNull(),
     crewIncluded: boolean("crew_included").default(true).notNull(),
-    primaryCaptainId: uuid("primary_captain_id").references(() => captains.id),
+    primaryCaptainId: uuid("primary_captain_id").references(() => captains.id, { onDelete: "set null" }), // Boat can exist without captain
     dayCharter: boolean("day_charter").default(true).notNull(),
     termCharter: boolean("term_charter").default(false).notNull(),
     minimumCharterDays: integer("minimum_charter_days"),
@@ -76,7 +76,7 @@ export const boats = pgTable("boat",{
     registrationNumber: text("registration_number"),
     hullId: text("hull_id"),
     insuranceInfo: text("insurance_info"),    // Simplified insurance fields
-    insuranceExpiry: timestamp("insurance_expiry", { mode: "date" }),
+    insuranceExpiry: timestamp("insurance_expiry", { mode: "date", withTimezone: true }),
     
     // Availability
     minRentalHours: integer("min_rental_hours"), // Added minimum rental hours
@@ -84,8 +84,8 @@ export const boats = pgTable("boat",{
     advanceBookingDays: integer("advance_booking_days"), // Added advance booking days
     
     // Maintenance
-    lastMaintenanceDate: timestamp("last_maintenance_date", { mode: "date" }),
-    nextMaintenanceDate: timestamp("next_maintenance_date", { mode: "date" }),
+    lastMaintenanceDate: timestamp("last_maintenance_date", { mode: "date", withTimezone: true }),
+    nextMaintenanceDate: timestamp("next_maintenance_date", { mode: "date", withTimezone: true }),
     maintenanceNotes: text("maintenance_notes"), // Added maintenance notes
 
     averageRating: doublePrecision("average_rating"),

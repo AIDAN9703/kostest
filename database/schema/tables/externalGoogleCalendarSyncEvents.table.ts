@@ -15,8 +15,8 @@ export const externalGoogleCalendarSyncEvents = pgTable("external_google_calenda
   eventId: text("event_id"), // External calendar event ID
   
   // Time period
-  startTime: timestamp("start_time", { withTimezone: true }).notNull(),
-  endTime: timestamp("end_time", { withTimezone: true }).notNull(),
+  startTime: timestamp("start_time", { mode: "date", withTimezone: true }).notNull(),
+  endTime: timestamp("end_time", { mode: "date", withTimezone: true }).notNull(),
   
   // Availability status
   isAvailable: boolean("is_available").default(true).notNull(),
@@ -25,12 +25,12 @@ export const externalGoogleCalendarSyncEvents = pgTable("external_google_calenda
   source: calendarSourceEnum("source").notNull(),
   
   // Optional booking reference (if source is BOOKING)
-  bookingId: uuid("booking_id").references(() => bookings.id),
+  bookingId: uuid("booking_id").references(() => bookings.id, { onDelete: "set null" }), // Preserve event even if booking deleted
   
   // Metadata
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-  lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
+  lastSyncedAt: timestamp("last_synced_at", { mode: "date", withTimezone: true }),
   
 }, (table) => [
   index("external_google_calendar_sync_events_boat_idx").on(table.boatId),

@@ -4,12 +4,12 @@ import SearchResults from "@/features/search/components/SearchResults";
 import VisGLSearchMap from "@/features/search/components/map/VisGLSearchMap";
 import SearchSkeleton from "@/features/search/components/SearchSkeleton";
 import { searchBoats } from "@/features/search/actions/search-actions";
-import { SearchResults as SearchResultsType } from "@/shared/types/types";
+import { SearchResults as SearchResultsType } from "@/shared/lib/types/types";
 import { 
   normalizeSearchParams,
   parseNumberParam, 
   extractBoundingBox
-} from "@/shared/utils/search-params-utils";
+} from "@/shared/lib/utils/search-params-utils";
 
 export const metadata: Metadata = {
   title: "Search Boats | KOSyachts",

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getEventById, updateEvent, deleteEvent } from "@/shared/services/events.service";
+import { getEventById, updateEvent, deleteEvent } from "@/shared/lib/services/events.service";
 
 export async function GET(
   request: NextRequest,

@@ -12,14 +12,14 @@ export const generalInquiries = pgTable("general_inquiry", {
     phone: text("phone").notNull(),
     
     // Inquiry Details
-    date: timestamp("date", { mode: "date" }),
+    date: timestamp("date", { mode: "date", withTimezone: true }),
     time: text("time"),
     budget: text("budget"),
     guests: integer("guests"),
     message: text("message"),
     
     // Admin fields
-    assignedTo: uuid("assigned_to").references(() => users.id),
+    assignedTo: uuid("assigned_to").references(() => users.id, { onDelete: "set null" }), // Preserve inquiry even if admin deleted
     notes: text("notes"),
     termsAccepted: boolean("terms_accepted").default(true).notNull(),
     

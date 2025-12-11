@@ -7,7 +7,7 @@ import { users } from "@/database/schema/tables";
 export const captains = pgTable("captain", {
     // Core Information
     id: uuid("id").defaultRandom().notNull().primaryKey(),
-    userId: uuid("user_id").notNull().unique().references(() => users.id),
+    userId: uuid("user_id").notNull().unique().references(() => users.id, { onDelete: "restrict" }), // Can't delete user if is captain
     status: text("status").default("PENDING"),
     
     // Personal Information
@@ -26,7 +26,7 @@ export const captains = pgTable("captain", {
     uscgLicensed: boolean("uscg_licensed").default(false).notNull(),
     licenseType: text("license_type"),
     licenseNumber: text("license_number"),
-    licenseExpiry: timestamp("license_expiry", { mode: "date" }),
+    licenseExpiry: timestamp("license_expiry", { mode: "date", withTimezone: true }),
     licenseImage: text("license_image"),
     yearsExperience: integer("years_experience"),
     
@@ -45,7 +45,7 @@ export const captains = pgTable("captain", {
     
     // Agreement Information
     agreementSigned: boolean("agreement_signed").default(false),
-    agreementDate: timestamp("agreement_date", { mode: "date" }),
+    agreementDate: timestamp("agreement_date", { mode: "date", withTimezone: true }),
     agreementType: text("agreement_type"),
     
     // Reviews & Ratings

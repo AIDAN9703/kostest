@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { bookingService } from '@/features/bookings/booking.service';
-import { apiSuccess, apiError } from '@/shared/utils/api-response';
+import { apiSuccess, apiError } from '@/shared/lib/utils/api-helpers';
 
 /**
  * Customer-facing API endpoint to fetch booking details

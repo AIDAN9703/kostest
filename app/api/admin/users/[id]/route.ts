@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { userService } from "@/features/users/user.service";
 import { updateUserSchema } from "@/features/users/user.validation";
-import { apiSuccess, apiError, apiSuccessNoData } from "@/shared/utils/api-response";
+import { apiSuccess, apiError, apiSuccessNoData } from "@/shared/lib/utils/api-helpers";
 
 /**
  * GET /api/admin/users/[id]

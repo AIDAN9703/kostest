@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { boatService } from "@/features/boats/boat.service";
 import { updateBoatSchema } from "@/features/boats/boat.validation";
-import { apiSuccess, apiSuccessNoData, apiError } from "@/shared/utils/api-response";
+import { apiSuccess, apiSuccessNoData, apiError } from "@/shared/lib/utils/api-helpers";
 
 /**
  * GET /api/admin/boats/[id]

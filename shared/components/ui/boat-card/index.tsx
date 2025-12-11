@@ -1,22 +1,29 @@
-'use client';
+"use client";
 
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Boat } from "@/shared/types/types";
-import { Users, MapPin, Star, ChevronLeft, ChevronRight, Heart } from "lucide-react";
-import { formatCurrency } from "@/shared/utils/general-utils";
+import { Boat } from "@/shared/lib/types/types";
+import {
+  Users,
+  MapPin,
+  Star,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+} from "lucide-react";
+import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { AspectRatio } from "@/shared/components/ui/aspect-ratio";
-import { cn } from "@/shared/utils/general-utils";
+import { cn } from "@/shared/lib/utils/general-utils";
 import { Image as IKImage } from "@imagekit/next";
-import { getImageKitProps } from "@/shared/services/imagekit.service";
-import { getBoatStartingHourlyLabel } from "@/shared/utils/pricing-utils";
+import { getImageKitProps } from "@/shared/lib/services/imagekit.service";
+import { getBoatStartingHourlyLabel } from "@/shared/lib/utils/pricing-utils";
 
 interface BoatCardProps {
   boat: Boat;
   index?: number;
-  variant?: 'default' | 'search' | 'featured' | 'compact';
+  variant?: "default" | "search" | "featured" | "compact";
   showRating?: boolean;
   showDetails?: boolean;
   showPrice?: boolean;
@@ -28,29 +35,28 @@ interface BoatCardProps {
   className?: string;
 }
 
-const BoatCard = ({ 
-  boat, 
-  index = 0, 
-  variant = 'default',
+const BoatCard = ({
+  boat,
+  index = 0,
+  variant = "default",
   showRating = true,
   showDetails = true,
   showPrice = true,
   showLocation = true,
   showInstantBook = true,
   imagePriority,
-  aspectRatio = 16/9,
+  aspectRatio = 16 / 9,
   highlightFeatured = true,
-  className = ""
+  className = "",
 }: BoatCardProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
   // Get all available images
-  const images = [
-    boat.mainImage,
-    ...(boat.galleryImages || []),
-  ].filter(Boolean);
+  const images = [boat.mainImage, ...(boat.galleryImages || [])].filter(
+    Boolean
+  );
 
   // If no images are available, use our custom fallback
   const hasImages = images.length > 0;
@@ -58,9 +64,9 @@ const BoatCard = ({
   // Get the current image
   const currentImageUrl = hasImages ? images[currentImageIndex] : null;
 
-  const handleImageNavigation = (direction: 'prev' | 'next') => {
-    setCurrentImageIndex(prev => {
-      if (direction === 'next') {
+  const handleImageNavigation = (direction: "prev" | "next") => {
+    setCurrentImageIndex((prev) => {
+      if (direction === "next") {
         return (prev + 1) % images.length;
       }
       return (prev - 1 + images.length) % images.length;
@@ -77,15 +83,15 @@ const BoatCard = ({
   // Simple variant-based classes
   const getVariantClasses = () => {
     switch (variant) {
-      case 'search':
+      case "search":
         return {
           card: "rounded-xl hover:scale-[1.01]",
-          content: "p-2 sm:p-3", 
+          content: "p-2 sm:p-3",
           title: "text-md sm:text-lg font-medium mb-1",
           details: "text-xs sm:text-sm gap-1",
           priceTag: "bottom-2 right-2 sm:bottom-3 sm:right-3",
         };
-      case 'featured':
+      case "featured":
         return {
           card: "rounded-2xl hover:scale-[1.03] shadow-md",
           content: "p-3 sm:p-4 md:p-5",
@@ -93,7 +99,7 @@ const BoatCard = ({
           details: "text-sm gap-2",
           priceTag: "bottom-4 right-4",
         };
-      case 'compact':
+      case "compact":
         return {
           card: "rounded-lg hover:scale-[1.01]",
           content: "p-1 sm:p-2",
@@ -116,7 +122,7 @@ const BoatCard = ({
 
   return (
     <Link href={`/boats/${boat.id}`} className="block">
-      <Card 
+      <Card
         className={cn(
           "group relative overflow-hidden font-poppins bg-white flex flex-col h-full transition-all duration-500 cursor-pointer",
           styles.card,
@@ -129,7 +135,9 @@ const BoatCard = ({
           <AspectRatio ratio={aspectRatio} className="overflow-hidden">
             {hasImages ? (
               (() => {
-                const props = getImageKitProps(currentImageUrl!, 'card', { eager: index < 3 || !!imagePriority });
+                const props = getImageKitProps(currentImageUrl!, "card", {
+                  eager: index < 3 || !!imagePriority,
+                });
                 return (
                   <IKImage
                     src={props.src}
@@ -155,25 +163,31 @@ const BoatCard = ({
                     className="object-contain"
                   />
                 </div>
-                <p className="text-gray-600 font-medium mb-1">No Images Available</p>
-                <p className="text-sm text-gray-500">Images for this boat are coming soon</p>
+                <p className="text-gray-600 font-medium mb-1">
+                  No Images Available
+                </p>
+                <p className="text-sm text-gray-500">
+                  Images for this boat are coming soon
+                </p>
               </div>
             )}
-            
+
             {/* Favorite button */}
             <button
               onClick={handleFavoriteClick}
               className="absolute top-3 right-3 z-10 p-1.5 bg-white/70 backdrop-blur-xs rounded-full shadow-md transition-all duration-200 hover:scale-110"
-              aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+              aria-label={
+                isFavorite ? "Remove from favorites" : "Add to favorites"
+              }
             >
-              <Heart 
+              <Heart
                 className={cn(
                   "w-3 h-3 sm:w-4 sm:h-4",
                   isFavorite ? "fill-rose-500 text-rose-500" : "text-gray-600"
                 )}
               />
             </button>
-            
+
             {/* Navigation arrows - only show on hover */}
             {isHovered && images.length > 1 && (
               <>
@@ -181,7 +195,7 @@ const BoatCard = ({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleImageNavigation('prev');
+                    handleImageNavigation("prev");
                   }}
                   className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md transition-colors z-10"
                   aria-label="Previous image"
@@ -192,7 +206,7 @@ const BoatCard = ({
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    handleImageNavigation('next');
+                    handleImageNavigation("next");
                   }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-2 rounded-full shadow-md transition-colors z-10"
                   aria-label="Next image"
@@ -201,24 +215,28 @@ const BoatCard = ({
                 </button>
               </>
             )}
-            
+
             {/* Image counter */}
             {images.length > 1 && (
               <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded-full text-xs z-10">
                 {currentImageIndex + 1} / {images.length}
               </div>
             )}
-            
+
             {/* Price tag */}
             {showPrice && (
-              <div className={cn(
-                "absolute bg-white/95 backdrop-blur-xs px-2 py-1 rounded-lg shadow-md",
-                styles.priceTag
-              )}>
-                <span className="text-sm sm:text-base font-medium text-[#1E293B]">{getBoatStartingHourlyLabel(boat)}</span>
+              <div
+                className={cn(
+                  "absolute bg-white/95 backdrop-blur-xs px-2 py-1 rounded-lg shadow-md",
+                  styles.priceTag
+                )}
+              >
+                <span className="text-sm sm:text-base font-medium text-[#1E293B]">
+                  {getBoatStartingHourlyLabel(boat)}
+                </span>
               </div>
             )}
-            
+
             {/* Featured tag - Corner flag */}
             {boat.featured && highlightFeatured && (
               <div className="absolute top-0 left-0 z-20">
@@ -232,61 +250,71 @@ const BoatCard = ({
 
         {/* Card content */}
         {showDetails && (
-          <CardContent className={cn(
-            "flex-1 flex flex-col",
-            styles.content
-          )}>
+          <CardContent className={cn("flex-1 flex flex-col", styles.content)}>
             <div className="flex items-start justify-between gap-3 sm:gap-6">
               <div className="flex-1 min-w-0 overflow-hidden">
                 {/* Boat title */}
                 <div className="flex items-center gap-2">
-                  <h3 className={cn(
-                    "text-[#1E293B] group-hover:text-primary transition-colors truncate",
-                    styles.title
-                  )}>
+                  <h3
+                    className={cn(
+                      "text-[#1E293B] group-hover:text-primary transition-colors truncate",
+                      styles.title
+                    )}
+                  >
                     {boat.displayTitle || boat.name}
                   </h3>
                   {/* Display InstantBook icon if available */}
                   {showInstantBook && boat.instantBook && (
-                    <Image 
-                      src="/icons/instant-book-small.svg" 
-                      width={12} 
-                      height={12} 
-                      alt="Instant Book" 
-                      className="h-3 w-3" 
+                    <Image
+                      src="/icons/instant-book-small.svg"
+                      width={12}
+                      height={12}
+                      alt="Instant Book"
+                      className="h-3 w-3"
                     />
                   )}
                 </div>
-                
+
                 {/* Location */}
-                {showLocation && boat.locationLabel && boat.locationLabel !== 'N/A' && (
-                  <div className={cn(
-                    "flex items-center mb-1 sm:mb-2 w-full overflow-hidden text-gray-600",
-                    styles.details
-                  )}>
-                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
-                    <span className="font-light tracking-wide truncate overflow-hidden">{boat.locationLabel}</span>
-                  </div>
-                )}
-                
+                {showLocation &&
+                  boat.locationLabel &&
+                  boat.locationLabel !== "N/A" && (
+                    <div
+                      className={cn(
+                        "flex items-center mb-1 sm:mb-2 w-full overflow-hidden text-gray-600",
+                        styles.details
+                      )}
+                    >
+                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4 shrink-0" />
+                      <span className="font-light tracking-wide truncate overflow-hidden">
+                        {boat.locationLabel}
+                      </span>
+                    </div>
+                  )}
+
                 {/* Guest capacity */}
-                <div className={cn(
-                  "flex items-center text-gray-600",
-                  styles.details
-                )}>
+                <div
+                  className={cn(
+                    "flex items-center text-gray-600",
+                    styles.details
+                  )}
+                >
                   <Users className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="font-light tracking-wide">{boat.capacity || boat.numOfPassengers} Guests</span>
+                  <span className="font-light tracking-wide">
+                    {boat.capacity || boat.numOfPassengers} Guests
+                  </span>
                 </div>
               </div>
-              
+
               {/* Rating */}
               {showRating && (
                 <div className="text-[#1E293B] flex items-center">
                   <Star className="w-3 h-3 sm:w-3.5 sm:h-3.5 fill-emerald-500 text-emerald-500 inline-block mr-1" />
                   <span className="text-xs sm:text-sm font-medium">
-                    {boat.averageRating?.toFixed(1) || "--"} 
+                    {boat.averageRating?.toFixed(1) || "--"}
                     <span className="text-gray-500 font-normal ml-0.5">
-                      ({boat.totalReviews} {boat.totalReviews === 1 ? 'review' : 'reviews'})
+                      ({boat.totalReviews}{" "}
+                      {boat.totalReviews === 1 ? "review" : "reviews"})
                     </span>
                   </span>
                 </div>
@@ -299,4 +327,4 @@ const BoatCard = ({
   );
 };
 
-export default BoatCard; 
+export default BoatCard;

@@ -1,34 +1,39 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { 
-  Save, 
-  Eye, 
-  Upload, 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Save,
+  Eye,
+  Upload,
   X,
   Calendar,
   Star,
   FileText,
-  Image as ImageIcon
-} from 'lucide-react';
-import { Button } from '@/shared/components/ui/button';
-import { Input } from '@/shared/components/ui/input';
-import { Textarea } from '@/shared/components/ui/textarea';
-import { Label } from '@/shared/components/ui/label';
-import { 
+  Image as ImageIcon,
+} from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { Label } from "@/shared/components/ui/label";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/shared/components/ui/select';
-import { Switch } from '@/shared/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs';
-import { 
+} from "@/shared/components/ui/select";
+import { Switch } from "@/shared/components/ui/switch";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/shared/components/ui/tabs";
+import {
   Form,
   FormControl,
   FormDescription,
@@ -36,33 +41,60 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/shared/components/ui/form';
-import { 
-  createBlogPost, 
-  updateBlogPost, 
+} from "@/shared/components/ui/form";
+import {
+  createBlogPost,
+  updateBlogPost,
   type CreateBlogPostData,
-  type BlogPost 
-} from '@/features-admin/blog/actions/admin-blog-actions';
-import { useToast } from '@/shared/hooks/use-toast';
-import Image from 'next/image';
+  type BlogPost,
+} from "@/features-admin/blog/actions/admin-blog-actions";
+import { useToast } from "@/shared/lib/hooks/use-toast";
+import Image from "next/image";
 
 // Validation schema
 const blogFormSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200, 'Title must be under 200 characters'),
-  slug: z.string()
-    .min(1, 'Slug is required')
-    .max(100, 'Slug must be under 100 characters')
-    .regex(/^[a-z0-9-]+$/, 'Slug must only contain lowercase letters, numbers, and hyphens'),
-  excerpt: z.string().min(1, 'Excerpt is required').max(500, 'Excerpt must be under 500 characters'),
-  content: z.string().min(1, 'Content is required'),
-  status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED', 'SCHEDULED']),
-  category: z.enum(['FLEET_NEWS', 'CONSERVATION', 'TIPS_ADVICE', 'CASE_STUDY', 'COMPANY_NEWS', 'SAFETY', 'EVENTS']),
-  author: z.string().min(1, 'Author is required').max(100, 'Author name must be under 100 characters'),
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(200, "Title must be under 200 characters"),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .max(100, "Slug must be under 100 characters")
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Slug must only contain lowercase letters, numbers, and hyphens"
+    ),
+  excerpt: z
+    .string()
+    .min(1, "Excerpt is required")
+    .max(500, "Excerpt must be under 500 characters"),
+  content: z.string().min(1, "Content is required"),
+  status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED", "SCHEDULED"]),
+  category: z.enum([
+    "FLEET_NEWS",
+    "CONSERVATION",
+    "TIPS_ADVICE",
+    "CASE_STUDY",
+    "COMPANY_NEWS",
+    "SAFETY",
+    "EVENTS",
+  ]),
+  author: z
+    .string()
+    .min(1, "Author is required")
+    .max(100, "Author name must be under 100 characters"),
   isFeatured: z.boolean(),
   featuredImage: z.string().optional(),
   imageAlt: z.string().optional(),
-  metaTitle: z.string().max(60, 'Meta title should be under 60 characters').optional(),
-  metaDescription: z.string().max(160, 'Meta description should be under 160 characters').optional(),
+  metaTitle: z
+    .string()
+    .max(60, "Meta title should be under 60 characters")
+    .optional(),
+  metaDescription: z
+    .string()
+    .max(160, "Meta description should be under 160 characters")
+    .optional(),
   publishedAt: z.string().optional(),
   scheduledFor: z.string().optional(),
 });
@@ -70,18 +102,18 @@ const blogFormSchema = z.object({
 type BlogFormData = z.infer<typeof blogFormSchema>;
 
 interface BlogFormProps {
-  mode: 'create' | 'edit';
+  mode: "create" | "edit";
   initialData?: BlogPost;
 }
 
 const categoryOptions = [
-  { value: 'FLEET_NEWS', label: 'Fleet News' },
-  { value: 'CONSERVATION', label: 'Conservation' },
-  { value: 'TIPS_ADVICE', label: 'Tips & Advice' },
-  { value: 'CASE_STUDY', label: 'Case Study' },
-  { value: 'COMPANY_NEWS', label: 'Company News' },
-  { value: 'SAFETY', label: 'Safety' },
-  { value: 'EVENTS', label: 'Events' },
+  { value: "FLEET_NEWS", label: "Fleet News" },
+  { value: "CONSERVATION", label: "Conservation" },
+  { value: "TIPS_ADVICE", label: "Tips & Advice" },
+  { value: "CASE_STUDY", label: "Case Study" },
+  { value: "COMPANY_NEWS", label: "Company News" },
+  { value: "SAFETY", label: "Safety" },
+  { value: "EVENTS", label: "Events" },
 ];
 
 export default function BlogForm({ mode, initialData }: BlogFormProps) {
@@ -94,56 +126,58 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
   const form = useForm<BlogFormData>({
     resolver: zodResolver(blogFormSchema),
     defaultValues: {
-      title: initialData?.title || '',
-      slug: initialData?.slug || '',
-      excerpt: initialData?.excerpt || '',
-      content: initialData?.content || '',
-      status: initialData?.status || 'DRAFT',
-      category: initialData?.category || 'COMPANY_NEWS',
-      author: initialData?.author || 'KOS Team',
+      title: initialData?.title || "",
+      slug: initialData?.slug || "",
+      excerpt: initialData?.excerpt || "",
+      content: initialData?.content || "",
+      status: initialData?.status || "DRAFT",
+      category: initialData?.category || "COMPANY_NEWS",
+      author: initialData?.author || "KOS Team",
       isFeatured: initialData?.isFeatured || false,
-      featuredImage: initialData?.featuredImage || '',
-      imageAlt: initialData?.imageAlt || '',
-      metaTitle: initialData?.metaTitle || '',
-      metaDescription: initialData?.metaDescription || '',
-      publishedAt: initialData?.publishedAt ? new Date(initialData.publishedAt).toISOString().slice(0, 16) : '',
-      scheduledFor: initialData?.scheduledFor ? new Date(initialData.scheduledFor).toISOString().slice(0, 16) : '',
+      featuredImage: initialData?.featuredImage || "",
+      imageAlt: initialData?.imageAlt || "",
+      metaTitle: initialData?.metaTitle || "",
+      metaDescription: initialData?.metaDescription || "",
+      publishedAt: initialData?.publishedAt
+        ? new Date(initialData.publishedAt).toISOString().slice(0, 16)
+        : "",
+      scheduledFor: initialData?.scheduledFor
+        ? new Date(initialData.scheduledFor).toISOString().slice(0, 16)
+        : "",
     },
   });
 
-  const watchedStatus = form.watch('status');
-
-
+  const watchedStatus = form.watch("status");
 
   // Handle image upload
   const handleImageUpload = async (file: File) => {
     setImageUploading(true);
     try {
       const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', 'blog');
-      
-      const response = await fetch('/api/upload', {
-        method: 'POST',
+      formData.append("file", file);
+      formData.append("type", "blog");
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error('Upload failed');
+        throw new Error("Upload failed");
       }
 
       const result = await response.json();
-      form.setValue('featuredImage', result.url);
-      
+      form.setValue("featuredImage", result.url);
+
       toast({
-        title: 'Success',
-        description: 'Image uploaded successfully',
+        title: "Success",
+        description: "Image uploaded successfully",
       });
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to upload image. Please try again.',
-        variant: 'destructive',
+        title: "Error",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
       });
     } finally {
       setImageUploading(false);
@@ -168,11 +202,13 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
         metaTitle: data.metaTitle || undefined,
         metaDescription: data.metaDescription || undefined,
         publishedAt: data.publishedAt ? new Date(data.publishedAt) : undefined,
-        scheduledFor: data.scheduledFor ? new Date(data.scheduledFor) : undefined,
+        scheduledFor: data.scheduledFor
+          ? new Date(data.scheduledFor)
+          : undefined,
       };
 
       let result;
-      if (mode === 'create') {
+      if (mode === "create") {
         result = await createBlogPost(submitData);
       } else {
         result = await updateBlogPost({
@@ -183,18 +219,18 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
 
       if (result.success) {
         toast({
-          title: 'Success',
-          description: `Blog post ${mode === 'create' ? 'created' : 'updated'} successfully`,
+          title: "Success",
+          description: `Blog post ${mode === "create" ? "created" : "updated"} successfully`,
         });
-        router.push('/admin/blog');
+        router.push("/admin/blog");
       } else {
         throw new Error(result.error);
       }
     } catch (error) {
       toast({
-        title: 'Error',
+        title: "Error",
         description: `Failed to ${mode} blog post. Please try again.`,
-        variant: 'destructive',
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
@@ -222,7 +258,7 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                   <FormItem>
                     <FormLabel>Title *</FormLabel>
                     <FormControl>
-                      <Input 
+                      <Input
                         placeholder="Enter blog post title..."
                         className="text-lg font-medium"
                         {...field}
@@ -241,14 +277,14 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                   <FormItem>
                     <FormLabel>URL Slug *</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="url-friendy-slug"
-                        {...field}
-                      />
+                      <Input placeholder="url-friendy-slug" {...field} />
                     </FormControl>
                     <FormDescription>
-                      URL-friendly slug (lowercase letters, numbers, and hyphens only)<br />
-                      This will be used in the URL: /news/{field.value || 'your-slug-here'}
+                      URL-friendly slug (lowercase letters, numbers, and hyphens
+                      only)
+                      <br />
+                      This will be used in the URL: /news/
+                      {field.value || "your-slug-here"}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -263,14 +299,15 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                   <FormItem>
                     <FormLabel>Excerpt *</FormLabel>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder="Brief description of the blog post..."
                         rows={3}
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      This will be shown in blog post previews ({field.value?.length || 0}/500 characters)
+                      This will be shown in blog post previews (
+                      {field.value?.length || 0}/500 characters)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -281,10 +318,10 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
               <div className="space-y-4">
                 <Label>Featured Image</Label>
                 <div className="flex items-start space-x-4">
-                  {form.watch('featuredImage') ? (
+                  {form.watch("featuredImage") ? (
                     <div className="relative">
                       <Image
-                        src={form.watch('featuredImage')!}
+                        src={form.watch("featuredImage")!}
                         alt="Featured image preview"
                         width={200}
                         height={120}
@@ -295,7 +332,7 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                         variant="destructive"
                         size="sm"
                         className="absolute -top-2 -right-2"
-                        onClick={() => form.setValue('featuredImage', '')}
+                        onClick={() => form.setValue("featuredImage", "")}
                       >
                         <X className="h-3 w-3" />
                       </Button>
@@ -304,11 +341,13 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                     <div className="w-48 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
                       <div className="text-center">
                         <ImageIcon className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">No image selected</p>
+                        <p className="text-sm text-gray-500">
+                          No image selected
+                        </p>
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="flex-1 space-y-2">
                     <input
                       type="file"
@@ -329,19 +368,19 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                       >
                         <span>
                           <Upload className="h-4 w-4 mr-2" />
-                          {imageUploading ? 'Uploading...' : 'Upload Image'}
+                          {imageUploading ? "Uploading..." : "Upload Image"}
                         </span>
                       </Button>
                     </label>
-                    
-                    {form.watch('featuredImage') && (
+
+                    {form.watch("featuredImage") && (
                       <FormField
                         control={form.control}
                         name="imageAlt"
                         render={({ field }) => (
                           <FormItem>
                             <FormControl>
-                              <Input 
+                              <Input
                                 placeholder="Image alt text for accessibility..."
                                 {...field}
                               />
@@ -362,7 +401,7 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                   <FormItem>
                     <FormLabel>Content *</FormLabel>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder="Write your blog post content here... (Rich text editor will be integrated later)"
                         rows={15}
                         className="font-mono text-sm"
@@ -385,7 +424,10 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select status" />
@@ -410,7 +452,10 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select category" />
@@ -437,10 +482,7 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                     <FormItem className="md:col-span-2">
                       <FormLabel>Author *</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="Enter author name..."
-                          {...field}
-                        />
+                        <Input placeholder="Enter author name..." {...field} />
                       </FormControl>
                       <FormDescription>
                         Name of the person who wrote this post
@@ -477,7 +519,7 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
               />
 
               {/* Publish Date (if published) */}
-              {watchedStatus === 'PUBLISHED' && (
+              {watchedStatus === "PUBLISHED" && (
                 <FormField
                   control={form.control}
                   name="publishedAt"
@@ -485,10 +527,7 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                     <FormItem>
                       <FormLabel>Publish Date</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="datetime-local"
-                          {...field}
-                        />
+                        <Input type="datetime-local" {...field} />
                       </FormControl>
                       <FormDescription>
                         Leave empty to use current date/time
@@ -500,7 +539,7 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
               )}
 
               {/* Schedule Date (if scheduled) */}
-              {watchedStatus === 'SCHEDULED' && (
+              {watchedStatus === "SCHEDULED" && (
                 <FormField
                   control={form.control}
                   name="scheduledFor"
@@ -508,10 +547,7 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                     <FormItem>
                       <FormLabel>Schedule For</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="datetime-local"
-                          {...field}
-                        />
+                        <Input type="datetime-local" {...field} />
                       </FormControl>
                       <FormDescription>
                         When should this post be automatically published?
@@ -532,13 +568,14 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                   <FormItem>
                     <FormLabel>Meta Title</FormLabel>
                     <FormControl>
-                      <Input 
+                      <Input
                         placeholder="SEO title for search engines..."
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      Recommended: 50-60 characters ({field.value?.length || 0}/60)
+                      Recommended: 50-60 characters ({field.value?.length || 0}
+                      /60)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -552,14 +589,15 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                   <FormItem>
                     <FormLabel>Meta Description</FormLabel>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder="SEO description for search engines..."
                         rows={3}
                         {...field}
                       />
                     </FormControl>
                     <FormDescription>
-                      Recommended: 150-160 characters ({field.value?.length || 0}/160)
+                      Recommended: 150-160 characters (
+                      {field.value?.length || 0}/160)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -573,11 +611,11 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.push('/admin/blog')}
+              onClick={() => router.push("/admin/blog")}
             >
               Cancel
             </Button>
-            
+
             <div className="flex items-center space-x-3">
               <Button
                 type="submit"
@@ -585,10 +623,9 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
                 className="bg-primary hover:bg-primary/90"
               >
                 <Save className="h-4 w-4 mr-2" />
-                {isSubmitting 
-                  ? `${mode === 'create' ? 'Creating' : 'Updating'}...` 
-                  : `${mode === 'create' ? 'Create' : 'Update'} Post`
-                }
+                {isSubmitting
+                  ? `${mode === "create" ? "Creating" : "Updating"}...`
+                  : `${mode === "create" ? "Create" : "Update"} Post`}
               </Button>
             </div>
           </div>
@@ -596,4 +633,4 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
       </Form>
     </div>
   );
-} 
+}

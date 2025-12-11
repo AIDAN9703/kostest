@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { boatPricingTiers } from '@/database/schema';
-import { Boat, PricingTier } from '@/shared/types/types';
+import { Boat, PricingTier } from '@/shared/lib/types/types';
 
 
 export interface PriceBreakdown {

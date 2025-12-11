@@ -8,7 +8,7 @@ import {
   parseBooleanParam, 
   parseArrayParam,
   createSearchQueryString
-} from "@/shared/utils/search-params-utils";
+} from "@/shared/lib/utils/search-params-utils";
 
 type ParamValue = string | number | boolean | null | undefined;
 

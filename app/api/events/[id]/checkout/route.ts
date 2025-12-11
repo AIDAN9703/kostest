@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { getEventById } from "@/shared/services/events.service";
-import config from "@/shared/config/config";
+import { getEventById } from "@/shared/lib/services/events.service";
+import config from "@/shared/lib/config";
 
 const stripe = new Stripe(config.stripeSecretKey, {
   apiVersion: "2025-07-30.basil",

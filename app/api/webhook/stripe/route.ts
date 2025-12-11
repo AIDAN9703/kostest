@@ -4,10 +4,10 @@ import { headers } from "next/headers";
 import { db } from "@/database/db";
 import { bookings, bookingTypeEnum, bookingStatusEnum, boats } from "@/database/schema";
 import { eq, or, sql } from "drizzle-orm";
-import config from "@/shared/config/config";
-import { ghlWebhookService } from "@/shared/services/ghl-webhook.service";
+import config from "@/shared/lib/config";
+import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 import { bookingService } from '@/features/bookings/booking.service';
-import { sendBookingConfirmationEmail } from '@/shared/services/email.service';
+import { sendBookingConfirmationEmail } from '@/shared/lib/services/email.service';
 
 // Use config for Stripe configuration
 const stripe = new Stripe(config.stripeSecretKey, {

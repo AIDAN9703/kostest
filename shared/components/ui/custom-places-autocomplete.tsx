@@ -3,9 +3,9 @@
 import { useRef, useEffect, useState, useCallback, useMemo } from 'react'
 import { Input } from './input'
 import { Loader2 } from 'lucide-react'
-import { LocationData } from '@/shared/types/types'
+import { LocationData } from '@/shared/lib/types/types'
 import { useSearchStore } from '@/features/search/store/useSearchStore'
-import { debounce } from '@/shared/utils/general-utils'
+import { debounce } from '@/shared/lib/utils/general-utils'
 
 interface CustomPlacesAutocompleteProps {
   onPlaceSelected: (locationData: LocationData) => void;

@@ -23,12 +23,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/shared/lib/hooks/use-toast";
 import { Loader2, User } from "lucide-react";
 import { UserProfile } from "@/features/users/user.types";
 import { ImageUpload } from "@/shared/components/ui/image-upload";
 import { Image as IKImage } from "@imagekit/next";
-import { getImageKitProps } from "@/shared/services/imagekit.service";
+import { getImageKitProps } from "@/shared/lib/services/imagekit.service";
 
 interface ProfileSettingsFormProps {
   user: UserProfile;

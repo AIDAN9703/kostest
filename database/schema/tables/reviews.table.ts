@@ -11,11 +11,11 @@ export const reviews = pgTable("review", {
     status: text("status").default("PUBLISHED").notNull(),
     
     // Relationships
-    bookingId: uuid("booking_id").references(() => bookings.id),
-    reviewerId: uuid("reviewer_id").notNull().references(() => users.id),
-    reviewedUserId: uuid("reviewed_user_id").references(() => users.id),
-    reviewedBoatId: uuid("reviewed_boat_id").references(() => boats.id),
-    reviewedCaptainId: uuid("reviewed_captain_id").references(() => captains.id),
+    bookingId: uuid("booking_id").references(() => bookings.id, { onDelete: "set null" }), // Preserve review even if booking deleted
+    reviewerId: uuid("reviewer_id").notNull().references(() => users.id, { onDelete: "restrict" }), // Can't delete user with reviews
+    reviewedUserId: uuid("reviewed_user_id").references(() => users.id, { onDelete: "set null" }), // Preserve review even if user deleted
+    reviewedBoatId: uuid("reviewed_boat_id").references(() => boats.id, { onDelete: "restrict" }), // Can't delete boat with reviews
+    reviewedCaptainId: uuid("reviewed_captain_id").references(() => captains.id, { onDelete: "set null" }), // Preserve review even if captain deleted
     
     // Review Content
     rating: integer("rating").notNull(),

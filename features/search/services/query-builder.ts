@@ -1,7 +1,7 @@
 import { boats, boatCategoryEnum } from "@/database/schema";
-import { SearchParamsType } from "@/shared/types/types";
+import { SearchParamsType } from "@/shared/lib/types/types";
 import { and, asc, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
-import { parseArrayParam, parseNumberParam, parseStringParam } from "@/shared/utils/search-params-utils";
+import { parseArrayParam, parseNumberParam, parseStringParam } from "@/shared/lib/utils/search-params-utils";
 
 /**
  * Service for building complex database queries for boat search

@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Camera, Loader2 } from "lucide-react";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/shared/lib/hooks/use-toast";
 
 interface ImageUploadProps {
   onUploadComplete: (imageUrl: string) => void;
@@ -12,7 +12,13 @@ interface ImageUploadProps {
   entityName?: string;
   buttonText?: string;
   className?: string;
-  variant?: "default" | "secondary" | "outline" | "ghost" | "link" | "destructive";
+  variant?:
+    | "default"
+    | "secondary"
+    | "outline"
+    | "ghost"
+    | "link"
+    | "destructive";
   size?: "default" | "sm" | "lg" | "icon";
   icon?: boolean;
   multiple?: boolean;
@@ -40,7 +46,7 @@ export function ImageUpload({
 
     // Validate file types
     for (const file of Array.from(files)) {
-      if (!file.type.startsWith('image/')) {
+      if (!file.type.startsWith("image/")) {
         toast({
           title: "Invalid file type",
           description: "Please select only image files (JPEG, PNG, etc.)",
@@ -61,7 +67,7 @@ export function ImageUpload({
     }
 
     // Validate required fields for boat uploads
-    if (type === 'boat' && (!entityId || !entityName)) {
+    if (type === "boat" && (!entityId || !entityName)) {
       toast({
         title: "Missing information",
         description: "Boat ID and name are required for boat image uploads",
@@ -76,53 +82,54 @@ export function ImageUpload({
       for (const file of Array.from(files)) {
         // Create form data
         const formData = new FormData();
-        formData.append('file', file);
-        formData.append('type', type);
-        
+        formData.append("file", file);
+        formData.append("type", type);
+
         // Add entity information if provided
-        if (entityId) formData.append('entityId', entityId);
-        if (entityName) formData.append('entityName', entityName);
-        
+        if (entityId) formData.append("entityId", entityId);
+        if (entityName) formData.append("entityName", entityName);
+
         // Upload to your API route
-        const response = await fetch('/api/upload', {
-          method: 'POST',
+        const response = await fetch("/api/upload", {
+          method: "POST",
           body: formData,
         });
-        
+
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Upload failed');
+          throw new Error(errorData.error || "Upload failed");
         }
-        
+
         const result = await response.json();
-        
+
         // Call the callback with the image URL
         onUploadComplete(result.url);
       }
-      
+
       toast({
         title: "Upload successful",
-        description: `Successfully uploaded ${files.length} image${files.length > 1 ? 's' : ''}`,
+        description: `Successfully uploaded ${files.length} image${files.length > 1 ? "s" : ""}`,
       });
     } catch (error) {
       console.error("Error uploading images:", error);
       toast({
         title: "Upload failed",
-        description: error instanceof Error ? error.message : "Failed to upload images",
+        description:
+          error instanceof Error ? error.message : "Failed to upload images",
         variant: "destructive",
       });
     } finally {
       setIsUploading(false);
       // Reset the file input
       if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+        fileInputRef.current.value = "";
       }
     }
   };
 
   // Determine if this is an icon-only button
-  const isIconOnly = size === 'icon' && !buttonText;
-  
+  const isIconOnly = size === "icon" && !buttonText;
+
   // Handle button click - prevent default to avoid form submission
   const handleButtonClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault(); // Prevent form submission
@@ -142,12 +149,16 @@ export function ImageUpload({
       >
         {isUploading ? (
           <>
-            <Loader2 className={`h-4 w-4 ${!isIconOnly ? 'mr-2' : ''} animate-spin`} />
-            {!isIconOnly && 'Uploading...'}
+            <Loader2
+              className={`h-4 w-4 ${!isIconOnly ? "mr-2" : ""} animate-spin`}
+            />
+            {!isIconOnly && "Uploading..."}
           </>
         ) : (
           <>
-            {icon && <Camera className={`h-4 w-4 ${!isIconOnly ? 'mr-2' : ''}`} />}
+            {icon && (
+              <Camera className={`h-4 w-4 ${!isIconOnly ? "mr-2" : ""}`} />
+            )}
             {buttonText}
           </>
         )}
@@ -162,4 +173,4 @@ export function ImageUpload({
       />
     </div>
   );
-} 
+}

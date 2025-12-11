@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext } from "react";
-import { Boat } from "@/shared/types/types";
+import { Boat } from "@/shared/lib/types/types";
 
 interface BoatProviderProps {
   boat: Boat;
@@ -11,11 +11,7 @@ interface BoatProviderProps {
 const BoatContext = createContext<Boat | null>(null);
 
 export default function BoatProvider({ boat, children }: BoatProviderProps) {
-  return (
-    <BoatContext.Provider value={boat}>
-      {children}
-    </BoatContext.Provider>
-  );
+  return <BoatContext.Provider value={boat}>{children}</BoatContext.Provider>;
 }
 
 export function useBoat(): Boat {
@@ -25,5 +21,3 @@ export function useBoat(): Boat {
   }
   return ctx;
 }
-
-

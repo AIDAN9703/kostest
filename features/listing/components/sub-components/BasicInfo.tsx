@@ -2,8 +2,8 @@
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Star, MapPin, Users, CalendarClock } from "lucide-react";
-import { Boat } from "@/shared/types/types";
-import { formatCurrency } from "@/shared/utils/general-utils";
+import { Boat } from "@/shared/lib/types/types";
+import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { GiCaptainHatProfile } from "react-icons/gi";
 import { TbRulerMeasure } from "react-icons/tb";
 import { format } from "date-fns";

@@ -1,17 +1,27 @@
 "use client";
 
-import { useState, useRef } from 'react';
-import FullCalendar from '@fullcalendar/react';
-import dayGridPlugin from '@fullcalendar/daygrid';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import interactionPlugin from '@fullcalendar/interaction';
-import listPlugin from '@fullcalendar/list';
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { useState, useRef } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import listPlugin from "@fullcalendar/list";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { Calendar, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/shared/components/ui/dialog";
-import { BookingCalendarEvent } from "@/shared/types/booking.types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
+import { BookingCalendarEvent } from "@/shared/lib/types/booking.types";
 
 interface BoatCalendarProps {
   boatId: string;
@@ -19,25 +29,30 @@ interface BoatCalendarProps {
   timezone?: string;
 }
 
-export default function BoatCalendar({ boatId, boatName, timezone }: BoatCalendarProps) {
-  const [selectedEvent, setSelectedEvent] = useState<BookingCalendarEvent | null>(null);
+export default function BoatCalendar({
+  boatId,
+  boatName,
+  timezone,
+}: BoatCalendarProps) {
+  const [selectedEvent, setSelectedEvent] =
+    useState<BookingCalendarEvent | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentView, setCurrentView] = useState('dayGridMonth');
+  const [currentView, setCurrentView] = useState("dayGridMonth");
   const calendarRef = useRef<FullCalendar>(null);
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
     }).format(amount);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -55,7 +70,7 @@ export default function BoatCalendar({ boatId, boatName, timezone }: BoatCalenda
 
   const handleDateSelect = (selectInfo: any) => {
     // Handle date selection for creating new bookings
-    console.log('Date selected:', selectInfo);
+    console.log("Date selected:", selectInfo);
   };
 
   return (
@@ -70,31 +85,31 @@ export default function BoatCalendar({ boatId, boatName, timezone }: BoatCalenda
             <div className="flex items-center gap-2">
               <div className="flex bg-gray-100 rounded-lg p-1">
                 <Button
-                  variant={currentView === 'dayGridMonth' ? 'default' : 'ghost'}
+                  variant={currentView === "dayGridMonth" ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => handleViewChange('dayGridMonth')}
+                  onClick={() => handleViewChange("dayGridMonth")}
                   className="text-xs"
                 >
                   Month
                 </Button>
                 <Button
-                  variant={currentView === 'timeGridWeek' ? 'default' : 'ghost'}
+                  variant={currentView === "timeGridWeek" ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => handleViewChange('timeGridWeek')}
+                  onClick={() => handleViewChange("timeGridWeek")}
                   className="text-xs"
                 >
                   Week
                 </Button>
                 <Button
-                  variant={currentView === 'listWeek' ? 'default' : 'ghost'}
+                  variant={currentView === "listWeek" ? "default" : "ghost"}
                   size="sm"
-                  onClick={() => handleViewChange('listWeek')}
+                  onClick={() => handleViewChange("listWeek")}
                   className="text-xs"
                 >
                   List
                 </Button>
               </div>
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -112,12 +127,17 @@ export default function BoatCalendar({ boatId, boatName, timezone }: BoatCalenda
         <CardContent>
           <FullCalendar
             ref={calendarRef}
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-            timeZone={timezone || 'local'}
+            plugins={[
+              dayGridPlugin,
+              timeGridPlugin,
+              interactionPlugin,
+              listPlugin,
+            ]}
+            timeZone={timezone || "local"}
             headerToolbar={{
-              left: 'prev,next',
-              center: 'title',
-              right: ''
+              left: "prev,next",
+              center: "title",
+              right: "",
             }}
             initialView={currentView}
             editable={false}
@@ -130,16 +150,16 @@ export default function BoatCalendar({ boatId, boatName, timezone }: BoatCalenda
             select={handleDateSelect}
             height="auto"
             eventDisplay="block"
-            dayHeaderFormat={{ weekday: 'short' }}
+            dayHeaderFormat={{ weekday: "short" }}
             slotLabelFormat={{
-              hour: 'numeric',
-              minute: '2-digit',
-              meridiem: 'short'
+              hour: "numeric",
+              minute: "2-digit",
+              meridiem: "short",
             }}
             eventTimeFormat={{
-              hour: 'numeric',
-              minute: '2-digit',
-              meridiem: 'short'
+              hour: "numeric",
+              minute: "2-digit",
+              meridiem: "short",
             }}
           />
         </CardContent>
@@ -150,18 +170,20 @@ export default function BoatCalendar({ boatId, boatName, timezone }: BoatCalenda
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {selectedEvent?.extendedProps?.type === 'external' ? 'External Block' : 'Booking Details'}
+              {selectedEvent?.extendedProps?.type === "external"
+                ? "External Block"
+                : "Booking Details"}
             </DialogTitle>
           </DialogHeader>
-          
+
           {selectedEvent && (
             <div className="space-y-4">
-              {selectedEvent.extendedProps.type === 'booking' && (
+              {selectedEvent.extendedProps.type === "booking" && (
                 <div className="flex justify-center">
-                  <Badge 
-                    style={{ 
+                  <Badge
+                    style={{
                       backgroundColor: selectedEvent.backgroundColor,
-                      color: selectedEvent.textColor
+                      color: selectedEvent.textColor,
                     }}
                     className="px-3 py-1"
                   >
@@ -170,13 +192,19 @@ export default function BoatCalendar({ boatId, boatName, timezone }: BoatCalenda
                 </div>
               )}
 
-              {selectedEvent.extendedProps.type === 'booking' && (
+              {selectedEvent.extendedProps.type === "booking" && (
                 <div>
                   <h3 className="font-medium text-gray-900">Customer</h3>
-                  <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerName}</p>
-                  <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerEmail}</p>
+                  <p className="text-sm text-gray-600">
+                    {selectedEvent.extendedProps.customerName}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {selectedEvent.extendedProps.customerEmail}
+                  </p>
                   {selectedEvent.extendedProps.customerPhone && (
-                    <p className="text-sm text-gray-600">{selectedEvent.extendedProps.customerPhone}</p>
+                    <p className="text-sm text-gray-600">
+                      {selectedEvent.extendedProps.customerPhone}
+                    </p>
                   )}
                 </div>
               )}
@@ -184,15 +212,24 @@ export default function BoatCalendar({ boatId, boatName, timezone }: BoatCalenda
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <h3 className="font-medium text-gray-900">Date & Time</h3>
-                  <p className="text-sm text-gray-600">{formatDate(selectedEvent.start)}</p>
                   <p className="text-sm text-gray-600">
-                    {new Date(selectedEvent.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-                    {selectedEvent.end ? ` - ${new Date(selectedEvent.end).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : ''}
+                    {formatDate(selectedEvent.start)}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {new Date(selectedEvent.start).toLocaleTimeString([], {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                    {selectedEvent.end
+                      ? ` - ${new Date(selectedEvent.end).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+                      : ""}
                   </p>
                 </div>
-                {selectedEvent.extendedProps.type === 'booking' && (
+                {selectedEvent.extendedProps.type === "booking" && (
                   <div>
-                    <h3 className="font-medium text-gray-900">Guests & Amount</h3>
+                    <h3 className="font-medium text-gray-900">
+                      Guests & Amount
+                    </h3>
                     <p className="text-sm text-gray-600">
                       {selectedEvent.extendedProps.numberOfPassengers} guests
                     </p>
@@ -204,29 +241,42 @@ export default function BoatCalendar({ boatId, boatName, timezone }: BoatCalenda
               </div>
 
               {/* Special Requests */}
-              {selectedEvent.extendedProps.type === 'booking' && selectedEvent.extendedProps.specialRequests && (
-                <div>
-                  <h3 className="font-medium text-gray-900">Special Requests</h3>
-                  <p className="text-sm text-gray-600">{selectedEvent.extendedProps.specialRequests}</p>
-                </div>
-              )}
+              {selectedEvent.extendedProps.type === "booking" &&
+                selectedEvent.extendedProps.specialRequests && (
+                  <div>
+                    <h3 className="font-medium text-gray-900">
+                      Special Requests
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {selectedEvent.extendedProps.specialRequests}
+                    </p>
+                  </div>
+                )}
 
               {/* Action Buttons */}
-              {selectedEvent.extendedProps.type === 'booking' && (
+              {selectedEvent.extendedProps.type === "booking" && (
                 <div className="flex gap-2 pt-4">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="flex-1"
-                    onClick={() => window.open(`mailto:${selectedEvent.extendedProps.customerEmail}`)}
+                    onClick={() =>
+                      window.open(
+                        `mailto:${selectedEvent.extendedProps.customerEmail}`
+                      )
+                    }
                   >
                     Email Customer
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     className="flex-1"
-                    onClick={() => window.open(`/admin/bookings/${selectedEvent.extendedProps.bookingId}`)}
+                    onClick={() =>
+                      window.open(
+                        `/admin/bookings/${selectedEvent.extendedProps.bookingId}`
+                      )
+                    }
                   >
                     View Details
                   </Button>
@@ -238,4 +288,4 @@ export default function BoatCalendar({ boatId, boatName, timezone }: BoatCalenda
       </Dialog>
     </div>
   );
-} 
+}

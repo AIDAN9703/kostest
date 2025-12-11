@@ -4,9 +4,9 @@ import { useState, useMemo, useCallback } from "react";
 import { Pencil, Check, X, Loader2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { cn, formatCurrency } from "@/shared/utils/general-utils";
+import { cn, formatCurrency } from "@/shared/lib/utils/general-utils";
 import { useUpdateBooking } from "@/features/bookings/hooks/useBookingMutations";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/shared/lib/hooks/use-toast";
 
 interface EditableFieldProps {
   bookingId: string;

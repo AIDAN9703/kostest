@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle, Mail, Calendar, Home, Ship } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import Link from "next/link";
-import { formatCurrency } from "@/shared/utils/general-utils";
+import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { format } from "date-fns";
 import Image from "next/image";
 import confetti from "canvas-confetti";
@@ -61,7 +61,7 @@ export default function PaymentSuccessPage() {
         // First, try to verify payment status (this will update booking if webhook hasn't fired)
         try {
           await fetch(`/api/bookings/${bookingId}/verify-payment`, {
-            method: 'POST',
+            method: "POST",
           });
         } catch (verifyError) {
           // Don't fail if verification fails, just log it
@@ -291,4 +291,3 @@ export default function PaymentSuccessPage() {
     </div>
   );
 }
-

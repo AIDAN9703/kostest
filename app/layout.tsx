@@ -4,7 +4,7 @@ import { ReactNode } from "react";
 import { Toaster } from "@/shared/components/ui/toaster";
 import localFont from "next/font/local";
 import { SessionProvider } from "next-auth/react";
-import GoogleMapsScript from "@/shared/providers/GoogleMapsScript";
+import GoogleMapsScript from "@/shared/lib/providers/GoogleMapsScript";
 import { ImageKitProvider } from "@imagekit/next";
 import CookiesConsent from "@/shared/components/CookiesConsent";
 import { NuqsAdapter } from "nuqs/adapters/next/app";

@@ -1,6 +1,6 @@
 import { db } from "@/database/db";
 import { boatPricingTiers } from "@/database/schema";
-import { Boat, BoatLocation } from "@/shared/types/types";
+import { Boat, BoatLocation } from "@/shared/lib/types/types";
 import { inArray } from "drizzle-orm";
 
 /**

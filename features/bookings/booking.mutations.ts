@@ -6,7 +6,7 @@
 
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
-import { type ActionResponse } from "@/shared/types/types";
+import { type ActionResponse } from "@/shared/lib/types/types";
 import { bookingService } from "@/features/bookings/booking.service";
 
 // ========================================

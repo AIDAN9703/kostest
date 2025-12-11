@@ -14,7 +14,7 @@ import {
 } from "@/shared/components/ui/dialog";
 import { DropdownMenuItem } from "@/shared/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/shared/lib/hooks/use-toast";
 
 interface DeleteBoatButtonProps {
   boatId: string;
@@ -22,7 +22,11 @@ interface DeleteBoatButtonProps {
   iconOnly?: boolean;
 }
 
-export function DeleteBoatButton({ boatId, boatName, iconOnly = false }: DeleteBoatButtonProps) {
+export function DeleteBoatButton({
+  boatId,
+  boatName,
+  iconOnly = false,
+}: DeleteBoatButtonProps) {
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const router = useRouter();
@@ -32,7 +36,7 @@ export function DeleteBoatButton({ boatId, boatName, iconOnly = false }: DeleteB
     setIsDeleting(true);
     try {
       const result = await deleteBoat(boatId);
-      
+
       if (result.success) {
         toast({
           title: "Boat deleted",
@@ -44,7 +48,8 @@ export function DeleteBoatButton({ boatId, boatName, iconOnly = false }: DeleteB
       } else {
         toast({
           title: "Error",
-          description: result.error || "Failed to delete the boat. Please try again.",
+          description:
+            result.error || "Failed to delete the boat. Please try again.",
           variant: "destructive",
         });
       }
@@ -80,7 +85,9 @@ export function DeleteBoatButton({ boatId, boatName, iconOnly = false }: DeleteB
             <DialogHeader>
               <DialogTitle>Delete Boat</DialogTitle>
               <DialogDescription>
-                Are you sure you want to delete <span className="font-medium">{boatName}</span>? This action cannot be undone.
+                Are you sure you want to delete{" "}
+                <span className="font-medium">{boatName}</span>? This action
+                cannot be undone.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
@@ -107,8 +114,8 @@ export function DeleteBoatButton({ boatId, boatName, iconOnly = false }: DeleteB
 
   return (
     <>
-      <DropdownMenuItem 
-        className="text-red-600 focus:text-red-600" 
+      <DropdownMenuItem
+        className="text-red-600 focus:text-red-600"
         onSelect={(e) => {
           e.preventDefault();
           setOpen(true);
@@ -123,7 +130,9 @@ export function DeleteBoatButton({ boatId, boatName, iconOnly = false }: DeleteB
           <DialogHeader>
             <DialogTitle>Delete Boat</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete <span className="font-medium">{boatName}</span>? This action cannot be undone.
+              Are you sure you want to delete{" "}
+              <span className="font-medium">{boatName}</span>? This action
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -146,4 +155,4 @@ export function DeleteBoatButton({ boatId, boatName, iconOnly = false }: DeleteB
       </Dialog>
     </>
   );
-} 
+}

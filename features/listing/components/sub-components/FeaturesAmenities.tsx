@@ -1,8 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Boat } from "@/shared/types/types";
-import { CheckCircle2, Music, Waves, ShieldAlert, ChevronDown, ChevronUp } from "lucide-react";
+import { Boat } from "@/shared/lib/types/types";
+import {
+  CheckCircle2,
+  Music,
+  Waves,
+  ShieldAlert,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 
@@ -14,40 +21,52 @@ export function FeaturesAmenities({ boat }: FeaturesAmenitiesProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleExpanded = () => {
-    setIsExpanded(prev => !prev);
+    setIsExpanded((prev) => !prev);
   };
 
   // Define the number of items to show per category when collapsed
   const initialVisibleCount = 6;
-  
+
   // Categorize features for better organization
   const features = boat.features || [];
   const amenities = boat.amenities || [];
   const safetyEquipment = boat.safetyEquipment || [];
-  
-  if (features.length === 0 && amenities.length === 0 && safetyEquipment.length === 0) {
+
+  if (
+    features.length === 0 &&
+    amenities.length === 0 &&
+    safetyEquipment.length === 0
+  ) {
     return null;
   }
 
-  const visibleFeatures = isExpanded ? features : features.slice(0, initialVisibleCount);
-  const visibleAmenities = isExpanded ? amenities : amenities.slice(0, initialVisibleCount);
-  const visibleSafetyItems = isExpanded ? safetyEquipment : safetyEquipment.slice(0, initialVisibleCount);
-  
+  const visibleFeatures = isExpanded
+    ? features
+    : features.slice(0, initialVisibleCount);
+  const visibleAmenities = isExpanded
+    ? amenities
+    : amenities.slice(0, initialVisibleCount);
+  const visibleSafetyItems = isExpanded
+    ? safetyEquipment
+    : safetyEquipment.slice(0, initialVisibleCount);
+
   // Determine if we need a "Show More" button (if any category has more items than initialVisibleCount)
-  const needsShowMore = 
-    features.length > initialVisibleCount || 
-    amenities.length > initialVisibleCount || 
+  const needsShowMore =
+    features.length > initialVisibleCount ||
+    amenities.length > initialVisibleCount ||
     safetyEquipment.length > initialVisibleCount;
-  
+
   return (
     <div>
-      <h2 className="text-2xl font-semibold text-gray-900 mb-6">Features & Amenities</h2>
-      
+      <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+        Features & Amenities
+      </h2>
+
       {/* Features Section */}
       {features.length > 0 && (
         <div className="mb-8">
           <h3 className="flex items-center gap-2 text-lg font-medium text-gray-900 mb-4">
-            <Waves className="h-5 w-5 text-primary" /> 
+            <Waves className="h-5 w-5 text-primary" />
             Features
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-8">
@@ -60,12 +79,12 @@ export function FeaturesAmenities({ boat }: FeaturesAmenitiesProps) {
           </div>
         </div>
       )}
-      
+
       {/* Amenities Section */}
       {amenities.length > 0 && (
         <div className="mb-8">
           <h3 className="flex items-center gap-2 text-lg font-medium text-gray-900 mb-4">
-            <Music className="h-5 w-5 text-primary" /> 
+            <Music className="h-5 w-5 text-primary" />
             Amenities
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-8">
@@ -78,12 +97,12 @@ export function FeaturesAmenities({ boat }: FeaturesAmenitiesProps) {
           </div>
         </div>
       )}
-      
+
       {/* Safety Equipment Section */}
       {safetyEquipment.length > 0 && (
         <div>
           <h3 className="flex items-center gap-2 text-lg font-medium text-gray-900 mb-4">
-            <ShieldAlert className="h-5 w-5 text-primary" /> 
+            <ShieldAlert className="h-5 w-5 text-primary" />
             Safety Equipment
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-8">
@@ -120,4 +139,4 @@ export function FeaturesAmenities({ boat }: FeaturesAmenitiesProps) {
       )}
     </div>
   );
-} 
+}

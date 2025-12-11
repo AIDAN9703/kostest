@@ -9,7 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
-import { Boat } from "@/shared/types/types";
+import { Boat } from "@/shared/lib/types/types";
 
 interface BoatHeaderProps {
   boat: Boat;
@@ -83,11 +83,7 @@ export function BoatHeader({ boat }: BoatHeaderProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full"
-                >
+                <Button variant="outline" size="icon" className="rounded-full">
                   <Share2 className="h-5 w-5 text-gray-500" />
                   <span className="sr-only">Share</span>
                 </Button>
@@ -101,11 +97,7 @@ export function BoatHeader({ boat }: BoatHeaderProps) {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="rounded-full"
-                >
+                <Button variant="outline" size="icon" className="rounded-full">
                   <Flag className="h-5 w-5 text-gray-500" />
                   <span className="sr-only">Report</span>
                 </Button>
@@ -119,4 +111,4 @@ export function BoatHeader({ boat }: BoatHeaderProps) {
       </div>
     </div>
   );
-} 
+}

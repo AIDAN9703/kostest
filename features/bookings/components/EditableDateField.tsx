@@ -4,12 +4,12 @@ import { useState, useMemo, useCallback } from "react";
 import { Pencil, Check, X, Loader2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { cn } from "@/shared/utils/general-utils";
+import { cn } from "@/shared/lib/utils/general-utils";
 import { format } from "date-fns";
-import { parseDateTimeInBoatTimezone } from "@/shared/utils/date-helpers";
-import { formatTime12Hour } from "@/shared/utils/general-utils";
+import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
+import { formatTime12Hour } from "@/shared/lib/utils/general-utils";
 import { useUpdateBooking } from "@/features/bookings/hooks/useBookingMutations";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/shared/lib/hooks/use-toast";
 
 interface EditableDateFieldProps {
   bookingId: string;
@@ -37,15 +37,16 @@ export function EditableDateField({
   // Memoize display value calculation
   const displayValue = useMemo(() => {
     if (!initialValue) return "-";
-    
+
     try {
-      const date = initialValue instanceof Date ? initialValue : new Date(initialValue);
+      const date =
+        initialValue instanceof Date ? initialValue : new Date(initialValue);
       if (isNaN(date.getTime())) return "-";
-      
+
       const { date: parsedDate, time } = parseDateTimeInBoatTimezone(date);
-      
+
       if (!parsedDate) return "-";
-      
+
       if (includeTime && time) {
         return `${format(parsedDate, "MMM d, yyyy")} ${formatTime12Hour(time)}`;
       }
@@ -58,7 +59,8 @@ export function EditableDateField({
   const handleStartEdit = useCallback(() => {
     if (initialValue) {
       try {
-        const date = initialValue instanceof Date ? initialValue : new Date(initialValue);
+        const date =
+          initialValue instanceof Date ? initialValue : new Date(initialValue);
         if (!isNaN(date.getTime())) {
           setDateValue(format(date, "yyyy-MM-dd"));
           if (includeTime) {
@@ -88,7 +90,7 @@ export function EditableDateField({
   const handleSave = useCallback(async () => {
     try {
       let saveValue: string | null = null;
-      
+
       if (dateValue.trim()) {
         if (includeTime && timeValue) {
           saveValue = `${dateValue}T${timeValue}:00`;
@@ -101,7 +103,7 @@ export function EditableDateField({
         id: bookingId,
         updates: { [field]: saveValue },
       });
-      
+
       setIsEditing(false);
     } catch (error) {
       toast({
@@ -110,7 +112,15 @@ export function EditableDateField({
         variant: "destructive",
       });
     }
-  }, [dateValue, timeValue, includeTime, bookingId, field, updateBooking, toast]);
+  }, [
+    dateValue,
+    timeValue,
+    includeTime,
+    bookingId,
+    field,
+    updateBooking,
+    toast,
+  ]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -184,4 +194,3 @@ export function EditableDateField({
     </div>
   );
 }
-

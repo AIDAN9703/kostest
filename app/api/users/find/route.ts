@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { db } from "@/database/db";
 import { users } from "@/database/schema";
 import { eq } from "drizzle-orm";
-import { apiSuccess, apiError } from "@/shared/utils/api-response";
+import { apiSuccess, apiError } from "@/shared/lib/utils/api-helpers";
 
 // Add dynamic configuration for Next.js 15
 export const dynamic = 'force-dynamic';

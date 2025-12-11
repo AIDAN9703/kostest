@@ -2,7 +2,7 @@
 
 import { useMemo, useCallback } from "react";
 import { Clock } from "lucide-react";
-import { cn, formatTime12Hour } from "@/shared/utils/general-utils";
+import { cn, formatTime12Hour } from "@/shared/lib/utils/general-utils";
 import { useTimeSlots } from "../hooks/useTimeSlots";
 
 interface TimeSlotsDisplayProps {

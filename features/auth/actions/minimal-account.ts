@@ -3,7 +3,7 @@
 import { db } from "@/database/db";
 import { users } from "@/database/schema";
 import { eq } from "drizzle-orm";
-import { ActionResponse } from "@/shared/types/types";
+import { ActionResponse } from "@/shared/lib/types/types";
 
 /**
  * Completes a minimal account by adding essential details

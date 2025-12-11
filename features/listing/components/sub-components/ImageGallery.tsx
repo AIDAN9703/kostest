@@ -5,7 +5,7 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { Image as IKImage } from "@imagekit/next";
-import { getImageKitProps } from "@/shared/services/imagekit.service";
+import { getImageKitProps } from "@/shared/lib/services/imagekit.service";
 import { AspectRatio } from "@/shared/components/ui/aspect-ratio";
 import {
   Carousel,
@@ -22,12 +22,15 @@ interface ImageGalleryProps {
   alt: string;
 }
 
-export function ImageGallery({ mainImage, galleryImages = [], alt }: ImageGalleryProps) {
-  const allImages = [
-    mainImage,
-    ...(galleryImages || [])
-  ].filter(Boolean) as string[];
-  
+export function ImageGallery({
+  mainImage,
+  galleryImages = [],
+  alt,
+}: ImageGalleryProps) {
+  const allImages = [mainImage, ...(galleryImages || [])].filter(
+    Boolean
+  ) as string[];
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [viewAllOpen, setViewAllOpen] = useState(false);
   const [api, setApi] = useState<CarouselApi>();
@@ -40,7 +43,7 @@ export function ImageGallery({ mainImage, galleryImages = [], alt }: ImageGaller
   const nextSlide = useCallback(() => {
     if (api) api.scrollNext();
   }, [api]);
-  
+
   // Handle opening the view all gallery - memoized for performance
   const openViewAll = useCallback((index: number = 0) => {
     setCurrentIndex(index);
@@ -62,7 +65,7 @@ export function ImageGallery({ mainImage, galleryImages = [], alt }: ImageGaller
   // Button animation variants for consistent hover effects
   const buttonVariants = {
     hover: { scale: 1.05 },
-    tap: { scale: 0.95 }
+    tap: { scale: 0.95 },
   };
 
   return (
@@ -78,17 +81,16 @@ export function ImageGallery({ mainImage, galleryImages = [], alt }: ImageGaller
         >
           <CarouselContent>
             {allImages.map((image, idx) => (
-              <CarouselItem
-                key={idx} 
-                className="md:basis-[60%] basis-full"
-              >
-                <AspectRatio 
+              <CarouselItem key={idx} className="md:basis-[60%] basis-full">
+                <AspectRatio
                   ratio={16 / 9}
                   className="bg-slate-50 rounded-none sm:rounded-lg overflow-hidden group cursor-pointer"
                   onClick={() => openViewAll(idx)}
                 >
                   {(() => {
-                    const props = getImageKitProps(image, 'gallery', { eager: idx === 0 });
+                    const props = getImageKitProps(image, "gallery", {
+                      eager: idx === 0,
+                    });
                     return (
                       <IKImage
                         src={props.src}
@@ -108,7 +110,7 @@ export function ImageGallery({ mainImage, galleryImages = [], alt }: ImageGaller
             ))}
           </CarouselContent>
         </Carousel>
-        
+
         {/* Enhanced navigation buttons matching home page style */}
         <div className="absolute left-2 top-1/2 -translate-y-1/2 sm:left-4">
           <motion.button
@@ -134,7 +136,7 @@ export function ImageGallery({ mainImage, galleryImages = [], alt }: ImageGaller
             <ChevronRight className="w-5 h-5 text-gray-700" />
           </motion.button>
         </div>
-        
+
         {/* Enhanced view all photos button */}
         <Button
           variant="outline"
@@ -145,7 +147,7 @@ export function ImageGallery({ mainImage, galleryImages = [], alt }: ImageGaller
           View All Photos
         </Button>
       </div>
-      
+
       {/* View All Gallery Popup */}
       <ImageGalleryViewAll
         images={allImages}
@@ -156,4 +158,4 @@ export function ImageGallery({ mainImage, galleryImages = [], alt }: ImageGaller
       />
     </>
   );
-} 
+}

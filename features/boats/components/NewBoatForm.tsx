@@ -26,7 +26,7 @@ import {
 } from "@/shared/components/ui/select";
 import { ImageUpload } from "@/shared/components/ui/image-upload";
 import { Loader2, Ship, GripVertical } from "lucide-react";
-import { useToast } from "@/shared/hooks/use-toast";
+import { useToast } from "@/shared/lib/hooks/use-toast";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 
 // Define the form schema
@@ -35,8 +35,15 @@ const boatFormSchema = z.object({
   description: z.string().min(20, "Description must be at least 20 characters"),
   boatType: z.string().min(1, "Please select a boat type"),
   length: z.coerce.number().positive("Length must be a positive number"),
-  capacity: z.coerce.number().int().positive("Capacity must be a positive integer"),
-  year: z.coerce.number().int().min(1900).max(new Date().getFullYear(), "Year must be valid"),
+  capacity: z.coerce
+    .number()
+    .int()
+    .positive("Capacity must be a positive integer"),
+  year: z.coerce
+    .number()
+    .int()
+    .min(1900)
+    .max(new Date().getFullYear(), "Year must be valid"),
   manufacturer: z.string().min(2, "Manufacturer must be at least 2 characters"),
   pricePerDay: z.coerce.number().positive("Price must be a positive number"),
   location: z.object({
@@ -71,64 +78,66 @@ interface BoatFormProps {
 }
 
 // Simple image item component
-const ImageItem = memo(({ 
-  image, 
-  index, 
-  isMain, 
-  onDelete
-}: { 
-  image: string; 
-  index: number; 
-  isMain: boolean; 
-  onDelete: (index: number) => void;
-}) => {
-  return (
-    <div className="relative w-32 h-32 border rounded-md overflow-hidden group bg-gray-100 shrink-0">
-      {/* Main Image Badge */}
-      {isMain && (
-        <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded z-10 shadow-xs font-medium">
-          Main
-        </div>
-      )}
-      
-      <img
-        src={image}
-        alt={`${isMain ? 'Main' : 'Gallery'} image ${index + 1}`}
-        className="w-full h-full object-cover"
-        loading="lazy"
-        width={128}
-        height={128}
-        draggable={false}
-      />
-      
-      {/* Drag Handle */}
-      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-grab active:cursor-grabbing">
-        <GripVertical className="h-6 w-6 text-white drop-shadow-md" />
-      </div>
-      
-      {/* Delete Button */}
-      <button
-        type="button"
-        className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold z-20"
-        onClick={(e) => {
-          e.stopPropagation();
-          e.preventDefault();
-          onDelete(index);
-        }}
-      >
-        ×
-      </button>
-    </div>
-  );
-});
+const ImageItem = memo(
+  ({
+    image,
+    index,
+    isMain,
+    onDelete,
+  }: {
+    image: string;
+    index: number;
+    isMain: boolean;
+    onDelete: (index: number) => void;
+  }) => {
+    return (
+      <div className="relative w-32 h-32 border rounded-md overflow-hidden group bg-gray-100 shrink-0">
+        {/* Main Image Badge */}
+        {isMain && (
+          <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded z-10 shadow-xs font-medium">
+            Main
+          </div>
+        )}
 
-ImageItem.displayName = 'ImageItem';
+        <img
+          src={image}
+          alt={`${isMain ? "Main" : "Gallery"} image ${index + 1}`}
+          className="w-full h-full object-cover"
+          loading="lazy"
+          width={128}
+          height={128}
+          draggable={false}
+        />
+
+        {/* Drag Handle */}
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-grab active:cursor-grabbing">
+          <GripVertical className="h-6 w-6 text-white drop-shadow-md" />
+        </div>
+
+        {/* Delete Button */}
+        <button
+          type="button"
+          className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold z-20"
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            onDelete(index);
+          }}
+        >
+          ×
+        </button>
+      </div>
+    );
+  }
+);
+
+ImageItem.displayName = "ImageItem";
 
 export default function BoatForm({ userId, boat }: BoatFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Separate state for images to avoid form re-renders
   const [images, setImages] = useState<string[]>(() => {
     if (!boat) return [];
@@ -137,125 +146,147 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
     if (boat.galleryImages?.length) allImages.push(...boat.galleryImages);
     return allImages.filter(Boolean);
   });
-  
+
   // Initialize form with default values or existing boat data
   const form = useForm<BoatFormValues>({
     resolver: zodResolver(boatFormSchema),
-    defaultValues: boat ? {
-      ...boat,
-      // Convert string values to numbers if needed
-      length: typeof boat.length === 'string' ? parseFloat(boat.length) : boat.length,
-      capacity: typeof boat.capacity === 'string' ? parseInt(boat.capacity) : boat.capacity,
-      year: typeof boat.year === 'string' ? parseInt(boat.year) : boat.year,
-      pricePerDay: typeof boat.pricePerDay === 'string' ? parseFloat(boat.pricePerDay) : boat.pricePerDay,
-      instantBook: boat.instantBook ?? false,
-    } : {
-      name: "",
-      description: "",
-      boatType: "",
-      length: undefined,
-      capacity: undefined,
-      year: undefined,
-      manufacturer: "",
-      pricePerDay: undefined,
-      location: {
-        city: "",
-        state: "",
-      },
-      mainImage: "",
-      galleryImages: [],
-      instantBook: false,
-    },
+    defaultValues: boat
+      ? {
+          ...boat,
+          // Convert string values to numbers if needed
+          length:
+            typeof boat.length === "string"
+              ? parseFloat(boat.length)
+              : boat.length,
+          capacity:
+            typeof boat.capacity === "string"
+              ? parseInt(boat.capacity)
+              : boat.capacity,
+          year: typeof boat.year === "string" ? parseInt(boat.year) : boat.year,
+          pricePerDay:
+            typeof boat.pricePerDay === "string"
+              ? parseFloat(boat.pricePerDay)
+              : boat.pricePerDay,
+          instantBook: boat.instantBook ?? false,
+        }
+      : {
+          name: "",
+          description: "",
+          boatType: "",
+          length: undefined,
+          capacity: undefined,
+          year: undefined,
+          manufacturer: "",
+          pricePerDay: undefined,
+          location: {
+            city: "",
+            state: "",
+          },
+          mainImage: "",
+          galleryImages: [],
+          instantBook: false,
+        },
   });
 
   // Simple form image sync
-  const updateFormImages = useCallback((newImages: string[]) => {
-    if (newImages.length === 0) {
-      form.setValue("mainImage", "");
-      form.setValue("galleryImages", []);
-    } else {
-      form.setValue("mainImage", newImages[0]);
-      form.setValue("galleryImages", newImages.slice(1));
-    }
-  }, [form]);
+  const updateFormImages = useCallback(
+    (newImages: string[]) => {
+      if (newImages.length === 0) {
+        form.setValue("mainImage", "");
+        form.setValue("galleryImages", []);
+      } else {
+        form.setValue("mainImage", newImages[0]);
+        form.setValue("galleryImages", newImages.slice(1));
+      }
+    },
+    [form]
+  );
 
   // Simple image upload handler
-  const handleImageUpload = useCallback((url: string) => {
-    setImages(prev => {
-      const newImages = [...prev, url];
-      updateFormImages(newImages);
-      return newImages;
-    });
-  }, [updateFormImages]);
+  const handleImageUpload = useCallback(
+    (url: string) => {
+      setImages((prev) => {
+        const newImages = [...prev, url];
+        updateFormImages(newImages);
+        return newImages;
+      });
+    },
+    [updateFormImages]
+  );
 
   // Simple drag end handler
-  const handleDragEnd = useCallback((result: any) => {
-    if (!result.destination) return;
-    
-    const startIndex = result.source.index;
-    const endIndex = result.destination.index;
-    
-    if (startIndex === endIndex) return;
-    
-    setImages(prev => {
-      const newImages = Array.from(prev);
-      const [reorderedItem] = newImages.splice(startIndex, 1);
-      newImages.splice(endIndex, 0, reorderedItem);
-      updateFormImages(newImages);
-      return newImages;
-    });
-  }, [updateFormImages]);
+  const handleDragEnd = useCallback(
+    (result: any) => {
+      if (!result.destination) return;
+
+      const startIndex = result.source.index;
+      const endIndex = result.destination.index;
+
+      if (startIndex === endIndex) return;
+
+      setImages((prev) => {
+        const newImages = Array.from(prev);
+        const [reorderedItem] = newImages.splice(startIndex, 1);
+        newImages.splice(endIndex, 0, reorderedItem);
+        updateFormImages(newImages);
+        return newImages;
+      });
+    },
+    [updateFormImages]
+  );
 
   // Simple image delete handler
-
 
   // Handle form submission
   const onSubmit = async (data: BoatFormValues) => {
     setIsSubmitting(true);
-    
+
     try {
       // Ensure form has latest image data
       updateFormImages(images);
-      
+
       // Prepare the boat data
       const boatData = {
         ...data,
         ownerId: userId,
       };
-      
+
       // API endpoint and method depend on whether we're creating or updating
-      const endpoint = boat ? `/api/boats/${boat.id}` : '/api/boats';
-      const method = boat ? 'PUT' : 'POST';
-      
+      const endpoint = boat ? `/api/boats/${boat.id}` : "/api/boats";
+      const method = boat ? "PUT" : "POST";
+
       // Send the request
       const response = await fetch(endpoint, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(boatData),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save boat');
+        throw new Error(errorData.error || "Failed to save boat");
       }
-      
+
       const result = await response.json();
-      
+
       toast({
         title: boat ? "Boat Updated" : "Boat Created",
-        description: boat ? "Your boat has been updated successfully." : "Your boat has been listed successfully.",
+        description: boat
+          ? "Your boat has been updated successfully."
+          : "Your boat has been listed successfully.",
       });
-      
+
       // Redirect to the boats list
-      router.push('/profile');
+      router.push("/profile");
       router.refresh();
     } catch (error) {
-      console.error('Error saving boat:', error);
+      console.error("Error saving boat:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to save boat",
+        description:
+          error instanceof Error ? error.message : "Failed to save boat",
         variant: "destructive",
       });
     } finally {
@@ -268,8 +299,10 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {/* Basic Information Section */}
         <div className="space-y-6">
-          <h2 className="text-lg font-medium border-b pb-2">Basic Information</h2>
-          
+          <h2 className="text-lg font-medium border-b pb-2">
+            Basic Information
+          </h2>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormField
               control={form.control}
@@ -284,15 +317,15 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="boatType"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Boat Type*</FormLabel>
-                  <Select 
-                    onValueChange={field.onChange} 
+                  <Select
+                    onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
@@ -313,7 +346,7 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
               )}
             />
           </div>
-          
+
           <FormField
             control={form.control}
             name="description"
@@ -321,25 +354,26 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
               <FormItem>
                 <FormLabel>Description*</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Describe your boat, its features, and what makes it special..." 
-                    className="min-h-32" 
-                    {...field} 
+                  <Textarea
+                    placeholder="Describe your boat, its features, and what makes it special..."
+                    className="min-h-32"
+                    {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  Include details about amenities, condition, and any special features.
+                  Include details about amenities, condition, and any special
+                  features.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
-        
+
         {/* Specifications Section */}
         <div className="space-y-6">
           <h2 className="text-lg font-medium border-b pb-2">Specifications</h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <FormField
               control={form.control}
@@ -354,7 +388,7 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="year"
@@ -362,9 +396,9 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
                 <FormItem>
                   <FormLabel>Year*</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      placeholder="e.g. 2018" 
+                    <Input
+                      type="number"
+                      placeholder="e.g. 2018"
                       {...field}
                       onChange={(e) => field.onChange(e.target.valueAsNumber)}
                     />
@@ -373,7 +407,7 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="length"
@@ -381,9 +415,9 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
                 <FormItem>
                   <FormLabel>Length (ft)*</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      placeholder="e.g. 32" 
+                    <Input
+                      type="number"
+                      placeholder="e.g. 32"
                       {...field}
                       onChange={(e) => field.onChange(e.target.valueAsNumber)}
                     />
@@ -392,7 +426,7 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="capacity"
@@ -400,9 +434,9 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
                 <FormItem>
                   <FormLabel>Capacity (people)*</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      placeholder="e.g. 8" 
+                    <Input
+                      type="number"
+                      placeholder="e.g. 8"
                       {...field}
                       onChange={(e) => field.onChange(e.target.valueAsNumber)}
                     />
@@ -413,11 +447,13 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
             />
           </div>
         </div>
-        
+
         {/* Location and Pricing Section */}
         <div className="space-y-6">
-          <h2 className="text-lg font-medium border-b pb-2">Location & Pricing</h2>
-          
+          <h2 className="text-lg font-medium border-b pb-2">
+            Location & Pricing
+          </h2>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <FormField
               control={form.control}
@@ -432,7 +468,7 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="location.state"
@@ -446,7 +482,7 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="pricePerDay"
@@ -454,9 +490,9 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
                 <FormItem>
                   <FormLabel>Price per Day ($)*</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="number" 
-                      placeholder="e.g. 250" 
+                    <Input
+                      type="number"
+                      placeholder="e.g. 250"
                       {...field}
                       onChange={(e) => field.onChange(e.target.valueAsNumber)}
                     />
@@ -467,12 +503,15 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
             />
           </div>
         </div>
-        
+
         {/* Images Section */}
         <div className="space-y-6">
           <h2 className="text-lg font-medium border-b pb-2">Images</h2>
-          <p className="text-sm text-gray-600">Upload and arrange images. The first image will be used as the main image.</p>
-          
+          <p className="text-sm text-gray-600">
+            Upload and arrange images. The first image will be used as the main
+            image.
+          </p>
+
           <div className="space-y-4">
             {/* Proper React Beautiful DnD Implementation */}
             <div>
@@ -483,30 +522,34 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
                 </span>
               </FormLabel>
               <div className="mt-2 space-y-4">
-                
-                
                 {/* Upload Button */}
                 <ImageUpload
                   type="boat"
                   onUploadComplete={handleImageUpload}
-                  buttonText={images.length === 0 ? "Upload First Image" : "Add More Images"}
+                  buttonText={
+                    images.length === 0
+                      ? "Upload First Image"
+                      : "Add More Images"
+                  }
                   variant="outline"
                   multiple={true}
                 />
-                
+
                 {/* Helper text */}
                 <p className="text-sm text-gray-500">
-                  Drag images horizontally to reorder them. The first image will automatically be used as the main image displayed in listings.
+                  Drag images horizontally to reorder them. The first image will
+                  automatically be used as the main image displayed in listings.
                 </p>
-                
+
                 {/* Image count */}
                 {images.length > 0 && (
                   <p className="text-sm text-blue-600 font-medium">
-                    {images.length} image{images.length !== 1 ? 's' : ''} uploaded
+                    {images.length} image{images.length !== 1 ? "s" : ""}{" "}
+                    uploaded
                   </p>
                 )}
               </div>
-              
+
               {/* Show form errors for both fields */}
               {form.formState.errors.mainImage && (
                 <p className="text-sm font-medium text-destructive mt-2">
@@ -521,11 +564,11 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
             </div>
           </div>
         </div>
-        
+
         {/* Booking Options */}
         <div className="space-y-6">
           <h2 className="text-lg font-medium border-b pb-2">Booking Options</h2>
-          
+
           <FormField
             control={form.control}
             name="instantBook"
@@ -540,14 +583,15 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
                 <div className="space-y-1 leading-none">
                   <FormLabel>Enable Instant Booking</FormLabel>
                   <FormDescription>
-                    Allow users to book your boat instantly without requiring your approval for each request.
+                    Allow users to book your boat instantly without requiring
+                    your approval for each request.
                   </FormDescription>
                 </div>
               </FormItem>
             )}
           />
         </div>
-        
+
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? (
             <>
@@ -564,4 +608,4 @@ export default function BoatForm({ userId, boat }: BoatFormProps) {
       </form>
     </Form>
   );
-} 
+}

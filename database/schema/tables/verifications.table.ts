@@ -8,7 +8,7 @@ import { verificationTypeEnum, verificationChannelEnum, verificationStatusEnum }
 export const verifications = pgTable("verification", {
     // Core Information
     id: uuid("id").defaultRandom().notNull().primaryKey(),
-    userId: uuid("user_id").notNull().references(() => users.id),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }), // Delete verifications when user deleted
     
     // Verification Details
     type: verificationTypeEnum("type").notNull(),

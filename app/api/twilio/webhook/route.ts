@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/database/db";
 import { verifications, verificationStatusEnum, users } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
-import { formatPhoneNumberE164 } from '@/shared/utils/general-utils';
+import { formatPhoneNumberE164 } from '@/shared/lib/utils/general-utils';
 
 /**
  * Twilio webhook handler for verification status updates

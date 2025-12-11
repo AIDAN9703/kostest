@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, User, X } from "lucide-react";
-import { getBoatOwners, getUserById } from "@/features/users/actions/user-actions";
+import {
+  getBoatOwners,@/shared/lib/utils/general-utils
+  getUserById,
+} from "@/features/users/actions/user-actions";
 import { cn } from "@/shared/utils/general-utils";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -18,8 +21,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/shared/components/ui/popover";
-import { useDebounce } from "@/shared/hooks/useDebounce";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
+import { useDebounce } from "@/shared/lib/hooks/useDebounce";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/shared/components/ui/avatar";
 
 interface Owner {
   id: string;
@@ -37,7 +44,12 @@ interface OwnerSelectProps {
   disabled?: boolean;
 }
 
-export function OwnerSelect({ value, onChange, placeholder, disabled }: OwnerSelectProps) {
+export function OwnerSelect({
+  value,
+  onChange,
+  placeholder,
+  disabled,
+}: OwnerSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [owners, setOwners] = useState<Owner[]>([]);
@@ -61,7 +73,7 @@ export function OwnerSelect({ value, onChange, placeholder, disabled }: OwnerSel
 
   const fetchSelectedOwner = async () => {
     if (!value) return;
-    
+
     try {
       const owner = await getUserById(value);
       if (owner) {
@@ -78,7 +90,7 @@ export function OwnerSelect({ value, onChange, placeholder, disabled }: OwnerSel
       setOwners([]);
       return;
     }
-    
+
     setLoading(true);
     try {
       const results = await getBoatOwners(debouncedSearch);
@@ -99,7 +111,7 @@ export function OwnerSelect({ value, onChange, placeholder, disabled }: OwnerSel
   };
 
   const handleSelectOwner = (ownerId: string) => {
-    const owner = owners.find(o => o.id === ownerId);
+    const owner = owners.find((o) => o.id === ownerId);
     if (owner) {
       setSelectedOwner(owner);
       onChange(ownerId);
@@ -130,15 +142,22 @@ export function OwnerSelect({ value, onChange, placeholder, disabled }: OwnerSel
             {selectedOwner ? (
               <div className="flex items-center gap-2 text-left">
                 <Avatar className="h-6 w-6">
-                  <AvatarImage src={selectedOwner.profileImage || undefined} alt={getDisplayName(selectedOwner)} />
+                  <AvatarImage
+                    src={selectedOwner.profileImage || undefined}
+                    alt={getDisplayName(selectedOwner)}
+                  />
                   <AvatarFallback>
                     <User className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 truncate">
-                  <div className="font-medium">{getDisplayName(selectedOwner)}</div>
+                  <div className="font-medium">
+                    {getDisplayName(selectedOwner)}
+                  </div>
                   {selectedOwner.email && (
-                    <div className="text-xs text-muted-foreground truncate">{selectedOwner.email}</div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {selectedOwner.email}
+                    </div>
                   )}
                 </div>
               </div>
@@ -148,7 +167,10 @@ export function OwnerSelect({ value, onChange, placeholder, disabled }: OwnerSel
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0 rounded-lg border-gray-200 z-50" sideOffset={4}>
+        <PopoverContent
+          className="w-[300px] p-0 rounded-lg border-gray-200 z-50"
+          sideOffset={4}
+        >
           <Command className="rounded-lg border-0">
             <CommandInput
               placeholder="Search owners..."
@@ -183,18 +205,27 @@ export function OwnerSelect({ value, onChange, placeholder, disabled }: OwnerSel
                     >
                       <div className="flex items-center gap-3 w-full">
                         <Avatar className="h-6 w-6 shrink-0">
-                          <AvatarImage src={owner.profileImage || undefined} alt={getDisplayName(owner)} />
+                          <AvatarImage
+                            src={owner.profileImage || undefined}
+                            alt={getDisplayName(owner)}
+                          />
                           <AvatarFallback className="text-xs">
                             <User className="h-3 w-3" />
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm truncate">{getDisplayName(owner)}</div>
+                          <div className="font-medium text-sm truncate">
+                            {getDisplayName(owner)}
+                          </div>
                           {owner.email && (
-                            <div className="text-xs text-gray-500 truncate">{owner.email}</div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {owner.email}
+                            </div>
                           )}
                         </div>
-                        {owner.id === value && <Check className="ml-2 h-4 w-4 text-blue-600 shrink-0" />}
+                        {owner.id === value && (
+                          <Check className="ml-2 h-4 w-4 text-blue-600 shrink-0" />
+                        )}
                       </div>
                     </CommandItem>
                   ))}
@@ -204,7 +235,7 @@ export function OwnerSelect({ value, onChange, placeholder, disabled }: OwnerSel
           </Command>
         </PopoverContent>
       </Popover>
-      
+
       {/* Clear button */}
       {selectedOwner && !disabled && (
         <button
@@ -218,4 +249,4 @@ export function OwnerSelect({ value, onChange, placeholder, disabled }: OwnerSel
       )}
     </div>
   );
-} 
+}

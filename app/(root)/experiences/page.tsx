@@ -6,59 +6,65 @@ import { Button } from "@/shared/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Yacht Experiences | KOSyachts",
-  description: "Discover unforgettable luxury yacht experiences in premium destinations. From fishing charters to celebration cruises.",
+  description:
+    "Discover unforgettable luxury yacht experiences in premium destinations. From fishing charters to celebration cruises.",
 };
 
 // Force static generation - this page has no dynamic content
-export const dynamic = 'force-static';
+export const dynamic = "force-static";
 
 // Define all experience types with their details
 const experiences = [
   {
     id: "fishing",
     title: "Fishing Charters",
-    description: "Experience the thrill of deep-sea fishing with professional guides and premium equipment.",
+    description:
+      "Experience the thrill of deep-sea fishing with professional guides and premium equipment.",
     image: "/images/experiences/fishing.jpg",
     imageAlt: "Deep sea fishing charter",
     href: "/experiences/fishing",
-    category: "Adventure"
+    category: "Adventure",
   },
   {
     id: "watersports",
     title: "Water Sports Adventures",
-    description: "Get your adrenaline pumping with jet skis, wakeboarding, and thrilling water activities.",
+    description:
+      "Get your adrenaline pumping with jet skis, wakeboarding, and thrilling water activities.",
     image: "/images/experiences/tiki.jpg",
     imageAlt: "Water sports activities",
     href: "/experiences/watersports",
-    category: "Adventure"
+    category: "Adventure",
   },
   {
     id: "sand-bar",
     title: "Sand Bar Excursions",
-    description: "Relax and enjoy pristine sandbar locations only accessible by luxury yacht.",
+    description:
+      "Relax and enjoy pristine sandbar locations only accessible by luxury yacht.",
     image: "/images/experiences/hauloversandbar.jpeg",
     imageAlt: "Beautiful sandbar destination",
     href: "/experiences/sand-bar",
-    category: "Relaxation"
+    category: "Relaxation",
   },
   {
     id: "special-events",
     title: "Special Events & Celebrations",
-    description: "Host your special occasions on the water for truly unforgettable memories.",
+    description:
+      "Host your special occasions on the water for truly unforgettable memories.",
     image: "/images/experiences/birthday.png",
     imageAlt: "Yacht celebration party",
     href: "/experiences/special-events",
-    category: "Events"
+    category: "Events",
   },
   {
     id: "term-charters",
     title: "Term Charters",
-    description: "Extended luxury voyages with premium vessels and professional crews.",
+    description:
+      "Extended luxury voyages with premium vessels and professional crews.",
     image: "/images/experiences/termcharter.avif",
     imageAlt: "Luxury term charter yacht",
     href: "/experiences/term-charters",
-    category: "Luxury"
-  }
+    category: "Luxury",
+  },
 ];
 
 export default function ExperiencesPage() {
@@ -91,11 +97,13 @@ export default function ExperiencesPage() {
                 Unforgettable Yacht Experiences
               </h1>
               <p className="text-white/90 text-base md:text-lg mb-5 leading-relaxed animate-fade-in-up [animation-delay:200ms] font-light drop-shadow-md max-w-2xl">
-                Discover unique luxury adventures on the water, perfectly crafted for every occasion and expertly tailored to create lasting memories.
+                Discover unique luxury adventures on the water, perfectly
+                crafted for every occasion and expertly tailored to create
+                lasting memories.
               </p>
               <div className="flex flex-wrap gap-3 animate-fade-in-up [animation-delay:300ms]">
-                <Button 
-                  size="default" 
+                <Button
+                  size="default"
                   variant="outline"
                   className="text-white border-white/40 hover:bg-white/10 px-6 py-2.5 text-sm font-medium"
                   asChild
@@ -116,19 +124,22 @@ export default function ExperiencesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center mb-12 animate-fade-in-up">
-            <span className="text-primary font-medium text-sm tracking-wide uppercase">Our Experiences</span>
+            <span className="text-primary font-medium text-sm tracking-wide uppercase">
+              Our Experiences
+            </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
               Choose Your Perfect Experience
             </h2>
             <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light leading-relaxed">
-              From thrilling adventures to peaceful escapes, our curated experiences offer something special for every taste and occasion.
+              From thrilling adventures to peaceful escapes, our curated
+              experiences offer something special for every taste and occasion.
             </p>
           </div>
-          
+
           {/* Experiences Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {experiences.map((experience, index) => (
-              <Link 
+              <Link
                 key={experience.id}
                 href={experience.href}
                 className="group block"
@@ -144,11 +155,11 @@ export default function ExperiencesPage() {
                       sizes="(max-width: 768px) 100vw, 50vw"
                       quality={90}
                     />
-                    
+
                     {/* Simple Logo Overlay */}
                     <div className="absolute top-6 left-6">
                       <Image
-                        src="/icons/kosupdatedlogo.webp"
+                        src="/icons/transparent-white-logo.webp"
                         alt="KOS Logo"
                         width={60}
                         height={60}
@@ -192,11 +203,12 @@ export default function ExperiencesPage() {
               Ready for Your Next Adventure?
             </h2>
             <p className="text-gray-600 mb-8 text-lg font-light max-w-2xl mx-auto leading-relaxed">
-              Our experienced team and premium fleet await to make your dream yacht experience a reality.
+              Our experienced team and premium fleet await to make your dream
+              yacht experience a reality.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="bg-primary hover:bg-primary/90 text-white font-medium px-8 py-3"
                 asChild
               >
@@ -205,15 +217,13 @@ export default function ExperiencesPage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 variant="outline"
                 className="border-primary text-primary hover:bg-primary hover:text-white font-medium px-8 py-3"
                 asChild
               >
-                <Link href="/contact">
-                  Contact Our Team
-                </Link>
+                <Link href="/contact">Contact Our Team</Link>
               </Button>
             </div>
           </div>
@@ -221,4 +231,4 @@ export default function ExperiencesPage() {
       </section>
     </div>
   );
-} 
+}

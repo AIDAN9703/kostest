@@ -2,25 +2,25 @@
 
 import { useCallback, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Boat, BoatLocation } from "@/shared/types/types";
+import { Boat, BoatLocation } from "@/shared/lib/types/types";
 import { Button } from "@/shared/components/ui/button";
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
   PaginationPrevious,
-  PaginationEllipsis 
+  PaginationEllipsis,
 } from "@/shared/components/ui/pagination";
 import { ArrowUpDown, Loader2, SlidersHorizontal } from "lucide-react";
-import { cn } from "@/shared/utils/general-utils";
+import { cn } from "@/shared/lib/utils/general-utils";
 import BoatCard from "@/shared/components/ui/boat-card";
 import { useSearchURL } from "@/features/search/hooks/useSearchURL";
-import { usePagination } from "@/shared/hooks/usePagination";
+import { usePagination } from "@/shared/lib/hooks/usePagination";
 import FilterModal from "./FilterModal";
 import SearchResultsFallback from "./SearchResultsFallback";
-import { parseStringParam } from "@/shared/utils/search-params-utils";
+import { parseStringParam } from "@/shared/lib/utils/search-params-utils";
 
 interface SearchResultsProps {
   initialResults: Boat[];
@@ -32,12 +32,12 @@ interface SearchResultsProps {
 
 // Sort options
 const SORT_OPTIONS = [
-  { value: 'featured', label: 'Featured' },
-  { value: 'price_asc', label: 'Price: Low to High' },
-  { value: 'price_desc', label: 'Price: High to Low' },
-  { value: 'length_asc', label: 'Length: Small to Large' },
-  { value: 'length_desc', label: 'Length: Large to Small' },
-  { value: 'newest', label: 'Newest First' }
+  { value: "featured", label: "Featured" },
+  { value: "price_asc", label: "Price: Low to High" },
+  { value: "price_desc", label: "Price: High to Low" },
+  { value: "length_asc", label: "Length: Small to Large" },
+  { value: "length_desc", label: "Length: Large to Small" },
+  { value: "newest", label: "Newest First" },
 ];
 
 // Animation variants for staggered animations
@@ -46,96 +46,108 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.05
-    }
-  }
+      staggerChildren: 0.05,
+    },
+  },
 };
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { 
-    opacity: 1, 
+  visible: {
+    opacity: 1,
     y: 0,
     transition: {
       type: "spring" as const,
       stiffness: 400,
-      damping: 25
-    }
-  }
+      damping: 25,
+    },
+  },
 };
 
-export default function SearchResults({ 
-  initialResults, 
-  totalCount, 
-  currentPage, 
+export default function SearchResults({
+  initialResults,
+  totalCount,
+  currentPage,
   totalPages,
-  locations = []
+  locations = [],
 }: SearchResultsProps) {
-  const { 
-    searchParams, 
-    isPending, 
-    updateSearchParams
-  } = useSearchURL();
-  
+  const { searchParams, isPending, updateSearchParams } = useSearchURL();
+
   // Get current sort from URL or default to featured
-  const currentSort = useMemo(() => 
-    parseStringParam(searchParams.get('sort')) || 'featured', [searchParams]);
-  
+  const currentSort = useMemo(
+    () => parseStringParam(searchParams.get("sort")) || "featured",
+    [searchParams]
+  );
+
   // Handle sort change
-  const handleSort = useCallback((sort: string) => {
-    updateSearchParams({
-      sort,
-      page: 1 // Reset to first page when sort changes
-    });
-  }, [updateSearchParams]);
-  
+  const handleSort = useCallback(
+    (sort: string) => {
+      updateSearchParams({
+        sort,
+        page: 1, // Reset to first page when sort changes
+      });
+    },
+    [updateSearchParams]
+  );
+
   // Handle page change
-  const handlePageChange = useCallback((page: number) => {
-    updateSearchParams({ page });
-  }, [updateSearchParams]);
-  
+  const handlePageChange = useCallback(
+    (page: number) => {
+      updateSearchParams({ page });
+    },
+    [updateSearchParams]
+  );
+
   // Get sort label for display
   const getSortLabel = useCallback((sort: string) => {
-    const option = SORT_OPTIONS.find(option => option.value === sort);
-    return option?.label || 'Featured';
+    const option = SORT_OPTIONS.find((option) => option.value === sort);
+    return option?.label || "Featured";
   }, []);
 
   // Use a state variable for FilterModal visibility
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  
+
   // Use custom pagination hook
   const { pages, hasNextPage, hasPreviousPage } = usePagination({
     currentPage,
-    totalPages
+    totalPages,
   });
 
   // Calculate active filter count
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    
+
     // Check for various filter parameters
-    if (searchParams.has('date')) count++;
-    if (searchParams.has('minPrice') || searchParams.has('maxPrice')) count++;
-    if (searchParams.has('minLength') || searchParams.has('maxLength')) count++;
-    if (searchParams.has('minYear') || searchParams.has('maxYear')) count++;
-    if (searchParams.has('passengers') && searchParams.get('passengers') !== '1') count++;
-    if (searchParams.has('cabins') && searchParams.get('cabins') !== '0') count++;
-    if (searchParams.has('bathrooms') && searchParams.get('bathrooms') !== '0') count++;
-    if (searchParams.has('category')) count++;
-    if (searchParams.has('features')) count++;
-    
+    if (searchParams.has("date")) count++;
+    if (searchParams.has("minPrice") || searchParams.has("maxPrice")) count++;
+    if (searchParams.has("minLength") || searchParams.has("maxLength")) count++;
+    if (searchParams.has("minYear") || searchParams.has("maxYear")) count++;
+    if (
+      searchParams.has("passengers") &&
+      searchParams.get("passengers") !== "1"
+    )
+      count++;
+    if (searchParams.has("cabins") && searchParams.get("cabins") !== "0")
+      count++;
+    if (searchParams.has("bathrooms") && searchParams.get("bathrooms") !== "0")
+      count++;
+    if (searchParams.has("category")) count++;
+    if (searchParams.has("features")) count++;
+
     return count;
   }, [searchParams]);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between">
-          {totalCount > 0 && (
-            <p className="text-gray-500 text-sm mt-1">
-              Showing page {currentPage} of {totalPages} &middot; <span className="font-medium">{totalCount}</span> boat{totalCount !== 1 && "s"} found
-            </p>
-          )}
-        
+        {totalCount > 0 && (
+          <p className="text-gray-500 text-sm mt-1">
+            Showing page {currentPage} of {totalPages} &middot;{" "}
+            <span className="font-medium">{totalCount}</span> boat
+            {totalCount !== 1 && "s"} found
+          </p>
+        )}
+
         <div className="flex items-center gap-3">
           {/* Filter Button with Badge */}
           <Button
@@ -151,10 +163,12 @@ export default function SearchResults({
               </span>
             )}
           </Button>
-          
+
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500 whitespace-nowrap">Sort by:</span>
+            <span className="text-sm text-gray-500 whitespace-nowrap">
+              Sort by:
+            </span>
             <div className="relative group">
               <Button
                 variant="outline"
@@ -164,10 +178,12 @@ export default function SearchResults({
                 <span>{getSortLabel(currentSort)}</span>
                 <ArrowUpDown className="h-4 w-4" />
               </Button>
-              
+
               {/* Sort Options Dropdown */}
-              <div className="absolute right-0 mt-2 w-[220px] bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-20
-                            opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+              <div
+                className="absolute right-0 mt-2 w-[220px] bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-20
+                            opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
+              >
                 <div className="py-1">
                   {SORT_OPTIONS.map((option) => (
                     <button
@@ -175,7 +191,9 @@ export default function SearchResults({
                       onClick={() => handleSort(option.value)}
                       className={cn(
                         "w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors",
-                        currentSort === option.value ? "text-[#2C3E50] font-medium" : "text-gray-700"
+                        currentSort === option.value
+                          ? "text-[#2C3E50] font-medium"
+                          : "text-gray-700"
                       )}
                     >
                       {option.label}
@@ -189,8 +207,8 @@ export default function SearchResults({
       </div>
 
       {/* Filter Modal */}
-      <FilterModal 
-        isOpen={isFilterModalOpen} 
+      <FilterModal
+        isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
       />
 
@@ -199,7 +217,7 @@ export default function SearchResults({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <AnimatePresence mode="wait">
             {isPending ? (
-              <motion.div 
+              <motion.div
                 key="loading"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -218,19 +236,15 @@ export default function SearchResults({
                 exit={{ opacity: 0 }}
               >
                 {initialResults.map((boat) => (
-                  <motion.div
-                    key={boat.id}
-                    variants={itemVariants}
-                    layout
-                  >
-                    <BoatCard 
+                  <motion.div key={boat.id} variants={itemVariants} layout>
+                    <BoatCard
                       boat={boat}
                       index={0} // Index is not needed for animation anymore
                       variant="search"
                       showDetails={true}
                       showPrice={true}
                       showLocation={true}
-                      aspectRatio={16/9}
+                      aspectRatio={16 / 9}
                       highlightFeatured={true}
                       showRating={true}
                     />
@@ -241,25 +255,27 @@ export default function SearchResults({
           </AnimatePresence>
         </div>
       ) : (
-       <SearchResultsFallback />
+        <SearchResultsFallback />
       )}
-      
+
       {/* Pagination */}
       {totalPages > 1 && (
         <Pagination className="mt-12">
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
+              <PaginationPrevious
                 href={`/boats/search?page=${currentPage - 1}`}
                 onClick={(e) => {
                   e.preventDefault();
                   handlePageChange(currentPage - 1);
                 }}
                 aria-disabled={!hasPreviousPage}
-                className={!hasPreviousPage ? "pointer-events-none opacity-50" : ""}
+                className={
+                  !hasPreviousPage ? "pointer-events-none opacity-50" : ""
+                }
               />
             </PaginationItem>
-            
+
             {pages.map((page) => {
               // Show first page, last page, current page, and pages around current page
               if (
@@ -297,9 +313,9 @@ export default function SearchResults({
 
               return null;
             })}
-            
+
             <PaginationItem>
-              <PaginationNext 
+              <PaginationNext
                 href={`/boats/search?page=${currentPage + 1}`}
                 onClick={(e) => {
                   e.preventDefault();
@@ -314,4 +330,4 @@ export default function SearchResults({
       )}
     </div>
   );
-} 
+}

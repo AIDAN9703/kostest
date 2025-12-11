@@ -1,6 +1,6 @@
-import Navigation from "@/shared/layouts/Navigation";
+import Navigation from "@/shared/components/layouts/Navigation";
 import { ReactNode } from "react";
-import Footer from "@/shared/layouts/Footer";
+import Footer from "@/shared/components/layouts/Footer";
 
 interface LayoutProps {
   children: ReactNode;

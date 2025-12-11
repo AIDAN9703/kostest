@@ -1,6 +1,6 @@
 "use client";
 
-import { Boat } from "@/shared/types/types";
+import { Boat } from "@/shared/lib/types/types";
 import {
   Clock,
   Calendar,
@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
-import { formatCurrency } from "@/shared/utils/general-utils";
+import { formatCurrency } from "@/shared/lib/utils/general-utils";
 
 interface BookingDetailsProps {
   boat: Boat;

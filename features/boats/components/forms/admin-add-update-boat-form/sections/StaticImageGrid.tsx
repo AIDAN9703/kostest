@@ -1,8 +1,8 @@
 "use client";
 
-import React from 'react';
+import React from "react";
 import { Image as IKImage } from "@imagekit/next";
-import { getImageKitProps } from "@/shared/services/imagekit.service";
+import { getImageKitProps } from "@/shared/lib/services/imagekit.service";
 
 interface StaticImageGridProps {
   images: string[];
@@ -10,14 +10,20 @@ interface StaticImageGridProps {
   showDeleteButton?: boolean;
 }
 
-export default function StaticImageGrid({ images, onDelete, showDeleteButton = false }: StaticImageGridProps) {
+export default function StaticImageGrid({
+  images,
+  onDelete,
+  showDeleteButton = false,
+}: StaticImageGridProps) {
   if (images.length === 0) {
     return (
       <div className="flex items-center justify-center h-32">
         <div className="text-center text-gray-500">
           <div className="text-lg mb-2">📷</div>
           <div className="text-sm">No images uploaded yet</div>
-          <div className="text-xs text-gray-400">Upload your first image below</div>
+          <div className="text-xs text-gray-400">
+            Upload your first image below
+          </div>
         </div>
       </div>
     );
@@ -26,8 +32,8 @@ export default function StaticImageGrid({ images, onDelete, showDeleteButton = f
   return (
     <div className="flex flex-wrap gap-3 justify-start">
       {images.map((image, index) => {
-        const props = getImageKitProps(image, 'thumb');
-        
+        const props = getImageKitProps(image, "thumb");
+
         return (
           <div key={`static-${image}-${index}`} className="relative group">
             <div className="relative w-24 h-24 border rounded-lg overflow-hidden bg-gray-100 hover:shadow-lg transition-shadow duration-200">
@@ -38,7 +44,7 @@ export default function StaticImageGrid({ images, onDelete, showDeleteButton = f
               )}
               <IKImage
                 src={props.src}
-                alt={`${index === 0 ? 'Main' : 'Gallery'} image ${index + 1}`}
+                alt={`${index === 0 ? "Main" : "Gallery"} image ${index + 1}`}
                 width={props.width}
                 height={props.height}
                 sizes={props.sizes}
@@ -47,7 +53,7 @@ export default function StaticImageGrid({ images, onDelete, showDeleteButton = f
                 transformation={props.transformation}
                 className="w-full h-full object-cover"
               />
-              
+
               {/* Delete button (optional) */}
               {showDeleteButton && onDelete && (
                 <button

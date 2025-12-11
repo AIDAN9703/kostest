@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { icalSyncService } from '@/shared/services/ical-sync.service';
+import { icalSyncService } from '@/shared/lib/services/ical-sync.service';
 
 export async function GET() {
   try {

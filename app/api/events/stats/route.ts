@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getEventStats } from "@/shared/services/events.service";
+import { getEventStats } from "@/shared/lib/services/events.service";
 
 export async function GET() {
   try {

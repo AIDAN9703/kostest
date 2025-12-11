@@ -1,7 +1,7 @@
 "use client";
 
-import { Boat, PricingTier } from "@/shared/types/types";
-import { calculateBookingPrice } from "@/shared/utils/pricing-utils";
+import { Boat, PricingTier } from "@/shared/lib/types/types";
+import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
 
 interface PriceSummaryProps {
   boat: Boat;

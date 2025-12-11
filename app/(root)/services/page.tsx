@@ -1,59 +1,73 @@
-import { Metadata } from 'next'
-import Image from 'next/image'
-import Link from 'next/link'
-import { ArrowRight, CheckCircle, Shield, Award, Anchor, Users, Star } from 'lucide-react'
-import { Button } from '@/shared/components/ui/button'
+import { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  ArrowRight,
+  CheckCircle,
+  Shield,
+  Award,
+  Anchor,
+  Users,
+  Star,
+} from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
 
 export const metadata: Metadata = {
-  title: 'Professional Marine Services | KOSyachts',
-  description: 'Comprehensive yacht and boat services including charter management, yacht management, sales, term charters, and dock management in Miami.',
-}
+  title: "Professional Marine Services | KOSyachts",
+  description:
+    "Comprehensive yacht and boat services including charter management, yacht management, sales, term charters, and dock management in Miami.",
+};
 
 // Force static generation - this page has no dynamic content
-export const dynamic = 'force-static';
+export const dynamic = "force-static";
 
 // Define all services with their details
 const services = [
   {
     id: "charter-management",
     title: "Charter Management",
-    description: "Turn your vessel into a revenue-generating asset with our comprehensive charter management services.",
+    description:
+      "Turn your vessel into a revenue-generating asset with our comprehensive charter management services.",
     image: "/images/services/charter-management.jpg",
     href: "/services/charter-management",
-    category: "Management"
+    category: "Management",
   },
   {
-    id: "yacht-management", 
+    id: "yacht-management",
     title: "Yacht Management",
-    description: "Complete yacht care and maintenance solutions for owners seeking peace of mind.",
+    description:
+      "Complete yacht care and maintenance solutions for owners seeking peace of mind.",
     image: "/images/services/yacht-management.jpg",
     href: "/services/yacht-management",
-    category: "Management"
+    category: "Management",
   },
   {
     id: "sales",
     title: "Sales & Brokerage",
-    description: "Expert guidance for buying or selling vessels with professional representation.",
+    description:
+      "Expert guidance for buying or selling vessels with professional representation.",
     image: "/images/services/sales.jpg",
     href: "/services/sales",
-    category: "Sales"
+    category: "Sales",
   },
   {
     id: "term-charters",
     title: "Term Charters",
-    description: "Extended luxury voyages with premium vessels and professional crews.",
+    description:
+      "Extended luxury voyages with premium vessels and professional crews.",
     image: "/images/services/term-charters.jpg",
     href: "/services/term-charters",
-    category: "Charter"
+    category: "Charter",
   },
   {
     id: "dock-management",
     title: "Dock Management",
-    description: "Professional management services for private docks and marina facilities.",
+    description:
+      "Professional management services for private docks and marina facilities.",
     image: "/images/services/dock-management.jpg",
     href: "/services/dock-management",
-    category: "Management"
-  }
+    category: "Management",
+  },
 ];
 
 export default function ServicesPage() {
@@ -86,11 +100,13 @@ export default function ServicesPage() {
                 Complete Service Portfolio
               </h1>
               <p className="text-white/90 text-base md:text-lg mb-5 leading-relaxed animate-fade-in-up [animation-delay:200ms] font-light drop-shadow-md max-w-2xl">
-                From yacht management to charter services, we provide comprehensive marine solutions tailored to enhance your boating experience.
+                From yacht management to charter services, we provide
+                comprehensive marine solutions tailored to enhance your boating
+                experience.
               </p>
               <div className="flex flex-wrap gap-3 animate-fade-in-up [animation-delay:300ms]">
-                <Button 
-                  size="default" 
+                <Button
+                  size="default"
                   variant="outline"
                   className="text-white border-white/40 hover:bg-white/10 px-6 py-2.5 text-sm font-medium"
                   asChild
@@ -111,19 +127,22 @@ export default function ServicesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center mb-12 animate-fade-in-up">
-            <span className="text-primary font-medium text-sm tracking-wide uppercase">Our Services</span>
+            <span className="text-primary font-medium text-sm tracking-wide uppercase">
+              Our Services
+            </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
               Professional Marine Solutions
             </h2>
             <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light leading-relaxed">
-              We offer a comprehensive range of professional marine services designed to meet every aspect of your boating needs.
+              We offer a comprehensive range of professional marine services
+              designed to meet every aspect of your boating needs.
             </p>
           </div>
-          
+
           {/* Services Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {services.map((service, index) => (
-              <Link 
+              <Link
                 key={service.id}
                 href={service.href}
                 className="group block"
@@ -139,11 +158,11 @@ export default function ServicesPage() {
                       sizes="(max-width: 768px) 100vw, 50vw"
                       quality={90}
                     />
-                    
+
                     {/* Simple Logo Overlay */}
                     <div className="absolute top-6 left-6">
                       <Image
-                        src="/icons/kosupdatedlogo.webp"
+                        src="/icons/transparent-white-logo.webp"
                         alt="KOS Logo"
                         width={60}
                         height={60}
@@ -183,46 +202,54 @@ export default function ServicesPage() {
       <section className="py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 animate-fade-in-up">
-            <span className="text-primary font-medium text-sm tracking-wide uppercase">Why Choose KOS</span>
+            <span className="text-primary font-medium text-sm tracking-wide uppercase">
+              Why Choose KOS
+            </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-medium mb-6 text-primary leading-tight">
               The KOS Difference
             </h2>
             <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light leading-relaxed">
-              Our commitment to excellence and attention to detail sets us apart in the marine services industry.
+              Our commitment to excellence and attention to detail sets us apart
+              in the marine services industry.
             </p>
           </div>
-          
+
           {/* Benefits Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
                 icon: <Shield className="h-6 w-6" />,
                 title: "Industry Expertise",
-                description: "Decades of combined experience in marine services and yacht management"
+                description:
+                  "Decades of combined experience in marine services and yacht management",
               },
               {
                 icon: <Star className="h-6 w-6" />,
-                title: "Premium Quality", 
-                description: "Uncompromising standards in every aspect of our service delivery"
+                title: "Premium Quality",
+                description:
+                  "Uncompromising standards in every aspect of our service delivery",
               },
               {
                 icon: <Users className="h-6 w-6" />,
                 title: "Personalized Service",
-                description: "Tailored solutions designed to meet your specific needs and preferences"
-              }
+                description:
+                  "Tailored solutions designed to meet your specific needs and preferences",
+              },
             ].map((benefit, index) => (
-              <div 
-                key={index} 
+              <div
+                key={index}
                 className="text-center animate-fade-in-up"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 <div className="bg-primary/5 p-4 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <div className="text-primary">
-                    {benefit.icon}
-                  </div>
+                  <div className="text-primary">{benefit.icon}</div>
                 </div>
-                <h3 className="text-xl font-medium text-primary mb-3">{benefit.title}</h3>
-                <p className="text-gray-600 font-light leading-relaxed">{benefit.description}</p>
+                <h3 className="text-xl font-medium text-primary mb-3">
+                  {benefit.title}
+                </h3>
+                <p className="text-gray-600 font-light leading-relaxed">
+                  {benefit.description}
+                </p>
               </div>
             ))}
           </div>
@@ -237,11 +264,12 @@ export default function ServicesPage() {
               Ready to Experience Premium Service?
             </h2>
             <p className="text-gray-600 mb-8 text-lg font-light max-w-2xl mx-auto leading-relaxed">
-              Contact our experienced team to discuss how our professional marine services can enhance your boating lifestyle.
+              Contact our experienced team to discuss how our professional
+              marine services can enhance your boating lifestyle.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 className="bg-primary hover:bg-primary/90 text-white font-medium px-8 py-3"
                 asChild
               >
@@ -250,15 +278,13 @@ export default function ServicesPage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button 
-                size="lg" 
+              <Button
+                size="lg"
                 variant="outline"
                 className="border-primary text-primary hover:bg-primary hover:text-white font-medium px-8 py-3"
                 asChild
               >
-                <Link href="/boats/search">
-                  Browse Our Fleet
-                </Link>
+                <Link href="/boats/search">Browse Our Fleet</Link>
               </Button>
             </div>
           </div>
@@ -266,4 +292,4 @@ export default function ServicesPage() {
       </section>
     </div>
   );
-} 
+}

@@ -2,8 +2,8 @@
 
 import { Badge } from "@/shared/components/ui/badge";
 import { CalendarDays, Clock, Users, MapPin, Anchor } from "lucide-react";
-import { formatCurrency } from "@/shared/utils/general-utils";
-import { ProfileBooking } from "@/shared/types/booking.types";
+import { formatCurrency } from "@/shared/lib/utils/general-utils";
+import { ProfileBooking } from "@/shared/lib/types/booking.types";
 
 interface BookingCardProps {
   booking: ProfileBooking;

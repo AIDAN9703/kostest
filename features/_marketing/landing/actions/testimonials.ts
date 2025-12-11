@@ -1,5 +1,5 @@
-import { cachedFetch } from '@/shared/utils/general-utils';
-import { ActionResponse } from '@/shared/types/types';
+import { cachedFetch } from '@/shared/lib/utils/general-utils';
+import { ActionResponse } from '@/shared/lib/types/types';
 
 interface Review {
   author_name: string;

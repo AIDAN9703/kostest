@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
 import { userService } from "@/features/users/user.service";
-import { apiSuccess, apiError } from "@/shared/utils/api-response";
+import { apiSuccess, apiError } from "@/shared/lib/utils/api-helpers";
 
 /**
  * GET /api/users/stats

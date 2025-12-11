@@ -2,6 +2,7 @@
 import { db } from '@/database/db';
 import { users } from '@/database/schema';
 import { and, count, eq, desc, or, ilike, inArray, gte } from 'drizzle-orm';
+import { bookings, notifications } from '@/database/schema';
 import { type User, type UserStatus } from '@/database/types';
 
 //types
@@ -87,6 +88,211 @@ export class UserService {
   }
 
   /**
+   * Get user optimized for admin detail page
+   * Includes: owned boats count, recent bookings, captain profile
+   */
+  async getUserForAdmin(id: string) {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, id),
+      with: {
+        ownedBoats: {
+          columns: {
+            id: true,
+            name: true,
+            category: true,
+            active: true,
+            featured: true,
+            mainImage: true,
+            createdAt: true,
+          },
+          limit: 10, // Recent boats only
+        },
+        captainProfile: {
+          columns: {
+            id: true,
+            status: true,
+            availableForHire: true,
+            uscgLicensed: true,
+          },
+        },
+        bookings: {
+          columns: {
+            id: true,
+            bookingStatus: true,
+            bookingType: true,
+            startDateTime: true,
+            totalAmount: true,
+            createdAt: true,
+          },
+          limit: 5, // Recent bookings only
+          orderBy: (bookings, { desc }) => [desc(bookings.createdAt)],
+        },
+      },
+    });
+
+    return user || null;
+  }
+
+  /**
+   * Get user optimized for profile page
+   * Includes: recent bookings, reviews, unread notifications
+   */
+  async getUserForProfile(id: string) {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, id),
+      with: {
+        bookings: {
+          columns: {
+            id: true,
+            bookingStatus: true,
+            bookingType: true,
+            startDateTime: true,
+            endDateTime: true,
+            totalAmount: true,
+            createdAt: true,
+          },
+          limit: 10, // Recent bookings
+          orderBy: (bookings, { desc }) => [desc(bookings.createdAt)],
+        },
+        reviewsAsReviewer: {
+          columns: {
+            id: true,
+            rating: true,
+            createdAt: true,
+          },
+          limit: 5, // Recent reviews
+        },
+        notifications: {
+          columns: {
+            id: true,
+            type: true,
+            title: true,
+            body: true,
+            status: true,
+            readAt: true,
+            createdAt: true,
+          },
+          where: (notifications, { isNull }) => isNull(notifications.readAt), // Unread only
+          limit: 10,
+          orderBy: (notifications, { desc }) => [desc(notifications.createdAt)],
+        },
+      },
+    });
+
+    return user || null;
+  }
+
+  /**
+   * Get user optimized for boat owner pages
+   * Includes: owned boats with full details
+   */
+  async getUserForBoatOwner(id: string) {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, id),
+      with: {
+        ownedBoats: {
+          columns: {
+            id: true,
+            name: true,
+            category: true,
+            active: true,
+            featured: true,
+            featuredOrder: true,
+            mainImage: true,
+            capacity: true,
+            lengthFt: true,
+            weeklyRate: true,
+            monthlyRate: true,
+            averageRating: true,
+            totalReviews: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          orderBy: (boats, { desc }) => [desc(boats.createdAt)],
+        },
+        captainProfile: {
+          columns: {
+            id: true,
+            status: true,
+            availableForHire: true,
+            uscgLicensed: true,
+          },
+        },
+      },
+    });
+
+    return user || null;
+  }
+
+  /**
+   * Get user by ID with all relations (boats, bookings, etc.)
+   * Uses the new Drizzle relations API for cleaner queries
+   * Use this when you need everything, otherwise use specific methods above
+   */
+  async getUserByIdWithRelations(id: string) {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, id),
+      with: {
+        ownedBoats: {
+          columns: {
+            id: true,
+            name: true,
+            category: true,
+            active: true,
+            featured: true,
+            mainImage: true,
+            createdAt: true,
+          },
+        },
+        captainProfile: {
+          columns: {
+            id: true,
+            status: true,
+            availableForHire: true,
+            uscgLicensed: true,
+          },
+        },
+        bookings: {
+          columns: {
+            id: true,
+            bookingStatus: true,
+            bookingType: true,
+            startDateTime: true,
+            totalAmount: true,
+            createdAt: true,
+          },
+          limit: 10,
+          orderBy: (bookings, { desc }) => [desc(bookings.createdAt)],
+        },
+        reviewsAsReviewer: {
+          columns: {
+            id: true,
+            rating: true,
+            createdAt: true,
+          },
+          limit: 5,
+        },
+        notifications: {
+          columns: {
+            id: true,
+            type: true,
+            title: true,
+            body: true,
+            status: true,
+            readAt: true,
+            createdAt: true,
+          },
+          where: (notifications, { isNull }) => isNull(notifications.readAt),
+          limit: 10,
+          orderBy: (notifications, { desc }) => [desc(notifications.createdAt)],
+        },
+      },
+    });
+
+    return user || null;
+  }
+
+  /**
    * Create new user (with password hashing)
    */
   async createUser(userData: CreateUserInput): Promise<User> {
@@ -109,7 +315,7 @@ export class UserService {
    */
   async updateUser(id: string, data: Partial<UpdateUserInput>): Promise<User> {
     // Prepare update data
-    const updateData: Partial<typeof users.$inferInsert> = {
+    const updateData: Partial<User> = {
       ...data,
       updatedAt: new Date(),
     };

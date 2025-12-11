@@ -3,9 +3,9 @@
 import { db } from "@/database/db";
 import { users } from "@/database/schema"; 
 import { eq } from "drizzle-orm";
-import { ActionResponse } from "@/shared/types/types";
-import { sendVerification, checkVerification } from "@/shared/services/twilio.service";
-import { formatPhoneNumberE164 } from '@/shared/utils/general-utils';
+import { ActionResponse } from "@/shared/lib/types/types";
+import { sendVerification, checkVerification } from "@/shared/lib/services/twilio.service";
+import { formatPhoneNumberE164 } from '@/shared/lib/utils/general-utils';
 import { auth } from "@/auth";
 
 /**

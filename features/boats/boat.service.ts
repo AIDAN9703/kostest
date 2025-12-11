@@ -11,7 +11,7 @@ import { type PaginatedBoatsResponse } from '@/features/boats/boat.types';
 import { z } from 'zod';
 
 //utils
-import { toDateOrNull } from '@/shared/utils/date-helpers';
+import { toDateOrNull } from '@/shared/lib/utils/date-helpers';
 
 // Original Drizzle inferred type for insert
 type DrizzleBoatInsert = typeof boats.$inferInsert;
