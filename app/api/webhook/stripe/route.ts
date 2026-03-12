@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { db } from "@/database/db";
-import { bookings, boats, bookingPricing, bookingStatusHistory, payments } from "@/database/schema";
+import { bookings, boats, bookingStatusHistory, payments } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
 import config from "@/shared/lib/config";
 import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
@@ -434,86 +434,43 @@ async function handleInstantBookingPayment(session: Stripe.Checkout.Session) {
       
       console.log(`Updated existing booking ${bookingId} to CONFIRMED status`);
     } else {
-      // Create a new booking with all related records
-      const now = new Date();
+      // Create booking via service (single source of truth for creation logic)
       const startDateTime = new Date(metadata.startDateTime);
-      const endDateTime = new Date(metadata.endDateTime);
-      
-      // Parse pricing from metadata
-      const totalAmountDollars = parseFloat(metadata.totalAmount || "0");
+      const endDateTime = metadata.endDateTime ? new Date(metadata.endDateTime) : null;
+      const basePriceDollars = parseFloat(metadata.basePrice || "0");
       const cleaningFeeDollars = parseFloat(metadata.cleaningFee || "0");
       const captainFeeDollars = parseFloat(metadata.captainFee || "0");
       const serviceFeeDollars = parseFloat(metadata.serviceFee || "0");
+      const totalAmountDollars = parseFloat(metadata.totalAmount || "0");
       const depositAmountDollars = parseFloat(metadata.depositAmount || "0");
-      const basePriceDollars = parseFloat(metadata.basePrice || "0");
-      
-      // Create booking record (payment info stored in payments table)
-      const [newBooking] = await db.insert(bookings).values({
-        bookingType: "INSTANT_BOOK",
-        bookingStatus: "CONFIRMED",
-        source: "WEBSITE",
-        userId: metadata.userId,
+
+      const newBooking = await bookingService.createInstantBooking({
         boatId: metadata.boatId,
         pricingTierId: metadata.pricingTierId || null,
-        
-        // Customer information
+        userId: metadata.userId,
         customerName: metadata.customerName || "",
         customerEmail: metadata.customerEmail || "",
         customerPhone: metadata.customerPhone || "",
-        
-        // Booking details
-        isMultiDay: metadata.isMultiDay === "true",
-        needsCaptain: metadata.needsCaptain === "true",
         startDateTime,
         endDateTime,
         numberOfPassengers: parseInt(metadata.numberOfPassengers || "1"),
+        needsCaptain: metadata.needsCaptain === "true",
         specialRequests: metadata.specialRequests || null,
-        
-        // Timestamps
-        createdAt: now,
-        updatedAt: now
-      }).returning();
-      
-      // Create pricing record in new table
-      await db.insert(bookingPricing).values({
-        bookingId: newBooking.id,
-        basePriceCents: dollarsToCents(basePriceDollars),
-        captainFeeCents: dollarsToCents(captainFeeDollars) || null,
-        cleaningFeeCents: dollarsToCents(cleaningFeeDollars) || null,
-        serviceFeeCents: dollarsToCents(serviceFeeDollars),
-        taxAmountCents: null,
-        discountAmountCents: null,
-        depositAmountCents: dollarsToCents(depositAmountDollars) || null,
-        totalAmountCents: dollarsToCents(totalAmountDollars),
-        currency: "USD",
-      });
-      
-      // Create status history entry
-      await db.insert(bookingStatusHistory).values({
-        bookingId: newBooking.id,
-        fromStatus: null,
-        toStatus: "CONFIRMED",
-        changedByUserId: metadata.userId,
-        reason: "Instant booking - payment received",
-      });
-      
-      // Create payment record
-      await db.insert(payments).values({
-        payableType: "BOOKING",
-        payableId: newBooking.id,
-        paymentType: "FULL_PAYMENT",
-        amountCents: dollarsToCents(totalAmountDollars),
-        currency: "USD",
-        status: "SUCCEEDED",
-        paymentMethodType: "STRIPE_CHECKOUT",
         stripePaymentIntentId: paymentIntentId,
         stripeCheckoutSessionId: session.id,
-        stripeCustomerId: session.customer as string,
-        processedAt: now,
+        stripeCustomerId: (session.customer as string) || undefined,
+        pricingOverrideCents: {
+          basePriceCents: dollarsToCents(basePriceDollars),
+          cleaningFeeCents: dollarsToCents(cleaningFeeDollars),
+          captainFeeCents: dollarsToCents(captainFeeDollars),
+          serviceFeeCents: dollarsToCents(serviceFeeDollars),
+          totalPriceCents: dollarsToCents(totalAmountDollars),
+          depositAmountCents: dollarsToCents(depositAmountDollars),
+        },
       });
-      
+
       console.log("Successfully created booking from payment session:", newBooking.id);
-      
+
       // Send confirmation email
       const fullBooking = await bookingService.getBookingById(newBooking.id);
       if (fullBooking) {

@@ -143,7 +143,8 @@ export class BookingStatusService {
   async forceSetStatus(
     bookingId: string,
     newStatus: BookingStatus,
-    reason: string = 'System override'
+    reason: string = 'System override',
+    changedByUserId?: string | null
   ): Promise<BookingStatusHistory> {
     const currentStatus = await this.getCurrentStatus(bookingId);
     if (currentStatus === null) {
@@ -164,7 +165,7 @@ export class BookingStatusService {
         bookingId,
         fromStatus: currentStatus,
         toStatus: newStatus,
-        changedByUserId: null,
+        changedByUserId: changedByUserId ?? null,
         reason,
         metadata: { forced: true },
       })
@@ -180,7 +181,8 @@ export class BookingStatusService {
   async createInitialHistory(
     bookingId: string,
     initialStatus: BookingStatus,
-    createdByUserId?: string | null
+    createdByUserId?: string | null,
+    reason?: string
   ): Promise<BookingStatusHistory> {
     const [historyEntry] = await db
       .insert(bookingStatusHistory)
@@ -189,7 +191,7 @@ export class BookingStatusService {
         fromStatus: null,
         toStatus: initialStatus,
         changedByUserId: createdByUserId ?? null,
-        reason: 'Booking created',
+        reason: reason ?? 'Booking created',
       })
       .returning();
 
@@ -329,6 +331,45 @@ export class BookingStatusService {
       changedByUserId: adminId,
       reason: reason ?? 'Payment refunded',
     });
+  }
+
+  /**
+   * Accept a draft booking (customer accepted via link)
+   * Uses forceSetStatus since DRAFT → APPROVED bypasses normal transition rules
+   */
+  async acceptDraft(
+    bookingId: string,
+    options?: { changedByUserId?: string | null; acceptedAt?: Date; acceptedCustomerNote?: string | null }
+  ): Promise<BookingStatusHistory> {
+    const currentStatus = await this.getCurrentStatus(bookingId);
+    if (currentStatus === null) throw new Error(`Booking not found: ${bookingId}`);
+    if (currentStatus !== 'DRAFT') throw new Error(`Cannot accept non-draft booking (status: ${currentStatus})`);
+
+    const now = new Date();
+    const updateData: Record<string, unknown> = {
+      bookingStatus: 'APPROVED',
+      updatedAt: now,
+    };
+    if (options?.acceptedAt !== undefined) updateData.acceptedAt = options.acceptedAt;
+    if (options?.acceptedCustomerNote !== undefined) updateData.acceptedCustomerNote = options.acceptedCustomerNote;
+
+    await db
+      .update(bookings)
+      .set(updateData as Record<string, Date | string | null>)
+      .where(eq(bookings.id, bookingId));
+
+    const [historyEntry] = await db
+      .insert(bookingStatusHistory)
+      .values({
+        bookingId,
+        fromStatus: 'DRAFT',
+        toStatus: 'APPROVED',
+        changedByUserId: options?.changedByUserId ?? null,
+        reason: 'Customer accepted',
+      })
+      .returning();
+
+    return historyEntry;
   }
 }
 

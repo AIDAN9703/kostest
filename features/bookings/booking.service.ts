@@ -45,6 +45,8 @@ import type { SupportedTimezones } from '@/shared/lib/utils/date-helpers';
 import { isValidUUID } from '@/shared/lib/utils/general-utils';
 import { bookingGroupService } from '@/features/booking-groups/booking-group.service';
 import { bookingPricingService } from './booking-pricing.service';
+import { bookingStatusService } from './booking-status.service';
+import { fetchBoatAndTier } from './booking-helpers';
 
 // ============================================================================
 // BOOKING SERVICE CLASS
@@ -71,44 +73,15 @@ export class BookingService {
       throw new Error("Start date/time is required");
     }
 
-    // Fetch boat
-    const [boat] = await db
-      .select({
-        id: boats.id,
-        ownerId: boats.ownerId,
-        cleaningFee: boats.cleaningFee,
-        depositAmount: boats.depositAmount,
-        crewRequired: boats.crewRequired,
-      })
-      .from(boats)
-      .where(eq(boats.id, input.boatId))
-      .limit(1);
-
-    if (!boat) {
-      throw new Error(`Boat not found: ${input.boatId}`);
-    }
-
-    // Fetch pricing tier
-    const [pricingTier] = await db
-      .select({
-        id: boatPricingTiers.id,
-        hours: boatPricingTiers.hours,
-        price: boatPricingTiers.price,
-      })
-      .from(boatPricingTiers)
-      .where(eq(boatPricingTiers.id, input.pricingTierId))
-      .limit(1);
-
-    if (!pricingTier) {
-      throw new Error(`Pricing tier not found: ${input.pricingTierId}`);
-    }
+    const { boat, tier } = await fetchBoatAndTier(input.boatId, input.pricingTierId);
+    if (!tier) throw new Error(`Pricing tier not found: ${input.pricingTierId}`);
 
     const resolvedEndDateTime =
-      endDateTime ?? calculateEndDateTime(startDateTime, pricingTier.hours);
+      endDateTime ?? calculateEndDateTime(startDateTime, tier.hours);
 
     // Calculate pricing in cents
     const priceBreakdown = calculateBookingPriceFromDollars(
-      pricingTier.price,
+      tier.price,
       boat.cleaningFee ?? 0,
       0 // captain fee
     );
@@ -171,15 +144,12 @@ export class BookingService {
       });
 
     // 3. Create initial status history entry
-    await db
-      .insert(bookingStatusHistory)
-      .values({
-        bookingId: newBooking.id,
-        fromStatus: null,
-        toStatus: initialStatus,
-        changedByUserId: assignedAdminId ?? null,
-        reason: bookingType === "REQUEST" ? "Booking request created by admin" : "Admin created booking",
-      });
+    await bookingStatusService.createInitialHistory(
+      newBooking.id,
+      initialStatus,
+      assignedAdminId,
+      bookingType === "REQUEST" ? "Booking request created by admin" : "Admin created booking"
+    );
 
     return newBooking;
   }
@@ -329,13 +299,12 @@ export class BookingService {
         currency: "USD",
       });
 
-      await db.insert(bookingStatusHistory).values({
-        bookingId: booking.id,
-        fromStatus: null,
-        toStatus: "DRAFT",
-        changedByUserId: assignedAdminId ?? null,
-        reason: "Draft booking created",
-      });
+      await bookingStatusService.createInitialHistory(
+        booking.id,
+        "DRAFT",
+        assignedAdminId,
+        "Draft booking created"
+      );
 
       bookingIds.push(booking.id);
     }
@@ -497,13 +466,12 @@ export class BookingService {
         currency: "USD",
       });
 
-      await db.insert(bookingStatusHistory).values({
-        bookingId: booking.id,
-        fromStatus: null,
-        toStatus: "DRAFT",
-        changedByUserId: assignedAdminId ?? null,
-        reason: "Booking created",
-      });
+      await bookingStatusService.createInitialHistory(
+        booking.id,
+        "DRAFT",
+        assignedAdminId,
+        "Booking created"
+      );
 
       bookingIds.push(booking.id);
     }
@@ -589,24 +557,10 @@ export class BookingService {
     const bookingIds: string[] = [];
 
     for (const b of draftBookings) {
-      await db
-        .update(bookings)
-        .set({
-          bookingStatus: "APPROVED",
-          acceptedAt: now,
-          acceptedCustomerNote: input.customerNote ?? null,
-          updatedAt: now,
-        })
-        .where(eq(bookings.id, b.id));
-
-      await db.insert(bookingStatusHistory).values({
-        bookingId: b.id,
-        fromStatus: "DRAFT",
-        toStatus: "APPROVED",
-        changedByUserId: null,
-        reason: "Customer accepted",
+      await bookingStatusService.acceptDraft(b.id, {
+        acceptedAt: now,
+        acceptedCustomerNote: input.customerNote ?? null,
       });
-
       bookingIds.push(b.id);
     }
 
@@ -647,30 +601,11 @@ export class BookingService {
       specialRequests?: string | null;
     }
   ): Promise<Booking> {
-    // Fetch boat and pricing tier
-    const [boat] = await db
-      .select({
-        id: boats.id,
-        ownerId: boats.ownerId,
-        cleaningFee: boats.cleaningFee,
-        depositAmount: boats.depositAmount,
-      })
-      .from(boats)
-      .where(eq(boats.id, input.boatId))
-      .limit(1);
+    const { boat, tier } = await fetchBoatAndTier(input.boatId, input.pricingTierId);
+    if (!tier) throw new Error(`Pricing tier not found: ${input.pricingTierId}`);
 
-    if (!boat) throw new Error(`Boat not found: ${input.boatId}`);
-
-    const [pricingTier] = await db
-      .select({ id: boatPricingTiers.id, price: boatPricingTiers.price, hours: boatPricingTiers.hours })
-      .from(boatPricingTiers)
-      .where(eq(boatPricingTiers.id, input.pricingTierId))
-      .limit(1);
-
-    if (!pricingTier) throw new Error(`Pricing tier not found: ${input.pricingTierId}`);
-
-    const resolvedEndDateTime = input.endDateTime ?? calculateEndDateTime(input.startDateTime, pricingTier.hours);
-    const priceBreakdown = calculateBookingPriceFromDollars(pricingTier.price, boat.cleaningFee ?? 0, 0);
+    const resolvedEndDateTime = input.endDateTime ?? calculateEndDateTime(input.startDateTime, tier.hours);
+    const priceBreakdown = calculateBookingPriceFromDollars(tier.price, boat.cleaningFee ?? 0, 0);
     const depositAmountCents = dollarsToCents(boat.depositAmount ?? 0);
 
     const now = new Date();
@@ -710,13 +645,12 @@ export class BookingService {
       currency: "USD",
     });
 
-    await db.insert(bookingStatusHistory).values({
-      bookingId: newBooking.id,
-      fromStatus: null,
-      toStatus: "PENDING",
-      changedByUserId: input.userId ?? null,
-      reason: "Booking request submitted",
-    });
+    await bookingStatusService.createInitialHistory(
+      newBooking.id,
+      "PENDING",
+      input.userId,
+      "Booking request submitted"
+    );
 
     return newBooking;
   }
@@ -727,7 +661,7 @@ export class BookingService {
   async createInstantBooking(
     input: {
       boatId: string;
-      pricingTierId: string;
+      pricingTierId: string | null;
       userId?: string | null;
       customerName: string;
       customerEmail: string;
@@ -739,32 +673,35 @@ export class BookingService {
       specialRequests?: string | null;
       stripePaymentIntentId?: string;
       stripeCustomerId?: string;
+      stripeCheckoutSessionId?: string;
+      /** When provided (e.g. from webhook metadata), use these instead of calculating from boat+tier */
+      pricingOverrideCents?: {
+        basePriceCents: number;
+        cleaningFeeCents: number;
+        captainFeeCents: number;
+        serviceFeeCents: number;
+        totalPriceCents: number;
+        depositAmountCents?: number;
+      };
     }
   ): Promise<Booking> {
-    const [boat] = await db
-      .select({
-        id: boats.id,
-        ownerId: boats.ownerId,
-        cleaningFee: boats.cleaningFee,
-        depositAmount: boats.depositAmount,
-      })
-      .from(boats)
-      .where(eq(boats.id, input.boatId))
-      .limit(1);
+    const { boat, tier } = await fetchBoatAndTier(input.boatId, input.pricingTierId);
 
-    if (!boat) throw new Error(`Boat not found: ${input.boatId}`);
+    let priceBreakdown: { basePriceCents: number; captainFeeCents: number; cleaningFeeCents: number; serviceFeeCents: number; totalPriceCents: number };
+    let depositAmountCents: number;
+    let resolvedEndDateTime: Date | null;
 
-    const [pricingTier] = await db
-      .select({ id: boatPricingTiers.id, price: boatPricingTiers.price, hours: boatPricingTiers.hours })
-      .from(boatPricingTiers)
-      .where(eq(boatPricingTiers.id, input.pricingTierId))
-      .limit(1);
-
-    if (!pricingTier) throw new Error(`Pricing tier not found: ${input.pricingTierId}`);
-
-    const resolvedEndDateTime = input.endDateTime ?? calculateEndDateTime(input.startDateTime, pricingTier.hours);
-    const priceBreakdown = calculateBookingPriceFromDollars(pricingTier.price, boat.cleaningFee ?? 0, 0);
-    const depositAmountCents = dollarsToCents(boat.depositAmount ?? 0);
+    if (input.pricingOverrideCents) {
+      priceBreakdown = input.pricingOverrideCents;
+      depositAmountCents = input.pricingOverrideCents.depositAmountCents ?? 0;
+      resolvedEndDateTime = input.endDateTime;
+    } else {
+      if (!tier) throw new Error("pricingTierId or pricingOverrideCents required");
+      resolvedEndDateTime = input.endDateTime ?? calculateEndDateTime(input.startDateTime, tier.hours);
+      const calc = calculateBookingPriceFromDollars(tier.price, boat.cleaningFee ?? 0, 0);
+      priceBreakdown = calc;
+      depositAmountCents = dollarsToCents(boat.depositAmount ?? 0);
+    }
 
     const now = new Date();
     
@@ -777,7 +714,7 @@ export class BookingService {
         userId: input.userId ?? null,
         boatOwnerId: boat.ownerId,
         boatId: input.boatId,
-        pricingTierId: input.pricingTierId,
+        pricingTierId: input.pricingTierId ?? null,
         customerName: input.customerName,
         customerEmail: input.customerEmail,
         customerPhone: input.customerPhone,
@@ -805,13 +742,12 @@ export class BookingService {
     });
 
     // Create status history
-    await db.insert(bookingStatusHistory).values({
-      bookingId: newBooking.id,
-      fromStatus: null,
-      toStatus: "CONFIRMED",
-      changedByUserId: input.userId ?? null,
-      reason: "Instant booking - payment received",
-    });
+    await bookingStatusService.createInitialHistory(
+      newBooking.id,
+      "CONFIRMED",
+      input.userId,
+      "Instant booking - payment received"
+    );
 
     // Create payment record
     await db.insert(payments).values({
@@ -823,6 +759,7 @@ export class BookingService {
       status: "SUCCEEDED",
       paymentMethodType: "STRIPE_CHECKOUT",
       stripePaymentIntentId: input.stripePaymentIntentId ?? null,
+      stripeCheckoutSessionId: input.stripeCheckoutSessionId ?? null,
       stripeCustomerId: input.stripeCustomerId ?? null,
       processedAt: now,
     });
@@ -857,9 +794,16 @@ export class BookingService {
     if (filters?.bookingStatus) {
       whereConditions.push(eq(bookings.bookingStatus, filters.bookingStatus));
     }
-    // Payment status filter - join with payments table to check status
+    // Payment status filter - use EXISTS to avoid duplicate rows from multiple payments per booking
     if (filters?.paymentStatus) {
-      whereConditions.push(eq(payments.status, filters.paymentStatus));
+      whereConditions.push(
+        sql`EXISTS (
+          SELECT 1 FROM payment p 
+          WHERE p.payable_type = 'BOOKING' 
+          AND p.payable_id = ${bookings.id} 
+          AND p.status = ${filters.paymentStatus}
+        )`
+      );
     }
     if (filters?.bookingType) {
       whereConditions.push(eq(bookings.bookingType, filters.bookingType));
@@ -903,8 +847,12 @@ export class BookingService {
       id: bookings.id,
       bookingType: bookings.bookingType,
       bookingStatus: bookings.bookingStatus,
-      // Payment status from payments table (latest/first payment)
-      paymentStatus: payments.status,
+      // Payment status from latest payment (subquery avoids duplicate rows when booking has multiple payments)
+      paymentStatus: sql<string>`(
+        SELECT p.status FROM payment p 
+        WHERE p.payable_type = 'BOOKING' AND p.payable_id = ${bookings.id} 
+        ORDER BY p.created_at DESC LIMIT 1
+      )`.as('paymentStatus'),
       customerName: bookings.customerName,
       customerEmail: bookings.customerEmail,
       customerPhone: bookings.customerPhone,
@@ -939,10 +887,6 @@ export class BookingService {
       db.select(selectFields)
         .from(bookings)
         .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
-        .leftJoin(payments, and(
-          eq(payments.payableType, 'BOOKING'),
-          eq(payments.payableId, bookings.id)
-        ))
         .leftJoin(boats, eq(bookings.boatId, boats.id))
         .leftJoin(bookingGroups, eq(bookings.bookingGroupId, bookingGroups.id))
         .leftJoin(users, eq(bookings.userId, users.id))
@@ -954,19 +898,16 @@ export class BookingService {
       db.select({ value: count() })
         .from(bookings)
         .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
-        .leftJoin(payments, and(
-          eq(payments.payableType, 'BOOKING'),
-          eq(payments.payableId, bookings.id)
-        ))
         .leftJoin(boats, eq(bookings.boatId, boats.id))
         .where(whereClause)
     ]);
 
-    // Map results, defaulting to 0 cents if no pricing record
+    // Map results, defaulting to 0 cents if no pricing record, PENDING if no payment
     const mappedBookings: BookingListItem[] = bookingsData.map(b => ({
       ...b,
       totalAmountCents: b.totalAmountCents ?? 0,
       currency: b.currency ?? 'USD',
+      paymentStatus: (b.paymentStatus ?? 'PENDING') as PaymentStatus,
     }));
 
     return {
@@ -1022,9 +963,17 @@ export class BookingService {
         totalAmountCents: bookingPricing.totalAmountCents,
         depositAmountCents: bookingPricing.depositAmountCents,
         currency: bookingPricing.currency,
-        // Payment info from payments table
-        paymentStatus: payments.status,
-        paymentMethod: payments.paymentMethodType,
+        // Payment info - subquery for latest payment (avoids duplicate rows)
+        paymentStatus: sql<string>`(
+          SELECT p.status FROM payment p 
+          WHERE p.payable_type = 'BOOKING' AND p.payable_id = ${bookings.id} 
+          ORDER BY p.created_at DESC LIMIT 1
+        )`.as('paymentStatus'),
+        paymentMethod: sql<string>`(
+          SELECT p.payment_method_type FROM payment p 
+          WHERE p.payable_type = 'BOOKING' AND p.payable_id = ${bookings.id} 
+          ORDER BY p.created_at DESC LIMIT 1
+        )`.as('paymentMethod'),
         // refundAmountCents removed - calculate from payments table if needed
         specialRequests: bookings.specialRequests,
         assignedAdminId: bookings.assignedAdminId,
@@ -1056,10 +1005,6 @@ export class BookingService {
       })
       .from(bookings)
       .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
-      .leftJoin(payments, and(
-        eq(payments.payableType, 'BOOKING'),
-        eq(payments.payableId, bookings.id)
-      ))
       .leftJoin(boats, eq(bookings.boatId, boats.id))
       .leftJoin(users, eq(bookings.userId, users.id))
       .leftJoin(boatOwner, eq(bookings.boatOwnerId, boatOwner.id))
@@ -1290,6 +1235,7 @@ export class BookingService {
 
   /**
    * Update booking status (creates history entry)
+   * Delegates to status service for consistency
    */
   async updateBookingStatus(
     id: string, 
@@ -1301,36 +1247,20 @@ export class BookingService {
       throw new Error(`Invalid UUID format: ${id}`);
     }
 
-    // Get current status for history
-    const [current] = await db
-      .select({ status: bookings.bookingStatus })
+    await bookingStatusService.forceSetStatus(
+      id,
+      status,
+      reason ?? 'Status updated',
+      changedByUserId ?? null
+    );
+
+    const [updated] = await db
+      .select()
       .from(bookings)
       .where(eq(bookings.id, id))
       .limit(1);
 
-    if (!current) {
-      throw new Error(`Booking not found: ${id}`);
-    }
-
-    // Update booking
-    const [updated] = await db
-      .update(bookings)
-      .set({ 
-        bookingStatus: status,
-        updatedAt: new Date()
-      })
-      .where(eq(bookings.id, id))
-      .returning();
-
-    // Create history entry
-    await db.insert(bookingStatusHistory).values({
-      bookingId: id,
-      fromStatus: current.status,
-      toStatus: status,
-      changedByUserId: changedByUserId ?? null,
-      reason: reason ?? null,
-    });
-
+    if (!updated) throw new Error(`Booking not found: ${id}`);
     return updated;
   }
 
@@ -1464,13 +1394,7 @@ export class BookingService {
 
       updateData.boatId = boatId;
       updateData.pricingTierId = pricingTierId;
-      updateData.cleaningFee = cleaningFee;
-      updateData.captainFee = captainFee;
-      updateData.serviceFee = priceBreakdown.serviceFeeCents / 100;
-      updateData.totalAmount = priceBreakdown.totalPriceCents / 100;
-      updateData.depositAmount = boat.depositAmount ?? 0;
-
-      // Also update the pricing record
+      // Pricing lives in booking_pricing table only (migration 0014 removed from bookings)
       await db
         .update(bookingPricing)
         .set({
@@ -1483,10 +1407,16 @@ export class BookingService {
         })
         .where(eq(bookingPricing.bookingId, id));
     } else if (updates.manualOverride && updates.totalAmount !== undefined) {
-      // Manual override - just set the total
-      updateData.totalAmount = updates.totalAmount;
-      if (updates.cleaningFee !== undefined) updateData.cleaningFee = updates.cleaningFee;
-      if (updates.captainFee !== undefined) updateData.captainFee = updates.captainFee;
+      // Manual override - update booking_pricing only (pricing columns removed from bookings)
+      const manualPricingUpdates: Record<string, number | null> = {
+        totalAmountCents: dollarsToCents(updates.totalAmount),
+      };
+      if (updates.cleaningFee != null) manualPricingUpdates.cleaningFeeCents = dollarsToCents(updates.cleaningFee);
+      if (updates.captainFee != null) manualPricingUpdates.captainFeeCents = dollarsToCents(updates.captainFee);
+      await db
+        .update(bookingPricing)
+        .set(manualPricingUpdates)
+        .where(eq(bookingPricing.bookingId, id));
     }
 
     // Update the booking

@@ -168,12 +168,13 @@ async function sendGHLWebhookForBookingRequest(
   user: any
 ) {
   try {
-    // Calculate pricing from source data
+    // Calculate pricing from source data (use shared util for consistency)
+    const { calculateBookingPriceFromDollars } = await import('@/shared/lib/utils/pricing-utils');
     const basePrice = pricingTier.price;
     const cleaningFee = boat.cleaningFee || 0;
-    const subtotal = basePrice + cleaningFee;
-    const serviceFee = subtotal * 0.035; // 3.5% service fee
-    const totalAmount = subtotal + serviceFee;
+    const priceBreakdown = calculateBookingPriceFromDollars(basePrice, cleaningFee, 0);
+    const serviceFee = priceBreakdown.serviceFeeCents / 100;
+    const totalAmount = priceBreakdown.totalPriceCents / 100;
 
     const ghlData = {
       name: user.name || "",
