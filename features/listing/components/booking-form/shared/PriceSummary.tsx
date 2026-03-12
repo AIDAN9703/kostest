@@ -1,0 +1,63 @@
+"use client";
+
+import { Boat, PricingTier } from "@/shared/lib/types/types";
+import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
+
+interface PriceSummaryProps {
+  boat: Boat;
+  selectedPricingTier?: PricingTier | null;
+  show?: boolean;
+}
+
+export function PriceSummary({ boat, selectedPricingTier, show = true }: PriceSummaryProps) {
+  if (!selectedPricingTier || !show) return null;
+
+  // ✅ Use unified pricing calculation
+  const priceBreakdown = calculateBookingPrice(
+    selectedPricingTier.price,
+    boat.cleaningFee || 0,
+    0 // Captain fee included in base price
+  );
+
+  return (
+    <div className="pt-2">
+      <div className="text-sm font-semibold text-gray-900 mb-2">Price Breakdown</div>
+      
+      <div className="space-y-2">
+        {/* Base Price */}
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">{selectedPricingTier.hours}hr Charter</span>
+          <span className="font-medium text-gray-900">${priceBreakdown.basePrice.toFixed(2)}</span>
+        </div>
+        
+        {/* Captain Service - Included */}
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">Crew Selection</span>
+          <span className="font-medium text-emerald-600">Included</span>
+        </div>
+        
+        {/* Cleaning Fee */}
+        {priceBreakdown.cleaningFee > 0 && (
+          <div className="flex justify-between text-sm">
+            <span className="text-gray-600">Cleaning Fee</span>
+            <span className="font-medium text-gray-900">${priceBreakdown.cleaningFee.toFixed(2)}</span>
+          </div>
+        )}
+        
+        {/* Service Fee */}
+        <div className="flex justify-between text-sm">
+          <span className="text-gray-600">Card Processing Fee (3.5%)</span>
+          <span className="font-medium text-gray-900">${priceBreakdown.serviceFee.toFixed(2)}</span>
+        </div>
+        
+        {/* Total */}
+        <div className="border-t border-gray-200 pt-3 mt-3">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-gray-900">Total Amount</span>
+            <span className="text-xl font-bold text-primary">${priceBreakdown.totalPrice.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+} 

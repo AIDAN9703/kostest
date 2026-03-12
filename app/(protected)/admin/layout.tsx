@@ -1,0 +1,55 @@
+import { ReactNode } from "react";
+import { requireAuth } from "@/shared/lib/utils/auth-utils";
+import AdminSidebar from "@/shared/admin/components/AdminSidebar";
+import AdminHeader from "@/shared/admin/components/AdminHeader";
+import { QueryProvider } from "@/shared/lib/providers/QueryProvider";
+import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
+import KBar from "@/shared/admin/components/kbar";
+import ThemeProvider from "@/shared/admin/components/theme-provider";
+import { ActiveThemeProvider } from "@/shared/admin/components/active-theme";
+import { cn } from "@/shared/lib/utils/general-utils";
+import { cookies } from "next/headers";
+import "./admin-theme.css";
+
+export default async function AdminLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  // Require authentication - middleware already protects this route
+  const session = await requireAuth();
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+  const activeThemeValue =
+    cookieStore.get("admin_active_theme")?.value ?? "default";
+
+  return (
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <ActiveThemeProvider initialTheme={activeThemeValue}>
+        <KBar>
+          <SidebarProvider
+            defaultOpen={defaultOpen}
+            data-admin-theme
+            className={cn(
+              "admin-theme bg-background text-foreground font-sans antialiased",
+              activeThemeValue ? `theme-${activeThemeValue}` : "",
+            )}
+          >
+            <AdminSidebar />
+            <SidebarInset>
+              <AdminHeader session={session} />
+              <div className="flex-1 overflow-y-auto p-8">
+                <QueryProvider>{children}</QueryProvider>
+              </div>
+            </SidebarInset>
+          </SidebarProvider>
+        </KBar>
+      </ActiveThemeProvider>
+    </ThemeProvider>
+  );
+}

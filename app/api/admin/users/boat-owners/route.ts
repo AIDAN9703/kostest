@@ -1,0 +1,30 @@
+import { NextRequest } from "next/server";
+import { auth } from "@/auth";
+import { userService } from "@/features/users/user.service";
+import { apiSuccess, apiError } from "@/shared/lib/utils/api-helpers";
+
+/**
+ * GET /api/admin/users/boat-owners
+ * Get list of boat owners (for owner selection dropdowns)
+ * Query param: search (optional) - filters by name, email, username
+ */
+export async function GET(request: NextRequest) {
+  try {
+    // Admin authentication
+    const session = await auth();
+    if (!session?.user || !session.user.isAdmin) {
+      return apiError("Admin access required", 403);
+    }
+
+    const searchParams = request.nextUrl.searchParams;
+    const search = searchParams.get('search') || undefined;
+
+    const owners = await userService.getBoatOwners(search);
+    return apiSuccess(owners);
+  } catch (error) {
+    console.error("Error fetching boat owners:", error);
+    return apiError("Failed to fetch boat owners");
+  }
+}
+
+

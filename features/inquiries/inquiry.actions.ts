@@ -1,0 +1,428 @@
+'use server';
+
+import { auth } from '@/auth';
+import { db } from '@/database/db';
+import {
+  generalInquiries,
+  inquiryEvents,
+  inquiryOutcomeEnum,
+  type InquiryOutcome,
+  type InquiryStage,
+} from '@/database/schema';
+import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
+import { eq } from 'drizzle-orm';
+import { emailSchema, phoneRequiredSchema } from '@/shared/lib/validation/common';
+
+const outcomeSchema = z.enum(["OPEN", "WON", "LOST", "ABANDONED"]);
+
+// Schema for validation - defined inline for server actions
+const generalInquirySchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: emailSchema,
+  phone: phoneRequiredSchema,
+  date: z.string().optional(),
+  time: z.string().optional(),
+  budget: z.string().optional(),
+  guests: z.string().optional(),
+  message: z.string().optional(),
+  termsAccepted: z.boolean().refine(async (val) => val === true, {
+    message: 'You must agree to the terms and conditions',
+  }),
+});
+
+// Type for the client to use
+export type GeneralInquiryInput = z.input<typeof generalInquirySchema>;
+
+/**
+ * Creates a general booking inquiry
+ */
+export async function createGeneralInquiry(data: GeneralInquiryInput) {
+  try {
+    // Validate data first
+    const validatedData = await generalInquirySchema.parseAsync(data);
+
+    // Create the inquiry in the database
+    const result = await db.insert(generalInquiries).values({
+      name: validatedData.name,
+      email: validatedData.email,
+      phone: validatedData.phone,
+      date: validatedData.date ? new Date(validatedData.date) : null,
+      time: validatedData.time || null,
+      budget: validatedData.budget || null,
+      guests: validatedData.guests ? parseInt(validatedData.guests) : null,
+      message: validatedData.message || null,
+      termsAccepted: validatedData.termsAccepted,
+      stage: 'NEEDS_CONTACT',
+      outcome: 'OPEN',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }).returning();
+
+    // Create initial CREATED event for timeline
+    if (result[0]) {
+      await db.insert(inquiryEvents).values({
+        inquiryId: result[0].id,
+        eventType: 'CREATED',
+        createdBy: null,
+      });
+    }
+
+    // Revalidate admin pages that show inquiries
+    revalidatePath('/admin/inquiries');
+    revalidatePath('/admin');
+    revalidatePath('/admin/all');
+
+    return {
+      success: true,
+      inquiry: result[0],
+      message: 'Your inquiry has been submitted successfully. Our team will contact you shortly.',
+    };
+  } catch (error) {
+    console.error('Error creating general inquiry:', error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        error: 'Invalid inquiry data',
+        fieldErrors: error.flatten().fieldErrors,
+      };
+    }
+
+    return {
+      success: false,
+      error: 'Failed to submit your inquiry. Please try again.',
+    };
+  }
+}
+
+/**
+ * Update the outcome of a general inquiry (open -> won/lost/abandoned)
+ * Supports reopening closed inquiries (won/lost/abandoned -> open)
+ */
+export async function updateInquiryOutcome(
+  id: string,
+  newOutcome: string,
+  reason?: string
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const [existing] = await db
+      .select({
+        outcome: generalInquiries.outcome,
+        stage: generalInquiries.stage,
+      })
+      .from(generalInquiries)
+      .where(eq(generalInquiries.id, id));
+
+    if (!existing) {
+      return { success: false, error: 'Inquiry not found' };
+    }
+
+    const previousOutcome = existing.outcome;
+    if (previousOutcome === newOutcome) {
+      return { success: true, inquiry: null };
+    }
+
+    const updateData: Record<string, unknown> = {
+      outcome: newOutcome,
+      updatedAt: new Date(),
+    };
+
+    // If reopening (closed -> OPEN), reset stage appropriately
+    if (previousOutcome !== 'OPEN' && newOutcome === 'OPEN') {
+      if (existing.stage === 'CONVERTED') {
+        updateData.stage = 'CONTACTED';
+      }
+    }
+
+    const [result] = await db
+      .update(generalInquiries)
+      .set(updateData)
+      .where(eq(generalInquiries.id, id))
+      .returning();
+
+    const outcomePayload = {
+      inquiryId: id,
+      eventType: 'OUTCOME_CHANGE' as const,
+      previousOutcome: previousOutcome as InquiryOutcome,
+      newOutcome: newOutcome as InquiryOutcome,
+      content: reason?.trim() || null,
+      metadata: reason ? { reason } : null,
+      createdBy: session.user.id,
+    };
+    await db.insert(inquiryEvents).values(outcomePayload);
+
+    const newStageValue = updateData.stage;
+    if (newStageValue && newStageValue !== existing.stage) {
+      await db.insert(inquiryEvents).values({
+        inquiryId: id,
+        eventType: 'STAGE_CHANGE',
+        previousStage: existing.stage as InquiryStage,
+        newStage: newStageValue as InquiryStage,
+        createdBy: session.user.id,
+      });
+    }
+
+    revalidatePath('/admin/inquiries');
+    revalidatePath(`/admin/inquiries/${id}`);
+
+    return { success: true, inquiry: result };
+  } catch (error) {
+    console.error('Error updating inquiry outcome:', error);
+    return { success: false, error: 'Failed to update inquiry outcome' };
+  }
+}
+
+/**
+ * Add a note to an inquiry (creates NOTE event)
+ */
+export async function addInquiryNote(inquiryId: string, content: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const trimmed = content?.trim();
+    if (!trimmed) {
+      return { success: false, error: 'Note content is required' };
+    }
+
+    await db.insert(inquiryEvents).values({
+      inquiryId,
+      eventType: 'NOTE',
+      content: trimmed,
+      createdBy: session.user.id,
+    });
+
+    revalidatePath('/admin/inquiries');
+    revalidatePath(`/admin/inquiries/${inquiryId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error adding inquiry note:', error);
+    return { success: false, error: 'Failed to add note' };
+  }
+}
+
+/**
+ * Log a contact attempt (creates CONTACT_ATTEMPT event)
+ * Automatically updates stage from NEEDS_CONTACT → CONTACTED if this is the first contact
+ */
+export async function logContactAttempt(
+  inquiryId: string,
+  contactMethod: 'EMAIL' | 'PHONE' | 'SMS' | 'IN_PERSON' | 'OTHER',
+  content?: string
+) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const [inquiry] = await db
+      .select({ stage: generalInquiries.stage, outcome: generalInquiries.outcome })
+      .from(generalInquiries)
+      .where(eq(generalInquiries.id, inquiryId));
+
+    if (!inquiry) {
+      return { success: false, error: 'Inquiry not found' };
+    }
+
+    await db.insert(inquiryEvents).values({
+      inquiryId,
+      eventType: 'CONTACT_ATTEMPT',
+      contactMethod,
+      content: content?.trim() || null,
+      createdBy: session.user.id,
+    });
+
+    let stageUpdated = false;
+    if (inquiry.stage === 'NEEDS_CONTACT' && inquiry.outcome === 'OPEN') {
+      await db
+        .update(generalInquiries)
+        .set({
+          stage: 'CONTACTED',
+          updatedAt: new Date(),
+        })
+        .where(eq(generalInquiries.id, inquiryId));
+
+      await db.insert(inquiryEvents).values({
+        inquiryId,
+        eventType: 'STAGE_CHANGE',
+        previousStage: 'NEEDS_CONTACT',
+        newStage: 'CONTACTED',
+        createdBy: session.user.id,
+      });
+
+      stageUpdated = true;
+    }
+
+    revalidatePath('/admin/inquiries');
+    revalidatePath(`/admin/inquiries/${inquiryId}`);
+
+    return {
+      success: true,
+      stageUpdated,
+      message: stageUpdated
+        ? 'Contact logged and inquiry marked as CONTACTED'
+        : 'Contact logged',
+    };
+  } catch (error) {
+    console.error('Error logging contact attempt:', error);
+    return { success: false, error: 'Failed to log contact attempt' };
+  }
+}
+
+/**
+ * Mark inquiry as converted (when booking is created from inquiry)
+ * Updates stage to CONVERTED (only call this when booking is actually created)
+ */
+export async function markInquiryAsConverted(inquiryId: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const [inquiry] = await db
+      .select({ stage: generalInquiries.stage, outcome: generalInquiries.outcome })
+      .from(generalInquiries)
+      .where(eq(generalInquiries.id, inquiryId));
+
+    if (!inquiry) {
+      return { success: false, error: 'Inquiry not found' };
+    }
+
+    if (inquiry.stage === 'CONVERTED') {
+      return { success: true, message: 'Inquiry already marked as converted' };
+    }
+
+    const previousStage = inquiry.stage;
+
+    await db
+      .update(generalInquiries)
+      .set({
+        stage: 'CONVERTED',
+        updatedAt: new Date(),
+      })
+      .where(eq(generalInquiries.id, inquiryId));
+
+    if (inquiry.outcome !== 'WON') {
+      await db
+        .update(generalInquiries)
+        .set({
+          outcome: 'WON',
+          updatedAt: new Date(),
+        })
+        .where(eq(generalInquiries.id, inquiryId));
+
+      await db.insert(inquiryEvents).values({
+        inquiryId,
+        eventType: 'OUTCOME_CHANGE',
+        previousOutcome: inquiry.outcome,
+        newOutcome: 'WON',
+        content: 'Booking created - inquiry converted',
+        createdBy: session.user.id,
+      });
+    }
+
+    await db.insert(inquiryEvents).values({
+      inquiryId,
+      eventType: 'STAGE_CHANGE',
+      previousStage,
+      newStage: 'CONVERTED',
+      content: 'Booking created from inquiry',
+      createdBy: session.user.id,
+    });
+
+    revalidatePath('/admin/inquiries');
+    revalidatePath(`/admin/inquiries/${inquiryId}`);
+
+    return { success: true, message: 'Inquiry marked as converted' };
+  } catch (error) {
+    console.error('Error marking inquiry as converted:', error);
+    return { success: false, error: 'Failed to mark inquiry as converted' };
+  }
+}
+
+/**
+ * Reopen a closed inquiry (WON/LOST/ABANDONED → OPEN)
+ */
+export async function reopenInquiry(inquiryId: string) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const [inquiry] = await db
+      .select({
+        outcome: generalInquiries.outcome,
+        stage: generalInquiries.stage,
+      })
+      .from(generalInquiries)
+      .where(eq(generalInquiries.id, inquiryId));
+
+    if (!inquiry) {
+      return { success: false, error: 'Inquiry not found' };
+    }
+
+    if (inquiry.outcome === 'OPEN') {
+      return { success: false, error: 'Inquiry is already open' };
+    }
+
+    const previousOutcome = inquiry.outcome;
+
+    type ReopenUpdatePayload = {
+      outcome: 'OPEN';
+      updatedAt: Date;
+      stage?: InquiryStage;
+    };
+    const updateData: ReopenUpdatePayload = {
+      outcome: 'OPEN',
+      updatedAt: new Date(),
+    };
+
+    if (inquiry.stage === 'CONVERTED') {
+      updateData.stage = 'CONTACTED';
+    }
+
+    await db
+      .update(generalInquiries)
+      .set(updateData)
+      .where(eq(generalInquiries.id, inquiryId));
+
+    await db.insert(inquiryEvents).values({
+      inquiryId,
+      eventType: 'OUTCOME_CHANGE',
+      previousOutcome,
+      newOutcome: 'OPEN',
+      content: `Reopened from ${previousOutcome}`,
+      createdBy: session.user.id,
+    });
+
+    if (updateData.stage && updateData.stage !== inquiry.stage) {
+      await db.insert(inquiryEvents).values({
+        inquiryId,
+        eventType: 'STAGE_CHANGE',
+        previousStage: inquiry.stage,
+        newStage: updateData.stage,
+        createdBy: session.user.id,
+      });
+    }
+
+    revalidatePath('/admin/inquiries');
+    revalidatePath(`/admin/inquiries/${inquiryId}`);
+
+    return { success: true, message: 'Inquiry reopened successfully' };
+  } catch (error) {
+    console.error('Error reopening inquiry:', error);
+    return { success: false, error: 'Failed to reopen inquiry' };
+  }
+}

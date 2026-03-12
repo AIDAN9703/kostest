@@ -1,0 +1,11 @@
+export { default as HeroSection } from './HeroSection';
+export { default as TestimonialsSection } from './TestimonialsSection';
+export { default as BrandsCarousel } from './BrandsCarousel';
+export { default as FeaturedFleet } from './FeaturedFleet';
+export { default as ExperienceSection } from './ExperienceSection'; 
+export { default as WhyChooseUs } from './WhyChooseUs';
+export { default as PopularExperiences } from './PopularExperiences';
+export { default as RequestToBook } from './RequestToBook';
+export { default as ClientsShowcase } from './ClientsShowcase';
+export { default as LocationsSection } from './LocationsSection';
+export { default as NearbyBoats } from './NearbyBoats';

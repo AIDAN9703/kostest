@@ -1,0 +1,31 @@
+// Export all relations
+
+// Core relations
+export * from "./boats.relations";
+export * from "./users.relations";
+export * from "./captainProfiles.relations";
+export * from "./ownerProfiles.relations";
+
+// Booking relations
+export * from "./bookingGroups.relations";
+export * from "./bookings.relations";
+export * from "./bookingPricing.relations";
+export * from "./bookingStatusHistory.relations";
+export * from "./bookingAdminNotes.relations";
+export * from "./bookingOps.relations";
+
+// Payment relations
+export * from "./payments.relations";
+
+// Other relations
+export * from "./reviews.relations";
+export * from "./verifications.relations";
+export * from "./notifications.relations";
+export * from "./generalInquiries.relations";
+export * from "./inquiryEvents.relations";
+export * from "./boatPricingTiers.relations";
+export * from "./boatBlocking.relations";
+export * from "./boatGoogleCalendars.relations";
+export * from "./externalGoogleCalendarSyncEvents.relations";
+export * from "./events.relations";
+

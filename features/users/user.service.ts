@@ -1,0 +1,341 @@
+//drizzle
+import { db } from '@/database/db';
+import { users, ownerProfiles } from '@/database/schema';
+import { and, count, eq, desc, or, ilike } from 'drizzle-orm';
+import { bookings, bookingPricing } from '@/database/schema';
+import { type User   } from '@/database/types';
+
+//types
+import { type UserFilterInput, type CreateUserInput, type UpdateUserInput } from '@/features/users/user.validation';
+import { type PaginatedUsersResponse, type UserWithRelations } from '@/features/users/user.types';
+
+//bcrypt
+import { hash } from 'bcryptjs';
+
+/**
+ * User Service Layer
+ * Single source of truth for all user database operations
+ */
+export class UserService {
+  /**
+   * Get paginated and filtered users
+   */
+  async getAllUsers(filters?: UserFilterInput): Promise<PaginatedUsersResponse> {
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 10;
+    const offset = (page - 1) * limit;
+
+    // Build queries
+    let query = db.select().from(users);
+    let countQuery = db.select({ count: count() }).from(users);
+
+    if (filters) {
+      const conditions = [];
+
+      // Search across multiple fields
+      if (filters.search) {
+        conditions.push(
+          or(
+            ilike(users.firstName, `%${filters.search}%`),
+            ilike(users.lastName, `%${filters.search}%`),
+            ilike(users.email, `%${filters.search}%`),
+            ilike(users.username, `%${filters.search}%`)
+          )
+        );
+      }
+
+      // Status filter
+      if (filters.status) {
+        conditions.push(eq(users.status, filters.status));
+      }
+
+      // Admin filter  
+      if (filters.isAdmin !== undefined) {
+        conditions.push(eq(users.isAdmin, filters.isAdmin));
+      }
+
+      // Apply conditions if any exist
+      if (conditions.length > 0) {
+        const whereClause = and(...conditions);
+        query = query.where(whereClause) as any;
+        countQuery = countQuery.where(whereClause) as any;
+      }
+    }
+
+    // Execute in parallel for performance
+    const [usersData, totalCountResult] = await Promise.all([
+      query.orderBy(desc(users.createdAt)).limit(limit).offset(offset),
+      countQuery
+    ]);
+
+    const totalCount = totalCountResult[0]?.count || 0;
+
+    return {
+      users: usersData,
+      totalCount,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit)
+    };
+  }
+
+  /**
+   * Get single user by ID with optional relations
+   * 
+   * @param id - User ID
+   * @param options - Relations to include (if omitted, returns basic user only)
+   * @returns User with requested relations, or null if not found
+   * 
+   * @example
+   * // Basic user (no relations)
+   * const user = await userService.getUserById(id);
+   * 
+   * @example
+   * // User with relations for admin detail page
+   * const user = await userService.getUserById(id, {
+   *   ownedBoats: { limit: 10 },
+   *   captainProfile: true,
+   *   bookings: { limit: 5 }
+   * });
+   */
+  async getUserById(
+    id: string,
+    options?: {
+      ownedBoats?: { limit: number };
+      captainProfile?: true;
+      bookings?: { limit: number };
+      reviewsAsReviewer?: { limit: number };
+      notifications?: { limit: number; unreadOnly?: boolean };
+    }
+  ): Promise<UserWithRelations | null> {
+    // If no options provided, use simple query
+    if (!options || Object.keys(options).length === 0) {
+    const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return user || null;
+  }
+
+    // Build relations object
+    const withClause: any = {};
+
+    if (options.ownedBoats) {
+      withClause.ownedBoats = {
+          columns: {
+            id: true,
+            name: true,
+            category: true,
+            active: true,
+            featured: true,
+            mainImage: true,
+            createdAt: true,
+          },
+        limit: options.ownedBoats.limit,
+      };
+    }
+
+    if (options.captainProfile) {
+      withClause.captainProfile = {
+          columns: {
+            userId: true,
+            status: true,
+            uscgLicensed: true,
+          },
+      };
+    }
+
+    if (options.reviewsAsReviewer) {
+      withClause.reviewsAsReviewer = {
+          columns: {
+            id: true,
+            rating: true,
+            createdAt: true,
+          },
+        limit: options.reviewsAsReviewer.limit,
+      };
+    }
+
+    if (options.notifications) {
+      withClause.notifications = {
+          columns: {
+            id: true,
+            type: true,
+            title: true,
+            body: true,
+            status: true,
+            readAt: true,
+            createdAt: true,
+          },
+        limit: options.notifications.limit,
+        orderBy: (notifications: any, { desc }: any) => [desc(notifications.createdAt)],
+        ...(options.notifications.unreadOnly && {
+          where: (notifications: any, { isNull }: any) => isNull(notifications.readAt),
+        }),
+      };
+    }
+
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, id),
+      with: withClause,
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    // Handle bookings separately to join with booking_pricing for totalAmountCents
+    if (options.bookings) {
+      const bookingsData = await db
+        .select({
+          id: bookings.id,
+          bookingStatus: bookings.bookingStatus,
+          bookingType: bookings.bookingType,
+          startDateTime: bookings.startDateTime,
+          createdAt: bookings.createdAt,
+          totalAmountCents: bookingPricing.totalAmountCents,
+        })
+        .from(bookings)
+        .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
+        .where(eq(bookings.userId, id))
+        .orderBy(desc(bookings.createdAt))
+        .limit(options.bookings.limit);
+
+      // Transform to match BookingListItemShared type
+      const transformedBookings = bookingsData.map((b) => ({
+        id: b.id,
+        bookingStatus: b.bookingStatus,
+        bookingType: b.bookingType,
+        startDateTime: b.startDateTime,
+        totalAmountCents: b.totalAmountCents ? Number(b.totalAmountCents) : null,
+        createdAt: b.createdAt,
+      }));
+
+      // Properly type the user with bookings
+      (user as UserWithRelations).bookings = transformedBookings;
+    }
+
+    return user as UserWithRelations;
+  }
+
+  
+
+
+  /**
+   * Create new user (with password hashing)
+   */
+  async createUser(userData: CreateUserInput): Promise<User> {
+    // Hash password before storage (CRITICAL!)
+    const hashedPassword = await hash(userData.password, 10);
+
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        ...userData,
+        password: hashedPassword,
+      })
+      .returning();
+
+    return newUser;
+  }
+
+  /**
+   * Update user (partial updates allowed)
+   */
+  async updateUser(id: string, data: Partial<UpdateUserInput>): Promise<User> {
+    // Prepare update data
+    const updateData: Partial<User> = {
+      ...data,
+      updatedAt: new Date(),
+    };
+    
+    // Hash password if being updated
+    if (data.password) {
+      updateData.password = await hash(data.password, 10);
+    }
+
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, id))
+      .returning();
+
+    if (!updatedUser) {
+      throw new Error(`User not found: ${id}`);
+    }
+
+    return updatedUser;
+  }
+
+
+  /**
+   * Delete user (hard delete)
+   */
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+
+  /**
+   * Get list of available boat owners
+   * Returns only users who have an owner_profile (can own boats)
+   * Used for owner selection in boat create/edit forms
+   */
+  async getBoatOwners(search?: string) {
+    const conditions = [eq(users.status, 'ACTIVE')];
+
+    // Optionally filter by search query
+    if (search) {
+      conditions.push(
+        or(
+          ilike(users.firstName, `%${search}%`),
+          ilike(users.lastName, `%${search}%`),
+          ilike(users.email, `%${search}%`),
+          ilike(users.username, `%${search}%`)
+        )!
+      );
+    }
+
+    const whereClause = and(...conditions);
+
+    return db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        username: users.username,
+        profileImage: users.profileImage,
+      })
+      .from(users)
+      .innerJoin(ownerProfiles, eq(ownerProfiles.userId, users.id))
+      .where(whereClause)
+      .orderBy(desc(users.createdAt))
+      .limit(50);
+  }
+
+  /**
+   * Get list of admin users
+   * Returns active admin users for assignment dropdowns
+   */
+  async getAdmins() {
+    const admins = await db
+      .select({
+        id: users.id,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        username: users.username,
+        profileImage: users.profileImage,
+      })
+      .from(users)
+      .where(and(
+        eq(users.isAdmin, true),
+        eq(users.status, 'ACTIVE')
+      ))
+      .orderBy(desc(users.createdAt))
+      .limit(50);
+    
+    return admins;
+  }
+}
+
+// Export singleton instance
+export const userService = new UserService();

@@ -1,0 +1,475 @@
+/**
+ * Booking Types - Single source of truth for all booking-related types
+ * 
+ * TYPE CATEGORIES:
+ * 1. Server Types - Date objects, used in service layer and server components
+ * 2. Client Types - ISO strings for dates, used in client components after serialization
+ * 3. Form Types - User input types with string dates (forms always produce strings)
+ * 4. Display Types - Formatted for specific UI contexts (calendar, profile, etc.)
+ * 
+ * MONEY CONVENTION:
+ * - All monetary values in database/service layer are in CENTS (integers)
+ * - Types with "Cents" suffix indicate cents values
+ * - Display layer converts to dollars using money-utils
+ */
+
+import type { PricingTier } from "@/shared/lib/types/types";
+import type { Cents } from "@/shared/lib/utils/money-utils";
+import type { 
+  BookingStatus, 
+  BookingType, 
+  BookingSource,
+  PaymentStatus,
+  PaymentType,
+  AdminNoteType
+} from "@/database/types";
+
+// Re-export PricingTier for convenience (also used by boats feature)
+export type { PricingTier } from "@/shared/lib/types/types";
+
+// Re-export relevant database types
+export type { BookingStatus, BookingType, BookingSource, PaymentStatus, PaymentType, AdminNoteType };
+
+// ============================================================================
+// NEW STRUCTURED TYPES (Use these going forward)
+// All monetary values are in CENTS
+// ============================================================================
+
+/**
+ * Pricing breakdown in cents - matches booking_pricing table
+ */
+export interface BookingPricingData {
+  basePriceCents: Cents;
+  captainFeeCents: Cents | null;
+  cleaningFeeCents: Cents | null;
+  serviceFeeCents: Cents | null;
+  taxAmountCents: Cents | null;
+  discountAmountCents: Cents | null;
+  discountCode: string | null;
+  depositAmountCents: Cents | null;
+  totalAmountCents: Cents;
+  currency: string;
+  depositDueDate: Date | null;
+  remainderDueDate: Date | null;
+}
+
+/**
+ * Payment record - matches payment table
+ */
+export interface BookingPaymentData {
+  id: string;
+  paymentType: PaymentType;
+  amountCents: Cents;
+  currency: string;
+  status: PaymentStatus;
+  paymentMethodType: string;
+  paymentMethodDetail: string | null;
+  stripePaymentIntentId: string | null;
+  stripePaymentLinkId: string | null;
+  processedAt: Date | null;
+  createdAt: Date;
+}
+
+/**
+ * Status history entry
+ */
+export interface BookingStatusHistoryEntry {
+  id: string;
+  fromStatus: BookingStatus | null;
+  toStatus: BookingStatus;
+  changedByUserId: string | null;
+  changedByName?: string | null;
+  reason: string | null;
+  createdAt: Date;
+}
+
+/**
+ * Admin note entry
+ */
+export interface BookingAdminNoteEntry {
+  id: string;
+  adminUserId: string;
+  adminName?: string | null;
+  noteType: AdminNoteType;
+  content: string;
+  createdAt: Date;
+}
+
+/**
+ * Complete booking with all related data
+ * This is the new "full" booking type with nested relations
+ */
+export interface BookingWithRelations {
+  // Core booking info
+  id: string;
+  bookingType: BookingType;
+  bookingStatus: BookingStatus;
+  source: BookingSource | null;
+  
+  // Customer info
+  userId: string | null;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  
+  // Booking details
+  boatId: string;
+  pricingTierId: string | null;
+  startDateTime: Date;
+  endDateTime: Date | null;
+  numberOfPassengers: number;
+  isMultiDay: boolean;
+  needsCaptain: boolean | null;
+  pickupLocation: string | null;
+  dropoffLocation: string | null;
+  specialRequests: string | null;
+  
+  // Admin assignment
+  assignedAdminId: string | null;
+  
+  // Cancellation info
+  cancelledAt: Date | null;
+  cancellationReason: string | null;
+  cancelledBy: string | null;
+  
+  // Timestamps
+  createdAt: Date;
+  updatedAt: Date;
+  expiresAt: Date | null;
+  
+  // Related data (from new tables)
+  pricing: BookingPricingData | null;
+  payments: BookingPaymentData[];
+  statusHistory: BookingStatusHistoryEntry[];
+  adminNotes: BookingAdminNoteEntry[];
+  
+  // Joined boat info
+  boat?: {
+    id: string;
+    name: string;
+    category: string | null;
+    mainImage: string | null;
+    capacity: number | null;
+    timezone: string | null;
+    ownerId: string | null;
+  } | null;
+  
+  // Joined user info (customer)
+  user?: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+    profileImage: string | null;
+  } | null;
+  
+  // Assigned admin info
+  assignedAdmin?: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string;
+  } | null;
+}
+
+/**
+ * Simplified booking for list views (optimized query)
+ */
+export interface BookingListItemNew {
+  id: string;
+  bookingType: BookingType;
+  bookingStatus: BookingStatus;
+  source: BookingSource | null;
+  customerName: string;
+  customerEmail: string;
+  startDateTime: Date;
+  endDateTime: Date | null;
+  numberOfPassengers: number;
+  needsCaptain: boolean | null;
+  createdAt: Date;
+  
+  // Pricing summary (from booking_pricing)
+  totalAmountCents: Cents | null;
+  currency: string | null;
+  
+  // Payment summary (calculated from payments)
+  paymentStatus: PaymentStatus | null;
+  totalPaidCents: Cents;
+  
+  // Joined boat info
+  boatId: string;
+  boatName: string | null;
+  boatCategory: string | null;
+  boatMainImage: string | null;
+  
+  // Assigned admin info
+  assignedAdminId: string | null;
+  assignedAdminFirstName: string | null;
+  assignedAdminLastName: string | null;
+}
+
+// ============================================================================
+// SERVER TYPES (Dates as Date objects - used in service layer & server components)
+// ============================================================================
+
+/**
+ * Booking list item for admin tables
+ * Returned by BookingService.getAllBookings()
+ * 
+ * Note: When passed to client components, dates become ISO strings due to React serialization
+ * All monetary values are in CENTS
+ */
+export interface BookingListItem {
+  id: string;
+  bookingType: string;
+  bookingStatus: string;
+  paymentStatus: string | null;
+  customerName: string | null;
+  customerEmail: string | null;
+  customerPhone: string | null;
+  startDateTime: Date;
+  endDateTime: Date | null;
+  numberOfPassengers: number;
+  
+  // Pricing in cents (from booking_pricing)
+  totalAmountCents: number;
+  currency: string;
+  
+  /** @deprecated Use payments table instead - stored in payments.stripePaymentLinkId */
+  stripePaymentLinkId?: string | null;
+  needsCaptain: boolean | null;
+  createdAt: Date;
+  
+  // Joined boat info
+  boatId: string | null;
+  bookingGroupId: string | null;
+  bookingGroupName: string | null;
+  boatName: string | null;
+  boatCategory: string | null;
+  boatMainImage: string | null;
+  
+  // Joined user info (customer)
+  userId: string | null;
+  userFirstName: string | null;
+  userLastName: string | null;
+  userEmail: string | null;
+  userProfileImage: string | null;
+  
+  // Assigned admin info
+  assignedAdminId: string | null;
+  assignedAdminFirstName: string | null;
+  assignedAdminLastName: string | null;
+  assignedAdminEmail: string | null;
+}
+
+/**
+ * Full booking details for admin detail page
+ * Extends BookingListItem with all fields
+ * All monetary values are in CENTS
+ */
+export interface BookingDetails extends BookingListItem {
+  pricingTierId: string | null;
+  paymentMethod: string | null;
+  specialRequests: string | null;
+  updatedAt: Date;
+  
+  
+  // Pricing breakdown in cents (from booking_pricing)
+  basePriceCents: number | null;
+  captainFeeCents: number | null;
+  cleaningFeeCents: number | null;
+  serviceFeeCents: number | null;
+  taxAmountCents: number | null;
+  discountAmountCents: number | null;
+  depositAmountCents: number | null;
+  
+  isMultiDay: boolean | null;
+  pickupLocation: string | null;
+  dropoffLocation: string | null;
+  cancellationReason: string | null;
+  cancelledAt: Date | null;
+  expiresAt: Date | null;
+  
+  // Extended boat info
+  boatCapacity: number | null;
+  boatTimezone: string | null;
+  boatOwnerId: string | null;
+  boatOwnerFirstName: string | null;
+  boatOwnerLastName: string | null;
+  boatOwnerEmail: string | null;
+}
+
+/**
+ * Paginated bookings response from API
+ */
+export interface PaginatedBookingsResponse {
+  bookings: BookingListItem[];
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+/**
+ * Booking statistics for dashboard
+ * @deprecated Use BookingStatsNew with cents
+ */
+export interface BookingStats {
+  total: number;
+  totalRevenue: number;
+  pending: number;
+  confirmed: number;
+  completed: number;
+  cancelled: number;
+}
+
+/**
+ * Booking statistics for dashboard (new - uses cents)
+ */
+export interface BookingStatsNew {
+  total: number;
+  totalRevenueCents: Cents;
+  pending: number;
+  confirmed: number;
+  completed: number;
+  cancelled: number;
+}
+
+/**
+ * Paginated bookings response (new structure)
+ */
+export interface PaginatedBookingsResponseNew {
+  bookings: BookingListItemNew[];
+  totalCount: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+// ============================================================================
+// FORM TYPES (User input - dates are always strings from form inputs)
+// ============================================================================
+
+/**
+ * Base booking form data - what the customer fills out
+ * Dates are ISO strings because HTML inputs produce strings
+ */
+export interface BookingFormData {
+  startDateTime: string;
+  numberOfPassengers: number;
+  needsCaptain: boolean;
+  specialRequests?: string;
+  pricingTierId: string;
+}
+
+/**
+ * Complete booking data with boat and pricing info
+ * Used during checkout flow
+ */
+export interface BookingWithDetails {
+  startDateTime: string;
+  numberOfPassengers: number;
+  needsCaptain: boolean;
+  specialRequests?: string;
+  boatId: string;
+  boat: SafeBoatData;
+  selectedTier: PricingTier;
+}
+
+/**
+ * Safe boat data for booking contexts (minimal boat info)
+ * Used in checkout and booking forms
+ */
+export interface SafeBoatData {
+  id: string;
+  name: string;
+  mainImage: string | null;
+  instantBook: boolean;
+  cleaningFee: number | null;
+  locationLabel: string | null;
+  timezone?: string | null;
+}
+
+// ============================================================================
+// DISPLAY TYPES (UI-specific, formatted for rendering)
+// ============================================================================
+
+/**
+ * Calendar event for FullCalendar integration
+ * All dates are ISO strings (FullCalendar expects strings)
+ */
+export interface BookingCalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  backgroundColor: string;
+  borderColor: string;
+  textColor: string;
+  extendedProps: {
+    type?: 'booking' | 'external';
+    bookingId?: string;
+    source?: string;
+    eventId?: string;
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    bookingStatus: string;
+    bookingType: string;
+    numberOfPassengers: number;
+    totalAmount: number;
+    specialRequests: string;
+    startTime: string;
+    endTime: string;
+    createdAt: string;
+    boatId?: string;
+    boatName?: string;
+  };
+}
+
+/**
+ * Profile page booking display format
+ * Pre-formatted for user-facing display
+ */
+export interface ProfileBooking {
+  id: string;
+  boatName: string;
+  boatType: string;
+  date: string;
+  duration: number;
+  location: string;
+  guests: number;
+  captain: boolean | null;
+  price: number;
+  status: string;
+  image: string;
+}
+
+// ============================================================================
+// API RESPONSE TYPES
+// ============================================================================
+
+/**
+ * Generic API response wrapper
+ */
+export interface BookingApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+}
+
+/**
+ * Paginated API response with meta
+ */
+export interface PaginatedBookingApiResponse<T> {
+  success: boolean;
+  data: T[];
+  meta: {
+    pagination: {
+      page: number;
+      limit: number;
+      totalCount: number;
+      totalPages: number;
+    };
+  };
+}

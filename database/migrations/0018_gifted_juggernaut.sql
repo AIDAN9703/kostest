@@ -1,0 +1,1 @@
+ALTER TYPE "public"."InquiryStage" ADD VALUE 'CONVERTED';
