@@ -4,7 +4,7 @@ import AuthForm from "@/features/auth/components/AuthForm";
 import { signInSchema } from "@/features/_validation/validations";
 import { signInAction } from "@/features/auth/actions/auth";
 
-const Page = () => {
+const Page = () => (
   <AuthForm
     type="SIGN_IN"
     schema={signInSchema}
@@ -13,7 +13,7 @@ const Page = () => {
       password: "",
     }}
     onSubmit={signInAction}
-  />;
-};
+  />
+);
 
 export default Page;
