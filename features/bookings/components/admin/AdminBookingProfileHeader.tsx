@@ -1,9 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Ship } from "lucide-react";
+import { Ship } from "lucide-react";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { StatusBadge } from "@/shared/lib/utils/badge-utils";
-import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import type { BookingDetails } from "@/features/bookings/booking.types";
 
 interface AdminBookingProfileHeaderProps {
@@ -16,77 +15,125 @@ interface AdminBookingProfileHeaderProps {
     | "bookingStatus"
     | "bookingType"
     | "paymentStatus"
-    | "numberOfPassengers"
-    | "totalAmountCents"
   >;
+}
+
+const BOOKING_STATUS_HINT: Record<string, string> = {
+  DRAFT: "Sent to customer as a quote; not accepted or paid yet.",
+  PENDING: "Request waiting for approval before customer can pay.",
+  APPROVED: "Approved — customer still needs to complete payment.",
+  CONFIRMED: "Paid and locked in.",
+  DENIED: "Request was declined.",
+  EXPIRED: "Approval or payment window passed.",
+  CANCELLED: "Cancelled.",
+  COMPLETED: "Trip finished.",
+  REFUNDED: "Money returned to customer.",
+};
+
+const BOOKING_TYPE_HINT: Record<string, string> = {
+  REQUEST: "Customer asked to book; you approve then they pay.",
+  INSTANT_BOOK: "Customer paid immediately on the site.",
+  EXTERNAL_BOOKING: "Created in admin (phone/email); lifecycle you control.",
+};
+
+const PAYMENT_HINT: Record<string, string> = {
+  SUCCEEDED: "At least one payment completed.",
+  PROCESSING: "Payment in progress.",
+  FAILED: "Last attempt failed.",
+  PENDING: "No successful payment yet.",
+  AWAITING_PAYMENT: "Waiting on customer payment.",
+  PARTIALLY_PAID: "Deposit or partial payment received.",
+  PAID: "Marked paid (legacy).",
+};
+
+function hint(map: Record<string, string>, key: string | null | undefined) {
+  if (!key) return "—";
+  return map[key.toUpperCase()] ?? "Current state for this booking.";
 }
 
 export function AdminBookingProfileHeader({
   booking,
 }: AdminBookingProfileHeaderProps) {
+  const paymentLabel = booking.paymentStatus ?? "PENDING";
+
   return (
     <Card className="overflow-hidden rounded-3xl">
       <CardContent className="p-6">
-        <div className="flex flex-col md:flex-row items-start gap-6 relative">
-          {/* Boat Image */}
-          <div className="md:w-48 h-48 rounded-lg overflow-hidden bg-muted shrink-0">
+        <div className="relative flex flex-col items-start gap-6 md:flex-row">
+          <div className="h-48 w-full shrink-0 overflow-hidden rounded-lg bg-muted md:w-48">
             {booking.boatMainImage ? (
               <Image
                 src={booking.boatMainImage}
                 alt={booking.boatName || "Boat"}
                 width={192}
                 height={192}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
+              <div className="flex h-full w-full items-center justify-center">
                 <Ship className="h-12 w-12 text-muted-foreground" />
               </div>
             )}
           </div>
 
-          {/* Booking Info */}
-          <div className="flex-1 space-y-6 min-w-0 pr-8">
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-2xl font-bold">
-                  Booking #{booking.id.slice(0, 6).toUpperCase()}
-                </h2>
-                <div className="flex gap-1 flex-wrap">
-                  <StatusBadge status={booking.bookingStatus} />
-                  <StatusBadge status={booking.paymentStatus} />
-                  {booking.bookingType && (
-                    <StatusBadge status={booking.bookingType} />
-                  )}
-                </div>
-              </div>
-              {booking.boatId && booking.boatName && (
+          <div className="min-w-0 flex-1 space-y-6">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
+                Booking #{booking.id.slice(0, 6).toUpperCase()}
+              </h1>
+              {booking.boatId && booking.boatName ? (
                 <Link
                   href={`/admin/boats/${booking.boatId}`}
-                  className="text-muted-foreground hover:text-foreground hover:underline"
+                  className="text-base text-muted-foreground hover:text-foreground hover:underline md:text-lg"
                 >
                   {booking.boatName}
                 </Link>
+              ) : (
+                <p className="text-base text-muted-foreground md:text-lg">—</p>
               )}
             </div>
 
-            <div className="flex flex-wrap gap-6">
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">
-                  Guests
-                </div>
-                <div className="mt-1 text-base font-medium">
-                  {booking.numberOfPassengers ?? "—"} people
-                </div>
+            <div className="grid gap-6 sm:grid-cols-1 lg:grid-cols-3">
+              <div className="space-y-3 rounded-lg border border-border bg-card p-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Booking status
+                </h3>
+                <StatusBadge
+                  status={booking.bookingStatus}
+                  title={hint(BOOKING_STATUS_HINT, booking.bookingStatus)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {hint(BOOKING_STATUS_HINT, booking.bookingStatus)}
+                </p>
               </div>
-              <div>
-                <div className="text-sm font-medium text-muted-foreground">
-                  Total
-                </div>
-                <div className="mt-1 text-base font-medium">
-                  {formatCentsAsCurrency(booking.totalAmountCents)}
-                </div>
+
+              <div className="space-y-3 rounded-lg border border-border bg-card p-4">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Payment
+                </h3>
+                <StatusBadge
+                  status={paymentLabel}
+                  title={hint(PAYMENT_HINT, paymentLabel)}
+                />
+                <p className="text-sm text-muted-foreground">
+                  {hint(PAYMENT_HINT, paymentLabel)}
+                </p>
               </div>
+
+              {booking.bookingType && (
+                <div className="space-y-3 rounded-lg border border-border bg-card p-4">
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    How it was booked
+                  </h3>
+                  <StatusBadge
+                    status={booking.bookingType}
+                    title={hint(BOOKING_TYPE_HINT, booking.bookingType)}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    {hint(BOOKING_TYPE_HINT, booking.bookingType)}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

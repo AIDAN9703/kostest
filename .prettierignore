@@ -1,0 +1,33 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+*.table.ts
+
+# Build output
+.next
+out
+dist
+build
+
+# Cache
+.turbo
+.cache
+
+# Generated files
+*.min.js
+*.min.css
+
+# Lock files (optional - some prefer to format these)
+# package-lock.json
+# pnpm-lock.yaml
+# yarn.lock
+
+# Database
+*.db
+*.sqlite
+
+# Misc
+.env
+.env.*
+!.env.example

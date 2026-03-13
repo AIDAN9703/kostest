@@ -10,6 +10,7 @@ import {
   bookings,
   bookingPricing,
   bookingStatusHistory,
+  bookingEvents,
   bookingAdminNotes,
   payments,
   reviews,
@@ -22,8 +23,6 @@ import {
   verifications,
   notifications,
   boatBlocking,
-  boatGoogleCalendars,
-  externalGoogleCalendarSyncEvents,
   events,
   ticketTiers,
   eventTicketPurchases,
@@ -39,7 +38,6 @@ import {
   
   // Boat enums
   boatCategoryEnum,
-  locationTypeEnum,
   timezoneEnum,
   
   // Booking enums
@@ -53,7 +51,6 @@ import {
   paymentTypeEnum,
   paymentMethodTypeEnum,
   payableTypeEnum,
-  lineItemTypeEnum,
   
   // Auth enums
   authProviderEnum,
@@ -70,9 +67,6 @@ import {
   
   // Availability enums
   blockingTypeEnum,
-  calendarSourceEnum,
-  calendarOwnerTypeEnum,
-  calendarSyncStatusEnum,
 } from './schema/enums';
 
 // ========================================
@@ -99,20 +93,10 @@ export type NewBoatPricingTier = typeof boatPricingTiers.$inferInsert;
 export type BoatBlocking = typeof boatBlocking.$inferSelect;
 export type NewBoatBlocking = typeof boatBlocking.$inferInsert;
 
-export type BoatGoogleCalendar = typeof boatGoogleCalendars.$inferSelect;
-export type NewBoatGoogleCalendar = typeof boatGoogleCalendars.$inferInsert;
-
-export type ExternalGoogleCalendarSyncEvent = typeof externalGoogleCalendarSyncEvents.$inferSelect;
-export type NewExternalGoogleCalendarSyncEvent = typeof externalGoogleCalendarSyncEvents.$inferInsert;
-
 // Boat enums
 export type BoatCategory = typeof boatCategoryEnum.enumValues[number];
-export type LocationType = typeof locationTypeEnum.enumValues[number];
 export type Timezone = typeof timezoneEnum.enumValues[number];
 export type BlockingType = typeof blockingTypeEnum.enumValues[number];
-export type CalendarSource = typeof calendarSourceEnum.enumValues[number];
-export type CalendarOwnerType = typeof calendarOwnerTypeEnum.enumValues[number];
-export type CalendarSyncStatus = typeof calendarSyncStatusEnum.enumValues[number];
 
 // ========================================
 // BOOKING TYPES
@@ -128,6 +112,10 @@ export type NewBookingPricing = typeof bookingPricing.$inferInsert;
 // Booking status history (audit trail)
 export type BookingStatusHistory = typeof bookingStatusHistory.$inferSelect;
 export type NewBookingStatusHistory = typeof bookingStatusHistory.$inferInsert;
+
+// Booking events (activity / audit timeline)
+export type BookingEvent = typeof bookingEvents.$inferSelect;
+export type NewBookingEvent = typeof bookingEvents.$inferInsert;
 
 // Booking admin notes
 export type BookingAdminNote = typeof bookingAdminNotes.$inferSelect;
@@ -232,9 +220,6 @@ export type NewEventTicketPurchase = typeof eventTicketPurchases.$inferInsert;
 
 export type EventTicket = typeof eventTickets.$inferSelect;
 export type NewEventTicket = typeof eventTickets.$inferInsert;
-
-// Line item type (for itemized charges)
-export type LineItemType = typeof lineItemTypeEnum.enumValues[number];
 
 // ========================================
 // COMMON FILTER TYPES

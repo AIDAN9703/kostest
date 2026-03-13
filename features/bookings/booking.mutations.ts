@@ -133,7 +133,11 @@ export async function updateBooking(
     // Validate input
     const validatedUpdates = bookingUpdateSchema.parse(updates);
 
-    const updatedBooking = await bookingService.updateBooking(id, validatedUpdates);
+    const updatedBooking = await bookingService.updateBooking(
+      id,
+      validatedUpdates,
+      session.user.id ?? null
+    );
     revalidatePath('/admin/bookings');
     revalidatePath(`/admin/bookings/${id}`);
     return { success: true, data: { booking: updatedBooking } };

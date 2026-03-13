@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db } from '@/database/db';
-import { bookings, externalGoogleCalendarSyncEvents, boats, bookingPricing } from '@/database/schema';
+import { bookings, boats, bookingPricing } from '@/database/schema';
 import { eq, and, gte, lte, inArray } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
@@ -24,26 +24,16 @@ export async function GET(request: NextRequest) {
     const startDate = new Date(start);
     const endDate = new Date(end);
 
-    // Build where conditions
     const bookingWhere = [
       gte(bookings.startDateTime, startDate),
       lte(bookings.startDateTime, endDate),
       inArray(bookings.bookingStatus, ['CONFIRMED', 'APPROVED', 'PENDING'])
     ];
-    
-    const externalWhere = [
-      gte(externalGoogleCalendarSyncEvents.startTime, startDate),
-      lte(externalGoogleCalendarSyncEvents.startTime, endDate),
-      eq(externalGoogleCalendarSyncEvents.isAvailable, false)
-    ];
 
-    // Add boat filter if specified
     if (boatId) {
       bookingWhere.push(eq(bookings.boatId, boatId));
-      externalWhere.push(eq(externalGoogleCalendarSyncEvents.boatId, boatId));
     }
 
-    // Get bookings in date range
     const bookingEvents = await db
       .select({
         id: bookings.id,
@@ -62,63 +52,26 @@ export async function GET(request: NextRequest) {
       .leftJoin(boats, eq(bookings.boatId, boats.id))
       .where(and(...bookingWhere));
 
-    // Get external calendar events in date range
-    const externalEvents = await db
-      .select({
-        id: externalGoogleCalendarSyncEvents.id,
-        eventId: externalGoogleCalendarSyncEvents.eventId,
-        start: externalGoogleCalendarSyncEvents.startTime,
-        end: externalGoogleCalendarSyncEvents.endTime,
-        source: externalGoogleCalendarSyncEvents.source,
-        boatId: externalGoogleCalendarSyncEvents.boatId,
-        boatName: boats.name
-      })
-      .from(externalGoogleCalendarSyncEvents)
-      .leftJoin(boats, eq(externalGoogleCalendarSyncEvents.boatId, boats.id))
-      .where(and(...externalWhere));
-
-    // Format events for FullCalendar
-    const events = [
-      // Booking events
-      ...bookingEvents.map(booking => ({
-        id: `booking-${booking.id}`,
-        title: `${booking.title} (${booking.boatName})`,
-        start: booking.start?.toISOString(),
-        end: booking.end?.toISOString(),
-        backgroundColor: getBookingColor(booking.status),
-        borderColor: getBookingColor(booking.status),
-        textColor: '#ffffff',
-        extendedProps: {
-          type: 'booking',
-          bookingId: booking.id,
-          customerName: booking.title,
-          customerEmail: booking.customerEmail,
-          boatName: booking.boatName,
-          boatId: booking.boatId,
-          numberOfPassengers: booking.numberOfPassengers,
-          totalAmountCents: booking.totalAmountCents ?? 0,
-          bookingStatus: booking.status
-        }
-      })),
-      
-      // External calendar events
-      ...externalEvents.map(external => ({
-        id: `external-${external.id}`,
-        title: `External Block (${external.boatName})`,
-        start: external.start.toISOString(),
-        end: external.end.toISOString(),
-        backgroundColor: getExternalColor(external.source),
-        borderColor: getExternalColor(external.source),
-        textColor: '#ffffff',
-        extendedProps: {
-          type: 'external',
-          source: external.source,
-          boatName: external.boatName,
-          boatId: external.boatId,
-          eventId: external.eventId
-        }
-      }))
-    ];
+    const events = bookingEvents.map(booking => ({
+      id: `booking-${booking.id}`,
+      title: `${booking.title} (${booking.boatName})`,
+      start: booking.start?.toISOString(),
+      end: booking.end?.toISOString(),
+      backgroundColor: getBookingColor(booking.status),
+      borderColor: getBookingColor(booking.status),
+      textColor: '#ffffff',
+      extendedProps: {
+        type: 'booking',
+        bookingId: booking.id,
+        customerName: booking.title,
+        customerEmail: booking.customerEmail,
+        boatName: booking.boatName,
+        boatId: booking.boatId,
+        numberOfPassengers: booking.numberOfPassengers,
+        totalAmountCents: booking.totalAmountCents ?? 0,
+        bookingStatus: booking.status
+      }
+    }));
 
     return NextResponse.json(events);
 
@@ -142,16 +95,5 @@ function getBookingColor(status: string) {
       return '#ef4444'; // Red
     default:
       return '#6b7280'; // Gray
-  }
-}
-
-function getExternalColor(source: string) {
-  switch (source) {
-    case 'GOOGLE':
-      return '#06b6d4'; // Cyan for Google Calendar
-    case 'MANUAL':
-      return '#8b5cf6'; // Purple for manual blocks
-    default:
-      return '#64748b'; // Slate
   }
 }

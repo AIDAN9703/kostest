@@ -10,6 +10,7 @@ import {
   getInvoicePaymentIntentId,
 } from "@/shared/lib/services/stripe.service";
 import { bookingService } from "@/features/bookings/booking.service";
+import { bookingEventsService } from "@/features/bookings/booking-events.service";
 import { paymentService } from "@/features/payments/payment.service";
 import { sendBookingConfirmationEmail } from "@/shared/lib/services/email.service";
 import { dollarsToCents } from "@/shared/lib/utils/money-utils";
@@ -380,6 +381,14 @@ async function updatePaymentStatus(paymentIntentId: string) {
             toStatus: "CONFIRMED",
             reason: "Payment received",
           });
+          await bookingEventsService.logStatusChange({
+            bookingId: currentBooking.id,
+            fromStatus: currentBooking.bookingStatus,
+            toStatus: "CONFIRMED",
+            actorType: "system",
+            reason: "Payment received",
+            channel: "stripe",
+          });
           
           console.log(`Updated booking ${currentBooking.id} to CONFIRMED`);
         }
@@ -601,6 +610,14 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
         toStatus: "CONFIRMED",
         reason: "Payment received via invoice",
       });
+      await bookingEventsService.logStatusChange({
+        bookingId: b.id,
+        fromStatus: b.bookingStatus,
+        toStatus: "CONFIRMED",
+        actorType: "system",
+        reason: "Payment received via invoice",
+        channel: "stripe",
+      });
       const full = await bookingService.getBookingById(b.id);
       if (full) await sendBookingConfirmationEmail(full).catch(() => {});
     }
@@ -679,6 +696,14 @@ async function handleRequestBookingPayment(session: Stripe.Checkout.Session, boo
       fromStatus: booking.bookingStatus as any,
       toStatus: "CONFIRMED",
       reason: "Payment received via payment link",
+    });
+    await bookingEventsService.logStatusChange({
+      bookingId,
+      fromStatus: booking.bookingStatus as import("@/database/types").BookingStatus,
+      toStatus: "CONFIRMED",
+      actorType: "system",
+      reason: "Payment received via payment link",
+      channel: "stripe",
     });
     
     // Update payment record if exists, or create one

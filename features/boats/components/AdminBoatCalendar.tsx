@@ -163,11 +163,7 @@ export default function AdminBoatCalendar({
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              {selectedEvent?.extendedProps?.type === "external"
-                ? "External Block"
-                : "Booking Details"}
-            </DialogTitle>
+            <DialogTitle>Booking Details</DialogTitle>
           </DialogHeader>
 
           {selectedEvent && (

@@ -18,7 +18,9 @@
     "db:seed-reviews": "npx tsx database/scripts/seed-reviews.ts",
     "db:create-fake-reviews": "npx tsx database/scripts/seed-reviews.ts",
     "db:setup-reviews": "npx tsx database/scripts/setup-reviews.ts",
-    "db:update-review-stats": "npx tsx database/scripts/calculate-review-stats.ts"
+    "db:update-review-stats": "npx tsx database/scripts/calculate-review-stats.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -50,7 +50,7 @@ import {
   denyBookingRequest,
   assignAdminToBooking,
   markBookingAsContacted,
-} from "@/features/bookings/actions/admin-booking-actions";
+} from "@/features/bookings/actions/admin-booking.actions";
 import { getOrCreatePaymentLink } from "@/features/bookings/booking.mutations";
 import { useDeleteBooking } from "@/features/bookings/hooks/useBookingMutations";
 import { useToast } from "@/shared/lib/hooks/use-toast";
@@ -99,15 +99,11 @@ export function AdminBookingsTable({
 
   const handleDelete = useCallback(
     (bookingId: string) => {
-      if (
-        !confirm(
-          "Are you sure you want to delete this booking? This action cannot be undone.",
-        )
-      )
+      if (!confirm("Are you sure you want to delete this booking? This action cannot be undone."))
         return;
       deleteBooking.mutate(bookingId);
     },
-    [deleteBooking, router],
+    [deleteBooking, router]
   );
 
   const handleAction = useCallback(
@@ -117,7 +113,7 @@ export function AdminBookingsTable({
         message?: string;
         error?: string;
       }>,
-      successMessage: string,
+      successMessage: string
     ) => {
       try {
         const result = await action();
@@ -139,18 +135,17 @@ export function AdminBookingsTable({
         });
       }
     },
-    [toast, handleRefresh],
+    [toast, handleRefresh]
   );
 
   const handleApprove = useCallback(
     (bookingId: string) => {
       setActionLoading(bookingId);
-      handleAction(
-        () => approveBookingRequest(bookingId),
-        "Booking Approved",
-      ).finally(() => setActionLoading(null));
+      handleAction(() => approveBookingRequest(bookingId), "Booking Approved").finally(() =>
+        setActionLoading(null)
+      );
     },
-    [handleAction],
+    [handleAction]
   );
 
   const handleDeny = useCallback(
@@ -158,34 +153,31 @@ export function AdminBookingsTable({
       const reason = prompt("Reason for denial:");
       if (!reason?.trim()) return;
       setActionLoading(bookingId);
-      handleAction(
-        () => denyBookingRequest(bookingId, reason),
-        "Booking Denied",
-      ).finally(() => setActionLoading(null));
+      handleAction(() => denyBookingRequest(bookingId, reason), "Booking Denied").finally(() =>
+        setActionLoading(null)
+      );
     },
-    [handleAction],
+    [handleAction]
   );
 
   const handleAssignAdmin = useCallback(
     (bookingId: string, adminId: string) => {
       setActionLoading(bookingId);
-      handleAction(
-        () => assignAdminToBooking(bookingId, adminId),
-        "Admin Assigned",
-      ).finally(() => setActionLoading(null));
+      handleAction(() => assignAdminToBooking(bookingId, adminId), "Admin Assigned").finally(() =>
+        setActionLoading(null)
+      );
     },
-    [handleAction],
+    [handleAction]
   );
 
   const handleMarkContacted = useCallback(
     (bookingId: string) => {
       setActionLoading(bookingId);
-      handleAction(
-        () => markBookingAsContacted(bookingId),
-        "Marked as Contacted",
-      ).finally(() => setActionLoading(null));
+      handleAction(() => markBookingAsContacted(bookingId), "Marked as Contacted").finally(() =>
+        setActionLoading(null)
+      );
     },
-    [handleAction],
+    [handleAction]
   );
 
   const handleCopyPaymentLink = useCallback(
@@ -207,7 +199,7 @@ export function AdminBookingsTable({
       }
       setActionLoading(null);
     },
-    [toast],
+    [toast]
   );
 
   const columns = useMemo<ColumnDef<BookingListItem, any>[]>(
@@ -216,8 +208,7 @@ export function AdminBookingsTable({
         header: "Customer",
         cell: ({ row }) => {
           const booking = row.original;
-          const displayName =
-            booking.customerName || booking.userEmail || "Unknown";
+          const displayName = booking.customerName || booking.userEmail || "Unknown";
           return (
             <div className="flex items-center gap-2">
               <div className="h-7 w-7 rounded-full bg-muted overflow-hidden shrink-0">
@@ -236,9 +227,7 @@ export function AdminBookingsTable({
                 )}
               </div>
               <div className="min-w-0">
-                <div className="font-medium text-foreground text-sm truncate">
-                  {displayName}
-                </div>
+                <div className="font-medium text-foreground text-sm truncate">{displayName}</div>
                 {booking.customerEmail && (
                   <div className="text-xs text-muted-foreground truncate">
                     {booking.customerEmail}
@@ -293,8 +282,7 @@ export function AdminBookingsTable({
           const endDateTime = booking.endDateTime;
 
           // startDateTime is NOT NULL in database, so no null check needed
-          const { date: startDate, time: startTime } =
-            parseDateTimeInBoatTimezone(startDateTime);
+          const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(startDateTime);
           const { time: endTime } = endDateTime
             ? parseDateTimeInBoatTimezone(endDateTime)
             : { time: "" };
@@ -344,9 +332,7 @@ export function AdminBookingsTable({
               : booking.assignedAdminEmail || "Unknown";
           return (
             <div className="text-sm">
-              <div className="font-medium text-foreground truncate">
-                {adminName}
-              </div>
+              <div className="font-medium text-foreground truncate">{adminName}</div>
               {/* contactedAt removed - derive from booking_admin_notes if needed */}
             </div>
           );
@@ -366,19 +352,13 @@ export function AdminBookingsTable({
         cell: ({ row }) => {
           const booking = row.original;
           const isPendingRequest =
-            booking.bookingType === "REQUEST" &&
-            booking.bookingStatus === "PENDING";
+            booking.bookingType === "REQUEST" && booking.bookingStatus === "PENDING";
           const isLoading = actionLoading === booking.id;
 
           return (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  disabled={isLoading}
-                >
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={isLoading}>
                   <MoreVertical className="h-4 w-4" />
                   <span className="sr-only">Actions</span>
                 </Button>
@@ -408,10 +388,7 @@ export function AdminBookingsTable({
                   </>
                 )}
                 <DropdownMenuItem asChild>
-                  <Link
-                    href={`/admin/bookings/${booking.id}`}
-                    className="cursor-pointer"
-                  >
+                  <Link href={`/admin/bookings/${booking.id}`} className="cursor-pointer">
                     <Eye className="mr-2 h-4 w-4" />
                     View Details
                   </Link>
@@ -424,9 +401,7 @@ export function AdminBookingsTable({
                   </DropdownMenuSubTrigger>
                   <DropdownMenuSubContent>
                     {admins.length === 0 ? (
-                      <DropdownMenuItem disabled>
-                        No admins available
-                      </DropdownMenuItem>
+                      <DropdownMenuItem disabled>No admins available</DropdownMenuItem>
                     ) : (
                       admins.map((admin) => {
                         const adminName =
@@ -437,9 +412,7 @@ export function AdminBookingsTable({
                         return (
                           <DropdownMenuItem
                             key={admin.id}
-                            onClick={() =>
-                              handleAssignAdmin(booking.id, admin.id)
-                            }
+                            onClick={() => handleAssignAdmin(booking.id, admin.id)}
                             disabled={isLoading || isAssigned}
                             className={isAssigned ? "opacity-50" : ""}
                           >
@@ -471,10 +444,7 @@ export function AdminBookingsTable({
                 </DropdownMenuItem>
                 {booking.customerEmail && (
                   <DropdownMenuItem asChild>
-                    <a
-                      href={`mailto:${booking.customerEmail}`}
-                      className="cursor-pointer"
-                    >
+                    <a href={`mailto:${booking.customerEmail}`} className="cursor-pointer">
                       <Mail className="mr-2 h-4 w-4" />
                       Send Email
                     </a>
@@ -504,7 +474,7 @@ export function AdminBookingsTable({
       handleDelete,
       actionLoading,
       admins,
-    ],
+    ]
   );
 
   const table = useReactTable({
@@ -520,9 +490,7 @@ export function AdminBookingsTable({
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="text-sm text-muted-foreground mt-2">
-            Loading bookings...
-          </p>
+          <p className="text-sm text-muted-foreground mt-2">Loading bookings...</p>
         </div>
       </div>
     );
@@ -533,9 +501,7 @@ export function AdminBookingsTable({
       <div className="flex items-center justify-center p-8">
         <div className="text-center">
           <CalendarCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">
-            No bookings found
-          </h3>
+          <h3 className="text-lg font-medium text-foreground mb-2">No bookings found</h3>
           <p className="text-sm text-muted-foreground">
             Try adjusting your filters or check back later.
           </p>
@@ -556,12 +522,7 @@ export function AdminBookingsTable({
                   className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 >
                   {header.isPlaceholder ? null : (
-                    <div>
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
-                    </div>
+                    <div>{flexRender(header.column.columnDef.header, header.getContext())}</div>
                   )}
                 </th>
               ))}
@@ -584,13 +545,9 @@ export function AdminBookingsTable({
       {pagination.totalPages > 1 && !hidePagination && (
         <div className="flex items-center justify-between px-6 py-3 border-t border-border bg-card">
           <div className="text-sm text-muted-foreground">
-            Showing {pagination.page * pagination.limit - pagination.limit + 1}{" "}
-            to{" "}
-            {Math.min(
-              pagination.page * pagination.limit,
-              pagination.totalCount,
-            )}{" "}
-            of {pagination.totalCount} bookings
+            Showing {pagination.page * pagination.limit - pagination.limit + 1} to{" "}
+            {Math.min(pagination.page * pagination.limit, pagination.totalCount)} of{" "}
+            {pagination.totalCount} bookings
           </div>
           <div className="flex items-center gap-1">
             <Button

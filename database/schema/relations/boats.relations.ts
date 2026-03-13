@@ -2,7 +2,6 @@ import { relations } from 'drizzle-orm';
 import { boats } from '../tables/boats.table';
 import { boatPricingTiers } from '../tables/boatPricingTiers.table';
 import { boatBlocking } from '../tables/boatBlocking.table';
-import { boatGoogleCalendars } from '../tables/boatGoogleCalendars.table';
 import { bookings } from '../tables/bookings.table';
 import { reviews } from '../tables/reviews.table';
 import { users } from '../tables/users.table';
@@ -19,7 +18,6 @@ export const boatsRelations = relations(boats, ({ one, many }) => ({
   }),
   pricingTiers: many(boatPricingTiers),
   blocking: many(boatBlocking),
-  googleCalendars: many(boatGoogleCalendars),
   bookings: many(bookings),
   reviews: many(reviews),
 }));

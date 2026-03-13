@@ -3,6 +3,8 @@ import { db } from "@/database/db";
 import { bookings, bookingStatusHistory, payments } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
 import { paymentService } from "@/features/payments/payment.service";
+import { bookingEventsService } from "@/features/bookings/booking-events.service";
+import type { BookingStatus } from "@/database/types";
 import { getStripe } from "@/shared/lib/services/stripe.service";
 
 // Add dynamic configuration for Next.js 15
@@ -174,6 +176,14 @@ export async function GET(request: NextRequest) {
           fromStatus: currentBookingStatus as any,
           toStatus: "CONFIRMED",
           reason: "Payment verified via checkout verification",
+        });
+        await bookingEventsService.logStatusChange({
+          bookingId,
+          fromStatus: currentBookingStatus as BookingStatus,
+          toStatus: "CONFIRMED",
+          actorType: "system",
+          reason: "Payment verified via checkout verification",
+          channel: "stripe",
         });
       }
     }

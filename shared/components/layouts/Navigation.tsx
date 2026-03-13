@@ -21,7 +21,8 @@ const Navigation = () => {
   const pathname = usePathname();
   const user = session?.user;
   const isAdmin = user?.isAdmin === true;
-  const isSearchPage = pathname === "/boats/search";
+  // Show search in nav on all pages except home (hero has its own search bar)
+  const showNavSearch = pathname !== "/";
 
   return (
     <header className="sticky top-0 left-0 right-0 z-50 bg-white backdrop-blur-xs shadow-xs border-b border-gray-200 font-poppins">
@@ -29,7 +30,7 @@ const Navigation = () => {
         {/* Main Navigation Bar */}
         <nav
           className={
-            isSearchPage
+            showNavSearch
               ? "flex items-center justify-between h-16 gap-4"
               : "flex items-center justify-between h-20 gap-4"
           }
@@ -56,8 +57,8 @@ const Navigation = () => {
             </Link>
           </div>
 
-          {/* Center section: Search Bar (only on search page) */}
-          {isSearchPage && (
+          {/* Center section: Search Bar (all pages except home) */}
+          {showNavSearch && (
             <div className="hidden md:flex flex-1 max-w-2xl mx-4 lg:mx-8">
               <Suspense fallback={<div className="w-full h-10" />}>
                 <SearchBar variant="compact" />
@@ -67,12 +68,10 @@ const Navigation = () => {
 
           {/* Right section: Navigation + User menu */}
           <div className="hidden lg:flex items-center gap-6">
-            {!isSearchPage && (
-              <DesktopNavigation
-                navigationData={navigationData}
-                isAdmin={isAdmin}
-              />
-            )}
+            <DesktopNavigation
+              navigationData={navigationData}
+              isAdmin={isAdmin}
+            />
             <UserMenu user={user} navigationData={navigationData} />
           </div>
 
@@ -82,8 +81,8 @@ const Navigation = () => {
           </div>
         </nav>
 
-        {/* Mobile Search Bar (only on search page) */}
-        {isSearchPage && (
+        {/* Mobile Search Bar (all pages except home) */}
+        {showNavSearch && (
           <div className="md:hidden pb-4">
             <Suspense fallback={<div className="w-full h-10" />}>
               <SearchBar variant="compact" />

@@ -9,7 +9,6 @@ import { notifications } from '../tables/notifications.table';
 import { verifications } from '../tables/verifications.table';
 import { generalInquiries } from '../tables/generalInquiries.table';
 import { inquiryEvents } from '../tables/inquiryEvents.table';
-import { boatGoogleCalendars } from '../tables/boatGoogleCalendars.table';
 import { boatBlocking } from '../tables/boatBlocking.table';
 // Relations for users table
 export const usersRelations = relations(users, ({ one, many }) => ({
@@ -69,7 +68,6 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   verifications: many(verifications),
   assignedInquiries: many(generalInquiries),
   inquiryEventsCreated: many(inquiryEvents),
-  ownedCalendars: many(boatGoogleCalendars),
   createdBlockings: many(boatBlocking),
 }));
 

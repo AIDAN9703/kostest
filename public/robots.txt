@@ -8,7 +8,6 @@ Disallow: /api/
 Disallow: /auth/
 Disallow: /sign-in
 Disallow: /sign-up
-Disallow: /verify
 Disallow: /_next/
 Disallow: /test-*
 Disallow: /private/

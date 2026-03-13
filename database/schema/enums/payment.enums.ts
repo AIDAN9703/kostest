@@ -33,14 +33,3 @@ export const payableTypeEnum = pgEnum("PayableType", [
   "BOOKING",           // Payment for a booking
   "EVENT_TICKET"       // Payment for an event ticket
 ]);
-
-// Line item type - for itemized charges (keep for compatibility)
-export const lineItemTypeEnum = pgEnum("LineItemType", [
-  "CLEANING",
-  "CAPTAIN",
-  "VESSEL_FEE",
-  "BOOKING_FEE",
-  "TAX",
-  "TRANSACTION_FEE",
-  "OTHER"
-]);

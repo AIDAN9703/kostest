@@ -15,7 +15,6 @@ module.exports = {
     
     // Auth routes
     '/auth/*',
-    '/verify',
     
     // API and system routes
     '/api/*',
@@ -50,7 +49,6 @@ module.exports = {
           '/auth/',
           '/sign-in',
           '/sign-up',
-          '/verify',
           '/_next/',
           '/test-*',
           '/private/',

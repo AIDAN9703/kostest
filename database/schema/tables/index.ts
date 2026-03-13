@@ -9,6 +9,7 @@ export * from "./bookingGroups.table";
 export * from "./bookings.table";
 export * from "./bookingPricing.table";
 export * from "./bookingStatusHistory.table";
+export * from "./bookingEvents.table";
 export * from "./bookingAdminNotes.table";
 export * from "./bookingOps.table";
 
@@ -24,8 +25,6 @@ export * from "./inquiryEvents.table";
 export * from "./blogPosts.table";
 export * from "./boatPricingTiers.table";
 export * from "./boatBlocking.table";
-export * from "./boatGoogleCalendars.table";
-export * from "./externalGoogleCalendarSyncEvents.table";
 
 // Event tables
 export * from "./events.table";

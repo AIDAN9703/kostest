@@ -1,12 +1,12 @@
 /**
  * Booking Service Layer
  * Single source of truth for all booking database operations
- * 
+ *
  * ARCHITECTURE:
  * - Uses transactions for multi-table operations
  * - Delegates to specialized services (pricing, status, notes, payments)
  * - All monetary values are in CENTS
- * 
+ *
  * RELATED SERVICES:
  * - BookingPricingService - manages booking_pricing table
  * - BookingStatusService - manages status transitions and history
@@ -14,46 +14,90 @@
  * - PaymentService - manages payments (in features/payments)
  */
 
-import { db } from '@/database/db';
-import { 
-  bookings, 
-  boats, 
-  users, 
+import { db } from "@/database/db";
+import {
+  bookings,
+  boats,
+  users,
   boatPricingTiers,
   bookingPricing,
   bookingStatusHistory,
+  bookingEvents,
   bookingAdminNotes,
   bookingGroups,
-  payments
-} from '@/database/schema';
-import { and, count, eq, desc, or, ilike, sql, gte, lte, aliasedTable, inArray } from 'drizzle-orm';
+  payments,
+  bookingOps,
+} from "@/database/schema";
+import { and, count, eq, desc, or, ilike, sql, gte, lte, aliasedTable, inArray } from "drizzle-orm";
 
-import { type BookingFilterInput, type BookingUpdateInput, type BookingCreateInput, type DraftBookingCreateInput, type CreateBookingsInput } from './booking.validation';
-import { 
-  type PaginatedBookingsResponse, 
-  type BookingListItem, 
-  type BookingDetails, 
+import {
+  type BookingFilterInput,
+  type BookingUpdateInput,
+  type BookingCreateInput,
+  type DraftBookingCreateInput,
+  type CreateBookingsInput,
+} from "./booking.validation";
+import {
+  type PaginatedBookingsResponse,
+  type BookingListItem,
+  type BookingDetails,
   type BookingWithRelations,
-  type BookingListItemNew,
-  type PaginatedBookingsResponseNew,
-} from './booking.types';
-import { type Booking, type BookingStatus, type PaymentStatus, type BookingSource } from '@/database/types';
-import { calculateBookingPriceFromDollars, calculateBookingPriceCents } from '@/shared/lib/utils/pricing-utils';
-import { dollarsToCents, type Cents } from '@/shared/lib/utils/money-utils';
-import { toDateOrNull, calculateEndDateTime } from '@/shared/lib/utils/date-helpers';
-import type { SupportedTimezones } from '@/shared/lib/utils/date-helpers';
-import { isValidUUID } from '@/shared/lib/utils/general-utils';
-import { bookingGroupService } from '@/features/booking-groups/booking-group.service';
-import { bookingPricingService } from './booking-pricing.service';
-import { bookingStatusService } from './booking-status.service';
-import { fetchBoatAndTier } from './booking-helpers';
+} from "./booking.types";
+import {
+  type Booking,
+  type BookingStatus,
+  type PaymentStatus,
+  type BookingSource,
+} from "@/database/types";
+import {
+  calculateBookingPriceFromDollars,
+  calculateBookingPriceCents,
+} from "@/shared/lib/utils/pricing-utils";
+import { dollarsToCents, type Cents } from "@/shared/lib/utils/money-utils";
+import { toDateOrNull, calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
+import { bookingGroupService } from "@/features/booking-groups/booking-group.service";
+import { bookingPricingService } from "./booking-pricing.service";
+import { bookingStatusService } from "./booking-status.service";
+import { bookingEventsService } from "./booking-events.service";
+import { fetchBoatAndTier, fetchBoatsAndTiersBulk } from "./booking-helpers";
+
+/** Serializable snapshot for booking.updated audit events */
+function bookingAuditSnapshot(b: BookingDetails): Record<string, unknown> {
+  return {
+    customerName: b.customerName,
+    customerEmail: b.customerEmail,
+    customerPhone: b.customerPhone,
+    numberOfPassengers: b.numberOfPassengers,
+    needsCaptain: b.needsCaptain,
+    pickupLocation: b.pickupLocation,
+    dropoffLocation: b.dropoffLocation,
+    specialRequests: b.specialRequests,
+    startDateTime:
+      b.startDateTime instanceof Date
+        ? b.startDateTime.toISOString()
+        : String(b.startDateTime),
+    endDateTime:
+      b.endDateTime instanceof Date
+        ? b.endDateTime.toISOString()
+        : b.endDateTime
+          ? String(b.endDateTime)
+          : null,
+    boatId: b.boatId,
+    pricingTierId: b.pricingTierId,
+    basePriceCents: b.basePriceCents ?? null,
+    captainFeeCents: b.captainFeeCents ?? null,
+    cleaningFeeCents: b.cleaningFeeCents ?? null,
+    serviceFeeCents: b.serviceFeeCents ?? null,
+    totalAmountCents: b.totalAmountCents ?? null,
+    depositAmountCents: b.depositAmountCents ?? null,
+  };
+}
 
 // ============================================================================
 // BOOKING SERVICE CLASS
 // ============================================================================
 
 export class BookingService {
-  
   // ==========================================================================
   // CREATE OPERATIONS
   // ==========================================================================
@@ -63,7 +107,7 @@ export class BookingService {
    * Uses transaction to create booking + pricing + status history atomically
    */
   async createAdminBooking(
-    input: BookingCreateInput, 
+    input: BookingCreateInput,
     assignedAdminId?: string | null
   ): Promise<Booking> {
     const startDateTime = toDateOrNull(input.startDateTime);
@@ -76,8 +120,7 @@ export class BookingService {
     const { boat, tier } = await fetchBoatAndTier(input.boatId, input.pricingTierId);
     if (!tier) throw new Error(`Pricing tier not found: ${input.pricingTierId}`);
 
-    const resolvedEndDateTime =
-      endDateTime ?? calculateEndDateTime(startDateTime, tier.hours);
+    const resolvedEndDateTime = endDateTime ?? calculateEndDateTime(startDateTime, tier.hours);
 
     // Calculate pricing in cents
     const priceBreakdown = calculateBookingPriceFromDollars(
@@ -89,15 +132,15 @@ export class BookingService {
     const depositAmountCents = dollarsToCents(boat.depositAmount ?? 0);
 
     const now = new Date();
-    
+
     // Determine booking type and initial status
     const bookingType = input.bookingType || "EXTERNAL_BOOKING";
     const source = (input.source || "ADMIN") as BookingSource;
-    
+
     // For EXTERNAL_BOOKING and admin-created, start as APPROVED
     // For REQUEST, start as PENDING
     const initialStatus = bookingType === "REQUEST" ? "PENDING" : "APPROVED";
-    
+
     // 1. Create booking record
     const [newBooking] = await db
       .insert(bookings)
@@ -127,21 +170,19 @@ export class BookingService {
       })
       .returning();
 
-    // 2. Create pricing record in new table
-    await db
-      .insert(bookingPricing)
-      .values({
-        bookingId: newBooking.id,
-        basePriceCents: priceBreakdown.basePriceCents,
-        captainFeeCents: priceBreakdown.captainFeeCents || null,
-        cleaningFeeCents: priceBreakdown.cleaningFeeCents || null,
-        serviceFeeCents: priceBreakdown.serviceFeeCents,
-        taxAmountCents: null,
-        discountAmountCents: null,
-        depositAmountCents: depositAmountCents || null,
-        totalAmountCents: priceBreakdown.totalPriceCents,
-        currency: "USD",
-      });
+    // 2. Create pricing record via pricing service
+    await bookingPricingService.createPricing({
+      bookingId: newBooking.id,
+      basePriceCents: priceBreakdown.basePriceCents,
+      captainFeeCents: priceBreakdown.captainFeeCents || null,
+      cleaningFeeCents: priceBreakdown.cleaningFeeCents || null,
+      serviceFeeCents: priceBreakdown.serviceFeeCents,
+      taxAmountCents: null,
+      discountAmountCents: null,
+      depositAmountCents: depositAmountCents || null,
+      totalAmountCents: priceBreakdown.totalPriceCents,
+      currency: "USD",
+    });
 
     // 3. Create initial status history entry
     await bookingStatusService.createInitialHistory(
@@ -172,38 +213,8 @@ export class BookingService {
 
     const now = new Date();
     const boatIds = [...new Set(input.boatOptions.map((o) => o.boatId))];
-
-    const boatsRows = await db
-      .select({
-        id: boats.id,
-        name: boats.name,
-        mainImage: boats.mainImage,
-        ownerId: boats.ownerId,
-        cleaningFee: boats.cleaningFee,
-        depositAmount: boats.depositAmount,
-        crewRequired: boats.crewRequired,
-      })
-      .from(boats)
-      .where(inArray(boats.id, boatIds));
-
-    const boatsById = new Map(boatsRows.map((b) => [b.id, b]));
-
-    const tiersRows = await db
-      .select({
-        id: boatPricingTiers.id,
-        boatId: boatPricingTiers.boatId,
-        hours: boatPricingTiers.hours,
-        price: boatPricingTiers.price,
-      })
-      .from(boatPricingTiers)
-      .where(
-        inArray(
-          boatPricingTiers.id,
-          input.boatOptions.map((o) => o.pricingTierId)
-        )
-      );
-
-    const tiersById = new Map(tiersRows.map((t) => [t.id, t]));
+    const tierIds = input.boatOptions.map((o) => o.pricingTierId);
+    const { boatsById, tiersById } = await fetchBoatsAndTiersBulk(boatIds, tierIds);
 
     let groupId: string | null = null;
     if (input.boatOptions.length > 1 || input.groupName) {
@@ -230,10 +241,9 @@ export class BookingService {
       if (!tier) throw new Error(`Pricing tier not found: ${option.pricingTierId}`);
 
       const basePrice = option.basePrice ?? tier.price;
-      const resolvedEndDateTime =
-        endDateTime ?? calculateEndDateTime(startDateTime, tier.hours);
+      const resolvedEndDateTime = endDateTime ?? calculateEndDateTime(startDateTime, tier.hours);
 
-      const lineItemsForBoat = i === primaryIdx ? input.lineItems ?? [] : [];
+      const lineItemsForBoat = i === primaryIdx ? (input.lineItems ?? []) : [];
       const lineItemsTotal = lineItemsForBoat.reduce(
         (sum, item) => sum + item.unitPrice * item.quantity,
         0
@@ -309,6 +319,16 @@ export class BookingService {
       bookingIds.push(booking.id);
     }
 
+    if (input.publishNow && publicToken && bookingIds.length > 0) {
+      await bookingEventsService.logDraftPublished({
+        bookingId: bookingIds[0],
+        actorId: assignedAdminId ?? null,
+        publicToken,
+        groupId,
+        allBookingIds: bookingIds,
+      });
+    }
+
     return {
       bookingIds,
       publicToken,
@@ -325,37 +345,8 @@ export class BookingService {
   ): Promise<{ bookingIds: string[]; publicToken: string | null; groupId: string | null }> {
     const now = new Date();
     const boatIds = [...new Set(input.bookings.map((b) => b.boatId))];
-
-    const boatsRows = await db
-      .select({
-        id: boats.id,
-        name: boats.name,
-        mainImage: boats.mainImage,
-        ownerId: boats.ownerId,
-        cleaningFee: boats.cleaningFee,
-        depositAmount: boats.depositAmount,
-        crewRequired: boats.crewRequired,
-      })
-      .from(boats)
-      .where(inArray(boats.id, boatIds));
-    const boatsById = new Map(boatsRows.map((b) => [b.id, b]));
-
-    const tierIds = input.bookings
-      .map((b) => b.pricingTierId)
-      .filter((id): id is string => !!id);
-    const tiersRows =
-      tierIds.length > 0
-        ? await db
-            .select({
-              id: boatPricingTiers.id,
-              boatId: boatPricingTiers.boatId,
-              hours: boatPricingTiers.hours,
-              price: boatPricingTiers.price,
-            })
-            .from(boatPricingTiers)
-            .where(inArray(boatPricingTiers.id, tierIds))
-        : [];
-    const tiersById = new Map(tiersRows.map((t) => [t.id, t]));
+    const tierIds = input.bookings.map((b) => b.pricingTierId).filter((id): id is string => !!id);
+    const { boatsById, tiersById } = await fetchBoatsAndTiersBulk(boatIds, tierIds);
 
     let groupId: string | null = null;
     if (input.bookings.length > 1 || input.groupName) {
@@ -380,8 +371,7 @@ export class BookingService {
       const tier = b.pricingTierId ? tiersById.get(b.pricingTierId) : null;
 
       if (!boat) throw new Error(`Boat not found: ${b.boatId}`);
-      if (b.pricingTierId && !tier)
-        throw new Error(`Pricing tier not found: ${b.pricingTierId}`);
+      if (b.pricingTierId && !tier) throw new Error(`Pricing tier not found: ${b.pricingTierId}`);
 
       const basePrice = tier ? (b.basePrice ?? tier.price) : b.basePrice;
       if (basePrice == null || basePrice < 0)
@@ -393,8 +383,7 @@ export class BookingService {
         : tier
           ? calculateEndDateTime(startDateTime, tier.hours)
           : null;
-      if (!endDateTime)
-        throw new Error("End date & time is required for custom pricing");
+      if (!endDateTime) throw new Error("End date & time is required for custom pricing");
 
       const addOnsForThisBooking = i === 0 ? (input.lineItems ?? []) : [];
       const addOnsTotal = addOnsForThisBooking.reduce(
@@ -476,6 +465,16 @@ export class BookingService {
       bookingIds.push(booking.id);
     }
 
+    if (publicToken && bookingIds.length > 0) {
+      await bookingEventsService.logDraftPublished({
+        bookingId: bookingIds[0],
+        actorId: assignedAdminId ?? null,
+        publicToken,
+        groupId,
+        allBookingIds: bookingIds,
+      });
+    }
+
     return {
       bookingIds,
       publicToken,
@@ -492,8 +491,19 @@ export class BookingService {
 
     const boatIds = [...new Set(draftBookings.map((b) => b.boatId))];
     const [boatsRows, pricingRows] = await Promise.all([
-      db.select({ id: boats.id, name: boats.name, mainImage: boats.mainImage }).from(boats).where(inArray(boats.id, boatIds)),
-      db.select().from(bookingPricing).where(inArray(bookingPricing.bookingId, draftBookings.map((b) => b.id))),
+      db
+        .select({ id: boats.id, name: boats.name, mainImage: boats.mainImage })
+        .from(boats)
+        .where(inArray(boats.id, boatIds)),
+      db
+        .select()
+        .from(bookingPricing)
+        .where(
+          inArray(
+            bookingPricing.bookingId,
+            draftBookings.map((b) => b.id)
+          )
+        ),
     ]);
     const boatsById = new Map(boatsRows.map((b) => [b.id, b]));
     const pricingByBooking = new Map(pricingRows.map((p) => [p.bookingId, p]));
@@ -570,10 +580,7 @@ export class BookingService {
         const { createDraftBookingInvoice } = await import(
           "@/features/bookings/booking-invoice.service"
         );
-        const result = await createDraftBookingInvoice(
-          draftBookings[0],
-          bookingIds[0]
-        );
+        const result = await createDraftBookingInvoice(draftBookings[0], bookingIds[0]);
         hostedInvoiceUrl = result.hostedInvoiceUrl;
       } catch (err) {
         console.error("Failed to create draft booking invoice:", err);
@@ -586,30 +593,29 @@ export class BookingService {
   /**
    * Create a customer booking request
    */
-  async createBookingRequest(
-    input: {
-      boatId: string;
-      pricingTierId: string;
-      userId?: string | null;
-      customerName: string;
-      customerEmail: string;
-      customerPhone: string;
-      startDateTime: Date;
-      endDateTime: Date | null;
-      numberOfPassengers: number;
-      needsCaptain: boolean;
-      specialRequests?: string | null;
-    }
-  ): Promise<Booking> {
+  async createBookingRequest(input: {
+    boatId: string;
+    pricingTierId: string;
+    userId?: string | null;
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    startDateTime: Date;
+    endDateTime: Date | null;
+    numberOfPassengers: number;
+    needsCaptain: boolean;
+    specialRequests?: string | null;
+  }): Promise<Booking> {
     const { boat, tier } = await fetchBoatAndTier(input.boatId, input.pricingTierId);
     if (!tier) throw new Error(`Pricing tier not found: ${input.pricingTierId}`);
 
-    const resolvedEndDateTime = input.endDateTime ?? calculateEndDateTime(input.startDateTime, tier.hours);
+    const resolvedEndDateTime =
+      input.endDateTime ?? calculateEndDateTime(input.startDateTime, tier.hours);
     const priceBreakdown = calculateBookingPriceFromDollars(tier.price, boat.cleaningFee ?? 0, 0);
     const depositAmountCents = dollarsToCents(boat.depositAmount ?? 0);
 
     const now = new Date();
-    
+
     const [newBooking] = await db
       .insert(bookings)
       .values({
@@ -634,7 +640,7 @@ export class BookingService {
       })
       .returning();
 
-    await db.insert(bookingPricing).values({
+    await bookingPricingService.createPricing({
       bookingId: newBooking.id,
       basePriceCents: priceBreakdown.basePriceCents,
       captainFeeCents: priceBreakdown.captainFeeCents || null,
@@ -658,36 +664,40 @@ export class BookingService {
   /**
    * Create an instant booking (payment at checkout)
    */
-  async createInstantBooking(
-    input: {
-      boatId: string;
-      pricingTierId: string | null;
-      userId?: string | null;
-      customerName: string;
-      customerEmail: string;
-      customerPhone: string;
-      startDateTime: Date;
-      endDateTime: Date | null;
-      numberOfPassengers: number;
-      needsCaptain: boolean;
-      specialRequests?: string | null;
-      stripePaymentIntentId?: string;
-      stripeCustomerId?: string;
-      stripeCheckoutSessionId?: string;
-      /** When provided (e.g. from webhook metadata), use these instead of calculating from boat+tier */
-      pricingOverrideCents?: {
-        basePriceCents: number;
-        cleaningFeeCents: number;
-        captainFeeCents: number;
-        serviceFeeCents: number;
-        totalPriceCents: number;
-        depositAmountCents?: number;
-      };
-    }
-  ): Promise<Booking> {
+  async createInstantBooking(input: {
+    boatId: string;
+    pricingTierId: string | null;
+    userId?: string | null;
+    customerName: string;
+    customerEmail: string;
+    customerPhone: string;
+    startDateTime: Date;
+    endDateTime: Date | null;
+    numberOfPassengers: number;
+    needsCaptain: boolean;
+    specialRequests?: string | null;
+    stripePaymentIntentId?: string;
+    stripeCustomerId?: string;
+    stripeCheckoutSessionId?: string;
+    /** When provided (e.g. from webhook metadata), use these instead of calculating from boat+tier */
+    pricingOverrideCents?: {
+      basePriceCents: number;
+      cleaningFeeCents: number;
+      captainFeeCents: number;
+      serviceFeeCents: number;
+      totalPriceCents: number;
+      depositAmountCents?: number;
+    };
+  }): Promise<Booking> {
     const { boat, tier } = await fetchBoatAndTier(input.boatId, input.pricingTierId);
 
-    let priceBreakdown: { basePriceCents: number; captainFeeCents: number; cleaningFeeCents: number; serviceFeeCents: number; totalPriceCents: number };
+    let priceBreakdown: {
+      basePriceCents: number;
+      captainFeeCents: number;
+      cleaningFeeCents: number;
+      serviceFeeCents: number;
+      totalPriceCents: number;
+    };
     let depositAmountCents: number;
     let resolvedEndDateTime: Date | null;
 
@@ -697,14 +707,15 @@ export class BookingService {
       resolvedEndDateTime = input.endDateTime;
     } else {
       if (!tier) throw new Error("pricingTierId or pricingOverrideCents required");
-      resolvedEndDateTime = input.endDateTime ?? calculateEndDateTime(input.startDateTime, tier.hours);
+      resolvedEndDateTime =
+        input.endDateTime ?? calculateEndDateTime(input.startDateTime, tier.hours);
       const calc = calculateBookingPriceFromDollars(tier.price, boat.cleaningFee ?? 0, 0);
       priceBreakdown = calc;
       depositAmountCents = dollarsToCents(boat.depositAmount ?? 0);
     }
 
     const now = new Date();
-    
+
     const [newBooking] = await db
       .insert(bookings)
       .values({
@@ -729,8 +740,8 @@ export class BookingService {
       })
       .returning();
 
-    // Create pricing record
-    await db.insert(bookingPricing).values({
+    // Create pricing record via pricing service
+    await bookingPricingService.createPricing({
       bookingId: newBooking.id,
       basePriceCents: priceBreakdown.basePriceCents,
       captainFeeCents: priceBreakdown.captainFeeCents || null,
@@ -773,7 +784,7 @@ export class BookingService {
 
   /**
    * Get paginated and filtered bookings
-   * @deprecated Use getAllBookingsNew for cents-based responses
+   * Returns cents-based pricing from booking_pricing table
    */
   async getAllBookings(filters?: BookingFilterInput): Promise<PaginatedBookingsResponse> {
     const page = filters?.page || 1;
@@ -783,12 +794,14 @@ export class BookingService {
     const whereConditions = [];
 
     if (filters?.search) {
-      whereConditions.push(or(
-        ilike(bookings.customerName || '', `%${filters.search}%`),
-        ilike(bookings.customerEmail || '', `%${filters.search}%`),
-        ilike(bookings.customerPhone || '', `%${filters.search}%`),
-        ilike(boats.name || '', `%${filters.search}%`)
-      ));
+      whereConditions.push(
+        or(
+          ilike(bookings.customerName || "", `%${filters.search}%`),
+          ilike(bookings.customerEmail || "", `%${filters.search}%`),
+          ilike(bookings.customerPhone || "", `%${filters.search}%`),
+          ilike(boats.name || "", `%${filters.search}%`)
+        )
+      );
     }
 
     if (filters?.bookingStatus) {
@@ -841,7 +854,7 @@ export class BookingService {
 
     const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
-    const assignedAdmin = aliasedTable(users, 'assignedAdmin');
+    const assignedAdmin = aliasedTable(users, "assignedAdmin");
 
     const selectFields = {
       id: bookings.id,
@@ -852,7 +865,7 @@ export class BookingService {
         SELECT p.status FROM payment p 
         WHERE p.payable_type = 'BOOKING' AND p.payable_id = ${bookings.id} 
         ORDER BY p.created_at DESC LIMIT 1
-      )`.as('paymentStatus'),
+      )`.as("paymentStatus"),
       customerName: bookings.customerName,
       customerEmail: bookings.customerEmail,
       customerPhone: bookings.customerPhone,
@@ -880,13 +893,26 @@ export class BookingService {
       assignedAdminFirstName: assignedAdmin.firstName,
       assignedAdminLastName: assignedAdmin.lastName,
       assignedAdminEmail: assignedAdmin.email,
-      // contactedAt removed - derive from booking_admin_notes (first note with type CONTACTED)
+      // Ops fields (from booking_ops - Excel workflow tracking)
+      opsDurationHours: bookingOps.durationHours,
+      opsExpenseCents: bookingOps.expenseCents,
+      opsRevenueCents: bookingOps.revenueCents,
+      opsBalanceOwnerCents: bookingOps.balanceOwnerCents,
+      opsBalanceClientCents: bookingOps.balanceClientCents,
+      opsCrewName: bookingOps.crewName,
+      opsContractSigned: bookingOps.contractSigned,
+      opsCaptainPaid: bookingOps.captainPaid,
+      opsAgentCode: bookingOps.agentCode,
+      opsCommissionCents: bookingOps.commissionCents,
+      opsSourceOverride: bookingOps.sourceOverride,
     };
 
     const [bookingsData, countResult] = await Promise.all([
-      db.select(selectFields)
+      db
+        .select(selectFields)
         .from(bookings)
         .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
+        .leftJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
         .leftJoin(boats, eq(bookings.boatId, boats.id))
         .leftJoin(bookingGroups, eq(bookings.bookingGroupId, bookingGroups.id))
         .leftJoin(users, eq(bookings.userId, users.id))
@@ -895,19 +921,20 @@ export class BookingService {
         .limit(limit)
         .offset(offset)
         .orderBy(desc(bookings.createdAt)),
-      db.select({ value: count() })
+      db
+        .select({ value: count() })
         .from(bookings)
         .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
         .leftJoin(boats, eq(bookings.boatId, boats.id))
-        .where(whereClause)
+        .where(whereClause),
     ]);
 
     // Map results, defaulting to 0 cents if no pricing record, PENDING if no payment
-    const mappedBookings: BookingListItem[] = bookingsData.map(b => ({
+    const mappedBookings: BookingListItem[] = bookingsData.map((b) => ({
       ...b,
       totalAmountCents: b.totalAmountCents ?? 0,
-      currency: b.currency ?? 'USD',
-      paymentStatus: (b.paymentStatus ?? 'PENDING') as PaymentStatus,
+      currency: b.currency ?? "USD",
+      paymentStatus: (b.paymentStatus ?? "PENDING") as PaymentStatus,
     }));
 
     return {
@@ -915,7 +942,7 @@ export class BookingService {
       totalCount: countResult[0].value,
       page,
       limit,
-      totalPages: Math.ceil(countResult[0].value / limit)
+      totalPages: Math.ceil(countResult[0].value / limit),
     };
   }
 
@@ -924,12 +951,8 @@ export class BookingService {
    * Pricing comes from booking_pricing table (in cents)
    */
   async getBookingById(id: string): Promise<BookingDetails | null> {
-    if (!isValidUUID(id)) {
-      throw new Error(`Invalid UUID format: ${id}`);
-    }
-
-    const assignedAdmin = aliasedTable(users, 'assignedAdmin');
-    const boatOwner = aliasedTable(users, 'boatOwner');
+    const assignedAdmin = aliasedTable(users, "assignedAdmin");
+    const boatOwner = aliasedTable(users, "boatOwner");
 
     const [booking] = await db
       .select({
@@ -968,12 +991,12 @@ export class BookingService {
           SELECT p.status FROM payment p 
           WHERE p.payable_type = 'BOOKING' AND p.payable_id = ${bookings.id} 
           ORDER BY p.created_at DESC LIMIT 1
-        )`.as('paymentStatus'),
+        )`.as("paymentStatus"),
         paymentMethod: sql<string>`(
           SELECT p.payment_method_type FROM payment p 
           WHERE p.payable_type = 'BOOKING' AND p.payable_id = ${bookings.id} 
           ORDER BY p.created_at DESC LIMIT 1
-        )`.as('paymentMethod'),
+        )`.as("paymentMethod"),
         // refundAmountCents removed - calculate from payments table if needed
         specialRequests: bookings.specialRequests,
         assignedAdminId: bookings.assignedAdminId,
@@ -1018,8 +1041,8 @@ export class BookingService {
     return {
       ...booking,
       totalAmountCents: booking.totalAmountCents ?? 0,
-      currency: booking.currency ?? 'USD',
-      paymentStatus: booking.paymentStatus ?? 'PENDING',
+      currency: booking.currency ?? "USD",
+      paymentStatus: booking.paymentStatus ?? "PENDING",
       paymentMethod: booking.paymentMethod ?? null,
     } as unknown as BookingDetails;
   }
@@ -1028,13 +1051,9 @@ export class BookingService {
    * Get booking with all related data (pricing, payments, history, notes)
    */
   async getBookingWithRelations(id: string): Promise<BookingWithRelations | null> {
-    if (!isValidUUID(id)) {
-      throw new Error(`Invalid UUID format: ${id}`);
-    }
-
-    const assignedAdmin = aliasedTable(users, 'assignedAdmin');
-    const noteAdmin = aliasedTable(users, 'noteAdmin');
-    const historyUser = aliasedTable(users, 'historyUser');
+    const assignedAdmin = aliasedTable(users, "assignedAdmin");
+    const noteAdmin = aliasedTable(users, "noteAdmin");
+    const historyUser = aliasedTable(users, "historyUser");
 
     // Get core booking with boat and user joins
     const [booking] = await db
@@ -1091,34 +1110,64 @@ export class BookingService {
     if (!booking) return null;
 
     // Fetch related data in parallel
-    const [pricingData, paymentsData, historyData, notesData] = await Promise.all([
+    const eventActor = aliasedTable(users, "eventActor");
+    const [pricingData, paymentsData, historyData, notesData, eventsData] =
+      await Promise.all([
       db.select().from(bookingPricing).where(eq(bookingPricing.bookingId, id)).limit(1),
-      db.select().from(payments).where(and(eq(payments.payableType, 'BOOKING'), eq(payments.payableId, id))).orderBy(desc(payments.createdAt)),
-      db.select({
-        id: bookingStatusHistory.id,
-        fromStatus: bookingStatusHistory.fromStatus,
-        toStatus: bookingStatusHistory.toStatus,
-        changedByUserId: bookingStatusHistory.changedByUserId,
-        reason: bookingStatusHistory.reason,
-        createdAt: bookingStatusHistory.createdAt,
-        changedByFirstName: historyUser.firstName,
-        changedByLastName: historyUser.lastName,
-      }).from(bookingStatusHistory)
+      db
+        .select()
+        .from(payments)
+        .where(and(eq(payments.payableType, "BOOKING"), eq(payments.payableId, id)))
+        .orderBy(desc(payments.createdAt)),
+      db
+        .select({
+          id: bookingStatusHistory.id,
+          fromStatus: bookingStatusHistory.fromStatus,
+          toStatus: bookingStatusHistory.toStatus,
+          changedByUserId: bookingStatusHistory.changedByUserId,
+          reason: bookingStatusHistory.reason,
+          createdAt: bookingStatusHistory.createdAt,
+          changedByFirstName: historyUser.firstName,
+          changedByLastName: historyUser.lastName,
+        })
+        .from(bookingStatusHistory)
         .leftJoin(historyUser, eq(bookingStatusHistory.changedByUserId, historyUser.id))
         .where(eq(bookingStatusHistory.bookingId, id))
         .orderBy(desc(bookingStatusHistory.createdAt)),
-      db.select({
-        id: bookingAdminNotes.id,
-        adminUserId: bookingAdminNotes.adminUserId,
-        noteType: bookingAdminNotes.noteType,
-        content: bookingAdminNotes.content,
-        createdAt: bookingAdminNotes.createdAt,
-        adminFirstName: noteAdmin.firstName,
-        adminLastName: noteAdmin.lastName,
-      }).from(bookingAdminNotes)
+      db
+        .select({
+          id: bookingAdminNotes.id,
+          adminUserId: bookingAdminNotes.adminUserId,
+          noteType: bookingAdminNotes.noteType,
+          content: bookingAdminNotes.content,
+          createdAt: bookingAdminNotes.createdAt,
+          adminFirstName: noteAdmin.firstName,
+          adminLastName: noteAdmin.lastName,
+        })
+        .from(bookingAdminNotes)
         .leftJoin(noteAdmin, eq(bookingAdminNotes.adminUserId, noteAdmin.id))
         .where(eq(bookingAdminNotes.bookingId, id))
         .orderBy(desc(bookingAdminNotes.createdAt)),
+      db
+        .select({
+          id: bookingEvents.id,
+          actorType: bookingEvents.actorType,
+          actorId: bookingEvents.actorId,
+          eventType: bookingEvents.eventType,
+          channel: bookingEvents.channel,
+          displayMessage: bookingEvents.displayMessage,
+          content: bookingEvents.content,
+          contactMethod: bookingEvents.contactMethod,
+          metadata: bookingEvents.metadata,
+          createdAt: bookingEvents.createdAt,
+          actorFirstName: eventActor.firstName,
+          actorLastName: eventActor.lastName,
+          actorEmail: eventActor.email,
+        })
+        .from(bookingEvents)
+        .leftJoin(eventActor, eq(bookingEvents.actorId, eventActor.id))
+        .where(eq(bookingEvents.bookingId, id))
+        .orderBy(desc(bookingEvents.createdAt)),
     ]);
 
     const pricing = pricingData[0];
@@ -1149,23 +1198,29 @@ export class BookingService {
       createdAt: booking.createdAt,
       updatedAt: booking.updatedAt,
       expiresAt: booking.expiresAt,
-      
-      pricing: pricing ? {
-        basePriceCents: Number(pricing.basePriceCents),
-        captainFeeCents: pricing.captainFeeCents ? Number(pricing.captainFeeCents) : null,
-        cleaningFeeCents: pricing.cleaningFeeCents ? Number(pricing.cleaningFeeCents) : null,
-        serviceFeeCents: pricing.serviceFeeCents ? Number(pricing.serviceFeeCents) : null,
-        taxAmountCents: pricing.taxAmountCents ? Number(pricing.taxAmountCents) : null,
-        discountAmountCents: pricing.discountAmountCents ? Number(pricing.discountAmountCents) : null,
-        discountCode: pricing.discountCode,
-        depositAmountCents: pricing.depositAmountCents ? Number(pricing.depositAmountCents) : null,
-        totalAmountCents: Number(pricing.totalAmountCents),
-        currency: pricing.currency,
-        depositDueDate: pricing.depositDueDate,
-        remainderDueDate: pricing.remainderDueDate,
-      } : null,
-      
-      payments: paymentsData.map(p => ({
+
+      pricing: pricing
+        ? {
+            basePriceCents: Number(pricing.basePriceCents),
+            captainFeeCents: pricing.captainFeeCents ? Number(pricing.captainFeeCents) : null,
+            cleaningFeeCents: pricing.cleaningFeeCents ? Number(pricing.cleaningFeeCents) : null,
+            serviceFeeCents: pricing.serviceFeeCents ? Number(pricing.serviceFeeCents) : null,
+            taxAmountCents: pricing.taxAmountCents ? Number(pricing.taxAmountCents) : null,
+            discountAmountCents: pricing.discountAmountCents
+              ? Number(pricing.discountAmountCents)
+              : null,
+            discountCode: pricing.discountCode,
+            depositAmountCents: pricing.depositAmountCents
+              ? Number(pricing.depositAmountCents)
+              : null,
+            totalAmountCents: Number(pricing.totalAmountCents),
+            currency: pricing.currency,
+            depositDueDate: pricing.depositDueDate,
+            remainderDueDate: pricing.remainderDueDate,
+          }
+        : null,
+
+      payments: paymentsData.map((p) => ({
         id: p.id,
         paymentType: p.paymentType,
         amountCents: Number(p.amountCents),
@@ -1178,54 +1233,74 @@ export class BookingService {
         processedAt: p.processedAt,
         createdAt: p.createdAt,
       })),
-      
-      statusHistory: historyData.map(h => ({
+
+      statusHistory: historyData.map((h) => ({
         id: h.id,
         fromStatus: h.fromStatus,
         toStatus: h.toStatus,
         changedByUserId: h.changedByUserId,
-        changedByName: h.changedByFirstName && h.changedByLastName 
-          ? `${h.changedByFirstName} ${h.changedByLastName}` 
-          : null,
+        changedByName:
+          h.changedByFirstName && h.changedByLastName
+            ? `${h.changedByFirstName} ${h.changedByLastName}`
+            : null,
         reason: h.reason,
         createdAt: h.createdAt,
       })),
-      
-      adminNotes: notesData.map(n => ({
+
+      adminNotes: notesData.map((n) => ({
         id: n.id,
         adminUserId: n.adminUserId,
-        adminName: n.adminFirstName && n.adminLastName 
-          ? `${n.adminFirstName} ${n.adminLastName}` 
-          : null,
+        adminName:
+          n.adminFirstName && n.adminLastName ? `${n.adminFirstName} ${n.adminLastName}` : null,
         noteType: n.noteType,
         content: n.content,
         createdAt: n.createdAt,
       })),
-      
+
+      activityEvents: eventsData.map((e) => ({
+        id: e.id,
+        actorType: e.actorType,
+        eventType: e.eventType,
+        channel: e.channel,
+        displayMessage: e.displayMessage,
+        content: e.content,
+        contactMethod: e.contactMethod,
+        metadata: e.metadata as Record<string, unknown> | null,
+        createdAt: e.createdAt,
+        actorName:
+          e.actorFirstName || e.actorLastName
+            ? `${e.actorFirstName || ""} ${e.actorLastName || ""}`.trim()
+            : e.actorEmail || (e.actorType === "system" ? "System" : "—"),
+      })),
+
       boat: {
         id: booking.boatId,
-        name: booking.boatName ?? '',
+        name: booking.boatName ?? "",
         category: booking.boatCategory,
         mainImage: booking.boatMainImage,
         capacity: booking.boatCapacity,
         timezone: booking.boatTimezone,
         ownerId: booking.boatOwnerId,
       },
-      
-      user: booking.userId ? {
-        id: booking.userId,
-        firstName: booking.userFirstName,
-        lastName: booking.userLastName,
-        email: booking.userEmail ?? '',
-        profileImage: booking.userProfileImage,
-      } : null,
-      
-      assignedAdmin: booking.assignedAdminId ? {
-        id: booking.assignedAdminId,
-        firstName: booking.assignedAdminFirstName,
-        lastName: booking.assignedAdminLastName,
-        email: booking.assignedAdminEmail ?? '',
-      } : null,
+
+      user: booking.userId
+        ? {
+            id: booking.userId,
+            firstName: booking.userFirstName,
+            lastName: booking.userLastName,
+            email: booking.userEmail ?? "",
+            profileImage: booking.userProfileImage,
+          }
+        : null,
+
+      assignedAdmin: booking.assignedAdminId
+        ? {
+            id: booking.assignedAdminId,
+            firstName: booking.assignedAdminFirstName,
+            lastName: booking.assignedAdminLastName,
+            email: booking.assignedAdminEmail ?? "",
+          }
+        : null,
     };
   }
 
@@ -1238,39 +1313,22 @@ export class BookingService {
    * Delegates to status service for consistency
    */
   async updateBookingStatus(
-    id: string, 
+    id: string,
     status: BookingStatus,
     changedByUserId?: string,
     reason?: string
   ): Promise<Booking> {
-    if (!isValidUUID(id)) {
-      throw new Error(`Invalid UUID format: ${id}`);
-    }
-
     await bookingStatusService.forceSetStatus(
       id,
       status,
-      reason ?? 'Status updated',
+      reason ?? "Status updated",
       changedByUserId ?? null
     );
 
-    const [updated] = await db
-      .select()
-      .from(bookings)
-      .where(eq(bookings.id, id))
-      .limit(1);
+    const [updated] = await db.select().from(bookings).where(eq(bookings.id, id)).limit(1);
 
     if (!updated) throw new Error(`Booking not found: ${id}`);
     return updated;
-  }
-
-  /**
-   * @deprecated Payment link ID is now stored in payments table, not on bookings
-   * This method is kept for backward compatibility but does nothing
-   */
-  async updatePaymentLinkId(id: string, paymentLinkId: string): Promise<void> {
-    // Payment link ID is stored in payments table, not bookings table
-    // This method is a no-op for backward compatibility
   }
 
   /**
@@ -1278,18 +1336,11 @@ export class BookingService {
    * Returns the updated booking for convenience
    */
   async updatePaymentStatus(bookingId: string, status: PaymentStatus): Promise<Booking | null> {
-    if (!isValidUUID(bookingId)) {
-      throw new Error(`Invalid UUID format: ${bookingId}`);
-    }
-
     // Find the payment record for this booking
     const [payment] = await db
       .select()
       .from(payments)
-      .where(and(
-        eq(payments.payableType, 'BOOKING'),
-        eq(payments.payableId, bookingId)
-      ))
+      .where(and(eq(payments.payableType, "BOOKING"), eq(payments.payableId, bookingId)))
       .limit(1);
 
     if (payment) {
@@ -1297,35 +1348,34 @@ export class BookingService {
       // Note: payments table doesn't have updatedAt field, only createdAt and processedAt
       await db
         .update(payments)
-        .set({ 
+        .set({
           status,
         })
         .where(eq(payments.id, payment.id));
     }
 
     // Return the booking
-    const [booking] = await db
-      .select()
-      .from(bookings)
-      .where(eq(bookings.id, bookingId))
-      .limit(1);
+    const [booking] = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
 
     return booking ?? null;
   }
 
   /**
    * Update booking fields (partial update with pricing recalculation)
+   * @param updatedByUserId — admin who performed the edit (for audit log)
    */
-  async updateBooking(id: string, updates: BookingUpdateInput): Promise<BookingDetails> {
-    if (!isValidUUID(id)) {
-      throw new Error(`Invalid UUID format: ${id}`);
-    }
-
+  async updateBooking(
+    id: string,
+    updates: BookingUpdateInput,
+    updatedByUserId?: string | null
+  ): Promise<BookingDetails> {
     // Get current booking
     const current = await this.getBookingById(id);
     if (!current) {
       throw new Error(`Booking not found: ${id}`);
     }
+
+    const beforeSnapshot = bookingAuditSnapshot(current);
 
     // Build update object
     const updateData: Record<string, any> = {
@@ -1336,7 +1386,8 @@ export class BookingService {
     if (updates.customerName !== undefined) updateData.customerName = updates.customerName;
     if (updates.customerEmail !== undefined) updateData.customerEmail = updates.customerEmail;
     if (updates.customerPhone !== undefined) updateData.customerPhone = updates.customerPhone;
-    if (updates.numberOfPassengers !== undefined) updateData.numberOfPassengers = updates.numberOfPassengers;
+    if (updates.numberOfPassengers !== undefined)
+      updateData.numberOfPassengers = updates.numberOfPassengers;
     if (updates.needsCaptain !== undefined) updateData.needsCaptain = updates.needsCaptain;
     if (updates.pickupLocation !== undefined) updateData.pickupLocation = updates.pickupLocation;
     if (updates.dropoffLocation !== undefined) updateData.dropoffLocation = updates.dropoffLocation;
@@ -1351,10 +1402,11 @@ export class BookingService {
     }
 
     // Handle boat/pricing changes with recalculation
-    const needsPricingRecalc = updates.boatId !== undefined || 
-                                updates.pricingTierId !== undefined ||
-                                updates.cleaningFee !== undefined ||
-                                updates.captainFee !== undefined;
+    const needsPricingRecalc =
+      updates.boatId !== undefined ||
+      updates.pricingTierId !== undefined ||
+      updates.cleaningFee !== undefined ||
+      updates.captainFee !== undefined;
 
     if (needsPricingRecalc && !updates.manualOverride) {
       const boatId = updates.boatId ?? current.boatId!;
@@ -1411,8 +1463,10 @@ export class BookingService {
       const manualPricingUpdates: Record<string, number | null> = {
         totalAmountCents: dollarsToCents(updates.totalAmount),
       };
-      if (updates.cleaningFee != null) manualPricingUpdates.cleaningFeeCents = dollarsToCents(updates.cleaningFee);
-      if (updates.captainFee != null) manualPricingUpdates.captainFeeCents = dollarsToCents(updates.captainFee);
+      if (updates.cleaningFee != null)
+        manualPricingUpdates.cleaningFeeCents = dollarsToCents(updates.cleaningFee);
+      if (updates.captainFee != null)
+        manualPricingUpdates.captainFeeCents = dollarsToCents(updates.captainFee);
       await db
         .update(bookingPricing)
         .set(manualPricingUpdates)
@@ -1420,15 +1474,37 @@ export class BookingService {
     }
 
     // Update the booking
-    await db
-      .update(bookings)
-      .set(updateData)
-      .where(eq(bookings.id, id));
+    await db.update(bookings).set(updateData).where(eq(bookings.id, id));
 
     // Return the updated booking
     const updatedBooking = await this.getBookingById(id);
     if (!updatedBooking) {
       throw new Error(`Failed to retrieve updated booking: ${id}`);
+    }
+
+    if (updatedByUserId) {
+      const afterSnapshot = bookingAuditSnapshot(updatedBooking);
+      const changedFields: string[] = [];
+      const previousState: Record<string, unknown> = {};
+      const newState: Record<string, unknown> = {};
+      for (const key of Object.keys(beforeSnapshot)) {
+        const a = JSON.stringify(beforeSnapshot[key]);
+        const b = JSON.stringify(afterSnapshot[key]);
+        if (a !== b) {
+          changedFields.push(key);
+          previousState[key] = beforeSnapshot[key];
+          newState[key] = afterSnapshot[key];
+        }
+      }
+      if (changedFields.length > 0) {
+        await bookingEventsService.logBookingUpdated({
+          bookingId: id,
+          actorId: updatedByUserId,
+          previousState,
+          newState,
+          changedFields,
+        });
+      }
     }
 
     return updatedBooking;
@@ -1437,87 +1513,65 @@ export class BookingService {
   /**
    * Assign admin to booking
    */
-  async assignAdmin(bookingId: string, adminId: string): Promise<Booking> {
-    if (!isValidUUID(bookingId) || !isValidUUID(adminId)) {
-      throw new Error(`Invalid UUID format`);
-    }
-
-    const [booking] = await db
-      .update(bookings)
-      .set({ 
-        assignedAdminId: adminId,
-        updatedAt: new Date()
-      })
+  async assignAdmin(
+    bookingId: string,
+    adminId: string,
+    performedByUserId: string
+  ): Promise<void> {
+    const [row] = await db
+      .select({ assignedAdminId: bookings.assignedAdminId })
+      .from(bookings)
       .where(eq(bookings.id, bookingId))
-      .returning();
-
-    return booking;
+      .limit(1);
+    const previous = row?.assignedAdminId ?? null;
+    if (previous === adminId) return;
+    await db
+      .update(bookings)
+      .set({
+        assignedAdminId: adminId,
+        updatedAt: new Date(),
+      })
+      .where(eq(bookings.id, bookingId));
+    await bookingEventsService.logAssignedAdminChanged({
+      bookingId,
+      actorId: performedByUserId,
+      previousAdminId: previous,
+      newAdminId: adminId,
+    });
   }
 
   /**
    * Unassign admin from booking
    */
-  async unassignAdmin(bookingId: string): Promise<Booking> {
-    if (!isValidUUID(bookingId)) {
-      throw new Error(`Invalid UUID format: ${bookingId}`);
-    }
-
-    const [booking] = await db
+  async unassignAdmin(bookingId: string, performedByUserId: string): Promise<void> {
+    const [row] = await db
+      .select({ assignedAdminId: bookings.assignedAdminId })
+      .from(bookings)
+      .where(eq(bookings.id, bookingId))
+      .limit(1);
+    const previous = row?.assignedAdminId ?? null;
+    if (previous == null) return;
+    await db
       .update(bookings)
-      .set({ 
+      .set({
         assignedAdminId: null,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       })
-      .where(eq(bookings.id, bookingId))
-      .returning();
-
-    return booking;
-  }
-
-  /**
-   * Mark booking as contacted (creates admin note)
-   * contactedAt is now derived from booking_admin_notes table
-   */
-  async markAsContacted(bookingId: string, adminId?: string): Promise<Booking> {
-    if (!isValidUUID(bookingId)) {
-      throw new Error(`Invalid UUID format: ${bookingId}`);
-    }
-
-    if (!adminId) {
-      throw new Error("Admin ID required to mark as contacted");
-    }
-
-    // Create admin note (this replaces the contactedAt field)
-    await db.insert(bookingAdminNotes).values({
+      .where(eq(bookings.id, bookingId));
+    await bookingEventsService.logAssignedAdminChanged({
       bookingId,
-      adminUserId: adminId,
-      noteType: 'CONTACTED',
-      content: 'Customer contacted',
+      actorId: performedByUserId,
+      previousAdminId: previous,
+      newAdminId: null,
     });
-
-    // Update updatedAt timestamp
-    const [updated] = await db
-      .update(bookings)
-      .set({ 
-        updatedAt: new Date()
-      })
-      .where(eq(bookings.id, bookingId))
-      .returning();
-
-    return updated;
   }
 
   /**
    * Delete a booking
    */
   async deleteBooking(id: string): Promise<void> {
-    if (!isValidUUID(id)) {
-      throw new Error(`Invalid UUID format: ${id}`);
-    }
-
     await db.delete(bookings).where(eq(bookings.id, id));
   }
-
 }
 
 // Export singleton instance

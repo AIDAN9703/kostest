@@ -13,15 +13,6 @@ export const boatCategoryEnum = pgEnum("BoatCategory", [
     "OTHER"
   ]);
 
-  // Location related types
-export const locationTypeEnum = pgEnum("LocationType", [
-    "HOME_PORT",
-    "CURRENT_LOCATION",
-    "PICKUP_LOCATION",
-    "DROPOFF_LOCATION",
-    "DESTINATION",
-  ]);
-
   // Timezone enum - Major IANA timezone identifiers
 export const timezoneEnum = pgEnum('timezone', [
   // Major US Timezones

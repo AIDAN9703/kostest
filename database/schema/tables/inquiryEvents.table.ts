@@ -26,20 +26,13 @@ export const inquiryEvents = pgTable(
   {
     id: uuid("id").defaultRandom().notNull().primaryKey(),
 
-    inquiryId: uuid("inquiry_id")
-      .notNull()
-      .references(() => generalInquiries.id, { onDelete: "cascade" }),
+    inquiryId: uuid("inquiry_id").notNull().references(() => generalInquiries.id, { onDelete: "cascade" }),
 
     eventType: inquiryEventTypeEnum("event_type").notNull(),
 
-    createdAt: timestamp("created_at", {
-      mode: "date",
-      withTimezone: true,
-    }).defaultNow().notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
 
-    createdBy: uuid("created_by").references(() => users.id, {
-      onDelete: "set null",
-    }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
 
     // For NOTE, CONTACT_ATTEMPT
     content: text("content"),

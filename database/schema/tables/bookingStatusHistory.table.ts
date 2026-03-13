@@ -16,17 +16,14 @@ import { bookingStatusEnum } from "@/database/schema/enums";
 export const bookingStatusHistory = pgTable("booking_status_history", {
   id: uuid("id").defaultRandom().notNull().primaryKey(),
   
-  bookingId: uuid("booking_id")
-    .notNull()
-    .references(() => bookings.id, { onDelete: "cascade" }),
+  bookingId: uuid("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
 
   // Status transition
   fromStatus: bookingStatusEnum("from_status"), // Null for initial creation
   toStatus: bookingStatusEnum("to_status").notNull(),
 
   // Who made the change
-  changedByUserId: uuid("changed_by_user_id")
-    .references(() => users.id, { onDelete: "set null" }), // Null for system changes
+  changedByUserId: uuid("changed_by_user_id").references(() => users.id, { onDelete: "set null" }), // Null for system changes
   
   // Context
   reason: text("reason"), // Cancellation reason, denial reason, etc.

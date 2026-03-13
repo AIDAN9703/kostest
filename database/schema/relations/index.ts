@@ -11,6 +11,7 @@ export * from "./bookingGroups.relations";
 export * from "./bookings.relations";
 export * from "./bookingPricing.relations";
 export * from "./bookingStatusHistory.relations";
+export * from "./bookingEvents.relations";
 export * from "./bookingAdminNotes.relations";
 export * from "./bookingOps.relations";
 
@@ -25,7 +26,5 @@ export * from "./generalInquiries.relations";
 export * from "./inquiryEvents.relations";
 export * from "./boatPricingTiers.relations";
 export * from "./boatBlocking.relations";
-export * from "./boatGoogleCalendars.relations";
-export * from "./externalGoogleCalendarSyncEvents.relations";
 export * from "./events.relations";
 

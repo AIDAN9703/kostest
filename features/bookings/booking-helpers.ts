@@ -5,7 +5,7 @@
 
 import { db } from "@/database/db";
 import { boats, boatPricingTiers } from "@/database/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 export type BoatForBooking = {
   id: string;
@@ -71,4 +71,81 @@ export async function fetchBoatAndTier(
     },
     tier,
   };
+}
+
+export type BoatForBulkBooking = {
+  id: string;
+  name: string;
+  mainImage: string | null;
+  ownerId: string;
+  cleaningFee: number | null;
+  depositAmount: number | null;
+  crewRequired: boolean;
+};
+
+export type TierForBulkBooking = {
+  id: string;
+  boatId: string;
+  hours: number;
+  price: number;
+};
+
+/**
+ * Fetch multiple boats and tiers by IDs - used by createDraftBookings and createBookings
+ */
+export async function fetchBoatsAndTiersBulk(
+  boatIds: string[],
+  tierIds: string[]
+): Promise<{
+  boatsById: Map<string, BoatForBulkBooking>;
+  tiersById: Map<string, TierForBulkBooking>;
+}> {
+  const [boatsRows, tiersRows] = await Promise.all([
+    boatIds.length > 0
+      ? db
+          .select({
+            id: boats.id,
+            name: boats.name,
+            mainImage: boats.mainImage,
+            ownerId: boats.ownerId,
+            cleaningFee: boats.cleaningFee,
+            depositAmount: boats.depositAmount,
+            crewRequired: boats.crewRequired,
+          })
+          .from(boats)
+          .where(inArray(boats.id, boatIds))
+      : Promise.resolve([]),
+    tierIds.length > 0
+      ? db
+          .select({
+            id: boatPricingTiers.id,
+            boatId: boatPricingTiers.boatId,
+            hours: boatPricingTiers.hours,
+            price: boatPricingTiers.price,
+          })
+          .from(boatPricingTiers)
+          .where(inArray(boatPricingTiers.id, tierIds))
+      : Promise.resolve([]),
+  ]);
+
+  const boatsById = new Map(
+    boatsRows.map((b) => [
+      b.id,
+      {
+        id: b.id,
+        name: b.name,
+        mainImage: b.mainImage,
+        ownerId: b.ownerId,
+        cleaningFee: b.cleaningFee,
+        depositAmount: b.depositAmount,
+        crewRequired: b.crewRequired ?? false,
+      },
+    ])
+  );
+
+  const tiersById = new Map(
+    tiersRows.map((t) => [t.id, { id: t.id, boatId: t.boatId, hours: t.hours, price: t.price }])
+  );
+
+  return { boatsById, tiersById };
 }

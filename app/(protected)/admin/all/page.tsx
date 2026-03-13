@@ -34,6 +34,19 @@ export default async function AllPage() {
         href: `/admin/bookings/${b.id}`,
         amount: b.totalAmountCents ? b.totalAmountCents / 100 : null,
         needsAttention,
+        // Ops fields for inline editing on All page
+        bookingId: b.id,
+        opsDurationHours: b.opsDurationHours,
+        opsExpenseCents: b.opsExpenseCents,
+        opsRevenueCents: b.opsRevenueCents,
+        opsBalanceOwnerCents: b.opsBalanceOwnerCents,
+        opsBalanceClientCents: b.opsBalanceClientCents,
+        opsCrewName: b.opsCrewName,
+        opsContractSigned: b.opsContractSigned,
+        opsCaptainPaid: b.opsCaptainPaid,
+        opsAgentCode: b.opsAgentCode,
+        opsCommissionCents: b.opsCommissionCents,
+        opsSourceOverride: b.opsSourceOverride,
       };
     }),
     ...inquiriesResult.inquiries.map((i) => {

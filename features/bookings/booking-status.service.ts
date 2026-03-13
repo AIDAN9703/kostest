@@ -10,6 +10,7 @@
 import { db } from '@/database/db';
 import { bookings, bookingStatusHistory } from '@/database/schema';
 import { eq, desc } from 'drizzle-orm';
+import { bookingEventsService } from '@/features/bookings/booking-events.service';
 import type { BookingStatus, BookingStatusHistory } from '@/database/types';
 
 // ============================================================================
@@ -133,6 +134,15 @@ export class BookingStatusService {
       })
       .returning();
 
+    await bookingEventsService.logStatusChange({
+      bookingId,
+      fromStatus: currentStatus,
+      toStatus: newStatus,
+      actorType: changedByUserId ? 'admin' : 'system',
+      actorId: changedByUserId ?? null,
+      reason: reason ?? null,
+    });
+
     return historyEntry;
   }
 
@@ -171,6 +181,15 @@ export class BookingStatusService {
       })
       .returning();
 
+    await bookingEventsService.logStatusChange({
+      bookingId,
+      fromStatus: currentStatus,
+      toStatus: newStatus,
+      actorType: changedByUserId ? 'admin' : 'system',
+      actorId: changedByUserId ?? null,
+      reason,
+    });
+
     return historyEntry;
   }
 
@@ -194,6 +213,15 @@ export class BookingStatusService {
         reason: reason ?? 'Booking created',
       })
       .returning();
+
+    await bookingEventsService.logStatusChange({
+      bookingId,
+      fromStatus: null,
+      toStatus: initialStatus,
+      actorType: createdByUserId ? 'admin' : 'system',
+      actorId: createdByUserId ?? null,
+      reason: reason ?? 'Booking created',
+    });
 
     return historyEntry;
   }
@@ -368,6 +396,16 @@ export class BookingStatusService {
         reason: 'Customer accepted',
       })
       .returning();
+
+    await bookingEventsService.logStatusChange({
+      bookingId,
+      fromStatus: 'DRAFT',
+      toStatus: 'APPROVED',
+      actorType: options?.changedByUserId ? 'user' : 'system',
+      actorId: options?.changedByUserId ?? null,
+      reason: 'Customer accepted',
+      channel: 'web',
+    });
 
     return historyEntry;
   }

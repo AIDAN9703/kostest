@@ -22,25 +22,28 @@ const ACTION_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
 
 export function AdminQuickActionsDropdown() {
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="secondary"
           size="icon"
-          className="group/toggle size-8"
+          className="size-8 shrink-0"
           aria-label="Quick actions"
           title="Quick actions"
         >
-          <Plus />
+          <Plus className="size-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="w-48">
+      <DropdownMenuContent
+        className="w-max max-w-[calc(100vw-2rem)] p-1"
+        align="start"
+      >
         {ADMIN_QUICK_ACTIONS.map((action) => {
           const Icon = ACTION_ICONS[action.label];
           return (
-            <DropdownMenuItem key={action.href} asChild>
+            <DropdownMenuItem key={action.href} asChild className="cursor-pointer whitespace-nowrap">
               <Link href={action.href} className="flex items-center gap-2">
-                {Icon && <Icon className="h-4 w-4 shrink-0" />}
+                {Icon && <Icon className="size-4 shrink-0" />}
                 {action.label}
               </Link>
             </DropdownMenuItem>

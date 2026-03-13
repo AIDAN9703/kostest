@@ -1,18 +1,14 @@
 /**
- * Booking Notes Service
- * 
- * Business logic layer for admin notes.
- * Uses direct database access (no repository layer).
+ * Booking notes & contact logging — stored as booking_event (append-only).
+ * booking_admin_note retained for reads until fully deprecated.
  */
 
-import { db } from '@/database/db';
-import { bookingAdminNotes, users } from '@/database/schema';
-import { eq, and, desc } from 'drizzle-orm';
-import type { BookingAdminNote, AdminNoteType } from '@/database/types';
-
-// ============================================================================
-// TYPES
-// ============================================================================
+import { db } from "@/database/db";
+import { bookingAdminNotes, bookingEvents, users } from "@/database/schema";
+import { eq, and, desc } from "drizzle-orm";
+import type { BookingAdminNote, AdminNoteType } from "@/database/types";
+import { bookingEventsService } from "@/features/bookings/booking-events.service";
+import { BOOKING_EVENT_TYPES } from "@/features/bookings/booking-events.constants";
 
 export interface CreateNoteInput {
   bookingId: string;
@@ -27,31 +23,16 @@ export interface NoteWithAdmin extends BookingAdminNote {
   adminEmail: string | null;
 }
 
-// ============================================================================
-// SERVICE CLASS
-// ============================================================================
-
 export class BookingNotesService {
-  /**
-   * Add a note to a booking
-   */
-  async addNote(input: CreateNoteInput): Promise<BookingAdminNote> {
-    const [note] = await db
-      .insert(bookingAdminNotes)
-      .values({
-        bookingId: input.bookingId,
-        adminUserId: input.adminUserId,
-        noteType: input.noteType ?? 'GENERAL',
-        content: input.content,
-      })
-      .returning();
-    
-    return note;
+  async addNote(input: CreateNoteInput): Promise<void> {
+    await bookingEventsService.logNote({
+      bookingId: input.bookingId,
+      actorId: input.adminUserId,
+      content: input.content,
+      noteType: input.noteType ?? "GENERAL",
+    });
   }
 
-  /**
-   * Get all notes for a booking
-   */
   async getNotesForBooking(bookingId: string): Promise<BookingAdminNote[]> {
     return db
       .select()
@@ -60,9 +41,6 @@ export class BookingNotesService {
       .orderBy(desc(bookingAdminNotes.createdAt));
   }
 
-  /**
-   * Get all notes for a booking with admin user info
-   */
   async getNotesWithAdminInfo(bookingId: string): Promise<NoteWithAdmin[]> {
     const notes = await db
       .select({
@@ -81,7 +59,7 @@ export class BookingNotesService {
       .where(eq(bookingAdminNotes.bookingId, bookingId))
       .orderBy(desc(bookingAdminNotes.createdAt));
 
-    return notes.map(note => ({
+    return notes.map((note) => ({
       id: note.id,
       bookingId: note.bookingId,
       adminUserId: note.adminUserId,
@@ -94,113 +72,114 @@ export class BookingNotesService {
     }));
   }
 
-  /**
-   * Get a single note by ID
-   */
   async getNoteById(noteId: string): Promise<BookingAdminNote | null> {
     const [note] = await db
       .select()
       .from(bookingAdminNotes)
       .where(eq(bookingAdminNotes.id, noteId))
       .limit(1);
-    
+
     return note ?? null;
   }
 
-  /**
-   * Delete a note (admin only, typically the author)
-   */
   async deleteNote(noteId: string): Promise<void> {
-    await db
-      .delete(bookingAdminNotes)
-      .where(eq(bookingAdminNotes.id, noteId));
+    await db.delete(bookingAdminNotes).where(eq(bookingAdminNotes.id, noteId));
   }
 
-  // ============================================================================
-  // CONVENIENCE METHODS
-  // ============================================================================
-
-  /**
-   * Add a "contacted" note - when admin contacts the customer
-   */
   async markAsContacted(
     bookingId: string,
     adminUserId: string,
     details?: string
-  ): Promise<BookingAdminNote> {
-    return this.addNote({
+  ): Promise<void> {
+    await bookingEventsService.logContact({
       bookingId,
-      adminUserId,
-      noteType: 'CONTACTED',
-      content: details ?? 'Customer contacted',
+      actorId: adminUserId,
+      contactMethod: "OTHER",
+      content: details ?? "Customer contacted",
     });
   }
 
-  /**
-   * Add a follow-up note
-   */
   async addFollowUp(
     bookingId: string,
     adminUserId: string,
     content: string
-  ): Promise<BookingAdminNote> {
-    return this.addNote({
+  ): Promise<void> {
+    await bookingEventsService.logNote({
       bookingId,
-      adminUserId,
-      noteType: 'FOLLOW_UP',
+      actorId: adminUserId,
       content,
+      noteType: "FOLLOW_UP",
     });
   }
 
-  /**
-   * Add an issue note
-   */
   async addIssue(
     bookingId: string,
     adminUserId: string,
     content: string
-  ): Promise<BookingAdminNote> {
-    return this.addNote({
+  ): Promise<void> {
+    await bookingEventsService.logNote({
       bookingId,
-      adminUserId,
-      noteType: 'ISSUE',
+      actorId: adminUserId,
       content,
+      noteType: "ISSUE",
     });
   }
 
-  /**
-   * Check if booking has been marked as contacted
-   */
+  /** True if any contact event or legacy CONTACTED admin note */
   async hasBeenContacted(bookingId: string): Promise<boolean> {
+    const [ev] = await db
+      .select({ id: bookingEvents.id })
+      .from(bookingEvents)
+      .where(
+        and(
+          eq(bookingEvents.bookingId, bookingId),
+          eq(bookingEvents.eventType, BOOKING_EVENT_TYPES.CONTACT_LOGGED)
+        )
+      )
+      .limit(1);
+    if (ev) return true;
     const [note] = await db
       .select()
       .from(bookingAdminNotes)
-      .where(and(
-        eq(bookingAdminNotes.bookingId, bookingId),
-        eq(bookingAdminNotes.noteType, 'CONTACTED')
-      ))
+      .where(
+        and(
+          eq(bookingAdminNotes.bookingId, bookingId),
+          eq(bookingAdminNotes.noteType, "CONTACTED")
+        )
+      )
       .limit(1);
-    
     return !!note;
   }
 
-  /**
-   * Get the first contacted date for a booking
-   */
   async getFirstContactedDate(bookingId: string): Promise<Date | null> {
-    const [note] = await db
-      .select()
+    const [fromEvents] = await db
+      .select({ createdAt: bookingEvents.createdAt })
+      .from(bookingEvents)
+      .where(
+        and(
+          eq(bookingEvents.bookingId, bookingId),
+          eq(bookingEvents.eventType, BOOKING_EVENT_TYPES.CONTACT_LOGGED)
+        )
+      )
+      .orderBy(bookingEvents.createdAt)
+      .limit(1);
+    const [fromNotes] = await db
+      .select({ createdAt: bookingAdminNotes.createdAt })
       .from(bookingAdminNotes)
-      .where(and(
-        eq(bookingAdminNotes.bookingId, bookingId),
-        eq(bookingAdminNotes.noteType, 'CONTACTED')
-      ))
+      .where(
+        and(
+          eq(bookingAdminNotes.bookingId, bookingId),
+          eq(bookingAdminNotes.noteType, "CONTACTED")
+        )
+      )
       .orderBy(bookingAdminNotes.createdAt)
       .limit(1);
-    
-    return note?.createdAt ?? null;
+    const a = fromEvents?.createdAt?.getTime() ?? Infinity;
+    const b = fromNotes?.createdAt?.getTime() ?? Infinity;
+    const min = Math.min(a, b);
+    if (min === Infinity) return null;
+    return new Date(min);
   }
 }
 
-// Export singleton instance
 export const bookingNotesService = new BookingNotesService();

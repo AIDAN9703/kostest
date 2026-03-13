@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Badge } from "@/shared/components/ui/badge";
@@ -33,8 +33,9 @@ import {
   AlertCircle,
   ChevronRight,
 } from "lucide-react";
+import { InlineOpsCell } from "@/features/bookings/components/admin/InlineOpsCell";
 
-export interface UnifiedItem {
+export interface UnifiedItemBase {
   id: string;
   type: "booking" | "inquiry";
   customerName: string;
@@ -45,6 +46,28 @@ export interface UnifiedItem {
   amount?: number | null;
   needsAttention?: boolean;
 }
+
+export interface UnifiedItemBooking extends UnifiedItemBase {
+  type: "booking";
+  bookingId: string;
+  opsDurationHours?: string | null;
+  opsExpenseCents?: number | null;
+  opsRevenueCents?: number | null;
+  opsBalanceOwnerCents?: number | null;
+  opsBalanceClientCents?: number | null;
+  opsCrewName?: string | null;
+  opsContractSigned?: boolean | null;
+  opsCaptainPaid?: boolean | null;
+  opsAgentCode?: string | null;
+  opsCommissionCents?: number | null;
+  opsSourceOverride?: string | null;
+}
+
+export interface UnifiedItemInquiry extends UnifiedItemBase {
+  type: "inquiry";
+}
+
+export type UnifiedItem = UnifiedItemBooking | UnifiedItemInquiry;
 
 interface AdminAllContentProps {
   items: UnifiedItem[];
@@ -332,62 +355,174 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
             </TableHeader>
             <TableBody>
               {filteredAndSortedItems.map((item) => (
-                <TableRow
-                  key={`${item.type}-${item.id}`}
-                  className="group hover:bg-muted/30 transition-colors"
-                >
-                  <TableCell>{getTypeBadge(item.type)}</TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium text-foreground">
-                        {item.customerName}
-                      </div>
-                      <div className="text-sm text-muted-foreground truncate max-w-[200px]">
-                        {item.customerEmail}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {item.date ? (
-                      <div className="text-sm">
-                        <div className="text-foreground">
-                          {format(new Date(item.date), "MMM d, yyyy")}
+                <React.Fragment key={`${item.type}-${item.id}`}>
+                  <TableRow
+                    className="group hover:bg-muted/30 transition-colors"
+                  >
+                    <TableCell>{getTypeBadge(item.type)}</TableCell>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium text-foreground">
+                          {item.customerName}
                         </div>
-                        <div className="text-muted-foreground">
-                          {format(new Date(item.date), "h:mm a")}
+                        <div className="text-sm text-muted-foreground truncate max-w-[200px]">
+                          {item.customerEmail}
                         </div>
                       </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1.5">
-                      {item.needsAttention && (
-                        <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+                    </TableCell>
+                    <TableCell>
+                      {item.date ? (
+                        <div className="text-sm">
+                          <div className="text-foreground">
+                            {format(new Date(item.date), "MMM d, yyyy")}
+                          </div>
+                          <div className="text-muted-foreground">
+                            {format(new Date(item.date), "h:mm a")}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">—</span>
                       )}
-                      {getStatusBadge(item.status, item.needsAttention)}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {item.amount != null && item.amount > 0 ? (
-                      <span className="font-medium text-foreground">
-                        {formatCentsAsCurrency(item.amount * 100)}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Link
-                      href={item.href}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5">
+                        {item.needsAttention && (
+                          <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+                        )}
+                        {getStatusBadge(item.status, item.needsAttention)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {item.amount != null && item.amount > 0 ? (
+                        <span className="font-medium text-foreground">
+                          {formatCentsAsCurrency(item.amount * 100)}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        href={item.href}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                      >
+                        View
+                        <ChevronRight className="h-4 w-4 opacity-70 group-hover:translate-x-0.5 transition-transform" />
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                  {item.type === "booking" && (
+                    <TableRow
+                      className="bg-muted/20 hover:bg-muted/30"
                     >
-                      View
-                      <ChevronRight className="h-4 w-4 opacity-70 group-hover:translate-x-0.5 transition-transform" />
-                    </Link>
-                  </TableCell>
-                </TableRow>
+                      <TableCell colSpan={6} className="py-2">
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 items-center text-sm">
+                          <span className="text-muted-foreground font-medium shrink-0">Ops:</span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground text-xs w-16 shrink-0">Duration</span>
+                            <InlineOpsCell
+                            bookingId={item.bookingId}
+                            field="durationHours"
+                            value={item.opsDurationHours}
+                            placeholder="—"
+                          />
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground text-xs w-16 shrink-0">Expense</span>
+                            <InlineOpsCell
+                            bookingId={item.bookingId}
+                            field="expenseCents"
+                            value={item.opsExpenseCents}
+                            isCents
+                            placeholder="—"
+                          />
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground text-xs w-16 shrink-0">REV</span>
+                            <InlineOpsCell
+                            bookingId={item.bookingId}
+                            field="revenueCents"
+                            value={item.opsRevenueCents}
+                            isCents
+                            placeholder="—"
+                          />
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground text-xs w-16 shrink-0">Bal Owner</span>
+                            <InlineOpsCell
+                            bookingId={item.bookingId}
+                            field="balanceOwnerCents"
+                            value={item.opsBalanceOwnerCents}
+                            isCents
+                            placeholder="—"
+                          />
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground text-xs w-16 shrink-0">Bal Client</span>
+                            <InlineOpsCell
+                            bookingId={item.bookingId}
+                            field="balanceClientCents"
+                            value={item.opsBalanceClientCents}
+                            isCents
+                            placeholder="—"
+                          />
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground text-xs w-16 shrink-0">Crew</span>
+                            <InlineOpsCell
+                            bookingId={item.bookingId}
+                            field="crewName"
+                            value={item.opsCrewName}
+                            placeholder="—"
+                          />
+                          </div>
+                          <span className="text-muted-foreground text-xs">Contract?</span>
+                          <InlineOpsCell
+                            bookingId={item.bookingId}
+                            field="contractSigned"
+                            value={item.opsContractSigned}
+                            isCheckbox
+                          />
+                          <span className="text-muted-foreground text-xs">C Paid?</span>
+                          <InlineOpsCell
+                            bookingId={item.bookingId}
+                            field="captainPaid"
+                            value={item.opsCaptainPaid}
+                            isCheckbox
+                          />
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground text-xs w-16 shrink-0">Agent</span>
+                            <InlineOpsCell
+                              bookingId={item.bookingId}
+                              field="agentCode"
+                              value={item.opsAgentCode}
+                              placeholder="—"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground text-xs w-16 shrink-0">Commission</span>
+                            <InlineOpsCell
+                              bookingId={item.bookingId}
+                              field="commissionCents"
+                              value={item.opsCommissionCents}
+                              isCents
+                              placeholder="—"
+                            />
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-muted-foreground text-xs w-16 shrink-0">Source</span>
+                            <InlineOpsCell
+                              bookingId={item.bookingId}
+                              field="sourceOverride"
+                              value={item.opsSourceOverride}
+                              placeholder="—"
+                            />
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
               ))}
             </TableBody>
           </Table>

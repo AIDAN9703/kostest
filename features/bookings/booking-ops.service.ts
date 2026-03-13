@@ -62,7 +62,22 @@ export const bookingOpsService = {
 
   async upsert(bookingId: string, input: BookingOpsInput): Promise<BookingOpsData> {
     const now = new Date();
-    const setValues = {
+    // Only include fields that are explicitly provided (partial update support)
+    const setValues: Record<string, unknown> = { updatedAt: now };
+    if (input.durationHours !== undefined) setValues.durationHours = input.durationHours;
+    if (input.expenseCents !== undefined) setValues.expenseCents = input.expenseCents;
+    if (input.revenueCents !== undefined) setValues.revenueCents = input.revenueCents;
+    if (input.balanceOwnerCents !== undefined) setValues.balanceOwnerCents = input.balanceOwnerCents;
+    if (input.balanceClientCents !== undefined) setValues.balanceClientCents = input.balanceClientCents;
+    if (input.crewName !== undefined) setValues.crewName = input.crewName;
+    if (input.contractSigned !== undefined) setValues.contractSigned = input.contractSigned;
+    if (input.captainPaid !== undefined) setValues.captainPaid = input.captainPaid;
+    if (input.agentCode !== undefined) setValues.agentCode = input.agentCode;
+    if (input.commissionCents !== undefined) setValues.commissionCents = input.commissionCents;
+    if (input.sourceOverride !== undefined) setValues.sourceOverride = input.sourceOverride;
+
+    const insertValues = {
+      bookingId,
       durationHours: input.durationHours ?? null,
       expenseCents: input.expenseCents ?? null,
       revenueCents: input.revenueCents ?? null,
@@ -74,18 +89,14 @@ export const bookingOpsService = {
       agentCode: input.agentCode ?? null,
       commissionCents: input.commissionCents ?? null,
       sourceOverride: input.sourceOverride ?? null,
-      updatedAt: now,
     };
 
     const [row] = await db
       .insert(bookingOps)
-      .values({
-        bookingId,
-        ...setValues,
-      })
+      .values(insertValues)
       .onConflictDoUpdate({
         target: bookingOps.bookingId,
-        set: setValues,
+        set: setValues as Record<string, string | number | boolean | Date | null>,
       })
       .returning();
 

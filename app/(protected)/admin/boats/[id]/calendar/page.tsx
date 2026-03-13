@@ -5,17 +5,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import AdminBoatCalendar from "@/features/boats/components/AdminBoatCalendar";
-import AdminBoatCalendarManager from "@/features/boats/components/AdminBoatCalendarManager";
-
-interface BoatCalendar {
-  id: string;
-  calendarName: string;
-  calendarId: string;
-  ownerType: "ADMIN" | "OWNER";
-  syncEnabled: boolean;
-  lastSyncAt?: Date;
-  lastSyncStatus?: "PENDING" | "SUCCESS" | "FAILED";
-}
 
 interface Boat {
   id: string;
@@ -29,17 +18,13 @@ export default function BoatCalendarPage({
   params: Promise<{ id: string }>;
 }) {
   const [boat, setBoat] = useState<Boat | null>(null);
-  const [calendars, setCalendars] = useState<BoatCalendar[]>([]);
   const [loading, setLoading] = useState(true);
-  const [boatId, setBoatId] = useState<string>("");
 
   useEffect(() => {
     async function loadData() {
       try {
         const resolvedParams = await params;
-        setBoatId(resolvedParams.id);
 
-        // Fetch boat data
         const boatResponse = await fetch(
           `/api/admin/boats/${resolvedParams.id}`,
         );
@@ -48,16 +33,6 @@ export default function BoatCalendarPage({
         }
         const boatData = await boatResponse.json();
         setBoat(boatData);
-
-        // Fetch calendars
-        const calendarsResponse = await fetch(
-          `/api/admin/boats/${resolvedParams.id}/calendars`,
-        );
-        if (!calendarsResponse.ok) {
-          throw new Error("Failed to fetch calendars");
-        }
-        const calendarsData = await calendarsResponse.json();
-        setCalendars(calendarsData);
 
         setLoading(false);
       } catch (error) {
@@ -68,11 +43,6 @@ export default function BoatCalendarPage({
 
     loadData();
   }, [params]);
-
-  const handleCalendarsChange = (newCalendars: BoatCalendar[]) => {
-    setCalendars(newCalendars);
-    // TODO: Persist to database via API call
-  };
 
   if (loading) {
     return (
@@ -104,14 +74,6 @@ export default function BoatCalendarPage({
           <p className="text-gray-500">Booking Calendar</p>
         </div>
       </div>
-
-      {/* External Calendar Management */}
-      <AdminBoatCalendarManager
-        boatId={boat.id}
-        boatName={boat.name}
-        calendars={calendars}
-        onCalendarsChange={handleCalendarsChange}
-      />
 
       {/* FullCalendar Component */}
       <AdminBoatCalendar

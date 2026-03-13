@@ -95,6 +95,22 @@ export interface BookingAdminNoteEntry {
   createdAt: Date;
 }
 
+/** Single row from booking_event timeline */
+export interface BookingActivityEventEntry {
+  id: string;
+  actorType: string;
+  eventType: string;
+  channel: string | null;
+  displayMessage: string | null;
+  content: string | null;
+  contactMethod: string | null;
+  metadata: Record<string, unknown> | null;
+  previousState?: Record<string, unknown> | null;
+  newState?: Record<string, unknown> | null;
+  createdAt: Date;
+  actorName: string;
+}
+
 /**
  * Complete booking with all related data
  * This is the new "full" booking type with nested relations
@@ -142,6 +158,8 @@ export interface BookingWithRelations {
   payments: BookingPaymentData[];
   statusHistory: BookingStatusHistoryEntry[];
   adminNotes: BookingAdminNoteEntry[];
+  /** Append-only activity log (status, notes, contacts, Stripe, …) */
+  activityEvents: BookingActivityEventEntry[];
   
   // Joined boat info
   boat?: {
@@ -260,6 +278,19 @@ export interface BookingListItem {
   assignedAdminFirstName: string | null;
   assignedAdminLastName: string | null;
   assignedAdminEmail: string | null;
+
+  // Ops fields (from booking_ops - Excel workflow tracking, all nullable)
+  opsDurationHours?: string | null;
+  opsExpenseCents?: number | null;
+  opsRevenueCents?: number | null;
+  opsBalanceOwnerCents?: number | null;
+  opsBalanceClientCents?: number | null;
+  opsCrewName?: string | null;
+  opsContractSigned?: boolean | null;
+  opsCaptainPaid?: boolean | null;
+  opsAgentCode?: string | null;
+  opsCommissionCents?: number | null;
+  opsSourceOverride?: string | null;
 }
 
 /**
@@ -407,10 +438,8 @@ export interface BookingCalendarEvent {
   borderColor: string;
   textColor: string;
   extendedProps: {
-    type?: 'booking' | 'external';
+    type?: 'booking';
     bookingId?: string;
-    source?: string;
-    eventId?: string;
     customerName: string;
     customerEmail: string;
     customerPhone: string;
