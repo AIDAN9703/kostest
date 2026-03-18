@@ -21,44 +21,46 @@ export default async function AllPage() {
   ]);
 
   const items = [
-    ...bookingsResult.bookings.map((b) => {
-      const needsAttention = b.bookingStatus === "PENDING" || b.bookingStatus === "DRAFT";
-      return {
+    ...bookingsResult.bookings.map((b) => ({
         id: b.id,
         type: "booking" as const,
         customerName: b.customerName || "N/A",
         customerEmail: b.customerEmail || "",
         date: b.startDateTime,
-        status: b.bookingStatus,
         href: `/admin/bookings/${b.id}`,
         amount: b.totalAmountCents ? b.totalAmountCents / 100 : null,
-        needsAttention,
         // Ops fields for inline editing on All page
         bookingId: b.id,
         opsExpenseCents: b.opsExpenseCents,
+        opsGmvCents: b.opsGmvCents,
         opsRevenueCents: b.opsRevenueCents,
+        opsPaidCents: b.opsPaidCents,
         opsBalanceOwnerCents: b.opsBalanceOwnerCents,
+        opsBalanceClientCents: b.opsBalanceClientCents,
         opsCrewName: b.opsCrewName,
+        opsNote: b.opsNote,
         opsContractSigned: b.opsContractSigned,
+        opsConnected: b.opsConnected,
+        opsClientPaid: b.opsClientPaid,
         opsCaptainPaid: b.opsCaptainPaid,
+        opsAllPaid: b.opsAllPaid,
+        opsSheetsSent: b.opsSheetsSent,
+        opsAgentCode: b.opsAgentCode,
+        opsCommissionAgentCents: b.opsCommissionAgentCents,
+        opsCommissionKosCents: b.opsCommissionKosCents,
         opsCommissionCents: b.opsCommissionCents,
         opsSourceOverride: b.opsSourceOverride,
-      };
-    }),
-    ...inquiriesResult.inquiries.map((i) => {
-      const needsAttention = i.outcome === "OPEN" && i.stage === "NEEDS_CONTACT";
-      return {
+      })),
+    ...inquiriesResult.inquiries.map((i) => ({
         id: i.id,
         type: "inquiry" as const,
         customerName: i.name,
         customerEmail: i.email,
         date: i.date ?? i.createdAt,
-        status: i.stage,
         href: `/admin/inquiries/${i.id}`,
         amount: null as number | null,
-        needsAttention,
-      };
-    }),
+        needsContact: i.outcome === "OPEN" && i.stage === "NEEDS_CONTACT",
+      })),
   ].sort((a, b) => {
     if (!a.date && !b.date) return 0;
     if (!a.date) return 1;

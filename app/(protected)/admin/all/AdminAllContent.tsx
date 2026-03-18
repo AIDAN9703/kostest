@@ -25,17 +25,21 @@ import { format } from "date-fns";
 import { EmptyState } from "@/shared/components/EmptyState";
 import {
   CalendarDays,
-  FileText,
   MessageSquare,
   Search,
   ArrowUpDown,
   Filter,
-  AlertCircle,
-  ChevronRight,
+  MoreVertical,
+  Eye,
 } from "lucide-react";
-import { Switch } from "@/shared/components/ui/switch";
-import { Label } from "@/shared/components/ui/label";
-import { OpsRowContent } from "@/features/bookings/components/admin/OpsRowContent";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/components/ui/dropdown-menu";
+import { Button } from "@/shared/components/ui/button";
+import { InlineOpsCell } from "@/features/bookings/components/admin/InlineOpsCell";
 
 export interface UnifiedItemBase {
   id: string;
@@ -43,21 +47,32 @@ export interface UnifiedItemBase {
   customerName: string;
   customerEmail: string;
   date: Date | null;
-  status: string;
   href: string;
   amount?: number | null;
-  needsAttention?: boolean;
+  /** Only for inquiries: show subtle "Needs contact" under contact info */
+  needsContact?: boolean;
 }
 
 export interface UnifiedItemBooking extends UnifiedItemBase {
   type: "booking";
   bookingId: string;
   opsExpenseCents?: number | null;
+  opsGmvCents?: number | null;
   opsRevenueCents?: number | null;
+  opsPaidCents?: number | null;
   opsBalanceOwnerCents?: number | null;
+  opsBalanceClientCents?: number | null;
   opsCrewName?: string | null;
+  opsNote?: string | null;
   opsContractSigned?: boolean | null;
+  opsConnected?: boolean | null;
+  opsClientPaid?: boolean | null;
   opsCaptainPaid?: boolean | null;
+  opsAllPaid?: boolean | null;
+  opsSheetsSent?: boolean | null;
+  opsAgentCode?: string | null;
+  opsCommissionAgentCents?: number | null;
+  opsCommissionKosCents?: number | null;
   opsCommissionCents?: number | null;
   opsSourceOverride?: string | null;
 }
@@ -81,7 +96,6 @@ const TYPE_OPTIONS = [
 const SORT_OPTIONS = [
   { value: "date-desc", label: "Newest first" },
   { value: "date-asc", label: "Oldest first" },
-  { value: "status", label: "Status" },
   { value: "amount-desc", label: "Amount (high → low)" },
 ] as const;
 
@@ -112,85 +126,20 @@ function getTypeBadge(type: string) {
   }
 }
 
-function formatStatus(status: string) {
-  return status
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (l) => l.toUpperCase());
-}
-
-function getStatusBadge(status: string, needsAttention?: boolean) {
-  const statusUpper = status.toUpperCase();
-  const formatted = formatStatus(status);
-  if (needsAttention) {
-    return (
-      <Badge variant="outline" className="border-amber-400 text-amber-700 dark:text-amber-400">
-        {formatted}
-      </Badge>
-    );
-  }
-  if (statusUpper === "PENDING" || statusUpper === "NEEDS_CONTACT") {
-    return <Badge variant="secondary">{formatted}</Badge>;
-  }
-  if (
-    statusUpper === "CONFIRMED" ||
-    statusUpper === "ACCEPTED" ||
-    statusUpper === "WON" ||
-    statusUpper === "PUBLISHED" ||
-    statusUpper === "CONTACTED"
-  ) {
-    return (
-      <Badge
-        variant="secondary"
-        className="bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200"
-      >
-        {formatted}
-      </Badge>
-    );
-  }
-  if (
-    statusUpper === "CANCELLED" ||
-    statusUpper === "LOST" ||
-    statusUpper === "ABANDONED" ||
-    statusUpper === "EXPIRED"
-  ) {
-    return (
-      <Badge
-        variant="secondary"
-        className="bg-red-500/10 text-red-700 dark:text-red-300 border-red-200"
-      >
-        {formatted}
-      </Badge>
-    );
-  }
-  if (statusUpper === "DRAFT") {
-    return (
-      <Badge variant="secondary" className="bg-muted text-muted-foreground">
-        {formatted}
-      </Badge>
-    );
-  }
-  return <Badge variant="secondary">{formatted}</Badge>;
-}
-
 export default function AdminAllContent({ items }: AdminAllContentProps) {
   const searchParams = useSearchParams();
   const [typeFilter, setTypeFilter] = useState<string>(() => searchParams.get("type") || "all");
   const [sort, setSort] = useState<string>(() => searchParams.get("sort") || "date-desc");
   const [search, setSearch] = useState<string>(() => searchParams.get("q") || "");
-  const [showOps, setShowOps] = useState<boolean>(() => searchParams.get("showOps") === "true");
 
   const stats = useMemo(() => {
     const byType = { booking: 0, inquiry: 0 };
-    let needsAttention = 0;
     for (const item of items) {
       byType[item.type]++;
-      if (item.needsAttention) needsAttention++;
     }
     return {
       total: items.length,
       ...byType,
-      needsAttention,
     };
   }, [items]);
 
@@ -223,9 +172,6 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
           return tb - ta;
         });
         break;
-      case "status":
-        result.sort((a, b) => (a.status || "").localeCompare(b.status || ""));
-        break;
       case "amount-desc":
         result.sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0));
         break;
@@ -243,7 +189,7 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
   return (
     <div className="flex flex-1 flex-col gap-6">
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
           <p className="text-xs font-medium text-muted-foreground">Total</p>
           <p className="text-2xl font-semibold text-foreground">{stats.total}</p>
@@ -256,12 +202,6 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
           <p className="text-xs font-medium text-muted-foreground">Inquiries</p>
           <p className="text-2xl font-semibold text-purple-600 dark:text-purple-400">
             {stats.inquiry}
-          </p>
-        </div>
-        <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-4 shadow-sm">
-          <p className="text-xs font-medium text-amber-700 dark:text-amber-400">Needs attention</p>
-          <p className="text-2xl font-semibold text-amber-700 dark:text-amber-400">
-            {stats.needsAttention}
           </p>
         </div>
       </div>
@@ -304,20 +244,14 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
               ))}
             </SelectContent>
           </Select>
-          <div className="flex items-center gap-2">
-            <Switch id="show-ops" checked={showOps} onCheckedChange={setShowOps} />
-            <Label htmlFor="show-ops" className="text-sm font-medium cursor-pointer">
-              Show ops
-            </Label>
-          </div>
         </div>
         <p className="text-sm text-muted-foreground">
           Showing {filteredAndSortedItems.length} of {items.length}
         </p>
       </div>
 
-      {/* Table */}
-      <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-hidden">
+      {/* Table - all ops inline */}
+      <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-x-auto">
         {filteredAndSortedItems.length === 0 ? (
           <div className="p-12">
             <EmptyState
@@ -334,86 +268,257 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead>Type</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="w-[80px]"></TableHead>
+                <TableHead className="whitespace-nowrap">Type</TableHead>
+                <TableHead className="whitespace-nowrap">Customer</TableHead>
+                <TableHead className="whitespace-nowrap">Date</TableHead>
+                <TableHead className="text-right whitespace-nowrap">Amount</TableHead>
+                <TableHead className="whitespace-nowrap">Expense</TableHead>
+                <TableHead className="whitespace-nowrap">GMV</TableHead>
+                <TableHead className="whitespace-nowrap">REV</TableHead>
+                <TableHead className="whitespace-nowrap">PAID</TableHead>
+                <TableHead className="whitespace-nowrap">Bal Owner</TableHead>
+                <TableHead className="whitespace-nowrap">Bal Client</TableHead>
+                <TableHead className="whitespace-nowrap">Crew</TableHead>
+                <TableHead className="whitespace-nowrap">Note</TableHead>
+                <TableHead className="whitespace-nowrap">Contract?</TableHead>
+                <TableHead className="whitespace-nowrap">Connected?</TableHead>
+                <TableHead className="whitespace-nowrap">C Paid?</TableHead>
+                <TableHead className="whitespace-nowrap">Capt Paid?</TableHead>
+                <TableHead className="whitespace-nowrap">All Paid?</TableHead>
+                <TableHead className="whitespace-nowrap">Sheets?</TableHead>
+                <TableHead className="whitespace-nowrap">Agent</TableHead>
+                <TableHead className="whitespace-nowrap">Comm Agent</TableHead>
+                <TableHead className="whitespace-nowrap">Comm KOS</TableHead>
+                <TableHead className="whitespace-nowrap">Source</TableHead>
+                <TableHead className="whitespace-nowrap text-right" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredAndSortedItems.map((item) => (
-                <React.Fragment key={`${item.type}-${item.id}`}>
-                  <TableRow className="group hover:bg-muted/30 transition-colors">
-                    <TableCell>{getTypeBadge(item.type)}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium text-foreground">{item.customerName}</div>
-                        <div className="text-sm text-muted-foreground truncate max-w-[200px]">
-                          {item.customerEmail}
-                        </div>
+                <TableRow
+                  key={`${item.type}-${item.id}`}
+                  className="group hover:bg-muted/30 transition-colors"
+                >
+                  <TableCell className="whitespace-nowrap">{getTypeBadge(item.type)}</TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    <div>
+                      <div className="font-medium text-foreground">{item.customerName}</div>
+                      <div className="text-sm text-muted-foreground truncate max-w-[180px]">
+                        {item.customerEmail}
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      {item.date ? (
-                        <div className="text-sm">
-                          <div className="text-foreground">
-                            {format(new Date(item.date), "MMM d, yyyy")}
-                          </div>
-                          <div className="text-muted-foreground">
-                            {format(new Date(item.date), "h:mm a")}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        {item.needsAttention && (
-                          <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
-                        )}
-                        {getStatusBadge(item.status, item.needsAttention)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {item.amount != null && item.amount > 0 ? (
-                        <span className="font-medium text-foreground">
-                          {formatCentsAsCurrency(item.amount * 100)}
+                      {item.type === "inquiry" && item.needsContact && (
+                        <span className="mt-0.5 inline-block text-xs text-amber-600 dark:text-amber-400">
+                          Needs contact
                         </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <Link
-                        href={item.href}
-                        className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                      >
-                        View
-                        <ChevronRight className="h-4 w-4 opacity-70 group-hover:translate-x-0.5 transition-transform" />
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                  {item.type === "booking" && showOps && (
-                    <TableRow className="border-t-2 border-b-2 border-border bg-muted/30 hover:bg-muted/40">
-                      <TableCell colSpan={6} className="border-l-2 border-l-primary/30 py-4">
-                        <OpsRowContent
+                    </div>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {item.date ? (
+                      <div className="text-sm">
+                        <div className="text-foreground">
+                          {format(new Date(item.date), "MMM d, yyyy")}
+                        </div>
+                        <div className="text-muted-foreground">
+                          {format(new Date(item.date), "h:mm a")}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right whitespace-nowrap">
+                    {item.amount != null && item.amount > 0 ? (
+                      <span className="font-medium text-foreground">
+                        {formatCentsAsCurrency(item.amount * 100)}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  {item.type === "booking" ? (
+                    <>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
                           bookingId={item.bookingId}
-                          opsExpenseCents={item.opsExpenseCents}
-                          opsRevenueCents={item.opsRevenueCents}
-                          opsBalanceOwnerCents={item.opsBalanceOwnerCents}
-                          opsCrewName={item.opsCrewName}
-                          opsContractSigned={item.opsContractSigned}
-                          opsCaptainPaid={item.opsCaptainPaid}
-                          opsCommissionCents={item.opsCommissionCents}
-                          opsSourceOverride={item.opsSourceOverride}
+                          field="expenseCents"
+                          value={item.opsExpenseCents}
+                          isCents
+                          placeholder="—"
                         />
                       </TableCell>
-                    </TableRow>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="gmvCents"
+                          value={item.opsGmvCents}
+                          isCents
+                          placeholder="—"
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="revenueCents"
+                          value={item.opsRevenueCents}
+                          isCents
+                          placeholder="—"
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="paidCents"
+                          value={item.opsPaidCents}
+                          isCents
+                          placeholder="—"
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="balanceOwnerCents"
+                          value={item.opsBalanceOwnerCents}
+                          isCents
+                          placeholder="—"
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="balanceClientCents"
+                          value={item.opsBalanceClientCents}
+                          isCents
+                          placeholder="—"
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="crewName"
+                          value={item.opsCrewName}
+                          placeholder="—"
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="opsNote"
+                          value={item.opsNote}
+                          placeholder="—"
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="contractSigned"
+                          value={item.opsContractSigned}
+                          isCheckbox
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="connected"
+                          value={item.opsConnected}
+                          isCheckbox
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="clientPaid"
+                          value={item.opsClientPaid}
+                          isCheckbox
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="captainPaid"
+                          value={item.opsCaptainPaid}
+                          isCheckbox
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="allPaid"
+                          value={item.opsAllPaid}
+                          isCheckbox
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="sheetsSent"
+                          value={item.opsSheetsSent}
+                          isCheckbox
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="agentCode"
+                          value={item.opsAgentCode}
+                          placeholder="—"
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="commissionAgentCents"
+                          value={item.opsCommissionAgentCents}
+                          isCents
+                          placeholder="—"
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="commissionKosCents"
+                          value={item.opsCommissionKosCents}
+                          isCents
+                          placeholder="—"
+                        />
+                      </TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <InlineOpsCell
+                          bookingId={item.bookingId}
+                          field="sourceOverride"
+                          value={item.opsSourceOverride}
+                          placeholder="—"
+                        />
+                      </TableCell>
+                    </>
+                  ) : (
+                    <>
+                      {Array.from({ length: 18 }).map((_, i) => (
+                        <TableCell key={i} />
+                      ))}
+                    </>
                   )}
-                </React.Fragment>
+                  <TableCell className="whitespace-nowrap text-right">
+                    <div className="flex justify-end">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
+                            <span className="sr-only">Actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={item.href} className="cursor-pointer">
+                              <Eye className="h-4 w-4 mr-2" />
+                              View
+                            </Link>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </TableCell>
+                </TableRow>
               ))}
             </TableBody>
           </Table>

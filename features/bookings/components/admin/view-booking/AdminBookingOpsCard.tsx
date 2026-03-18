@@ -33,14 +33,22 @@ export function AdminBookingOpsCard({ bookingId, ops }: AdminBookingOpsCardProps
   const [error, setError] = useState<string | null>(null);
 
   const [expenseCents, setExpenseCents] = useState(centsToDisplay(ops?.expenseCents));
+  const [gmvCents, setGmvCents] = useState(centsToDisplay(ops?.gmvCents));
   const [revenueCents, setRevenueCents] = useState(centsToDisplay(ops?.revenueCents));
-  const [balanceOwnerCents, setBalanceOwnerCents] = useState(
-    centsToDisplay(ops?.balanceOwnerCents)
-  );
+  const [paidCents, setPaidCents] = useState(centsToDisplay(ops?.paidCents));
+  const [balanceOwnerCents, setBalanceOwnerCents] = useState(centsToDisplay(ops?.balanceOwnerCents));
+  const [balanceClientCents, setBalanceClientCents] = useState(centsToDisplay(ops?.balanceClientCents));
   const [crewName, setCrewName] = useState(ops?.crewName ?? "");
+  const [opsNote, setOpsNote] = useState(ops?.opsNote ?? "");
   const [contractSigned, setContractSigned] = useState(ops?.contractSigned ?? false);
+  const [connected, setConnected] = useState(ops?.connected ?? false);
+  const [clientPaid, setClientPaid] = useState(ops?.clientPaid ?? false);
   const [captainPaid, setCaptainPaid] = useState(ops?.captainPaid ?? false);
-  const [commissionCents, setCommissionCents] = useState(centsToDisplay(ops?.commissionCents));
+  const [allPaid, setAllPaid] = useState(ops?.allPaid ?? false);
+  const [sheetsSent, setSheetsSent] = useState(ops?.sheetsSent ?? false);
+  const [agentCode, setAgentCode] = useState(ops?.agentCode ?? "");
+  const [commissionAgentCents, setCommissionAgentCents] = useState(centsToDisplay(ops?.commissionAgentCents));
+  const [commissionKosCents, setCommissionKosCents] = useState(centsToDisplay(ops?.commissionKosCents));
   const [sourceOverride, setSourceOverride] = useState(ops?.sourceOverride ?? "");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -50,12 +58,22 @@ export function AdminBookingOpsCard({ bookingId, ops }: AdminBookingOpsCardProps
     try {
       const result = await updateBookingOps(bookingId, {
         expenseCents: parseDollarsToCents(expenseCents),
+        gmvCents: parseDollarsToCents(gmvCents),
         revenueCents: parseDollarsToCents(revenueCents),
+        paidCents: parseDollarsToCents(paidCents),
         balanceOwnerCents: parseDollarsToCents(balanceOwnerCents),
+        balanceClientCents: parseDollarsToCents(balanceClientCents),
         crewName: crewName.trim() || null,
+        opsNote: opsNote.trim() || null,
         contractSigned,
+        connected,
+        clientPaid,
         captainPaid,
-        commissionCents: parseDollarsToCents(commissionCents),
+        allPaid,
+        sheetsSent,
+        agentCode: agentCode.trim() || null,
+        commissionAgentCents: parseDollarsToCents(commissionAgentCents),
+        commissionKosCents: parseDollarsToCents(commissionKosCents),
         sourceOverride: sourceOverride.trim() || null,
       });
 
@@ -92,105 +110,76 @@ export function AdminBookingOpsCard({ bookingId, ops }: AdminBookingOpsCardProps
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="crewName">Crew / Captain</Label>
-              <Input
-                id="crewName"
-                type="text"
-                placeholder="e.g. Jackie, Max"
-                value={crewName}
-                onChange={(e) => setCrewName(e.target.value)}
-                className="rounded-xl"
-              />
+              <Input id="crewName" placeholder="e.g. Jackie, Max" value={crewName} onChange={(e) => setCrewName(e.target.value)} className="rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="opsNote">Note</Label>
+              <Input id="opsNote" placeholder="Ops note..." value={opsNote} onChange={(e) => setOpsNote(e.target.value)} className="rounded-xl" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="agentCode">Agent</Label>
+              <Input id="agentCode" placeholder="Agent name/code" value={agentCode} onChange={(e) => setAgentCode(e.target.value)} className="rounded-xl" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="sourceOverride">Source</Label>
-              <Input
-                id="sourceOverride"
-                type="text"
-                placeholder="Getmyboat, Boatsetter, Direct, Website..."
-                value={sourceOverride}
-                onChange={(e) => setSourceOverride(e.target.value)}
-                className="rounded-xl"
-              />
+              <Input id="sourceOverride" placeholder="Getmyboat, Boatsetter, Direct, Website..." value={sourceOverride} onChange={(e) => setSourceOverride(e.target.value)} className="rounded-xl" />
             </div>
           </div>
 
           <div className="space-y-4">
             <h4 className="text-sm font-semibold text-foreground">Financial ($)</h4>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="expenseCents">Expense</Label>
-                <Input
-                  id="expenseCents"
-                  type="text"
-                  placeholder="0.00"
-                  value={expenseCents}
-                  onChange={(e) => setExpenseCents(e.target.value)}
-                  className="rounded-xl"
-                />
+                <Input id="expenseCents" type="text" placeholder="0.00" value={expenseCents} onChange={(e) => setExpenseCents(e.target.value)} className="rounded-xl" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="revenueCents">Revenue</Label>
-                <Input
-                  id="revenueCents"
-                  type="text"
-                  placeholder="0.00"
-                  value={revenueCents}
-                  onChange={(e) => setRevenueCents(e.target.value)}
-                  className="rounded-xl"
-                />
+                <Label htmlFor="gmvCents">GMV</Label>
+                <Input id="gmvCents" type="text" placeholder="0.00" value={gmvCents} onChange={(e) => setGmvCents(e.target.value)} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="revenueCents">REV</Label>
+                <Input id="revenueCents" type="text" placeholder="0.00" value={revenueCents} onChange={(e) => setRevenueCents(e.target.value)} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="paidCents">PAID</Label>
+                <Input id="paidCents" type="text" placeholder="0.00" value={paidCents} onChange={(e) => setPaidCents(e.target.value)} className="rounded-xl" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="balanceOwnerCents">Balance Owner</Label>
-                <Input
-                  id="balanceOwnerCents"
-                  type="text"
-                  placeholder="0.00"
-                  value={balanceOwnerCents}
-                  onChange={(e) => setBalanceOwnerCents(e.target.value)}
-                  className="rounded-xl"
-                />
+                <Input id="balanceOwnerCents" type="text" placeholder="0.00" value={balanceOwnerCents} onChange={(e) => setBalanceOwnerCents(e.target.value)} className="rounded-xl" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="commissionCents">Commission</Label>
-                <Input
-                  id="commissionCents"
-                  type="text"
-                  placeholder="0.00"
-                  value={commissionCents}
-                  onChange={(e) => setCommissionCents(e.target.value)}
-                  className="rounded-xl"
-                />
+                <Label htmlFor="balanceClientCents">Balance Client</Label>
+                <Input id="balanceClientCents" type="text" placeholder="0.00" value={balanceClientCents} onChange={(e) => setBalanceClientCents(e.target.value)} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="commissionAgentCents">Commission Agent</Label>
+                <Input id="commissionAgentCents" type="text" placeholder="0.00" value={commissionAgentCents} onChange={(e) => setCommissionAgentCents(e.target.value)} className="rounded-xl" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="commissionKosCents">Commission KOS</Label>
+                <Input id="commissionKosCents" type="text" placeholder="0.00" value={commissionKosCents} onChange={(e) => setCommissionKosCents(e.target.value)} className="rounded-xl" />
               </div>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-6">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="contractSigned"
-                checked={contractSigned}
-                onCheckedChange={(v) => setContractSigned(v === true)}
-              />
-              <Label
-                htmlFor="contractSigned"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Contract signed
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="captainPaid"
-                checked={captainPaid}
-                onCheckedChange={(v) => setCaptainPaid(v === true)}
-              />
-              <Label
-                htmlFor="captainPaid"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Captain paid
-              </Label>
-            </div>
+            {[
+              { id: "contractSigned", label: "Contract signed", checked: contractSigned, set: setContractSigned },
+              { id: "connected", label: "Connected?", checked: connected, set: setConnected },
+              { id: "clientPaid", label: "C Paid? (Client)", checked: clientPaid, set: setClientPaid },
+              { id: "captainPaid", label: "Capt Paid?", checked: captainPaid, set: setCaptainPaid },
+              { id: "allPaid", label: "All Paid?", checked: allPaid, set: setAllPaid },
+              { id: "sheetsSent", label: "Sheets?", checked: sheetsSent, set: setSheetsSent },
+            ].map(({ id, label, checked, set }) => (
+              <div key={id} className="flex items-center space-x-2">
+                <Checkbox id={id} checked={checked} onCheckedChange={(v) => set(v === true)} />
+                <Label htmlFor={id} className="text-sm font-medium leading-none cursor-pointer">
+                  {label}
+                </Label>
+              </div>
+            ))}
           </div>
         </form>
       </CardContent>

@@ -285,11 +285,22 @@ export interface BookingListItem {
 
   // Ops fields (from booking_ops - Excel workflow tracking, all nullable)
   opsExpenseCents?: number | null;
+  opsGmvCents?: number | null;
   opsRevenueCents?: number | null;
+  opsPaidCents?: number | null;
   opsBalanceOwnerCents?: number | null;
+  opsBalanceClientCents?: number | null;
   opsCrewName?: string | null;
+  opsNote?: string | null;
   opsContractSigned?: boolean | null;
+  opsConnected?: boolean | null;
+  opsClientPaid?: boolean | null;
   opsCaptainPaid?: boolean | null;
+  opsAllPaid?: boolean | null;
+  opsSheetsSent?: boolean | null;
+  opsAgentCode?: string | null;
+  opsCommissionAgentCents?: number | null;
+  opsCommissionKosCents?: number | null;
   opsCommissionCents?: number | null;
   opsSourceOverride?: string | null;
 }
