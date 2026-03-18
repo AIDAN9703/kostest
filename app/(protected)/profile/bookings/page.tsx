@@ -52,6 +52,7 @@ function transformBooking(dbBooking: {
 
   return {
     id: dbBooking.id,
+    bookingStatus: dbBooking.bookingStatus,
     boatName: dbBooking.boatName || "Unknown Boat",
     boatType: dbBooking.boatCategory || "Yacht",
     date: startDate ? format(startDate, "EEEE, MMMM d, yyyy") : "No date",
@@ -68,14 +69,12 @@ function transformBooking(dbBooking: {
 // Map database status to display status
 function getBookingDisplayStatus(dbStatus: string): string {
   const statusMap: Record<string, string> = {
+    DRAFT: "pending",
     PENDING: "pending",
     APPROVED: "approved",
     CONFIRMED: "confirmed",
-    DENIED: "cancelled",
-    EXPIRED: "cancelled",
     CANCELLED: "cancelled",
     COMPLETED: "completed",
-    REFUNDED: "cancelled",
   };
   return statusMap[dbStatus] || "pending";
 }
@@ -166,7 +165,7 @@ export default async function BookingsPage() {
       </div>
 
       {allBookings.length > 0 ? (
-        <div className="space-y-3 md:space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {allBookings.map((booking) => (
             <BookingCard key={booking.id} booking={booking} />
           ))}

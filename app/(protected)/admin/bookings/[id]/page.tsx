@@ -1,26 +1,29 @@
-import { bookingService } from "@/features/bookings/booking.service";
-import { bookingOpsService } from "@/features/bookings/booking-ops.service";
-import { bookingEventsService } from "@/features/bookings/booking-events.service";
-import { BookingActivityTimeline } from "@/features/bookings/components/admin/BookingActivityTimeline";
-import type { BookingActivityEventEntry } from "@/features/bookings/booking.types";
 import { notFound } from "next/navigation";
-import { AdminBookingProfileHeader } from "@/features/bookings/components/admin/AdminBookingProfileHeader";
-import { AdminBookingDetailsCard } from "@/features/bookings/components/admin/AdminBookingDetailsCard";
-import { AdminBookingPaymentCard } from "@/features/bookings/components/admin/AdminBookingPaymentCard";
-import { AdminBookingOpsCard } from "@/features/bookings/components/admin/AdminBookingOpsCard";
+
+import { AdminBookingProfileHeader } from "@/features/bookings/components/admin/view-booking/AdminBookingProfileHeader";
+import { AdminBookingDetailsCard } from "@/features/bookings/components/admin/view-booking/AdminBookingDetailsCard";
+import { AdminBookingPaymentCard } from "@/features/bookings/components/admin/view-booking/AdminBookingPaymentCard";
+import { AdminBookingOpsCard } from "@/features/bookings/components/admin/view-booking/AdminBookingOpsCard";
+import { BookingActivityTimeline } from "@/features/bookings/components/admin/view-booking/BookingActivityTimeline";
+
+import { bookingService } from "@/features/bookings/services/booking.service";
+import { bookingOpsService } from "@/features/bookings/services/booking-ops.service";
+import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
+import { paymentService } from "@/features/payments/payment.service";
+
+import type { BookingActivityEventEntry } from "@/features/bookings/booking.types";
 
 interface BookingDetailsPageProps {
   params: Promise<{ id: string }>;
 }
 
-export default async function BookingDetailsPage({
-  params,
-}: BookingDetailsPageProps) {
+export default async function BookingDetailsPage({ params }: BookingDetailsPageProps) {
   const { id } = await params;
-  const [booking, ops, rawEvents] = await Promise.all([
+  const [booking, ops, rawEvents, bookingPayments] = await Promise.all([
     bookingService.getBookingById(id),
     bookingOpsService.getByBookingId(id),
     bookingEventsService.listByBookingId(id),
+    paymentService.getBookingPayments(id),
   ]);
 
   const activityEvents: BookingActivityEventEntry[] = rawEvents.map((e) => ({
@@ -51,14 +54,11 @@ export default async function BookingDetailsPage({
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
           <AdminBookingDetailsCard booking={booking} />
-          <AdminBookingPaymentCard booking={booking} />
+          <AdminBookingPaymentCard booking={booking} payments={bookingPayments} />
           <AdminBookingOpsCard bookingId={id} ops={ops} />
         </div>
         <div className="lg:col-span-1">
-          <BookingActivityTimeline
-            events={activityEvents}
-            className="lg:sticky lg:top-20"
-          />
+          <BookingActivityTimeline events={activityEvents} className="lg:sticky lg:top-20" />
         </div>
       </div>
     </div>

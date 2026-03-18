@@ -6,7 +6,7 @@ import { pgEnum } from "drizzle-orm/pg-core";
 export const inquiryStageEnum = pgEnum("InquiryStage", [
   "NEEDS_CONTACT",  // New, awaiting first outreach
   "CONTACTED",      // First contact made
-  "CONVERTED",      // Booking created from inquiry
+  "CONVERTED",
 ]);
 
 /**
@@ -14,7 +14,7 @@ export const inquiryStageEnum = pgEnum("InquiryStage", [
  */
 export const inquiryOutcomeEnum = pgEnum("InquiryOutcome", [
   "OPEN",      // Active, in progress
-  "WON",       // Converted/booked
+  "WON",
   "LOST",      // Declined, chose competitor, etc.
   "ABANDONED", // No response, went cold
 ]);

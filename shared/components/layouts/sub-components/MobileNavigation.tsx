@@ -14,7 +14,7 @@ import {
   SheetClose,
 } from "@/shared/components/ui/sheet";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
-import { ChevronDown, Menu, ArrowRight } from "lucide-react";
+import { ChevronDown, Menu } from "lucide-react";
 import { Session } from "next-auth";
 import { signOut } from "next-auth/react";
 import { NavigationData } from "@/shared/lib/constants/navigation-data";
@@ -118,47 +118,13 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
                       {expandedItems.includes(item.href) && (
                         <div className="mt-2 ml-4 space-y-2 border-l-2 border-primary/10 pl-4">
-                          {/* Featured section */}
-                          {item.featured && (
-                            <Link
-                              href={item.featured.href}
-                              className="block rounded-lg bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/10 overflow-hidden mb-4"
-                            >
-                              {item.featured.image && (
-                                <div className="relative w-full h-36">
-                                  <Image
-                                    src={item.featured.image}
-                                    alt={
-                                      item.featured.imageAlt ||
-                                      item.featured.title
-                                    }
-                                    fill
-                                    className="object-cover"
-                                  />
-                                </div>
-                              )}
-                              <div className="p-3">
-                                <h3 className="text-sm font-semibold text-primary mb-1">
-                                  {item.featured.title}
-                                </h3>
-                                <p className="text-xs text-muted-foreground mb-1.5 line-clamp-2">
-                                  {item.featured.description}
-                                </p>
-                                <span className="inline-flex items-center gap-1 text-xs font-medium text-primary">
-                                  {item.featured.ctaText || "Learn More"}
-                                  <ArrowRight className="w-3 h-3" />
-                                </span>
-                              </div>
-                            </Link>
-                          )}
-
                           {/* Sections */}
                           {item.sections?.map((section, sectionIndex) => (
                             <div
                               key={`section-${sectionIndex}`}
                               className="mb-4"
                             >
-                              <h4 className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">
+                              <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">
                                 {section.title}
                               </h4>
                               <div className="space-y-1">

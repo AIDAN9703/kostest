@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { bookingService } from "@/features/bookings/booking.service";
+import { bookingService } from "@/features/bookings/services/booking.service";
 import { userService } from "@/features/users/user.service";
 import { bookingSearchParamsCache } from "@/features/bookings/searchParams";
 import { AdminBookingFilter } from "@/features/bookings/components/admin/AdminBookingFilter";
@@ -50,6 +50,7 @@ export default async function BookingsPage({
         }}
         admins={admins}
         hidePagination
+        showOps={params.showOps}
       />
       <AdminBookingTablePagination
         totalCount={result.totalCount}

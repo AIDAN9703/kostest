@@ -1,8 +1,7 @@
-import { GroupBookingForm } from "@/features/bookings/components/admin/create/GroupBookingForm";
-import { getCreateBookingFormData } from "@/features/bookings/lib/get-create-form-data";
+import { GroupBookingForm } from "@/features/bookings/components/admin/booking-forms/GroupBookingForm";
+import { boatService } from "@/features/boats/boat.service";
 
 export default async function AdminBookingCreateGroupPage() {
-  const { pricingTiers } = await getCreateBookingFormData(null);
-
+  const pricingTiers = await boatService.getAllActivePricingTiers();
   return <GroupBookingForm pricingTiers={pricingTiers} />;
 }

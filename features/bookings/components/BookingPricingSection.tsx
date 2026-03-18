@@ -4,6 +4,7 @@ import React from "react";
 import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { SafeBoatData, PricingTier } from "@/features/bookings/booking.types";
 import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
+import { SERVICE_FEE_PERCENT_DISPLAY } from "@/shared/lib/constants/fees-constants";
 
 interface BookingPricingSectionProps {
   boat: SafeBoatData;
@@ -47,7 +48,7 @@ export default function BookingPricingSection({
     {
       label: "Card processing fee",
       amount: priceBreakdown.serviceFee,
-      description: "Card processing fee (3.5%)",
+      description: `Card processing fee (${SERVICE_FEE_PERCENT_DISPLAY}%)`,
       isIncluded: false
     }
   ];

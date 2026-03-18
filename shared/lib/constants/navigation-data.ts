@@ -1,13 +1,13 @@
 import {
-    Calendar,
-    Users2,
-    User,
-    LayoutDashboard,
-    CalendarDays,
-    PartyPopper,
-    MessageSquare,
-    Heart,
-    type LucideIcon,
+  Calendar,
+  Users2,
+  User,
+  LayoutDashboard,
+  CalendarDays,
+  PartyPopper,
+  MessageSquare,
+  Heart,
+  type LucideIcon,
 } from "lucide-react";
 
 // ============================================
@@ -15,221 +15,209 @@ import {
 // ============================================
 
 export interface SimpleNavItem {
-    href: string;
-    label: string;
-    type: "link" | "dropdown";
-    items?: SimpleNavItem[];
-    sections?: { title: string; items: SimpleNavItem[] }[];
-    icon?: LucideIcon;
-    // Featured section for Solana-style dropdowns
-    featured?: {
-        title: string;
-        description: string;
-        href: string;
-        image: string;
-        imageAlt?: string;
-        ctaText?: string;
-    };
+  href: string;
+  label: string;
+  type: "link" | "dropdown";
+  items?: SimpleNavItem[];
+  sections?: { title: string; items: SimpleNavItem[] }[];
+  icon?: LucideIcon;
 }
 
 export interface NavigationData {
-    main: SimpleNavItem[];
-    secondary: SimpleNavItem[];
-    user: SimpleNavItem[];
+  main: SimpleNavItem[];
+  secondary: SimpleNavItem[];
+  user: SimpleNavItem[];
 }
 
 export const navigationData: NavigationData = {
-    main: [
+  main: [
+    {
+      href: "/explore",
+      label: "Explore",
+      type: "dropdown",
+      sections: [
         {
-            href: "/explore",
-            label: "Explore",
-            type: "dropdown",
-            featured: {
-                title: "About KOS Yachts",
-                description: "Discover our story, mission, and how we're revolutionizing yacht experiences.",
-                href: "/about-us",
-                image: "/images/koshero.jpg",
-                imageAlt: "KOS Yachts - Premium yacht experiences",
-                ctaText: "Learn More",
+          title: "Experiences",
+          items: [
+            {
+              href: "/boats/search",
+              label: "All Boats",
+              type: "link",
             },
-            sections: [
-                {
-                    title: "Experiences",
-                    items: [
-                        {
-                            href: "/boats/search",
-                            label: "All Boats",
-                            type: "link",
-                        },
-                        {
-                            href: "/experiences/term-charters",
-                            label: "Term Charters",
-                            type: "link",
-                        },
-                        {
-                            href: "/experiences/fishing",
-                            label: "Fishing",
-                            type: "link",
-                        },
-                        {
-                            href: "/experiences/watersports",
-                            label: "Water Sports",
-                            type: "link",
-                        },
-                        {
-                            href: "/experiences/sand-bar",
-                            label: "Sand Bar",
-                            type: "link",
-                        },
-                        {
-                            href: "/experiences/special-events",
-                            label: "Special Events",
-                            type: "link",
-                        },
-                        {
-                            href: "/experiences",
-                            label: "All Experiences",
-                            type: "link",
-                        },
-                    ],
-                },
-                {
-                    title: "Locations",
-                    items: [
-                        {
-                            href: "/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=25.92129499999999&ne_lng=-80.1229&sw_lat=25.7090419531335&sw_lng=-80.31860792381018&zoom_level=13&map_toggle=on",
-                            label: "Miami",
-                            type: "link",
-                        },
-                        {
-                            href: "/boats/search?near=Fort+Lauderdale%2C+FL%2C+USA&ne_lat=26.211927993713&ne_lng=-80.09590395442405&sw_lat=26.07050306928547&sw_lng=-80.20370500560662&zoom_level=13&map_toggle=on",
-                            label: "Fort Lauderdale",
-                            type: "link",
-                        },
-                        {
-                            href: "/boats/search?near=Naples%2C+FL%2C+USA&ne_lat=26.2112380492215&ne_lng=-81.766661003186&sw_lat=26.07891108467754&sw_lng=-81.82036397203399&zoom_level=13&map_toggle=on",
-                            label: "Naples",
-                            type: "link",
-                        },
-                        {
-                            href: "/boats/search?near=West+Palm+Beach%2C+FL%2C+USA&ne_lat=27.27923161620977&ne_lng=-79.74194885822209&sw_lat=26.310840379641395&sw_lng=-80.41348816486271&zoom_level=13&map_toggle=on&page=1",
-                            label: "West Palm Beach",
-                            type: "link",
-                        },
-                        {
-                            href: "/boats/search?near=Connecticut%2C+USA&ne_lat=42.05051096606773&ne_lng=-71.78723902917415&sw_lat=40.95094295977581&sw_lng=-73.7277749818916&zoom_level=13&map_toggle=on",
-                            label: "Connecticut",
-                            type: "link",
-                        },
-                        {
-                            href: "/boats/search?near=The+Bahamas&ne_lat=26.393465781093617&ne_lng=-76.4473427890677&sw_lat=22.4431417432063&sw_lng=-79.1335000156302&zoom_level=13&map_toggle=on&page=1",
-                            label: "Bahamas",
-                            type: "link",
-                        },
-                        {
-                            href: "/boats/search?near=Dominican+Republic&ne_lat=19.9786989016584&ne_lng=-68.2526000505517&sw_lat=17.36110005053662&sw_lng=-72.00750992566606&zoom_level=13&map_toggle=on",
-                            label: "Dominican Republic",
-                            type: "link",
-                        },
-                    ],
-                },
-                {
-                    title: "Owner Services",
-                    items: [
-                        {
-                            href: "/services/charter-management",
-                            label: "Charter Management",
-                            type: "link",
-                        },
-                        {
-                            href: "/services/yacht-management",
-                            label: "Yacht Management",
-                            type: "link",
-                        },
-                        {
-                            href: "/services/sales",
-                            label: "Sales/Purchase",
-                            type: "link",
-                        },
-                        {
-                            href: "/services/dock-management",
-                            label: "Dock Management",
-                            type: "link",
-                        },
-                    ],
-                },
-                {
-                    title: "Company",
-                    items: [
-                        {
-                            href: "/careers",
-                            label: "Careers",
-                            type: "link",
-                        },
-                        {
-                            href: "/kos-yacht-club",
-                            label: "KOS Yacht Club",
-                            type: "link",
-                        },
-                        {
-                            href: "/events",
-                            label: "Events",
-                            type: "link",
-                        },
-                        {
-                            href: "/news",
-                            label: "News & Blog",
-                            type: "link",
-                        },
-                        {
-                            href: "https://kosyachts.myshopify.com/",
-                            label: "Store",
-                            type: "link",
-                        },
-                        {
-                            href: "/faq",
-                            label: "FAQ",
-                            type: "link",
-                        },
-                    ],
-                },
-            ],
+            {
+              href: "/experiences/term-charters",
+              label: "Term Charters",
+              type: "link",
+            },
+            {
+              href: "/experiences/fishing",
+              label: "Fishing",
+              type: "link",
+            },
+            {
+              href: "/experiences/watersports",
+              label: "Water Sports",
+              type: "link",
+            },
+            {
+              href: "/experiences/sand-bar",
+              label: "Sand Bar",
+              type: "link",
+            },
+            {
+              href: "/experiences/special-events",
+              label: "Special Events",
+              type: "link",
+            },
+            {
+              href: "/experiences",
+              label: "All Experiences",
+              type: "link",
+            },
+          ],
         },
-        { href: "/contact", label: "Contact", type: "link" },
-    ],
+        {
+          title: "Locations",
+          items: [
+            {
+              href: "/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=25.92129499999999&ne_lng=-80.1229&sw_lat=25.7090419531335&sw_lng=-80.31860792381018&zoom_level=13&map_toggle=on",
+              label: "Miami",
+              type: "link",
+            },
+            {
+              href: "/boats/search?near=Fort+Lauderdale%2C+FL%2C+USA&ne_lat=26.211927993713&ne_lng=-80.09590395442405&sw_lat=26.07050306928547&sw_lng=-80.20370500560662&zoom_level=13&map_toggle=on",
+              label: "Fort Lauderdale",
+              type: "link",
+            },
+            {
+              href: "/boats/search?near=Naples%2C+FL%2C+USA&ne_lat=26.2112380492215&ne_lng=-81.766661003186&sw_lat=26.07891108467754&sw_lng=-81.82036397203399&zoom_level=13&map_toggle=on",
+              label: "Naples",
+              type: "link",
+            },
+            {
+              href: "/boats/search?near=West+Palm+Beach%2C+FL%2C+USA&ne_lat=27.27923161620977&ne_lng=-79.74194885822209&sw_lat=26.310840379641395&sw_lng=-80.41348816486271&zoom_level=13&map_toggle=on&page=1",
+              label: "West Palm Beach",
+              type: "link",
+            },
+            {
+              href: "/boats/search?near=Connecticut%2C+USA&ne_lat=42.05051096606773&ne_lng=-71.78723902917415&sw_lat=40.95094295977581&sw_lng=-73.7277749818916&zoom_level=13&map_toggle=on",
+              label: "Connecticut",
+              type: "link",
+            },
+            {
+              href: "/boats/search?near=The+Bahamas&ne_lat=26.393465781093617&ne_lng=-76.4473427890677&sw_lat=22.4431417432063&sw_lng=-79.1335000156302&zoom_level=13&map_toggle=on&page=1",
+              label: "Bahamas",
+              type: "link",
+            },
+            {
+              href: "/boats/search?near=Dominican+Republic&ne_lat=19.9786989016584&ne_lng=-68.2526000505517&sw_lat=17.36110005053662&sw_lng=-72.00750992566606&zoom_level=13&map_toggle=on",
+              label: "Dominican Republic",
+              type: "link",
+            },
+          ],
+        },
+        {
+          title: "Owner Services",
+          items: [
+            {
+              href: "/services/charter-management",
+              label: "Charter Management",
+              type: "link",
+            },
+            {
+              href: "/services/yacht-management",
+              label: "Yacht Management",
+              type: "link",
+            },
+            {
+              href: "/services/sales",
+              label: "Sales/Purchase",
+              type: "link",
+            },
+            {
+              href: "/services/dock-management",
+              label: "Dock Management",
+              type: "link",
+            },
+          ],
+        },
+        {
+          title: "Company",
+          items: [
+            {
+              href: "/about-us",
+              label: "About Us",
+              type: "link",
+            },
+            {
+              href: "/careers",
+              label: "Careers",
+              type: "link",
+            },
+            {
+              href: "/kos-yacht-club",
+              label: "KOS Yacht Club",
+              type: "link",
+            },
+            {
+              href: "/events",
+              label: "Events",
+              type: "link",
+            },
+            {
+              href: "/news",
+              label: "News & Blog",
+              type: "link",
+            },
+            {
+              href: "https://kosyachts.myshopify.com/",
+              label: "Store",
+              type: "link",
+            },
+            {
+              href: "/faq",
+              label: "FAQ",
+              type: "link",
+            },
+          ],
+        },
+      ],
+    },
+    { href: "/contact", label: "Contact", type: "link" },
+  ],
 
-    secondary: [
-        { href: "/legal/terms", label: "Terms & Conditions", type: "link" },
-        { href: "/legal/privacy", label: "Privacy Policy", type: "link" },
-        { href: "/legal/accessibility", label: "Accessibility", type: "link" },
-    ],
+  secondary: [
+    { href: "/legal/terms", label: "Terms & Conditions", type: "link" },
+    { href: "/legal/privacy", label: "Privacy Policy", type: "link" },
+    { href: "/legal/accessibility", label: "Accessibility", type: "link" },
+  ],
 
-    user: [
-        {
-            href: "/profile/favorites",
-            label: "Favorites",
-            type: "link",
-            icon: Heart,
-        },
-        {
-            href: "/profile/bookings",
-            label: "Bookings",
-            type: "link",
-            icon: Calendar,
-        },
-        {
-            href: "/profile/messages",
-            label: "Messages",
-            type: "link",
-            icon: MessageSquare,
-        },
-        {
-            href: "/profile",
-            label: "Profile",
-            type: "link",
-            icon: User,
-        },
-    ],
+  user: [
+    {
+      href: "/profile/favorites",
+      label: "Favorites",
+      type: "link",
+      icon: Heart,
+    },
+    {
+      href: "/profile/bookings",
+      label: "Bookings",
+      type: "link",
+      icon: Calendar,
+    },
+    {
+      href: "/profile/messages",
+      label: "Messages",
+      type: "link",
+      icon: MessageSquare,
+    },
+    {
+      href: "/profile",
+      label: "Profile",
+      type: "link",
+      icon: User,
+    },
+  ],
 };
 
 // ============================================
@@ -237,131 +225,130 @@ export const navigationData: NavigationData = {
 // ============================================
 
 export interface AdminNavItem {
-    label: string;
-    href: string;
-    iconClassName?: string;
+  label: string;
+  href: string;
+  iconClassName?: string;
 }
 
 export interface AdminNavGroup {
-    title: string;
-    icon: LucideIcon;
-    iconClassName?: string;
-    items: AdminNavItem[];
+  title: string;
+  icon: LucideIcon;
+  iconClassName?: string;
+  items: AdminNavItem[];
 }
 
 export const ADMIN_QUICK_ACTIONS: AdminNavItem[] = [
-    {
-        label: "Create Boat",
-        href: "/admin/boats/create",
-        iconClassName: "h-4 w-4 text-blue-400",
-    },
-    {
-        label: "Create Booking",
-        href: "/admin/bookings/create",
-        iconClassName: "h-4 w-4 text-blue-400",
-    },
-    {
-        label: "Create Booking Group",
-        href: "/admin/bookings/create-group",
-        iconClassName: "h-4 w-4 text-blue-400",
-    },
-    {
-        label: "Create User",
-        href: "/admin/users/create",
-        iconClassName: "h-4 w-4 text-purple-400",
-    },
-    {
-        label: "Create Blog Post",
-        href: "/admin/blog/create",
-        iconClassName: "h-4 w-4 text-light-200",
-    },
-    {
-        label: "Create Event",
-        href: "/admin/events?create=true",
-        iconClassName: "h-4 w-4 text-rose-400",
-    },
+  {
+    label: "Create Boat",
+    href: "/admin/boats/create",
+    iconClassName: "h-4 w-4 text-blue-400",
+  },
+  {
+    label: "Create Booking",
+    href: "/admin/bookings/create",
+    iconClassName: "h-4 w-4 text-blue-400",
+  },
+  {
+    label: "Create Booking Group",
+    href: "/admin/bookings/create-group",
+    iconClassName: "h-4 w-4 text-blue-400",
+  },
+  {
+    label: "Create User",
+    href: "/admin/users/create",
+    iconClassName: "h-4 w-4 text-purple-400",
+  },
+  {
+    label: "Create Blog Post",
+    href: "/admin/blog/create",
+    iconClassName: "h-4 w-4 text-light-200",
+  },
+  {
+    label: "Create Event",
+    href: "/admin/events?create=true",
+    iconClassName: "h-4 w-4 text-rose-400",
+  },
 ];
 
 export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
-    {
-        title: "Bookings",
-        icon: CalendarDays,
+  {
+    title: "Bookings",
+    icon: CalendarDays,
+    iconClassName: "h-5 w-5",
+    items: [
+      {
+        label: "All",
+        href: "/admin/all",
         iconClassName: "h-5 w-5",
-        items: [
-            {
-                label: "All",
-                href: "/admin/all",
-                iconClassName: "h-5 w-5",
-            },
-            {
-                label: "Bookings",
-                href: "/admin/bookings",
-                iconClassName: "h-5 w-5",
-            },
-            {
-                label: "Inquiries",
-                href: "/admin/inquiries",
-                iconClassName: "h-5 w-5",
-            },
-        ],
-    },
-    {
-        title: "Entity Management",
-        icon: Users2,
+      },
+      {
+        label: "Bookings",
+        href: "/admin/bookings",
         iconClassName: "h-5 w-5",
-        items: [
-            {
-                label: "Users",
-                href: "/admin/users",
-                iconClassName: "h-5 w-5",
-            },
-            {
-                label: "Boats",
-                href: "/admin/boats",
-                iconClassName: "h-5 w-5",
-            },
-        ],
-    },
-    {
-        title: "Marketing",
-        icon: PartyPopper,
+      },
+      {
+        label: "Inquiries",
+        href: "/admin/inquiries",
         iconClassName: "h-5 w-5",
-        items: [
-            {
-                label: "Events",
-                href: "/admin/events",
-                iconClassName: "h-5 w-5",
-            },
-            {
-                label: "Blog Posts",
-                href: "/admin/blog",
-                iconClassName: "h-5 w-5",
-            },
-        ],
-    },
+      },
+    ],
+  },
+  {
+    title: "Entity Management",
+    icon: Users2,
+    iconClassName: "h-5 w-5",
+    items: [
+      {
+        label: "Users",
+        href: "/admin/users",
+        iconClassName: "h-5 w-5",
+      },
+      {
+        label: "Boats",
+        href: "/admin/boats",
+        iconClassName: "h-5 w-5",
+      },
+    ],
+  },
+  {
+    title: "Marketing",
+    icon: PartyPopper,
+    iconClassName: "h-5 w-5",
+    items: [
+      {
+        label: "Events",
+        href: "/admin/events",
+        iconClassName: "h-5 w-5",
+      },
+      {
+        label: "Blog Posts",
+        href: "/admin/blog",
+        iconClassName: "h-5 w-5",
+      },
+    ],
+  },
 ];
 
 export const ADMIN_DASHBOARD_LINK: AdminNavItem = {
-    label: "Dashboard",
-    href: "/admin",
-    iconClassName: "h-5 w-5",
+  label: "Dashboard",
+  href: "/admin",
+  iconClassName: "h-5 w-5",
 };
 
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
-    ADMIN_DASHBOARD_LINK,
-    ...ADMIN_NAV_GROUPS.flatMap((group) => group.items),
+  ADMIN_DASHBOARD_LINK,
+  ...ADMIN_NAV_GROUPS.flatMap((group) => group.items),
 ];
 
 export const ADMIN_USER_MENU_ITEMS: AdminNavItem[] = [
-    {
-        label: "Your Profile",
-        href: "/profile",
-        iconClassName: "h-4 w-4",
-    },
-    {
-        label: "Settings",
-        href: "/profile/settings",
-        iconClassName: "h-4 w-4",
-    },
+  {
+    label: "Your Profile",
+    href: "/profile",
+    iconClassName: "h-4 w-4",
+  },
+  {
+    label: "Settings",
+    href: "/profile/settings",
+    iconClassName: "h-4 w-4",
+  },
 ];
-

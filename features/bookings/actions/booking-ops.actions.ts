@@ -1,14 +1,11 @@
 "use server";
 
 import { auth } from "@/auth";
-import { bookingOpsService } from "@/features/bookings/booking-ops.service";
-import type { BookingOpsInput } from "@/features/bookings/booking-ops.service";
+import { bookingOpsService } from "@/features/bookings/services/booking-ops.service";
+import type { BookingOpsInput } from "@/features/bookings/services/booking-ops.service";
 import { revalidatePath } from "next/cache";
 
-export async function updateBookingOps(
-  bookingId: string,
-  input: BookingOpsInput
-) {
+export async function updateBookingOps(bookingId: string, input: BookingOpsInput) {
   try {
     const session = await auth();
     if (!session?.user?.isAdmin) {

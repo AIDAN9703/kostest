@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { User, Shield, Bell, CreditCard, MapPin, ChevronRight, Loader2, ArrowLeft } from "lucide-react";
+import { StripePortalButton } from "./StripePortalButton";
 import { SettingsField } from "./SettingsField";
 import { SettingsFieldGroup } from "./SettingsFieldGroup";
 import { updateUserProfile } from "@/features/profile/actions/profile-actions";
@@ -238,10 +239,14 @@ function NotificationsTab({ user }: { user: UserProfile }) {
 function PaymentsTab({ user }: { user: UserProfile }) {
   return (
     <div className="space-y-0">
-      <div className="py-4 border-b border-gray-200">
+      <div className="flex flex-col gap-2 py-4 border-b border-gray-200">
+        <h3 className="text-sm font-medium text-gray-900">
+          Receipts & invoices
+        </h3>
         <p className="text-sm text-gray-500">
-          Payment methods coming soon.
+          View payment history, download receipts, and manage payment methods.
         </p>
+        <StripePortalButton />
       </div>
     </div>
   );

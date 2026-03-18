@@ -11,11 +11,11 @@ import { db } from "@/database/db";
 import { bookings } from "@/database/schema";
 
 import { getAdminSession } from "@/shared/lib/utils/auth-utils";
-import { createPaymentLinkForBooking } from "@/features/bookings/actions/stripe-payment-links";
+import { createCheckoutSessionForBooking } from "@/features/bookings/actions/stripe-checkout";
 
-import { bookingService } from "@/features/bookings/booking.service";
-import { bookingStatusService } from "@/features/bookings/booking-status.service";
-import { bookingNotesService } from "@/features/bookings/booking-notes.service";
+import { bookingService } from "@/features/bookings/services/booking.service";
+import { bookingStatusService } from "@/features/bookings/services/booking-status.service";
+import { bookingNotesService } from "@/features/bookings/services/booking-notes.service";
 import {
   sendBookingApprovalEmail,
   sendBookingDenialEmail,
@@ -37,7 +37,7 @@ export async function approveBookingRequest(bookingId: string) {
       return { success: false, error: `Booking is already ${booking.bookingStatus.toLowerCase()}` };
     }
 
-    const paymentLink = await createPaymentLinkForBooking(bookingId);
+    const paymentLink = await createCheckoutSessionForBooking(bookingId);
     await bookingStatusService.approve(bookingId, session.user.id!);
 
     const emailSent = await sendBookingApprovalEmail(booking as any, paymentLink);
@@ -62,7 +62,7 @@ export async function approveBookingRequest(bookingId: string) {
   }
 }
 
-/** Deny a booking request - emails customer with reason */
+/** Deny a booking request - cancels with reason and emails customer */
 export async function denyBookingRequest(bookingId: string, reason: string) {
   try {
     const authResult = await getAdminSession();
@@ -80,7 +80,11 @@ export async function denyBookingRequest(bookingId: string, reason: string) {
       return { success: false, error: `Booking is already ${booking.bookingStatus.toLowerCase()}` };
     }
 
-    await bookingStatusService.deny(bookingId, session.user.id!, reason.trim());
+    await bookingStatusService.cancel(
+      bookingId,
+      `Request denied: ${reason.trim()}`,
+      session.user.id!
+    );
     const emailSent = await sendBookingDenialEmail(booking as any, reason.trim());
 
     revalidatePath("/admin/bookings");
@@ -121,26 +125,6 @@ export async function assignAdminToBooking(bookingId: string, adminId: string) {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to assign admin",
-    };
-  }
-}
-
-/** Unassign admin from booking */
-export async function unassignAdminFromBooking(bookingId: string) {
-  try {
-    const authResult = await getAdminSession();
-    if (authResult.error) return { success: false, error: authResult.error };
-
-    await bookingService.unassignAdmin(bookingId, authResult.session!.user.id!);
-    revalidatePath("/admin/bookings");
-    revalidatePath(`/admin/bookings/${bookingId}`);
-
-    return { success: true, message: "Admin unassigned successfully" };
-  } catch (error) {
-    console.error("Error unassigning admin:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to unassign admin",
     };
   }
 }
@@ -224,7 +208,7 @@ export async function cancelBooking(bookingId: string, reason: string) {
     if (authResult.error) return { success: false, error: authResult.error };
     if (!reason?.trim()) return { success: false, error: "Cancellation reason is required" };
 
-    await bookingStatusService.cancel(bookingId, authResult.session!.user.id, reason.trim());
+    await bookingStatusService.cancel(bookingId, reason.trim(), authResult.session!.user.id);
 
     revalidatePath("/admin/bookings");
     revalidatePath(`/admin/bookings/${bookingId}`);

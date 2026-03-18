@@ -4,7 +4,7 @@
  * STRUCTURE:
  * - Customer-facing: createBookingRequest, createInstantBooking
  * - Admin workflow: approveBookingRequest, denyBookingRequest, assignAdmin, etc.
- * - Stripe: createPaymentLinkForBooking, getPaymentLinkUrl
+ * - Stripe: createCheckoutSessionForBooking, getOrCreateCheckoutUrl
  */
 
 // Customer-facing booking flows
@@ -17,17 +17,14 @@ export {
   approveBookingRequest,
   denyBookingRequest,
   assignAdminToBooking,
-  unassignAdminFromBooking,
   markBookingAsContacted,
   addBookingNote,
   completeBooking,
   cancelBooking,
 } from "./admin-booking.actions";
 
-// Stripe payment link utilities
+// Stripe checkout utilities
 export {
-  createPaymentLinkForBooking,
-  getPaymentLinkStatus,
-  getPaymentLinkUrl,
-  markPaymentLinkSucceeded,
-} from "./stripe-payment-links";
+  createCheckoutSessionForBooking,
+  getOrCreateCheckoutUrl,
+} from "./stripe-checkout";

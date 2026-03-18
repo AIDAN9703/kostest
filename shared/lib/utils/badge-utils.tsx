@@ -6,6 +6,7 @@
  */
 
 import { cn } from "@/shared/lib/utils/general-utils";
+import { PAYMENT_DISPLAY_LABELS, type PaymentDisplayStatus } from "@/shared/lib/utils/payment-display";
 
 // Badge style configurations
 export const BADGE_STYLES = {
@@ -53,28 +54,24 @@ export const STATUS_COLORS = {
   ARCHIVED: "gray",
   APPROVED: "blue",
   CONFIRMED: "green",
-  DENIED: "red",
   CANCELLED: "red",
   COMPLETED: "purple",
-  EXPIRED: "gray",
-  REFUNDED: "amber",
 
   // Booking Type
   INSTANT_BOOK: "green",
   REQUEST: "blue",
-  INQUIRY: "yellow",
   EXTERNAL_BOOKING: "purple",
 
-  // Payment Status
-  SUCCEEDED: "green", // New: payment completed successfully
-  PROCESSING: "blue", // New: payment being processed
-  FAILED: "red", // Payment failed
-  CHARGEBACK: "red", // Payment disputed
+  // Raw payment transaction statuses (from Stripe)
+  SUCCEEDED: "green",
+  PROCESSING: "blue",
+  FAILED: "red",
+  CHARGEBACK: "red",
 
-  // Payment Status (legacy values - for backward compatibility)
+  // Computed payment display statuses (booking-level)
+  UNPAID: "yellow",
+  DEPOSIT_PAID: "amber",
   PAID: "green",
-  AWAITING_PAYMENT: "yellow",
-  PARTIALLY_PAID: "amber",
 
   // Boolean Status
   true: "green",
@@ -130,6 +127,9 @@ export function formatStatusText(
 ): string {
   if (status === null || status === undefined) return "Unknown";
   if (typeof status === "boolean") return status ? "Active" : "Inactive";
+
+  const key = String(status).toUpperCase() as PaymentDisplayStatus;
+  if (key in PAYMENT_DISPLAY_LABELS) return PAYMENT_DISPLAY_LABELS[key];
 
   return String(status)
     .replace(/_/g, " ")

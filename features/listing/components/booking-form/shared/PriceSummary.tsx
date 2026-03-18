@@ -2,6 +2,7 @@
 
 import { Boat, PricingTier } from "@/shared/lib/types/types";
 import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
+import { SERVICE_FEE_PERCENT_DISPLAY } from "@/shared/lib/constants/fees-constants";
 
 interface PriceSummaryProps {
   boat: Boat;
@@ -46,7 +47,7 @@ export function PriceSummary({ boat, selectedPricingTier, show = true }: PriceSu
         
         {/* Service Fee */}
         <div className="flex justify-between text-sm">
-          <span className="text-gray-600">Card Processing Fee (3.5%)</span>
+          <span className="text-gray-600">Card Processing Fee ({SERVICE_FEE_PERCENT_DISPLAY}%)</span>
           <span className="font-medium text-gray-900">${priceBreakdown.serviceFee.toFixed(2)}</span>
         </div>
         

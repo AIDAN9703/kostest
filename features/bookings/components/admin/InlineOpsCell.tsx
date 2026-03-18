@@ -10,15 +10,12 @@ import { Loader2 } from "lucide-react";
 
 /** Field names as used by updateBookingOps (BookingOpsInput keys) */
 export type OpsField =
-  | "durationHours"
   | "expenseCents"
   | "revenueCents"
   | "balanceOwnerCents"
-  | "balanceClientCents"
   | "crewName"
   | "contractSigned"
   | "captainPaid"
-  | "agentCode"
   | "commissionCents"
   | "sourceOverride";
 

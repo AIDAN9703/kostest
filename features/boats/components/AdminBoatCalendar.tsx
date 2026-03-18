@@ -230,19 +230,6 @@ export default function AdminBoatCalendar({
                 )}
               </div>
 
-              {/* Special Requests */}
-              {selectedEvent.extendedProps.type === "booking" &&
-                selectedEvent.extendedProps.specialRequests && (
-                  <div>
-                    <h3 className="font-medium text-gray-900">
-                      Special Requests
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {selectedEvent.extendedProps.specialRequests}
-                    </p>
-                  </div>
-                )}
-
               {/* Action Buttons */}
               {selectedEvent.extendedProps.type === "booking" && (
                 <div className="flex gap-2 pt-4">

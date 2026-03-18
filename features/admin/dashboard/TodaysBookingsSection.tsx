@@ -98,9 +98,7 @@ export function TodaysBookingsSection({
                   </div>
                   <div className="flex items-center gap-1">
                     <StatusBadge status={booking.bookingStatus} />
-                    {booking.paymentStatus && (
-                      <StatusBadge status={booking.paymentStatus} />
-                    )}
+                    <StatusBadge status={booking.paymentDisplayStatus} />
                   </div>
                   <span className="text-xs text-muted-foreground shrink-0">
                     {format(new Date(booking.startDateTime), "MMM d, h:mm a")}

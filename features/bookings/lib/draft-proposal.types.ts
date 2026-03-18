@@ -1,0 +1,45 @@
+/**
+ * Types for the public draft booking proposal page.
+ * Used when customers open the SMS/link to view and accept their charter proposal.
+ */
+
+export interface DraftProposalAddOn {
+  name: string;
+  description?: string | null;
+  unitPrice: number;
+  quantity: number;
+  total: number;
+}
+
+export interface DraftProposalBooking {
+  id: string;
+  boatId: string;
+  boatName: string;
+  boatMainImage: string | null;
+  /** Charter base price only (cents) */
+  basePriceCents: number;
+  /** Cleaning fee (cents) */
+  cleaningFeeCents: number;
+  /** 3.5% card processing fee (cents) */
+  serviceFeeCents: number;
+  /** Total for this booking (cents) */
+  totalCents: number;
+  addOns: DraftProposalAddOn[] | null;
+}
+
+export interface DraftProposalData {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  startDateTime: Date;
+  endDateTime: Date | null;
+  numberOfPassengers: number;
+  pickupLocation: string | null;
+  dropoffLocation: string | null;
+  allowPayment: boolean;
+  paymentType: string | null;
+  acceptedAt: Date | null;
+  depositAmountCents: number | null;
+  totalAmountCents: number;
+  bookings: DraftProposalBooking[];
+}

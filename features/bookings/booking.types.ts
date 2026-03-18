@@ -15,6 +15,7 @@
 
 import type { PricingTier } from "@/shared/lib/types/types";
 import type { Cents } from "@/shared/lib/utils/money-utils";
+import type { PaymentDisplayStatus } from "@/shared/lib/utils/payment-display";
 import type { 
   BookingStatus, 
   BookingType, 
@@ -95,6 +96,27 @@ export interface BookingAdminNoteEntry {
   createdAt: Date;
 }
 
+/**
+ * Add-on stored on a booking (matches booking.add_ons JSON column)
+ */
+export interface BookingAddOn {
+  name: string;
+  description?: string | null;
+  unitPrice: number;
+  quantity: number;
+  total: number;
+}
+
+/**
+ * Add-on form input (total is computed on save)
+ */
+export interface BookingAddOnInput {
+  name: string;
+  description?: string | null;
+  unitPrice: number;
+  quantity: number;
+}
+
 /** Single row from booking_event timeline */
 export interface BookingActivityEventEntry {
   id: string;
@@ -138,7 +160,6 @@ export interface BookingWithRelations {
   needsCaptain: boolean | null;
   pickupLocation: string | null;
   dropoffLocation: string | null;
-  specialRequests: string | null;
   
   // Admin assignment
   assignedAdminId: string | null;
@@ -152,7 +173,19 @@ export interface BookingWithRelations {
   createdAt: Date;
   updatedAt: Date;
   expiresAt: Date | null;
-  
+
+  // Payment configuration
+  paymentType: string | null;
+
+  // Add-ons (from booking.add_ons JSON)
+  addOns?: Array<{
+    name: string;
+    description?: string | null;
+    unitPrice: number;
+    quantity: number;
+    total: number;
+  }> | null;
+
   // Related data (from new tables)
   pricing: BookingPricingData | null;
   payments: BookingPaymentData[];
@@ -190,42 +223,6 @@ export interface BookingWithRelations {
   } | null;
 }
 
-/**
- * Simplified booking for list views (optimized query)
- */
-export interface BookingListItemNew {
-  id: string;
-  bookingType: BookingType;
-  bookingStatus: BookingStatus;
-  source: BookingSource | null;
-  customerName: string;
-  customerEmail: string;
-  startDateTime: Date;
-  endDateTime: Date | null;
-  numberOfPassengers: number;
-  needsCaptain: boolean | null;
-  createdAt: Date;
-  
-  // Pricing summary (from booking_pricing)
-  totalAmountCents: Cents | null;
-  currency: string | null;
-  
-  // Payment summary (calculated from payments)
-  paymentStatus: PaymentStatus | null;
-  totalPaidCents: Cents;
-  
-  // Joined boat info
-  boatId: string;
-  boatName: string | null;
-  boatCategory: string | null;
-  boatMainImage: string | null;
-  
-  // Assigned admin info
-  assignedAdminId: string | null;
-  assignedAdminFirstName: string | null;
-  assignedAdminLastName: string | null;
-}
-
 // ============================================================================
 // SERVER TYPES (Dates as Date objects - used in service layer & server components)
 // ============================================================================
@@ -241,7 +238,16 @@ export interface BookingListItem {
   id: string;
   bookingType: string;
   bookingStatus: string;
+
+  /** Raw status of the most recent payment transaction (DB enum value). */
   paymentStatus: string | null;
+  /** Computed booking-level payment status for display (Unpaid, Paid, etc.). */
+  paymentDisplayStatus: PaymentDisplayStatus;
+  /** Sum of all succeeded, non-refund payments in cents. */
+  totalPaidCents: number;
+  /** Whether any refund exists for this booking. */
+  hasRefund: boolean;
+
   customerName: string | null;
   customerEmail: string | null;
   customerPhone: string | null;
@@ -253,8 +259,6 @@ export interface BookingListItem {
   totalAmountCents: number;
   currency: string;
   
-  /** @deprecated Use payments table instead - stored in payments.stripePaymentLinkId */
-  stripePaymentLinkId?: string | null;
   needsCaptain: boolean | null;
   createdAt: Date;
   
@@ -280,15 +284,12 @@ export interface BookingListItem {
   assignedAdminEmail: string | null;
 
   // Ops fields (from booking_ops - Excel workflow tracking, all nullable)
-  opsDurationHours?: string | null;
   opsExpenseCents?: number | null;
   opsRevenueCents?: number | null;
   opsBalanceOwnerCents?: number | null;
-  opsBalanceClientCents?: number | null;
   opsCrewName?: string | null;
   opsContractSigned?: boolean | null;
   opsCaptainPaid?: boolean | null;
-  opsAgentCode?: string | null;
   opsCommissionCents?: number | null;
   opsSourceOverride?: string | null;
 }
@@ -301,7 +302,6 @@ export interface BookingListItem {
 export interface BookingDetails extends BookingListItem {
   pricingTierId: string | null;
   paymentMethod: string | null;
-  specialRequests: string | null;
   updatedAt: Date;
   
   
@@ -341,42 +341,6 @@ export interface PaginatedBookingsResponse {
   totalPages: number;
 }
 
-/**
- * Booking statistics for dashboard
- * @deprecated Use BookingStatsNew with cents
- */
-export interface BookingStats {
-  total: number;
-  totalRevenue: number;
-  pending: number;
-  confirmed: number;
-  completed: number;
-  cancelled: number;
-}
-
-/**
- * Booking statistics for dashboard (new - uses cents)
- */
-export interface BookingStatsNew {
-  total: number;
-  totalRevenueCents: Cents;
-  pending: number;
-  confirmed: number;
-  completed: number;
-  cancelled: number;
-}
-
-/**
- * Paginated bookings response (new structure)
- */
-export interface PaginatedBookingsResponseNew {
-  bookings: BookingListItemNew[];
-  totalCount: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
 // ============================================================================
 // FORM TYPES (User input - dates are always strings from form inputs)
 // ============================================================================
@@ -389,7 +353,6 @@ export interface BookingFormData {
   startDateTime: string;
   numberOfPassengers: number;
   needsCaptain: boolean;
-  specialRequests?: string;
   pricingTierId: string;
 }
 
@@ -401,7 +364,6 @@ export interface BookingWithDetails {
   startDateTime: string;
   numberOfPassengers: number;
   needsCaptain: boolean;
-  specialRequests?: string;
   boatId: string;
   boat: SafeBoatData;
   selectedTier: PricingTier;
@@ -447,7 +409,6 @@ export interface BookingCalendarEvent {
     bookingType: string;
     numberOfPassengers: number;
     totalAmount: number;
-    specialRequests: string;
     startTime: string;
     endTime: string;
     createdAt: string;
@@ -462,6 +423,7 @@ export interface BookingCalendarEvent {
  */
 export interface ProfileBooking {
   id: string;
+  bookingStatus: string;
   boatName: string;
   boatType: string;
   date: string;

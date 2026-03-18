@@ -7,17 +7,14 @@ export const bookingTypeEnum = pgEnum("BookingType", [
   "EXTERNAL_BOOKING"   // Admin-created external booking
 ]);
 
-// Booking status - lifecycle states
+// Booking status - lifecycle states (pure booking lifecycle, no payment semantics)
 export const bookingStatusEnum = pgEnum("BookingStatus", [
   "DRAFT",             // Admin-created, sent to customer, awaiting acceptance
   "PENDING",           // Initial state for booking requests
   "APPROVED",          // Request approved, waiting for payment
   "CONFIRMED",         // Payment received, booking confirmed
-  "DENIED",            // Request was denied
-  "EXPIRED",           // Payment wasn't made within timeframe
-  "CANCELLED",         // Cancelled by customer or owner
+  "CANCELLED",         // Cancelled (covers denied, expired, refunded — see cancellationReason)
   "COMPLETED",         // Trip completed
-  "REFUNDED"           // Booking was refunded
 ]);
 
 // Booking source - where the booking originated

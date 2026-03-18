@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { eq } from "drizzle-orm";
-import { bookingService } from "@/features/bookings/booking.service";
+import { bookingService } from "@/features/bookings/services/booking.service";
 import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 
 /**
@@ -19,53 +19,55 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
   // Check for authentication
   const session = await auth();
   if (!session?.user) {
-    return { 
-      success: false, 
-      error: "You must be signed in to book", 
-      errorType: "AUTH"
+    return {
+      success: false,
+      error: "You must be signed in to book",
+      errorType: "AUTH",
     };
   }
 
   try {
     // Validate the booking data
     const validatedData = bookingRequestSchema.parse(data);
-    
+
     // Get the pricing tier details
     const pricingTierResults = await db
       .select()
       .from(boatPricingTiers)
       .where(eq(boatPricingTiers.id, validatedData.pricingTierId));
-    
+
     if (pricingTierResults.length === 0) {
-      return { 
-        success: false, 
-        error: "Invalid pricing tier selected" 
+      return {
+        success: false,
+        error: "Invalid pricing tier selected",
       };
     }
-    
+
     const pricingTier = pricingTierResults[0];
-    
+
     // Check availability before creating booking
-    const { AvailabilityService } = await import("@/features/availability/services/availability.service");
+    const { AvailabilityService } = await import(
+      "@/features/availability/services/availability.service"
+    );
     const availabilityService = new AvailabilityService();
-    
+
     const startDateTime = new Date(validatedData.startDateTime);
     const endDateTime = calculateEndDateTime(startDateTime, pricingTier.hours);
-    
+
     const availability = await availabilityService.checkTimeSlotAvailability(
       data.boatId,
       startDateTime,
       endDateTime
     );
-    
+
     if (!availability.isAvailable) {
       return {
         success: false,
         error: "Selected time slot is no longer available. Please choose a different time.",
-        errorType: "AVAILABILITY"
+        errorType: "AVAILABILITY",
       };
     }
-    
+
     // Get boat details for validation
     const boatResults = await db
       .select({
@@ -78,16 +80,16 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
       })
       .from(boats)
       .where(eq(boats.id, data.boatId));
-    
+
     if (boatResults.length === 0) {
-      return { 
-        success: false, 
-        error: "Boat not found" 
+      return {
+        success: false,
+        error: "Boat not found",
       };
     }
-    
+
     const boat = boatResults[0];
-    
+
     // Use the booking service to create the booking
     // This handles creating the booking, pricing, and status history records
     const booking = await bookingService.createBookingRequest({
@@ -101,39 +103,44 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
       endDateTime,
       numberOfPassengers: validatedData.numberOfPassengers,
       needsCaptain: validatedData.needsCaptain || boat.crewRequired || false,
-      specialRequests: validatedData.specialRequests || null,
     });
-    
+
     // Send GHL webhook for booking request (async, don't block the response)
-    sendGHLWebhookForBookingRequest(booking, boat, pricingTier, startDateTime, endDateTime, session.user).catch(error => {
-      console.warn('GHL booking request webhook failed:', error);
+    sendGHLWebhookForBookingRequest(
+      booking,
+      boat,
+      pricingTier,
+      startDateTime,
+      endDateTime,
+      session.user
+    ).catch((error) => {
+      console.warn("GHL booking request webhook failed:", error);
     });
 
     // Revalidate relevant paths
     revalidatePath("/profile/bookings");
     revalidatePath(`/boats/${data.boatId}`);
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       booking,
-      message: "Booking request submitted successfully"
+      message: "Booking request submitted successfully",
     };
-    
   } catch (error) {
     console.error("Booking request error:", error);
-    
+
     if (error instanceof z.ZodError) {
       // Handle validation errors
-      return { 
-        success: false, 
-        error: "Invalid booking data", 
-        fieldErrors: error.flatten().fieldErrors 
+      return {
+        success: false,
+        error: "Invalid booking data",
+        fieldErrors: error.flatten().fieldErrors,
       };
     }
-    
-    return { 
-      success: false, 
-      error: "Failed to create booking request. Please try again." 
+
+    return {
+      success: false,
+      error: "Failed to create booking request. Please try again.",
     };
   }
 }
@@ -149,7 +156,6 @@ export async function createBookingRequestAction(formData: FormData) {
     pricingTierId: formData.get("pricingTierId") as string,
     numberOfPassengers: parseInt(formData.get("numberOfPassengers") as string),
     needsCaptain: formData.get("needsCaptain") === "true",
-    specialRequests: formData.get("specialRequests") as string,
   };
 
   return await createBookingRequest(data);
@@ -169,7 +175,7 @@ async function sendGHLWebhookForBookingRequest(
 ) {
   try {
     // Calculate pricing from source data (use shared util for consistency)
-    const { calculateBookingPriceFromDollars } = await import('@/shared/lib/utils/pricing-utils');
+    const { calculateBookingPriceFromDollars } = await import("@/shared/lib/utils/pricing-utils");
     const basePrice = pricingTier.price;
     const cleaningFee = boat.cleaningFee || 0;
     const priceBreakdown = calculateBookingPriceFromDollars(basePrice, cleaningFee, 0);
@@ -192,9 +198,9 @@ async function sendGHLWebhookForBookingRequest(
       service_fee: String(serviceFee.toFixed(2)),
       total_amount: String(totalAmount.toFixed(2)),
       booking_id: booking.id,
-      booking_type: 'REQUEST',
-      source: 'KOS Yacht Club - Booking Request',
-      submitted_at: new Date().toISOString()
+      booking_type: "REQUEST",
+      source: "KOS Yacht Club - Booking Request",
+      submitted_at: new Date().toISOString(),
     };
 
     await ghlWebhookService.sendBookingRequest(ghlData);

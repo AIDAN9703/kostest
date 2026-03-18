@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, XCircle, PauseCircle, CalendarPlus } from "lucide-react";
+import { CheckCircle2, XCircle, PauseCircle } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -64,10 +64,7 @@ export function InquiryCloseActions({
     return null; // Don't show close actions if already closed
   }
 
-  async function handleCloseInquiry(
-    outcome: "WON" | "LOST" | "ABANDONED",
-    createBooking: boolean = false,
-  ) {
+  async function handleCloseInquiry(outcome: "WON" | "LOST" | "ABANDONED") {
     setLoading(outcome.toLowerCase());
     const reason =
       outcome === "LOST"
@@ -82,22 +79,11 @@ export function InquiryCloseActions({
       setShowCloseDialog(null);
       setLostReason("");
       setLostReasonOther("");
-
       router.refresh();
       toast({
         title: `Inquiry marked as ${formatLabel(outcome)} ✓`,
-        description:
-          outcome === "WON"
-            ? createBooking
-              ? "Redirecting to create booking. The inquiry will be marked CONVERTED when the booking is saved."
-              : "Inquiry marked as won. Create a booking to mark as CONVERTED."
-            : "Inquiry has been closed",
+        description: outcome === "WON" ? "Inquiry marked as won." : "Inquiry has been closed",
       });
-
-      // If WON and creating booking, redirect to booking creation (don't convert yet - conversion happens when booking is saved)
-      if (outcome === "WON" && createBooking) {
-        router.push(`/admin/bookings/create?inquiryId=${inquiryId}`);
-      }
     } else {
       toast({ title: "Error", description: res.error, variant: "destructive" });
     }
@@ -149,40 +135,23 @@ export function InquiryCloseActions({
           <DialogHeader>
             <DialogTitle>Mark as Won</DialogTitle>
             <DialogDescription>
-              This will mark the inquiry as won. Would you like to create a
-              booking? The inquiry will be linked to the booking and marked as
-              CONVERTED when you save the booking.
+              This will mark the inquiry as won and close it.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setShowCloseDialog(null)}
-              className="w-full sm:w-auto rounded-xl"
+              className="rounded-xl"
             >
               Cancel
             </Button>
             <Button
-              onClick={() => handleCloseInquiry("WON", false)}
+              onClick={() => handleCloseInquiry("WON")}
               disabled={loading === "won"}
-              variant="outline"
-              className="w-full sm:w-auto rounded-xl"
+              className="rounded-xl gap-2 bg-green-600 text-white hover:bg-green-700"
             >
-              {loading === "won" ? "Marking..." : "Mark as Won Only"}
-            </Button>
-            <Button
-              onClick={() => handleCloseInquiry("WON", true)}
-              disabled={loading === "won"}
-              className="w-full sm:w-auto rounded-xl gap-2 bg-green-600 text-white hover:bg-green-700"
-            >
-              {loading === "won" ? (
-                "Marking..."
-              ) : (
-                <>
-                  <CalendarPlus className="h-4 w-4" />
-                  Mark as Won & Create Booking
-                </>
-              )}
+              {loading === "won" ? "Marking..." : "Mark as Won"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,21 +1,10 @@
 "use client";
 
+import type { SafeBoatData } from "@/features/bookings/booking.types";
 import { PricingTier } from "@/shared/lib/types/types";
-import { CalendarIcon, UsersIcon } from "lucide-react";
-import { ClockIcon } from "lucide-react";
+import { CalendarIcon, ClockIcon, UsersIcon } from "lucide-react";
 import { formatDate, formatTime12Hour } from "@/shared/lib/utils/general-utils";
 import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
-
-// Safe boat data interface - only includes necessary and safe properties
-interface SafeBoatData {
-  id: string;
-  name: string;
-  mainImage: string | null;
-  instantBook: boolean;
-  cleaningFee: number | null;
-  locationLabel: string | null;
-  timezone?: string | null; // Need timezone for proper boat time display
-}
 
 interface BookingSummaryProps {
   boat: SafeBoatData;

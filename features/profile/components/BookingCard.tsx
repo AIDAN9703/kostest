@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
+import Image from "next/image";
 import { Badge } from "@/shared/components/ui/badge";
-import { CalendarDays, Clock, Users, MapPin, Anchor } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { ProfileBooking } from "@/features/bookings/booking.types";
 
@@ -12,7 +14,7 @@ interface BookingCardProps {
 const statusConfig = {
   confirmed: { color: "bg-emerald-100 text-emerald-800", label: "Confirmed" },
   approved: {
-    color: "bg-blue-100 text-blue-800",
+    color: "bg-blue-100 text-white",
     label: "Approved - Awaiting Payment",
   },
   pending: { color: "bg-yellow-100 text-yellow-800", label: "Pending" },
@@ -22,77 +24,33 @@ const statusConfig = {
 
 export function BookingCard({ booking }: BookingCardProps) {
   const statusStyle =
-    statusConfig[booking.status as keyof typeof statusConfig] ||
-    statusConfig.pending;
+    statusConfig[booking.status as keyof typeof statusConfig] || statusConfig.pending;
 
   return (
-    <div className="md:bg-white md:rounded-3xl md:p-6 md:shadow-sm md:border md:border-gray-200 md:hover:shadow-md md:transition-shadow pb-4 md:pb-0 border-b border-gray-200 md:border-b-0 last:border-b-0">
-      <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-        {/* Boat Image */}
-        <div className="w-full sm:w-40 h-40 relative overflow-hidden rounded-xl md:rounded-2xl shrink-0">
-          <img
-            src={booking.image}
-            alt={booking.boatName}
-            className="w-full h-full object-cover"
-          />
-        </div>
-
-        {/* Booking Details */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between mb-2 md:mb-3">
+    <Link href={`/profile/bookings/${booking.id}`} className="group block">
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-gray-200 transition-shadow hover:shadow-lg">
+        <Image
+          src={booking.image}
+          alt={booking.boatName}
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          sizes="(max-width: 768px) 100vw, 400px"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="absolute bottom-0 left-0 right-0 p-4">
+          <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex-1">
-              <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-1">
-                {booking.boatName}
-              </h3>
-              <p className="text-xs md:text-sm text-gray-500 capitalize">
-                {booking.boatType}
-              </p>
+              <h3 className="truncate text-lg font-semibold text-white">{booking.boatName}</h3>
+              <p className="mt-0.5 text-sm text-white/90">{booking.date}</p>
+              <p className="mt-1 text-sm font-medium text-white">{formatCurrency(booking.price)}</p>
             </div>
-            <Badge
-              className={`ml-2 text-xs ${statusStyle.color} shrink-0 rounded-lg`}
-            >
-              {statusStyle.label}
-            </Badge>
+            <Badge className={`shrink-0 text-xs ${statusStyle.color}`}>{statusStyle.label}</Badge>
           </div>
-
-          <div className="space-y-1.5 md:space-y-2 text-xs md:text-sm text-gray-600 mb-3 md:mb-4">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-3.5 w-3.5 md:h-4 md:w-4 text-gray-400 shrink-0" />
-              <span className="truncate">{booking.date}</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Clock className="h-3.5 w-3.5 md:h-4 md:w-4 text-gray-400 shrink-0" />
-              <span>{booking.duration}h charter</span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Users className="h-3.5 w-3.5 md:h-4 md:w-4 text-gray-400 shrink-0" />
-              <span>
-                {booking.guests} guest{booking.guests !== 1 ? "s" : ""}
-                {booking.captain && " • Captain included"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-gray-400 shrink-0" />
-              <span className="truncate">{booking.location}</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-3 md:pt-4 border-t border-gray-100">
-            <div className="text-base md:text-lg font-semibold text-gray-900">
-              {formatCurrency(booking.price)}
-            </div>
-            <div className="flex items-center gap-1 text-xs text-gray-500">
-              <Anchor className="h-3 w-3" />
-              <span className="hidden sm:inline">
-                ID: {booking.id.slice(0, 8)}
-              </span>
-            </div>
-          </div>
+        </div>
+        <div className="absolute right-4 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-full bg-white/90 p-2 opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100">
+          <ArrowRight className="h-5 w-5 text-primary" />
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

@@ -9,8 +9,8 @@ import {
 import {
   bookingStatusEnum,
   bookingTypeEnum,
-  paymentStatusEnum,
 } from "@/database/schema";
+import { PAYMENT_DISPLAY_STATUSES } from "@/shared/lib/utils/payment-display";
 
 /**
  * Shared search params config for bookings page.
@@ -20,7 +20,7 @@ import {
 export const bookingSearchParams = {
   search: parseAsString.withDefault(""),
   bookingStatus: parseAsStringEnum(bookingStatusEnum.enumValues),
-  paymentStatus: parseAsStringEnum(paymentStatusEnum.enumValues),
+  paymentStatus: parseAsStringEnum([...PAYMENT_DISPLAY_STATUSES]),
   bookingType: parseAsStringEnum(bookingTypeEnum.enumValues),
   dateFrom: parseAsString,
   dateTo: parseAsString,
@@ -29,6 +29,7 @@ export const bookingSearchParams = {
   maxAmount: parseAsInteger,
   assignedAdminId: parseAsString,
   bookingGroupId: parseAsString,
+  showOps: parseAsBoolean.withDefault(false),
   page: parseAsInteger.withDefault(1),
   limit: parseAsInteger.withDefault(10),
 };

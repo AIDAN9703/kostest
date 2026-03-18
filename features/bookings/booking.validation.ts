@@ -2,8 +2,8 @@ import * as z from "zod";
 import {
   bookingStatusEnum,
   bookingTypeEnum,
-  paymentStatusEnum,
 } from "@/database/schema";
+import { PAYMENT_DISPLAY_STATUSES } from "@/shared/lib/utils/payment-display";
 
 /**
  * Booking filter/search schema for URL params - Comprehensive filters for admin
@@ -19,7 +19,7 @@ export const bookingFilterSchema = z.object({
   
   // Status filters (from database schema)
   bookingStatus: z.enum(bookingStatusEnum.enumValues).optional(),
-  paymentStatus: z.enum(paymentStatusEnum.enumValues).optional(),
+  paymentStatus: z.enum(PAYMENT_DISPLAY_STATUSES).optional(),
   bookingType: z.enum(bookingTypeEnum.enumValues).optional(),
   
   // Date range
@@ -69,7 +69,6 @@ export const bookingUpdateSchema = z.object({
   numberOfPassengers: z.number().int().min(1, "Must have at least 1 passenger").optional(),
   startDateTime: z.string().datetime().optional(), // ISO string - will be converted to UTC using boat timezone
   endDateTime: z.string().datetime().nullable().optional(), // ISO string - will be converted to UTC using boat timezone
-  specialRequests: z.string().nullable().optional(),
   pickupLocation: z.string().nullable().optional(),
   dropoffLocation: z.string().nullable().optional(),
   needsCaptain: z.boolean().optional(),
@@ -117,91 +116,32 @@ export const bookingUpdateSchema = z.object({
 export type BookingUpdateInput = z.infer<typeof bookingUpdateSchema>;
 
 /**
- * Booking create schema for admin bookings
- * Keeps pricing tier required and lets endDateTime be optional
- */
-export const bookingCreateSchema = z.object({
-  customerName: z.string().min(1, "Customer name is required"),
-  customerEmail: z.string().email("Invalid email address"),
-  customerPhone: z.string().optional().nullable(),
-  boatId: z.string().uuid("Invalid boat ID"),
-  pricingTierId: z.string().uuid("Invalid pricing tier ID"),
-  startDateTime: z.string().datetime(),
-  endDateTime: z.string().datetime().nullable().optional(),
-  numberOfPassengers: z.number().int().min(1, "Must have at least 1 passenger"),
-  needsCaptain: z.boolean(),
-  pickupLocation: z.string().nullable().optional(),
-  dropoffLocation: z.string().nullable().optional(),
-  specialRequests: z.string().nullable().optional(),
-  // New fields for admin booking creation
-  userId: z.string().uuid().nullable().optional(),
-  inquiryId: z.string().uuid().nullable().optional(),
-  bookingType: z.enum(["REQUEST", "INSTANT_BOOK", "EXTERNAL_BOOKING"]).optional().default("EXTERNAL_BOOKING"),
-  source: z.enum(["WEBSITE", "ADMIN", "BROKER"]).optional().default("ADMIN"),
-});
-
-export type BookingCreateInput = z.infer<typeof bookingCreateSchema>;
-
-/**
- * Boat option for draft booking creation (multi-boat)
- */
-export const draftBoatOptionSchema = z.object({
-  boatId: z.string().uuid(),
-  pricingTierId: z.string().uuid(),
-  basePrice: z.number().min(0).optional(), // Override from tier; uses tier price if not set
-  isPrimary: z.boolean().optional().default(false),
-});
-
-/**
- * Draft booking create schema
- * Creates draft bookings (optionally in group) that can be sent to customer
- */
-export const draftBookingCreateSchema = z.object({
-  customerName: z.string().min(1, "Customer name is required"),
-  customerEmail: z.string().email("Invalid email address"),
-  customerPhone: z.string().optional().nullable(),
-  startDateTime: z.string().datetime(),
-  endDateTime: z.string().datetime().nullable().optional(),
-  numberOfPassengers: z.number().int().min(1, "Must have at least 1 passenger"),
-  pickupLocation: z.string().nullable().optional(),
-  dropoffLocation: z.string().nullable().optional(),
-  specialRequests: z.string().nullable().optional(),
-  adminNotes: z.string().nullable().optional(),
-  userId: z.string().uuid().nullable().optional(),
-  inquiryId: z.string().uuid().nullable().optional(),
-  boatOptions: z.array(draftBoatOptionSchema).min(1, "At least one boat is required"),
-  lineItems: z.array(z.object({
-    name: z.string(),
-    description: z.string().nullable().optional(),
-    unitPrice: z.number().min(0),
-    quantity: z.number().int().min(1),
-  })).optional().default([]),
-  groupName: z.string().nullable().optional(),
-  allowPayment: z.boolean().optional().default(false),
-  paymentType: z.enum(["DEPOSIT_ONLY", "FULL_PAYMENT"]).optional().default("FULL_PAYMENT"),
-  expiresAt: z.string().datetime().nullable().optional(),
-  publishNow: z.boolean().optional().default(false),
-});
-
-export type DraftBookingCreateInput = z.infer<typeof draftBookingCreateSchema>;
-
-/**
  * Single booking section - resolved on client (full data per booking)
  * Option C: pricingTierId optional. When null = custom pricing, basePrice + endDateTime required.
  */
 export const bookingSectionSchema = z
   .object({
-    boatId: z.string().uuid(),
+    boatId: z.string().uuid("Please select a boat"),
+    usePricingTier: z.boolean().optional(),
     pricingTierId: z.string().uuid().nullable().optional(),
     basePrice: z.number().min(0, "Base price must be 0 or greater"),
     depositAmount: z.number().min(0).nullable().optional(),
-    customerName: z.string().min(1),
-    customerEmail: z.string().email(),
+    customerName: z.string().min(1, "Customer name is required"),
+    customerEmail: z.string().email("Invalid email"),
     customerPhone: z.string().optional().nullable(),
     userId: z.string().uuid().nullable().optional(),
-    startDateTime: z.string().datetime(),
+    startDateTime: z.string().datetime("Please select start date and time"),
     endDateTime: z.string().datetime().nullable().optional(),
   })
+  .refine(
+    (data) => {
+      if (data.usePricingTier) {
+        return !!data.pricingTierId && z.string().uuid().safeParse(data.pricingTierId).success;
+      }
+      return true;
+    },
+    { message: "Please select a pricing tier or switch to custom pricing", path: ["pricingTierId"] }
+  )
   .refine(
     (data) => {
       // Custom pricing (no tier): endDateTime required
@@ -223,6 +163,14 @@ export const bookingSectionSchema = z
     { message: "Base price required for custom pricing", path: ["basePrice"] }
   );
 
+/** Add-on input schema - matches BookingAddOnInput */
+export const bookingAddOnSchema = z.object({
+  name: z.string().min(1, "Add-on name is required"),
+  description: z.string().nullable().optional(),
+  unitPrice: z.number().min(0.01, "Unit price must be greater than 0"),
+  quantity: z.number().int().min(1),
+});
+
 /**
  * Unified create bookings schema - one or more bookings in a group
  */
@@ -230,20 +178,15 @@ export const createBookingsSchema = z.object({
   numberOfPassengers: z.number().int().min(1, "Must have at least 1 passenger"),
   pickupLocation: z.string().nullable().optional(),
   dropoffLocation: z.string().nullable().optional(),
-  specialRequests: z.string().nullable().optional(),
   adminNotes: z.string().nullable().optional(),
-  inquiryId: z.string().uuid().nullable().optional(),
   bookings: z.array(bookingSectionSchema).min(1, "At least one booking is required"),
-  lineItems: z.array(z.object({
-    name: z.string(),
-    description: z.string().nullable().optional(),
-    unitPrice: z.number().min(0),
-    quantity: z.number().int().min(1),
-  })).optional().default([]),
+  lineItems: z.array(bookingAddOnSchema).optional().default([]),
   groupName: z.string().nullable().optional(),
   allowPayment: z.boolean().optional().default(false),
   paymentType: z.enum(["DEPOSIT_ONLY", "FULL_PAYMENT"]).optional().default("FULL_PAYMENT"),
-  expiresAt: z.string().datetime().nullable().optional(),
+  sendProposalEmail: z.boolean().optional().default(false),
+  sendProposalSms: z.boolean().optional().default(false),
+  publishNow: z.boolean().optional(),
 });
 
 export type CreateBookingsInput = z.infer<typeof createBookingsSchema>;

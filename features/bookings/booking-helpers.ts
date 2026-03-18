@@ -22,8 +22,8 @@ export type TierForBooking = {
 };
 
 /**
- * Fetch boat and pricing tier by IDs - used across createAdminBooking,
- * createDraftBookings, createBookingRequest, createInstantBooking, webhooks
+ * Fetch boat and pricing tier by IDs - used across createBookingRequest,
+ * createInstantBooking, webhooks
  */
 export async function fetchBoatAndTier(
   boatId: string,
@@ -91,7 +91,7 @@ export type TierForBulkBooking = {
 };
 
 /**
- * Fetch multiple boats and tiers by IDs - used by createDraftBookings and createBookings
+ * Fetch multiple boats and tiers by IDs - used by createBookings
  */
 export async function fetchBoatsAndTiersBulk(
   boatIds: string[],

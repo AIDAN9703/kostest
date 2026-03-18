@@ -1,22 +1,7 @@
-import { SingleBookingForm } from "@/features/bookings/components/admin/create/SingleBookingForm";
-import { getCreateBookingFormData } from "@/features/bookings/lib/get-create-form-data";
+import { SingleBookingForm } from "@/features/bookings/components/admin/booking-forms/SingleBookingForm";
+import { boatService } from "@/features/boats/boat.service";
 
-type PageProps = {
-  searchParams: Promise<{ inquiryId?: string }>;
-};
-
-export default async function AdminBookingCreatePage({
-  searchParams,
-}: PageProps) {
-  const params = await searchParams;
-  const { pricingTiers, inquiryId, inquiryPrefill } =
-    await getCreateBookingFormData(params.inquiryId ?? null);
-
-  return (
-    <SingleBookingForm
-      pricingTiers={pricingTiers}
-      inquiryId={inquiryId}
-      inquiryPrefill={inquiryPrefill}
-    />
-  );
+export default async function AdminBookingCreatePage() {
+  const pricingTiers = await boatService.getAllActivePricingTiers();
+  return <SingleBookingForm pricingTiers={pricingTiers} />;
 }

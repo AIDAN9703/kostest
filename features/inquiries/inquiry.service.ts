@@ -24,9 +24,7 @@ export interface PaginatedInquiriesResponse {
 }
 
 export class InquiryService {
-  async getAllInquiries(
-    filters?: InquiryFilterInput
-  ): Promise<PaginatedInquiriesResponse> {
+  async getAllInquiries(filters?: InquiryFilterInput): Promise<PaginatedInquiriesResponse> {
     const page = filters?.page ?? 1;
     const limit = filters?.limit ?? 10;
     const offset = (page - 1) * limit;
@@ -38,8 +36,7 @@ export class InquiryService {
     if (filters?.outcome) {
       conditions.push(eq(generalInquiries.outcome, filters.outcome));
     }
-    const whereClause =
-      conditions.length > 0 ? and(...conditions) : undefined;
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const [inquiries, countResult] = await Promise.all([
       db
@@ -49,10 +46,7 @@ export class InquiryService {
         .orderBy(desc(generalInquiries.createdAt))
         .limit(limit)
         .offset(offset),
-      db
-        .select({ value: count() })
-        .from(generalInquiries)
-        .where(whereClause),
+      db.select({ value: count() }).from(generalInquiries).where(whereClause),
     ]);
 
     const totalCount = Number(countResult[0]?.value ?? 0);
@@ -66,9 +60,7 @@ export class InquiryService {
     };
   }
 
-  async getInquiryById(
-    id: string
-  ): Promise<(GeneralInquiry & { events: unknown[] }) | null> {
+  async getInquiryById(id: string): Promise<(GeneralInquiry & { events: unknown[] }) | null> {
     const [inquiry, events] = await Promise.all([
       db.query.generalInquiries.findFirst({
         where: eq(generalInquiries.id, id),

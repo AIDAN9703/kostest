@@ -33,7 +33,9 @@ import {
   AlertCircle,
   ChevronRight,
 } from "lucide-react";
-import { InlineOpsCell } from "@/features/bookings/components/admin/InlineOpsCell";
+import { Switch } from "@/shared/components/ui/switch";
+import { Label } from "@/shared/components/ui/label";
+import { OpsRowContent } from "@/features/bookings/components/admin/OpsRowContent";
 
 export interface UnifiedItemBase {
   id: string;
@@ -50,15 +52,12 @@ export interface UnifiedItemBase {
 export interface UnifiedItemBooking extends UnifiedItemBase {
   type: "booking";
   bookingId: string;
-  opsDurationHours?: string | null;
   opsExpenseCents?: number | null;
   opsRevenueCents?: number | null;
   opsBalanceOwnerCents?: number | null;
-  opsBalanceClientCents?: number | null;
   opsCrewName?: string | null;
   opsContractSigned?: boolean | null;
   opsCaptainPaid?: boolean | null;
-  opsAgentCode?: string | null;
   opsCommissionCents?: number | null;
   opsSourceOverride?: string | null;
 }
@@ -166,10 +165,7 @@ function getStatusBadge(status: string, needsAttention?: boolean) {
   }
   if (statusUpper === "DRAFT") {
     return (
-      <Badge
-        variant="secondary"
-        className="bg-muted text-muted-foreground"
-      >
+      <Badge variant="secondary" className="bg-muted text-muted-foreground">
         {formatted}
       </Badge>
     );
@@ -179,15 +175,10 @@ function getStatusBadge(status: string, needsAttention?: boolean) {
 
 export default function AdminAllContent({ items }: AdminAllContentProps) {
   const searchParams = useSearchParams();
-  const [typeFilter, setTypeFilter] = useState<string>(
-    () => searchParams.get("type") || "all"
-  );
-  const [sort, setSort] = useState<string>(
-    () => searchParams.get("sort") || "date-desc"
-  );
-  const [search, setSearch] = useState<string>(
-    () => searchParams.get("q") || ""
-  );
+  const [typeFilter, setTypeFilter] = useState<string>(() => searchParams.get("type") || "all");
+  const [sort, setSort] = useState<string>(() => searchParams.get("sort") || "date-desc");
+  const [search, setSearch] = useState<string>(() => searchParams.get("q") || "");
+  const [showOps, setShowOps] = useState<boolean>(() => searchParams.get("showOps") === "true");
 
   const stats = useMemo(() => {
     const byType = { booking: 0, inquiry: 0 };
@@ -213,9 +204,7 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       result = result.filter(
-        (i) =>
-          i.customerName.toLowerCase().includes(q) ||
-          i.customerEmail.toLowerCase().includes(q)
+        (i) => i.customerName.toLowerCase().includes(q) || i.customerEmail.toLowerCase().includes(q)
       );
     }
 
@@ -235,9 +224,7 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
         });
         break;
       case "status":
-        result.sort((a, b) =>
-          (a.status || "").localeCompare(b.status || "")
-        );
+        result.sort((a, b) => (a.status || "").localeCompare(b.status || ""));
         break;
       case "amount-desc":
         result.sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0));
@@ -263,9 +250,7 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
         </div>
         <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
           <p className="text-xs font-medium text-muted-foreground">Bookings</p>
-          <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
-            {stats.booking}
-          </p>
+          <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">{stats.booking}</p>
         </div>
         <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
           <p className="text-xs font-medium text-muted-foreground">Inquiries</p>
@@ -274,9 +259,7 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
           </p>
         </div>
         <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20 p-4 shadow-sm">
-          <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-            Needs attention
-          </p>
+          <p className="text-xs font-medium text-amber-700 dark:text-amber-400">Needs attention</p>
           <p className="text-2xl font-semibold text-amber-700 dark:text-amber-400">
             {stats.needsAttention}
           </p>
@@ -321,6 +304,12 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
               ))}
             </SelectContent>
           </Select>
+          <div className="flex items-center gap-2">
+            <Switch id="show-ops" checked={showOps} onCheckedChange={setShowOps} />
+            <Label htmlFor="show-ops" className="text-sm font-medium cursor-pointer">
+              Show ops
+            </Label>
+          </div>
         </div>
         <p className="text-sm text-muted-foreground">
           Showing {filteredAndSortedItems.length} of {items.length}
@@ -356,15 +345,11 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
             <TableBody>
               {filteredAndSortedItems.map((item) => (
                 <React.Fragment key={`${item.type}-${item.id}`}>
-                  <TableRow
-                    className="group hover:bg-muted/30 transition-colors"
-                  >
+                  <TableRow className="group hover:bg-muted/30 transition-colors">
                     <TableCell>{getTypeBadge(item.type)}</TableCell>
                     <TableCell>
                       <div>
-                        <div className="font-medium text-foreground">
-                          {item.customerName}
-                        </div>
+                        <div className="font-medium text-foreground">{item.customerName}</div>
                         <div className="text-sm text-muted-foreground truncate max-w-[200px]">
                           {item.customerEmail}
                         </div>
@@ -411,114 +396,20 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
                       </Link>
                     </TableCell>
                   </TableRow>
-                  {item.type === "booking" && (
-                    <TableRow
-                      className="bg-muted/20 hover:bg-muted/30"
-                    >
-                      <TableCell colSpan={6} className="py-2">
-                        <div className="flex flex-wrap gap-x-6 gap-y-2 items-center text-sm">
-                          <span className="text-muted-foreground font-medium shrink-0">Ops:</span>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-muted-foreground text-xs w-16 shrink-0">Duration</span>
-                            <InlineOpsCell
-                            bookingId={item.bookingId}
-                            field="durationHours"
-                            value={item.opsDurationHours}
-                            placeholder="—"
-                          />
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-muted-foreground text-xs w-16 shrink-0">Expense</span>
-                            <InlineOpsCell
-                            bookingId={item.bookingId}
-                            field="expenseCents"
-                            value={item.opsExpenseCents}
-                            isCents
-                            placeholder="—"
-                          />
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-muted-foreground text-xs w-16 shrink-0">REV</span>
-                            <InlineOpsCell
-                            bookingId={item.bookingId}
-                            field="revenueCents"
-                            value={item.opsRevenueCents}
-                            isCents
-                            placeholder="—"
-                          />
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-muted-foreground text-xs w-16 shrink-0">Bal Owner</span>
-                            <InlineOpsCell
-                            bookingId={item.bookingId}
-                            field="balanceOwnerCents"
-                            value={item.opsBalanceOwnerCents}
-                            isCents
-                            placeholder="—"
-                          />
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-muted-foreground text-xs w-16 shrink-0">Bal Client</span>
-                            <InlineOpsCell
-                            bookingId={item.bookingId}
-                            field="balanceClientCents"
-                            value={item.opsBalanceClientCents}
-                            isCents
-                            placeholder="—"
-                          />
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-muted-foreground text-xs w-16 shrink-0">Crew</span>
-                            <InlineOpsCell
-                            bookingId={item.bookingId}
-                            field="crewName"
-                            value={item.opsCrewName}
-                            placeholder="—"
-                          />
-                          </div>
-                          <span className="text-muted-foreground text-xs">Contract?</span>
-                          <InlineOpsCell
-                            bookingId={item.bookingId}
-                            field="contractSigned"
-                            value={item.opsContractSigned}
-                            isCheckbox
-                          />
-                          <span className="text-muted-foreground text-xs">C Paid?</span>
-                          <InlineOpsCell
-                            bookingId={item.bookingId}
-                            field="captainPaid"
-                            value={item.opsCaptainPaid}
-                            isCheckbox
-                          />
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-muted-foreground text-xs w-16 shrink-0">Agent</span>
-                            <InlineOpsCell
-                              bookingId={item.bookingId}
-                              field="agentCode"
-                              value={item.opsAgentCode}
-                              placeholder="—"
-                            />
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-muted-foreground text-xs w-16 shrink-0">Commission</span>
-                            <InlineOpsCell
-                              bookingId={item.bookingId}
-                              field="commissionCents"
-                              value={item.opsCommissionCents}
-                              isCents
-                              placeholder="—"
-                            />
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-muted-foreground text-xs w-16 shrink-0">Source</span>
-                            <InlineOpsCell
-                              bookingId={item.bookingId}
-                              field="sourceOverride"
-                              value={item.opsSourceOverride}
-                              placeholder="—"
-                            />
-                          </div>
-                        </div>
+                  {item.type === "booking" && showOps && (
+                    <TableRow className="border-t-2 border-b-2 border-border bg-muted/30 hover:bg-muted/40">
+                      <TableCell colSpan={6} className="border-l-2 border-l-primary/30 py-4">
+                        <OpsRowContent
+                          bookingId={item.bookingId}
+                          opsExpenseCents={item.opsExpenseCents}
+                          opsRevenueCents={item.opsRevenueCents}
+                          opsBalanceOwnerCents={item.opsBalanceOwnerCents}
+                          opsCrewName={item.opsCrewName}
+                          opsContractSigned={item.opsContractSigned}
+                          opsCaptainPaid={item.opsCaptainPaid}
+                          opsCommissionCents={item.opsCommissionCents}
+                          opsSourceOverride={item.opsSourceOverride}
+                        />
                       </TableCell>
                     </TableRow>
                   )}

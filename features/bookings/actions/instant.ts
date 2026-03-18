@@ -7,15 +7,11 @@ import { bookingRequestSchema, BookingRequest } from "@/features/_validation/val
 import { z } from "zod";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { eq } from "drizzle-orm";
-import Stripe from "stripe";
 import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
 import { getBaseUrl } from "@/shared/lib/utils/base-url";
+import { getStripe } from "@/shared/lib/services/stripe.service";
 
-
-// Initialize Stripe with your secret key
-const stripe = new Stripe(process.env.NODE_ENV === "development" ? process.env.STRIPE_SECRET_KEY! : process.env.STRIPE_LIVE_SECRET_KEY!, {
-  apiVersion: "2025-07-30.basil",
-});
+const stripe = getStripe();
 
 /**
  * Creates a Stripe Checkout session for instant booking using pricing tiers
@@ -135,7 +131,7 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
       },
       mode: 'payment',
       allow_promotion_codes: true, // ✨ Enable Stripe's built-in coupon input
-      success_url: `${getBaseUrl()}/bookings/${boat.id}/success?type=instant&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${getBaseUrl()}/bookings/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${getBaseUrl()}/boats/${boat.id}?canceled=true`,
     } as any);
     
@@ -175,7 +171,6 @@ export async function createInstantBookingAction(formData: FormData) {
     pricingTierId: formData.get("pricingTierId") as string,
     numberOfPassengers: parseInt(formData.get("numberOfPassengers") as string),
     needsCaptain: formData.get("needsCaptain") === "true",
-    specialRequests: formData.get("specialRequests") as string,
   };
 
   return await createInstantBooking(data);

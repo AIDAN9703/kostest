@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { bookingService } from "@/features/bookings/booking.service";
+import { bookingService } from "@/features/bookings/services/booking.service";
 import { inquiryService } from "@/features/inquiries/inquiry.service";
 import AdminAllContent from "./AdminAllContent";
 
@@ -22,8 +22,7 @@ export default async function AllPage() {
 
   const items = [
     ...bookingsResult.bookings.map((b) => {
-      const needsAttention =
-        b.bookingStatus === "PENDING" || b.bookingStatus === "DRAFT";
+      const needsAttention = b.bookingStatus === "PENDING" || b.bookingStatus === "DRAFT";
       return {
         id: b.id,
         type: "booking" as const,
@@ -36,22 +35,18 @@ export default async function AllPage() {
         needsAttention,
         // Ops fields for inline editing on All page
         bookingId: b.id,
-        opsDurationHours: b.opsDurationHours,
         opsExpenseCents: b.opsExpenseCents,
         opsRevenueCents: b.opsRevenueCents,
         opsBalanceOwnerCents: b.opsBalanceOwnerCents,
-        opsBalanceClientCents: b.opsBalanceClientCents,
         opsCrewName: b.opsCrewName,
         opsContractSigned: b.opsContractSigned,
         opsCaptainPaid: b.opsCaptainPaid,
-        opsAgentCode: b.opsAgentCode,
         opsCommissionCents: b.opsCommissionCents,
         opsSourceOverride: b.opsSourceOverride,
       };
     }),
     ...inquiriesResult.inquiries.map((i) => {
-      const needsAttention =
-        i.outcome === "OPEN" && i.stage === "NEEDS_CONTACT";
+      const needsAttention = i.outcome === "OPEN" && i.stage === "NEEDS_CONTACT";
       return {
         id: i.id,
         type: "inquiry" as const,
@@ -78,8 +73,8 @@ export default async function AllPage() {
           Everything at a glance
         </h1>
         <p className="mt-2 text-muted-foreground">
-          Unified view of all bookings and inquiries. Filter, search, and sort
-          to find what you need.
+          Unified view of all bookings and inquiries. Filter, search, and sort to find what you
+          need.
         </p>
       </div>
 

@@ -1,41 +1,74 @@
 "use server";
 
+import { z, ZodError } from "zod";
 import { auth } from "@/auth";
-import { bookingService } from "@/features/bookings/booking.service";
-import { createBookingsSchema } from "@/features/bookings/booking.validation";
-import { markInquiryAsConverted } from "@/features/inquiries/inquiry.actions";
+import { bookingService } from "@/features/bookings/services/booking.service";
+import {
+  createBookingsSchema,
+  bookingSectionSchema,
+  bookingAddOnSchema,
+} from "@/features/bookings/booking.validation";
 import { sendDraftBookingEmail } from "@/shared/lib/services/email.service";
 import { sendSms } from "@/shared/lib/services/twilio.service";
+import { getBaseUrl } from "@/shared/lib/utils/base-url";
+import { ActionResponse } from "@/shared/lib/types/types";
 
-function toIsoOrNull(raw: FormDataEntryValue | null): string | null {
-  if (!raw || typeof raw !== "string") return null;
-  const date = new Date(raw);
-  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+function formatZodError(error: ZodError): string {
+  const first = error.errors[0];
+  if (!first) return "Validation failed";
+  const path = first.path.filter(Boolean).join(".");
+  return path ? `${path}: ${first.message}` : first.message;
 }
 
-function parseJson<T>(raw: FormDataEntryValue | null, fallback: T): T {
-  if (!raw || typeof raw !== "string") return fallback;
+const bookingsArraySchema = bookingSectionSchema.array();
+const lineItemsArraySchema = bookingAddOnSchema.array();
+
+function parseAndValidateBookings(raw: FormDataEntryValue | null): z.infer<typeof bookingsArraySchema> {
+  if (!raw || typeof raw !== "string") return [];
   try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
+    const parsed = JSON.parse(raw);
+    const result = bookingsArraySchema.safeParse(parsed);
+    if (!result.success) {
+      throw new ZodError(result.error.errors);
+    }
+    return result.data;
+  } catch (err) {
+    if (err instanceof ZodError) throw err;
+    throw new Error("Invalid bookings data");
   }
 }
 
-export interface CreateBookingsResponse {
-  success: boolean;
-  data?: {
-    bookingIds: string[];
-    publicToken: string | null;
-    groupId: string | null;
-  };
-  error?: string;
+function parseAndValidateLineItems(raw: FormDataEntryValue | null): z.infer<typeof lineItemsArraySchema> {
+  if (!raw || typeof raw !== "string") return [];
+  try {
+    const parsed = JSON.parse(raw);
+    const result = lineItemsArraySchema.safeParse(parsed);
+    if (!result.success) {
+      throw new ZodError(result.error.errors);
+    }
+    return result.data;
+  } catch (err) {
+    if (err instanceof ZodError) throw err;
+    throw new Error("Invalid line items data");
+  }
 }
 
 export async function createBookingsAction(
-  _prevState: CreateBookingsResponse,
+  _prevState: ActionResponse<{
+    bookingIds: string[];
+    publicToken: string | null;
+    groupId: string | null;
+    proposalSent?: boolean;
+  }>,
   formData: FormData
-): Promise<CreateBookingsResponse> {
+): Promise<
+  ActionResponse<{
+    bookingIds: string[];
+    publicToken: string | null;
+    groupId: string | null;
+    proposalSent?: boolean;
+  }>
+> {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -44,69 +77,47 @@ export async function createBookingsAction(
 
     const bookingsRaw = formData.get("bookings");
     const lineItemsRaw = formData.get("lineItems");
-    const expiresAtRaw = formData.get("expiresAt") as string | null;
+    const sendProposalEmail = formData.get("sendProposalEmail") === "on";
+    const sendProposalSms = formData.get("sendProposalSms") === "on";
 
-    const bookingsData = parseJson<
-      Array<{
-        boatId: string;
-        pricingTierId?: string | null;
-        basePrice: number;
-        depositAmount?: number | null;
-        customerName: string;
-        customerEmail: string;
-        customerPhone?: string | null;
-        userId?: string | null;
-        startDateTime: string;
-        endDateTime?: string | null;
-      }>
-    >(bookingsRaw, []);
+    const bookingsData = parseAndValidateBookings(bookingsRaw);
+    const lineItemsData = parseAndValidateLineItems(lineItemsRaw);
 
     const payload = createBookingsSchema.parse({
       numberOfPassengers: Number(formData.get("numberOfPassengers") || 0),
       pickupLocation: formData.get("pickupLocation") || null,
       dropoffLocation: formData.get("dropoffLocation") || null,
-      specialRequests: formData.get("specialRequests") || null,
       adminNotes: formData.get("adminNotes") || null,
-      inquiryId: formData.get("inquiryId") || null,
       bookings: bookingsData,
-      lineItems: parseJson(lineItemsRaw, []),
+      lineItems: lineItemsData,
       groupName: formData.get("groupName") || null,
       allowPayment: formData.get("allowPayment") === "on",
       paymentType:
-        (formData.get("paymentType") as "DEPOSIT_ONLY" | "FULL_PAYMENT") ||
-        "FULL_PAYMENT",
-      expiresAt: toIsoOrNull(expiresAtRaw),
+        (formData.get("paymentType") as "DEPOSIT_ONLY" | "FULL_PAYMENT") || "FULL_PAYMENT",
+      sendProposalEmail,
+      sendProposalSms,
     });
 
-    const result = await bookingService.createBookings(
-      payload,
-      session.user.id
-    );
+    const publishNow = sendProposalEmail || sendProposalSms;
+    const result = await bookingService.createBookings({ ...payload, publishNow }, session.user.id);
 
-    if (payload.inquiryId) {
-      await markInquiryAsConverted(payload.inquiryId);
-    }
+    const baseUrl = getBaseUrl();
+    const draftLink = result.publicToken ? `${baseUrl}/bookings/draft/${result.publicToken}` : null;
 
-    // Auto-send draft proposal to customer (email + SMS)
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.kosyachts.com";
-    const draftLink = result.publicToken
-      ? `${baseUrl}/bookings/draft/${result.publicToken}`
-      : null;
-
-    if (draftLink) {
+    if (draftLink && publishNow) {
       const first = payload.bookings[0];
       const isGroup = payload.bookings.length > 1;
 
-      // Email
-      sendDraftBookingEmail({
-        customerName: first.customerName,
-        customerEmail: first.customerEmail,
-        draftLink,
-        isGroup,
-      }).catch((err) => console.error("Draft email failed:", err));
+      if (sendProposalEmail) {
+        sendDraftBookingEmail({
+          customerName: first.customerName,
+          customerEmail: first.customerEmail,
+          draftLink,
+          isGroup,
+        }).catch((err) => console.error("Draft email failed:", err));
+      }
 
-      // SMS (if phone provided)
-      if (first.customerPhone?.trim()) {
+      if (sendProposalSms && first.customerPhone?.trim()) {
         sendSms(
           first.customerPhone,
           `Kings Of The Sea: Your charter proposal is ready. View & accept: ${draftLink}`
@@ -120,14 +131,17 @@ export async function createBookingsAction(
         bookingIds: result.bookingIds,
         publicToken: result.publicToken,
         groupId: result.groupId,
+        proposalSent: publishNow,
       },
     };
   } catch (error) {
     console.error("Create bookings error:", error);
+    if (error instanceof ZodError) {
+      return { success: false, error: formatZodError(error) };
+    }
     return {
       success: false,
-      error:
-        error instanceof Error ? error.message : "Failed to create bookings",
+      error: error instanceof Error ? error.message : "Failed to create bookings",
     };
   }
 }

@@ -131,18 +131,22 @@ export const calculateServiceFeeCents = (subtotalCents: Cents): Cents => {
 
 /**
  * MAIN booking price calculator in CENTS - use for all database operations
- * 
- * @param basePriceCents - Base price from pricing tier (in cents)
+ *
+ * Order: base (charter) + add-ons + cleaning + captain = subtotal, then 3.5% fee on subtotal = total
+ *
+ * @param basePriceCents - Charter base price only (in cents)
  * @param cleaningFeeCents - One-time cleaning fee in cents (optional)
  * @param captainFeeCents - Captain service fee in cents (optional)
+ * @param addOnsCents - Add-ons total in cents (optional)
  * @returns Complete price breakdown with all fees in cents
  */
 export const calculateBookingPriceCents = (
   basePriceCents: Cents,
   cleaningFeeCents: Cents = 0,
-  captainFeeCents: Cents = 0
+  captainFeeCents: Cents = 0,
+  addOnsCents: Cents = 0
 ): BookingPriceBreakdownCents => {
-  const subtotalCents = basePriceCents + captainFeeCents + cleaningFeeCents;
+  const subtotalCents = basePriceCents + addOnsCents + captainFeeCents + cleaningFeeCents;
   const serviceFeeCents = calculateServiceFeeCents(subtotalCents);
   const totalPriceCents = subtotalCents + serviceFeeCents;
 

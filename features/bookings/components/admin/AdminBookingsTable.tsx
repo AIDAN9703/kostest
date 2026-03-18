@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   useReactTable,
@@ -35,7 +35,6 @@ import {
   XCircle,
   UserCheck,
   Phone,
-  Link as LinkIcon,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -51,9 +50,9 @@ import {
   assignAdminToBooking,
   markBookingAsContacted,
 } from "@/features/bookings/actions/admin-booking.actions";
-import { getOrCreatePaymentLink } from "@/features/bookings/booking.mutations";
 import { useDeleteBooking } from "@/features/bookings/hooks/useBookingMutations";
 import { useToast } from "@/shared/lib/hooks/use-toast";
+import { OpsRowContent } from "./OpsRowContent";
 
 interface Admin {
   id: string;
@@ -76,6 +75,8 @@ interface AdminBookingsTableProps {
   admins?: Admin[];
   /** When true, pagination UI is hidden (use external Link-based pagination) */
   hidePagination?: boolean;
+  /** When true, show expandable ops row below each booking */
+  showOps?: boolean;
 }
 
 const columnHelper = createColumnHelper<BookingListItem>();
@@ -87,6 +88,7 @@ export function AdminBookingsTable({
   onPageChange,
   admins: adminsProp = [],
   hidePagination,
+  showOps = false,
 }: AdminBookingsTableProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -103,7 +105,7 @@ export function AdminBookingsTable({
         return;
       deleteBooking.mutate(bookingId);
     },
-    [deleteBooking, router]
+    [deleteBooking]
   );
 
   const handleAction = useCallback(
@@ -180,27 +182,6 @@ export function AdminBookingsTable({
     [handleAction]
   );
 
-  const handleCopyPaymentLink = useCallback(
-    async (bookingId: string) => {
-      setActionLoading(bookingId);
-      const result = await getOrCreatePaymentLink(bookingId);
-      if (result.success && result.data?.url) {
-        await navigator.clipboard.writeText(result.data.url);
-        toast({
-          title: "Payment link copied",
-          description: "Share the link with the customer to collect payment.",
-        });
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to get payment link",
-          variant: "destructive",
-        });
-      }
-      setActionLoading(null);
-    },
-    [toast]
-  );
 
   const columns = useMemo<ColumnDef<BookingListItem, any>[]>(
     () => [
@@ -306,14 +287,19 @@ export function AdminBookingsTable({
         cell: ({ row }) => {
           const booking = row.original;
           return (
-            <div className="flex flex-col gap-1">
-              <StatusBadge status={booking.bookingStatus} />
-              {booking.paymentStatus && (
-                <StatusBadge
-                  status={booking.paymentStatus}
-                  className="border border-border bg-card"
-                />
-              )}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">
+                  Booking
+                </span>
+                <StatusBadge status={booking.bookingStatus} />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">
+                  Payment
+                </span>
+                <StatusBadge status={booking.paymentDisplayStatus} />
+              </div>
             </div>
           );
         },
@@ -434,14 +420,6 @@ export function AdminBookingsTable({
                   <Phone className="mr-2 h-4 w-4" />
                   Mark as Contacted
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleCopyPaymentLink(booking.id)}
-                  disabled={isLoading}
-                  className="cursor-pointer"
-                >
-                  <LinkIcon className="mr-2 h-4 w-4" />
-                  Copy Payment Link
-                </DropdownMenuItem>
                 {booking.customerEmail && (
                   <DropdownMenuItem asChild>
                     <a href={`mailto:${booking.customerEmail}`} className="cursor-pointer">
@@ -519,7 +497,7 @@ export function AdminBookingsTable({
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
+                  className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
                 >
                   {header.isPlaceholder ? null : (
                     <div>{flexRender(header.column.columnDef.header, header.getContext())}</div>
@@ -530,15 +508,41 @@ export function AdminBookingsTable({
           ))}
         </thead>
         <tbody className="divide-y divide-border bg-card">
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} className="hover:bg-muted/50 transition-colors">
-              {row.getVisibleCells().map((cell) => (
-                <td key={cell.id} className="px-4 py-2.5">
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
+          {table.getRowModel().rows.map((row) => {
+            const booking = row.original;
+            const colCount = row.getVisibleCells().length;
+            return (
+              <React.Fragment key={row.id}>
+                <tr className="hover:bg-muted/50 transition-colors">
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-3 py-2">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+                {showOps && (
+                  <tr className="border-t-2 border-b-2 border-border bg-muted/30 hover:bg-muted/40">
+                    <td
+                      colSpan={colCount}
+                      className="border-l-2 border-l-primary/30 px-3 py-4"
+                    >
+                      <OpsRowContent
+                        bookingId={booking.id}
+                        opsExpenseCents={booking.opsExpenseCents}
+                        opsRevenueCents={booking.opsRevenueCents}
+                        opsBalanceOwnerCents={booking.opsBalanceOwnerCents}
+                        opsCrewName={booking.opsCrewName}
+                        opsContractSigned={booking.opsContractSigned}
+                        opsCaptainPaid={booking.opsCaptainPaid}
+                        opsCommissionCents={booking.opsCommissionCents}
+                        opsSourceOverride={booking.opsSourceOverride}
+                      />
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
+            );
+          })}
         </tbody>
       </table>
 

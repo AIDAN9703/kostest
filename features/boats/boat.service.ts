@@ -246,10 +246,9 @@ export class BoatService {
   }
 
   /**
-   * Get boat pricing tiers
+   * Get boat pricing tiers (for a single boat)
    */
   async getBoatPricingTiers(boatId: string) {
- 
     const tiers = await db
       .select()
       .from(boatPricingTiers)
@@ -257,6 +256,25 @@ export class BoatService {
       .orderBy(boatPricingTiers.hours);
 
     return tiers;
+  }
+
+  /**
+   * Get all active pricing tiers for admin booking create forms.
+   * Used when boat is not yet selected - form needs tiers for all boats.
+   */
+  async getAllActivePricingTiers() {
+    return db
+      .select({
+        id: boatPricingTiers.id,
+        boatId: boatPricingTiers.boatId,
+        hours: boatPricingTiers.hours,
+        price: boatPricingTiers.price,
+        name: boatPricingTiers.name,
+        isDefault: boatPricingTiers.isDefault,
+      })
+      .from(boatPricingTiers)
+      .where(eq(boatPricingTiers.isActive, true))
+      .orderBy(boatPricingTiers.hours);
   }
 
   /**

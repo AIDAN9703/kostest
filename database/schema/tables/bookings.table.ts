@@ -22,7 +22,7 @@ export const bookings = pgTable(
     captainUserId: uuid("captain_user_id").references(() => users.id, { onDelete: "set null" }),
     pricingTierId: uuid("pricing_tier_id").references(() => boatPricingTiers.id, { onDelete: "set null" }),
     bookingGroupId: uuid("booking_group_id").references(() => bookingGroups.id, { onDelete: "set null" }),
-    inquiryId: uuid("inquiry_id").references(() => generalInquiries.id, { onDelete: "set null" }), // If converted from inquiry
+    inquiryId: uuid("inquiry_id").references(() => generalInquiries.id, { onDelete: "set null" }),
     assignedAdminId: uuid("assigned_admin_id").references(() => users.id, { onDelete: "set null" }),
 
     // ==========================================================================
