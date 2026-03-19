@@ -67,7 +67,7 @@ export default function NearbyBoats() {
 
   return (
     <section className="py-8 sm:py-12 relative overflow-hidden">
-      <div className="max-w-full sm:max-w-[80%] mx-auto px-4">
+      <div className="w-full">
         <motion.div
           className="text-center mb-4"
           initial={{ opacity: 0, y: 20 }}

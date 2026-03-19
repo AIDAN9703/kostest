@@ -1,31 +1,23 @@
-import { redirect } from "next/navigation";
 import { requireCaptain } from "@/shared/lib/utils/auth-utils";
-import { userService } from "@/features/users/user.service";
-import { CaptainDashboard } from "@/features/profile/components/CaptainDashboard";
 
-export default async function CaptainsPortalPage() {
+export default async function CaptainsPage() {
   const session = await requireCaptain();
 
-  const user = await userService.getUserById(session.user.id, {
-    captainProfile: true,
-  });
-
-  if (!user) {
-    redirect("/sign-up");
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            Captains Portal
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Welcome back, {session.user.name?.split(" ")[0] ?? "Captain"}
-          </p>
-        </div>
-        <CaptainDashboard userId={user.id} />
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold text-primary">
+          Captain Dashboard
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Manage your captain profile and assignments
+        </p>
+      </div>
+
+      <div className="rounded-lg border bg-card p-6 text-card-foreground shadow-sm">
+        <p className="text-muted-foreground">
+          Welcome, {session.user.name}. Your captain dashboard is being set up.
+        </p>
       </div>
     </div>
   );

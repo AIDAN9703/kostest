@@ -89,11 +89,24 @@ export const bookingOpsService = {
     const setValues: Record<string, unknown> = { updatedAt: now };
 
     const fields: (keyof BookingOpsInput)[] = [
-      "expenseCents", "gmvCents", "revenueCents", "paidCents",
-      "balanceOwnerCents", "balanceClientCents", "crewName", "opsNote",
-      "contractSigned", "connected", "clientPaid", "captainPaid",
-      "allPaid", "sheetsSent", "agentCode",
-      "commissionAgentCents", "commissionKosCents", "commissionCents",
+      "expenseCents",
+      "gmvCents",
+      "revenueCents",
+      "paidCents",
+      "balanceOwnerCents",
+      "balanceClientCents",
+      "crewName",
+      "opsNote",
+      "contractSigned",
+      "connected",
+      "clientPaid",
+      "captainPaid",
+      "allPaid",
+      "sheetsSent",
+      "agentCode",
+      "commissionAgentCents",
+      "commissionKosCents",
+      "commissionCents",
       "sourceOverride",
     ];
     for (const f of fields) {

@@ -1,8 +1,8 @@
 import { Boat, PricingTier } from "../types/types";
 import { formatCurrency } from "./general-utils";
-import { SERVICE_FEE_RATE } from '@/shared/lib/constants/fees-constants';
+import { SERVICE_FEE_RATE } from "@/shared/lib/constants/fees-constants";
 
-import { dollarsToCents, type Cents } from './money-utils';
+import { dollarsToCents, type Cents } from "./money-utils";
 import { BoatWithTiers } from "@/features/boats/boat.types";
 /**
  * Minimal boat type for pricing functions - only requires fields actually used
@@ -61,7 +61,7 @@ export function getBoatDefaultPrice(boat: BoatForPricing): number {
   // Try from pricing tiers first
   const defaultTier = getDefaultPricingTier(boat);
   if (defaultTier) return defaultTier.price;
-  
+
   // Fallback to deprecated hourlyRate if it exists
   return boat.hourlyRate || 0;
 }
@@ -74,9 +74,9 @@ export function getBoatDefaultPrice(boat: BoatForPricing): number {
 export function getBoatDefaultHours(boat: BoatForPricing): string {
   const defaultTier = getDefaultPricingTier(boat);
   if (defaultTier) return `${defaultTier.hours}hr`;
-  
+
   return "hr";
-} 
+}
 
 /**
  * Compute the lowest price-per-hour across active tiers for "from $X+/hr" display
@@ -99,10 +99,8 @@ export function getBoatStartingHourlyRate(boat: BoatWithTiers): number {
  */
 export function getBoatStartingHourlyLabel(boat: BoatWithTiers): string {
   const hourly = getBoatStartingHourlyRate(boat);
-  return `${formatCurrency(hourly)}+/hr`;
+  return `${formatCurrency(hourly)}+/hour`;
 }
-
-
 
 // ========================================
 // CENTS-BASED PRICING (NEW - Use for all database operations)
@@ -163,7 +161,7 @@ export const calculateBookingPriceCents = (
 /**
  * Calculate booking price from DOLLAR inputs, returns CENTS
  * Convenience function for when inputs come from forms/UI in dollars
- * 
+ *
  * @param basePriceDollars - Base price from pricing tier (in dollars)
  * @param cleaningFeeDollars - One-time cleaning fee in dollars (optional)
  * @param captainFeeDollars - Captain service fee in dollars (optional)
@@ -208,9 +206,9 @@ export const calculateServiceFee = (subtotal: number): number => {
 /**
  * MAIN booking price calculator - single source of truth
  * Use this everywhere for consistent pricing
- * 
+ *
  * @deprecated Use calculateBookingPriceCents instead
- * 
+ *
  * @param pricingTierPrice - Base price from pricing tier
  * @param cleaningFee - One-time cleaning fee (optional)
  * @param captainFee - Captain service fee (optional, usually 0 as included in base)

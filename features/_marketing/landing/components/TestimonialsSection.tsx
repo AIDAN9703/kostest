@@ -22,10 +22,7 @@ interface TestimonialsSectionProps {
 const StarRating = React.memo(({ rating }: { rating: number }) => (
   <div className="flex">
     {[...Array(5)].map((_, i) => (
-      <FaStar
-        key={i}
-        className={`w-4 h-4 ${i < rating ? "text-yellow-400" : "text-gray-300"}`}
-      />
+      <FaStar key={i} className={`w-4 h-4 ${i < rating ? "text-yellow-400" : "text-gray-300"}`} />
     ))}
   </div>
 ));
@@ -45,19 +42,13 @@ const ReviewCard = React.memo(({ review }: { review: Review }) => (
         />
       </div>
       <div className="flex-1">
-        <h3 className="text-lg font-medium text-gray-900">
-          {review.author_name}
-        </h3>
-        <p className="text-sm text-gray-600">
-          {review.relative_time_description}
-        </p>
+        <h3 className="text-lg font-medium text-gray-900">{review.author_name}</h3>
+        <p className="text-sm text-gray-600">{review.relative_time_description}</p>
       </div>
     </div>
 
     <div className="flex-1">
-      <p className="text-gray-700 leading-relaxed mb-4 line-clamp-4">
-        {review.text}
-      </p>
+      <p className="text-gray-700 leading-relaxed mb-4 line-clamp-4">{review.text}</p>
       <StarRating rating={review.rating} />
     </div>
   </div>
@@ -65,9 +56,7 @@ const ReviewCard = React.memo(({ review }: { review: Review }) => (
 
 ReviewCard.displayName = "ReviewCard";
 
-export default function TestimonialsSection({
-  reviews,
-}: TestimonialsSectionProps) {
+export default function TestimonialsSection({ reviews }: TestimonialsSectionProps) {
   const [startIndex, setStartIndex] = useState(0);
   const [visibleCount, setVisibleCount] = useState(3);
 
@@ -102,7 +91,7 @@ export default function TestimonialsSection({
   if (!reviews.length) {
     return (
       <div className="py-16 bg-primary text-white">
-        <div className="max-w-7xl mx-auto px-4 text-center">
+        <div className="w-full text-center">
           <h2 className="text-2xl font-bold mb-4">No Reviews Available</h2>
           <p className="opacity-80">Reviews will appear here soon.</p>
         </div>
@@ -122,14 +111,10 @@ export default function TestimonialsSection({
         />
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 relative z-10">
+      <div className="w-full relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            What Our Clients Say
-          </h2>
-          <p className="text-xl opacity-90">
-            Real experiences from real customers
-          </p>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">What Our Clients Say</h2>
+          <p className="text-xl opacity-90">Real experiences from real customers</p>
         </div>
 
         <div className="relative">
@@ -157,10 +142,7 @@ export default function TestimonialsSection({
           {/* Reviews grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {visibleReviews.map((review, index) => (
-              <div
-                key={`${startIndex}-${index}`}
-                className="opacity-0 animate-fade-in-up"
-              >
+              <div key={`${startIndex}-${index}`} className="opacity-0 animate-fade-in-up">
                 <ReviewCard review={review} />
               </div>
             ))}
@@ -174,9 +156,7 @@ export default function TestimonialsSection({
                   key={index}
                   onClick={() => goToSlide(index)}
                   className={`h-2 rounded-full transition-all ${
-                    startIndex === index
-                      ? "bg-white w-6"
-                      : "bg-white/40 w-2 hover:bg-white/60"
+                    startIndex === index ? "bg-white w-6" : "bg-white/40 w-2 hover:bg-white/60"
                   }`}
                   aria-label={`Go to slide ${index + 1}`}
                 />

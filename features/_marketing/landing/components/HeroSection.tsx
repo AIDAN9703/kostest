@@ -72,8 +72,7 @@ export default function HeroSection() {
 
           {/* Subtitle */}
           <p className="text-sm sm:text-base md:text-lg max-w-xs sm:max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl text-white mt-2 sm:mt-4 md:mt-6">
-            Discover unforgettable boat and yacht charters with experienced crew
-            worldwide
+            Discover unforgettable boat and yacht charters with experienced crew worldwide
           </p>
         </div>
       </div>

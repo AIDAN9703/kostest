@@ -111,10 +111,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         sameSite: "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
-        // Scope cookie to root domain so subdomains (admin., captains., etc.) share the session
-        domain: process.env.NODE_ENV === "production"
-          ? ".kosyachts.com"
-          : undefined,
+        domain:
+          process.env.NODE_ENV === "production"
+            ? ".kosyachts.com"
+            : undefined,
       },
     },
   },

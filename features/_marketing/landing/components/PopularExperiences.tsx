@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Button } from '@/shared/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { motion } from "framer-motion";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/shared/components/ui/button";
+import { ArrowRight } from "lucide-react";
 
 const experiences = [
   {
@@ -12,58 +12,58 @@ const experiences = [
     image: "/images/experiences/daycharters4.png",
     description: "Perfect for a day of fun on the water with friends",
     color: "from-blue-500/20 to-cyan-500/60",
-    link: "/experiences/special-events"
+    link: "/experiences/special-events",
   },
   {
     title: "Term Charters",
     image: "/images/experiences/termcharter.avif",
     description: "Extended luxury experiences for your perfect getaway",
     color: "from-emerald-500/20 to-teal-500/60",
-    link: "/experiences/special-events"
+    link: "/experiences/special-events",
   },
   {
     title: "Corporate Events",
     image: "/images/experiences/corporateevents.webp",
     description: "Impress new clients and reward your team in style",
     color: "from-indigo-500/20 to-blue-500/60",
-    link: "/experiences/special-events"
+    link: "/experiences/special-events",
   },
   {
     title: "Bachelor/Bachelorette",
     image: "/images/experiences/bachellorette2.png",
     description: "Celebrate your special day in unforgettable style",
     color: "from-purple-500/20 to-pink-500/60",
-    link: "/experiences/special-events"
+    link: "/experiences/special-events",
   },
   {
     title: "Sunset Cruise",
     image: "/images/experiences/sunset.jpg",
     description: "Experience breathtaking sunsets while on the water",
     color: "from-orange-500/20 to-rose-500/60",
-    link: "/experiences/special-events"
+    link: "/experiences/special-events",
   },
   {
     title: "High Capacity",
     image: "/images/experiences/highcapacity.png",
     description: "Perfect for large groups and special celebrations",
     color: "from-red-500/20 to-orange-500/60",
-    link: "/experiences/special-events"
-  }
+    link: "/experiences/special-events",
+  },
 ];
 
 const fadeInUpAnimation = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  transition: (delay = 0) => ({ 
-    duration: 0.5, 
-    delay 
-  })
+  transition: (delay = 0) => ({
+    duration: 0.5,
+    delay,
+  }),
 };
 
 export default function PopularExperiences() {
   return (
     <section className="relative py-6 sm:py-12 font-poppins">
-      <div className="max-w-full sm:max-w-[80%] mx-auto px-6">
+      <div className="w-full">
         {/* Section Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -102,7 +102,9 @@ export default function PopularExperiences() {
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
                     quality={90}
                   />
-                  <div className={`absolute inset-0 bg-linear-to-b ${experience.color} opacity-40 group-hover:opacity-60 transition-opacity duration-500`} />
+                  <div
+                    className={`absolute inset-0 bg-linear-to-b ${experience.color} opacity-40 group-hover:opacity-60 transition-opacity duration-500`}
+                  />
                   {/* Content Overlay */}
                   <div className="absolute inset-0 p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col justify-end bg-linear-to-t from-black/60 via-black/20 to-transparent">
                     <h3 className="text-white text-base sm:text-lg md:text-xl lg:text-2xl font-poppins font-medium truncate">
@@ -126,4 +128,4 @@ export default function PopularExperiences() {
       </div>
     </section>
   );
-} 
+}

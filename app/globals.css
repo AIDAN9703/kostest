@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @plugin 'tailwindcss-animate';
 
@@ -80,6 +80,7 @@
   --color-gray-100: #cbd5e1;
 
   --breakpoint-xs: 480px;
+  --breakpoint-3xl: 112.5rem; /* 1800px */
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
@@ -118,7 +119,6 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
-
   *,
   ::after,
   ::before,
@@ -144,8 +144,6 @@
   /* Profile animations */
   animation: fadeIn 0.5s ease-in-out;
 }
-
-
 
 @utility line-clamp-1 {
   overflow: hidden;
@@ -194,7 +192,6 @@
 }
 
 @layer components {
-
   @keyframes fadeIn {
     from {
       opacity: 0;
@@ -206,9 +203,6 @@
       transform: translateY(0);
     }
   }
-
-
-
 }
 
 @layer base {
@@ -246,11 +240,7 @@
      from admin with dark mode on. */
 }
 
-
-
 @layer utilities {
-
-
   @keyframes float {
     0% {
       transform: translateY(0px);
@@ -320,8 +310,6 @@
       background-position: 0% 50%;
     }
   }
-
-
 }
 
 @layer base {
@@ -357,10 +345,6 @@
     transform: translateY(0);
   }
 }
-
-
-
-
 
 /* Service page animations */
 .animate-fade-in-up {
@@ -400,7 +384,6 @@
     opacity: 1;
     transform: translateX(0);
   }
-
 }
 
 @keyframes fadeInRight {
@@ -438,7 +421,6 @@
 
 /* Responsive animations - reduce motion for users who prefer it */
 @media (prefers-reduced-motion: reduce) {
-
   .animate-fade-in-up,
   .animate-fade-in-left,
   .animate-fade-in-right {

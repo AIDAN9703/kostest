@@ -11,10 +11,7 @@ import MobileNavigation from "./sub-components/MobileNavigation";
 import DesktopNavigation from "./sub-components/DesktopNavigation";
 import UserMenu from "./sub-components/UserMenu";
 import SearchBar from "./sub-components/SearchBar";
-import {
-  navigationData,
-  type NavigationData,
-} from "@/shared/lib/constants/navigation-data";
+import { navigationData, type NavigationData } from "@/shared/lib/constants/navigation-data";
 
 const Navigation = () => {
   const { data: session } = useSession();
@@ -25,8 +22,8 @@ const Navigation = () => {
   const showNavSearch = pathname !== "/";
 
   return (
-    <header className="sticky top-0 left-0 right-0 z-50 bg-white backdrop-blur-xs shadow-xs border-b border-gray-200 font-poppins">
-      <div className="max-w-9xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200 font-poppins">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Navigation Bar */}
         <nav
           className={
@@ -43,7 +40,7 @@ const Navigation = () => {
 
             <Link
               href="/"
-              className="focus:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/50 rounded-full transition-opacity hover:opacity-80"
+              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-full hover:opacity-80"
               aria-label="Home"
             >
               <Image
@@ -68,10 +65,7 @@ const Navigation = () => {
 
           {/* Right section: Navigation + User menu */}
           <div className="hidden lg:flex items-center gap-6">
-            <DesktopNavigation
-              navigationData={navigationData}
-              isAdmin={isAdmin}
-            />
+            <DesktopNavigation navigationData={navigationData} isAdmin={isAdmin} />
             <UserMenu user={user} navigationData={navigationData} />
           </div>
 

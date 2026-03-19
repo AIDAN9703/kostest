@@ -7,7 +7,6 @@ import { FaYoutube, FaTiktok } from "react-icons/fa";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 
-// Simplified footer data structure
 const footerData = {
   quickLinks: [
     { label: "About Us", href: "/about-us" },
@@ -40,180 +39,147 @@ const footerData = {
 };
 
 export default function Footer() {
-  // Unified styling system - matches navigation approach
-  const styles = {
-    // Layout
-    container: "bg-white",
-    wrapper: "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20",
-
-    // New layout: left + middle bunched + right
-    mainGrid:
-      "grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-8 lg:gap-4 items-start",
-    leftSection: "flex flex-col",
-    middleSection: "flex flex-col",
-    rightSection: "flex flex-col",
-
-    // Typography
-    heading:
-      "text-lg font-semibold font-poppins tracking-wide text-primary mb-4",
-    link: "block text-sm text-gray-600 hover:text-primary transition-colors font-medium",
-    linkList: "space-y-4",
-
-    // Brand section (left)
-    logo: "rounded-full mb-6 transition-transform hover:scale-105",
-    contactItem: "flex items-center gap-3 text-sm text-gray-600 mb-4",
-    contactIcon: "w-4 h-4 text-primary flex-shrink-0",
-    socialContainer: "flex items-center gap-3 mt-6",
-    socialLink:
-      "w-10 h-10 rounded-full border border-gray-200 hover:border-primary/30 flex items-center justify-center transition-all hover:scale-110 hover:bg-primary/5",
-    socialIcon: "w-4 h-4 text-gray-600 hover:text-primary transition-colors",
-
-    // Link sections (middle) - bunched together
-    linkSections: "grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8",
-    linkSection: "flex flex-col",
-
-    // Newsletter (right) - matches other sections structure
-    newsletterForm: "flex flex-col gap-3 mt-2",
-    newsletterInput:
-      "bg-gray-50 border-gray-200 focus:border-gold focus:ring-gold/20 h-12",
-    newsletterButton:
-      "bg-primary text-white h-12 font-medium flex items-center justify-center gap-2",
-
-    // Bottom bar
-    bottomBar: "mt-16 pt-8 border-t border-gray-100",
-    bottomContent:
-      "flex flex-col md:flex-row justify-between items-center gap-4",
-    copyright: "text-gray-500 text-sm",
-    legalLinks: "flex flex-wrap items-center justify-center gap-6 md:gap-8",
-    legalLink: "text-gray-500 hover:text-primary transition-colors text-sm",
-  };
-
   return (
-    <footer className={styles.container}>
-      <div className={styles.wrapper}>
-        {/* Main footer content */}
-        <div className={styles.mainGrid}>
-          {/* Left: Brand section */}
-          <div className={styles.leftSection}>
-            <Link href="/" className="block">
+    <footer className="font-poppins">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-16">
+        <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-10 lg:gap-6">
+          {/* Brand */}
+          <div className="flex flex-col max-w-[240px]">
+            <Link href="/" className="block mb-5 rounded-full hover:scale-105 transition-transform">
               <Image
                 src="/icons/transparent-logo.png"
                 alt="KOS Yachts"
-                width={56}
-                height={56}
-                className={styles.logo}
+                width={52}
+                height={52}
+                className="rounded-full"
               />
             </Link>
 
-            {/* Contact info */}
-            <div className="space-y-4">
-              <div className={styles.contactItem}>
-                <Phone className={styles.contactIcon} />
-                <span>(305) 521-8877</span>
-              </div>
-              <div className={styles.contactItem}>
-                <Mail className={styles.contactIcon} />
-                <span>contact@kosyachts.com</span>
-              </div>
-              <div className={styles.contactItem}>
-                <MapPin className={styles.contactIcon} />
-                <span>Miami, FL</span>
+            <div className="space-y-3">
+              <a
+                href="tel:+13055218877"
+                className="flex items-center gap-3 text-sm text-gray-600 hover:text-primary transition-colors"
+              >
+                <Phone className="w-4 h-4 text-primary shrink-0" />
+                (305) 521-8877
+              </a>
+              <a
+                href="mailto:contact@kosyachts.com"
+                className="flex items-center gap-3 text-sm text-gray-600 hover:text-primary transition-colors"
+              >
+                <Mail className="w-4 h-4 text-primary shrink-0" />
+                contact@kosyachts.com
+              </a>
+              <div className="flex items-center gap-3 text-sm text-gray-600">
+                <MapPin className="w-4 h-4 text-primary shrink-0" />
+                Miami, FL
               </div>
             </div>
 
-            {/* Social links */}
-            <div className={styles.socialContainer}>
-              <a
-                href="https://instagram.com/kosyachts"
-                className={styles.socialLink}
-                aria-label="Instagram"
-              >
-                <Instagram className={styles.socialIcon} />
-              </a>
-              <a
-                href="https://www.tiktok.com/@kosyachts"
-                className={styles.socialLink}
-                aria-label="TikTok"
-              >
-                <FaTiktok className={styles.socialIcon} />
-              </a>
-              <a
-                href="https://www.youtube.com/@Kosyachts"
-                className={styles.socialLink}
-                aria-label="YouTube"
-              >
-                <FaYoutube className={styles.socialIcon} />
-              </a>
-            </div>
-          </div>
-
-          {/* Middle: Link sections bunched together */}
-          <div className={styles.middleSection}>
-            <div className={styles.linkSections}>
-              {/* Quick Links */}
-              <div className={styles.linkSection}>
-                <h3 className={styles.heading}>Quick Links</h3>
-                <div className={styles.linkList}>
-                  {footerData.quickLinks.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className={styles.link}
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* Locations */}
-              <div className={styles.linkSection}>
-                <h3 className={styles.heading}>Locations</h3>
-                <div className={styles.linkList}>
-                  {footerData.locations.map((location) => (
-                    <Link
-                      key={location.href}
-                      href={location.href}
-                      className={styles.link}
-                    >
-                      {location.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* Services */}
-              <div className={styles.linkSection}>
-                <h3 className={styles.heading}>Services</h3>
-                <div className={styles.linkList}>
-                  {footerData.services.map((service) => (
-                    <Link
-                      key={service.href}
-                      href={service.href}
-                      className={styles.link}
-                    >
-                      {service.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
+            <div className="flex items-center gap-2.5 mt-6">
+              {[
+                {
+                  href: "https://instagram.com/kosyachts",
+                  label: "Instagram",
+                  icon: Instagram,
+                },
+                {
+                  href: "https://www.tiktok.com/@kosyachts",
+                  label: "TikTok",
+                  icon: FaTiktok,
+                },
+                {
+                  href: "https://www.youtube.com/@Kosyachts",
+                  label: "YouTube",
+                  icon: FaYoutube,
+                },
+              ].map((social) => (
+                <a
+                  key={social.label}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-9 h-9 rounded-full border border-gray-200 hover:border-primary/30 hover:bg-primary/5 flex items-center justify-center transition-all"
+                  aria-label={social.label}
+                >
+                  <social.icon className="w-4 h-4 text-gray-500 hover:text-primary transition-colors" />
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Right: Newsletter section */}
-          <div className={styles.rightSection}>
-            <h3 className={styles.heading}>Stay Connected</h3>
-            <p className="text-sm text-gray-600">
-              Get exclusive updates on new charters, special offers, and luxury
-              yacht experiences.
+          {/* Link Columns */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 lg:gap-10 lg:justify-items-center">
+            <div>
+              <h3 className="text-sm font-semibold tracking-wide text-primary mb-4 uppercase">
+                Quick Links
+              </h3>
+              <div className="space-y-3">
+                {footerData.quickLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="block text-sm text-gray-500 hover:text-primary transition-colors"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold tracking-wide text-primary mb-4 uppercase">
+                Locations
+              </h3>
+              <div className="space-y-3">
+                {footerData.locations.map((loc) => (
+                  <Link
+                    key={loc.href}
+                    href={loc.href}
+                    className="block text-sm text-gray-500 hover:text-primary transition-colors"
+                  >
+                    {loc.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold tracking-wide text-primary mb-4 uppercase">
+                Services
+              </h3>
+              <div className="space-y-3">
+                {footerData.services.map((svc) => (
+                  <Link
+                    key={svc.href}
+                    href={svc.href}
+                    className="block text-sm text-gray-500 hover:text-primary transition-colors"
+                  >
+                    {svc.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Newsletter */}
+          <div className="max-w-full sm:max-w-[280px]">
+            <h3 className="text-sm font-semibold tracking-wide text-primary mb-4 uppercase">
+              Stay Connected
+            </h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Get exclusive updates on new charters, special offers, and luxury yacht experiences.
             </p>
-            <form className={styles.newsletterForm}>
+            <form className="flex flex-col gap-2">
               <Input
                 type="email"
                 placeholder="Your email address"
-                className={styles.newsletterInput}
+                className="bg-white border-gray-200 focus:border-gold focus:ring-gold/20 h-11 rounded-lg"
               />
-              <Button type="submit" className={styles.newsletterButton}>
+              <Button
+                type="submit"
+                className="h-11 font-medium flex items-center justify-center gap-2 rounded-lg"
+              >
                 <Send className="w-4 h-4" />
                 Subscribe
               </Button>
@@ -221,18 +187,18 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className={styles.bottomBar}>
-          <div className={styles.bottomContent}>
-            <p className={styles.copyright}>
-              © 2024 KOS Yachts. All rights reserved.
+        {/* Bottom */}
+        <div className="mt-14 pt-6 border-t border-gray-200">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-gray-400 text-sm">
+              &copy; {new Date().getFullYear()} KOS Yachts. All rights reserved.
             </p>
-            <div className={styles.legalLinks}>
+            <div className="flex flex-wrap items-center justify-center gap-5 md:gap-6">
               {footerData.legal.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={styles.legalLink}
+                  className="text-gray-400 hover:text-primary transition-colors text-sm"
                 >
                   {link.label}
                 </Link>

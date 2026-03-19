@@ -54,7 +54,7 @@ function SearchPageContent({
     <div className="flex min-h-screen">
       {/* Search Results - Full width on mobile, 2/3 width on desktop */}
       <div className="w-full md:w-2/3">
-        <div className="container mx-auto px-4 lg:px-6 py-4">
+        <div className="w-full px-4 lg:px-6 py-4">
           <SearchResults 
             initialResults={data.boats}
             totalCount={data.totalCount}

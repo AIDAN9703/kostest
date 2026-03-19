@@ -1,26 +1,20 @@
-import React from "react";
+import React, { Suspense } from "react";
+import { Loader2 } from "lucide-react";
 import {
   HeroSection,
-  TestimonialsSection,
-  BrandsCarousel,
   FeaturedFleet,
   PopularExperiences,
-  RequestToBook,
   ClientsShowcase,
   LocationsSection,
+  BrandsCarousel,
+  TestimonialsSection,
+  RequestToBook,
   NearbyBoats,
 } from "@/features/_marketing/landing/components";
-import {
-  getFeaturedBoats,
-  getTestimonials,
-} from "@/features/_marketing/landing/actions";
-import { Suspense } from "react";
-import { Loader2 } from "lucide-react";
+import { getFeaturedBoats, getTestimonials } from "@/features/_marketing/landing/actions";
 
-// This component wraps all the content that needs data
 async function HomeContent() {
   try {
-    // Fetch all data in parallel
     const [boatsResponse, reviewsResponse] = await Promise.all([
       getFeaturedBoats(),
       getTestimonials(),
@@ -29,38 +23,31 @@ async function HomeContent() {
     return (
       <>
         <HeroSection />
-        <div className="w-full">
-          {boatsResponse.success &&
-            boatsResponse.data &&
-            boatsResponse.data.length > 0 && (
-              <FeaturedFleet boats={boatsResponse.data} />
-            )}
-          <NearbyBoats />
+
+        <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-8">
+          {boatsResponse.success && boatsResponse.data && boatsResponse.data.length > 0 && (
+            <FeaturedFleet boats={boatsResponse.data} />
+          )}
+
           <ClientsShowcase />
           <LocationsSection />
           <BrandsCarousel />
-          <PopularExperiences />
-          {reviewsResponse.success &&
-            reviewsResponse.data &&
-            reviewsResponse.data.length > 0 && (
-              <TestimonialsSection reviews={reviewsResponse.data} />
-            )}
+
+          {reviewsResponse.success && reviewsResponse.data && reviewsResponse.data.length > 0 && (
+            <TestimonialsSection reviews={reviewsResponse.data} />
+          )}
+
           <RequestToBook />
         </div>
       </>
     );
   } catch (error) {
     console.error("Error loading home page content:", error);
-    // Return a minimal version of the page if data fetching fails
     return (
       <>
         <HeroSection />
-        <div className="space-y-20 w-full">
-          <div className="text-center py-12">
-            <p className="text-gray-600">
-              Unable to load content. Please try again later.
-            </p>
-          </div>
+        <div className="py-16 text-center">
+          <p className="text-gray-500">Unable to load content. Please try again later.</p>
         </div>
       </>
     );

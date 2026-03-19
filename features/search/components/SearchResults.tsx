@@ -123,15 +123,9 @@ export default function SearchResults({
     if (searchParams.has("minPrice") || searchParams.has("maxPrice")) count++;
     if (searchParams.has("minLength") || searchParams.has("maxLength")) count++;
     if (searchParams.has("minYear") || searchParams.has("maxYear")) count++;
-    if (
-      searchParams.has("passengers") &&
-      searchParams.get("passengers") !== "1"
-    )
-      count++;
-    if (searchParams.has("cabins") && searchParams.get("cabins") !== "0")
-      count++;
-    if (searchParams.has("bathrooms") && searchParams.get("bathrooms") !== "0")
-      count++;
+    if (searchParams.has("passengers") && searchParams.get("passengers") !== "1") count++;
+    if (searchParams.has("cabins") && searchParams.get("cabins") !== "0") count++;
+    if (searchParams.has("bathrooms") && searchParams.get("bathrooms") !== "0") count++;
     if (searchParams.has("category")) count++;
     if (searchParams.has("features")) count++;
 
@@ -167,9 +161,7 @@ export default function SearchResults({
 
           {/* Sort Dropdown */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500 whitespace-nowrap">
-              Sort by:
-            </span>
+            <span className="text-sm text-gray-500 whitespace-nowrap">Sort by:</span>
             <div className="relative group">
               <Button
                 variant="outline"
@@ -208,14 +200,11 @@ export default function SearchResults({
       </div>
 
       {/* Filter Modal */}
-      <FilterModal
-        isOpen={isFilterModalOpen}
-        onClose={() => setIsFilterModalOpen(false)}
-      />
+      <FilterModal isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} />
 
       {/* Results Grid */}
       {initialResults.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 3xl:grid-cols-3 gap-5">
           <AnimatePresence mode="wait">
             {isPending ? (
               <motion.div
@@ -230,7 +219,7 @@ export default function SearchResults({
             ) : (
               <motion.div
                 key="results"
-                className="col-span-full grid grid-cols-1 lg:grid-cols-2 gap-6 w-full"
+                className="col-span-full grid grid-cols-1 sm:grid-cols-2 3xl:grid-cols-3 gap-5 w-full"
                 variants={containerVariants}
                 initial="hidden"
                 animate="visible"
@@ -240,12 +229,11 @@ export default function SearchResults({
                   <motion.div key={boat.id} variants={itemVariants} layout>
                     <BoatCard
                       boat={boat}
-                      index={0} // Index is not needed for animation anymore
+                      index={0}
                       variant="search"
                       showDetails={true}
                       showPrice={true}
                       showLocation={true}
-                      aspectRatio={16 / 9}
                       highlightFeatured={true}
                       showRating={true}
                     />
@@ -271,9 +259,7 @@ export default function SearchResults({
                   handlePageChange(currentPage - 1);
                 }}
                 aria-disabled={!hasPreviousPage}
-                className={
-                  !hasPreviousPage ? "pointer-events-none opacity-50" : ""
-                }
+                className={!hasPreviousPage ? "pointer-events-none opacity-50" : ""}
               />
             </PaginationItem>
 
