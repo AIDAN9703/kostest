@@ -6,5 +6,4 @@ export { default as LocationsSection } from "./LocationsSection";
 export { default as BrandsCarousel } from "./BrandsCarousel";
 export { default as TestimonialsSection } from "./TestimonialsSection";
 export { default as RequestToBook } from "./RequestToBook";
-export { default as NearbyBoats } from "./NearbyBoats";
 export { default as ExperienceSection } from "./ExperienceSection";

@@ -9,7 +9,6 @@ import {
   BrandsCarousel,
   TestimonialsSection,
   RequestToBook,
-  NearbyBoats,
 } from "@/features/_marketing/landing/components";
 import { getFeaturedBoats, getTestimonials } from "@/features/_marketing/landing/actions";
 
