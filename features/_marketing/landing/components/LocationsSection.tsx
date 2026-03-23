@@ -65,7 +65,7 @@ export default function LocationsSection() {
   const nextSlide = useCallback(() => api?.scrollNext(), [api]);
 
   return (
-    <section className="py-8 sm:py-16 font-poppins">
+    <section className="py-8 sm:py-16">
       <div className="w-full">
         {/* Header */}
         <motion.div
@@ -76,7 +76,7 @@ export default function LocationsSection() {
           className="flex items-end justify-between mb-4"
         >
           <div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-primary leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary leading-tight">
               Explore Destinations
             </h2>
             <p className="text-foreground text-sm sm:text-base font-light max-w-md">
@@ -139,7 +139,7 @@ export default function LocationsSection() {
 
                       {/* Content */}
                       <div className="absolute bottom-0 left-0 w-full p-5">
-                        <h3 className="text-2xl font-semibold text-white">{location.name}</h3>
+                        <h3 className="text-2xl font-bold text-white">{location.name}</h3>
                         <div className="flex items-center gap-1.5 text-white/70 text-sm">
                           <MapPin className="w-3.5 h-3.5" />
                           <span>{location.boatCount} yachts available</span>

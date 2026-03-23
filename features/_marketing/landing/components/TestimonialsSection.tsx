@@ -113,7 +113,7 @@ export default function TestimonialsSection({ reviews }: TestimonialsSectionProp
 
       <div className="w-full relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">What Our Clients Say</h2>
+          <h2 className="text-4xl md:text-5xl font-extrabold mb-4">What Our Clients Say</h2>
           <p className="text-xl opacity-90">Real experiences from real customers</p>
         </div>
 

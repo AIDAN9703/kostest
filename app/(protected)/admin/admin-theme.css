@@ -9,7 +9,7 @@ html.dark:has([data-admin-theme]) body {
 
 .admin-theme {
     --radius: 0.625rem;
-    --font-sans: var(--font-open-sans);
+    --font-sans: var(--font-montserrat), ui-sans-serif, sans-serif;
     --color-background: oklch(1 0 0);
     --color-foreground: oklch(0.145 0 0);
     --color-card: oklch(1 0 0);

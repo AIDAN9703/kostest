@@ -67,17 +67,17 @@ const BoatCard = ({
       ? "px-3 py-3 sm:px-5 sm:py-5"
       : "p-3 sm:p-4";
   const titleSize = isCompact
-    ? "text-sm font-semibold"
+    ? "text-sm font-bold"
     : isFeatured
-      ? "text-base font-semibold sm:text-lg"
-      : "text-sm font-semibold sm:text-base";
+      ? "text-base font-bold sm:text-lg"
+      : "text-sm font-bold sm:text-base";
   const metaSize = isCompact ? "text-[10px]" : "text-[10px] sm:text-xs";
 
   return (
     <Link href={`/boats/${boat.id}`} className="block h-full w-full">
       <div
         className={cn(
-          "group relative bg-white flex flex-col h-full transition-all duration-300 ease-out font-poppins overflow-hidden border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 shrink-0",
+          "group relative bg-white flex flex-col h-full transition-all duration-300 ease-out overflow-hidden border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 shrink-0",
           radius,
           className
         )}

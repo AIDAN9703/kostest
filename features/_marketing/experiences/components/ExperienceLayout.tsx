@@ -58,7 +58,7 @@ export default function ExperienceLayout({
         
         <div className="relative z-10 h-full flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto w-full text-center">
-            <div className="font-poppins text-white">
+            <div className="text-white">
               <span className="inline-block text-white text-xs font-medium mb-2 tracking-wide uppercase animate-fade-in-up drop-shadow-md">
                 Experience
               </span>

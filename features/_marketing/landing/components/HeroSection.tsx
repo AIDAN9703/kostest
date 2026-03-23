@@ -43,10 +43,10 @@ export default function HeroSection() {
       {/* Content Container */}
       <div className="relative z-10 h-full flex flex-col items-center py-8 sm:py-12 md:py-16 space-y-4">
         {/* Content area */}
-        <div className="flex-1 flex flex-col items-center justify-center w-full font-poppins text-white text-center">
+        <div className="flex-1 flex flex-col items-center justify-center w-full text-white text-center">
           {/* Main Heading with fixed height container */}
           <div className="mb-4 sm:mb-6">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-bold leading-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-extrabold leading-tight">
               Find Your Perfect
               <br />
               {/* Fixed height container to prevent layout shifts */}

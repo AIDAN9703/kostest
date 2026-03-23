@@ -56,7 +56,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
         </button>
       </SheetTrigger>
 
-      <SheetContent side="left" className="w-full max-w-sm p-0 font-poppins">
+      <SheetContent side="left" className="w-full max-w-sm p-0">
         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
 
         <div className="flex flex-col h-full">

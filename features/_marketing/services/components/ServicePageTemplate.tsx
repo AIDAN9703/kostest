@@ -96,7 +96,7 @@ const ServicePageTemplate: React.FC<ServicePageProps> = ({
 
         <div className="relative z-10 h-full flex flex-col justify-center px-4 sm:px-6 lg:px-8">
           <div className="max-w-7xl mx-auto w-full">
-            <div className="max-w-3xl font-poppins text-white">
+            <div className="max-w-3xl text-white">
               <span className="inline-block text-white text-xs font-medium mb-2 tracking-wide uppercase animate-fade-in-up drop-shadow-md">
                 {subtitle}
               </span>

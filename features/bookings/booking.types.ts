@@ -286,6 +286,7 @@ export interface BookingListItem {
   // Ops fields (from booking_ops - Excel workflow tracking, all nullable)
   opsExpenseCents?: number | null;
   opsGmvCents?: number | null;
+  /** Stored copy of REV (booking total − expense); recomputed on each ops save. */
   opsRevenueCents?: number | null;
   opsPaidCents?: number | null;
   opsBalanceOwnerCents?: number | null;

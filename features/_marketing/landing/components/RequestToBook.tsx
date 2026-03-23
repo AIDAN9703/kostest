@@ -114,10 +114,10 @@ export default function RequestToBook() {
   );
 
   return (
-    <section className="py-10 sm:py-16 md:py-20 font-poppins">
+    <section className="py-10 sm:py-16 md:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-left sm:text-center mb-6 sm:mb-12">
-          <h2 className="text-primary text-3xl sm:text-4xl md:text-5xl font-medium leading-tight">
+          <h2 className="text-primary text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
             Ready for your next adventure?
           </h2>
           <p className="hidden lg:block text-gray-500 text-sm sm:text-base max-w-2xl mx-auto mt-2">
@@ -129,7 +129,7 @@ export default function RequestToBook() {
           <div className="lg:col-span-7">
             <Card className="rounded-2xl border shadow-sm">
               <CardHeader>
-                <CardTitle className="text-primary text-xl sm:text-2xl">
+                <CardTitle className="text-primary text-xl sm:text-2xl font-bold">
                   Request a Quote
                 </CardTitle>
                 <CardDescription>
@@ -372,7 +372,7 @@ export default function RequestToBook() {
           </div>
 
           <div className="lg:col-span-4 flex flex-col items-center justify-center text-center">
-            <h3 className="text-primary text-xl font-semibold mb-2">
+            <h3 className="text-primary text-xl font-bold mb-2">
               Book Instantly Online
             </h3>
             <p className="text-muted-foreground text-sm mb-6">

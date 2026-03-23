@@ -47,7 +47,7 @@ export default function PublicDraftBookingClient({
                   <p className="text-xs font-semibold uppercase tracking-wider text-white/90">
                     Your Charter Proposal
                   </p>
-                  <h1 className="mt-1 font-poppins text-2xl font-bold text-white drop-shadow-md sm:text-3xl md:text-4xl">
+                  <h1 className="mt-1 text-2xl font-bold text-white drop-shadow-md sm:text-3xl md:text-4xl">
                     {data.customerName}&rsquo;s Experience
                   </h1>
                   <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-white/90">

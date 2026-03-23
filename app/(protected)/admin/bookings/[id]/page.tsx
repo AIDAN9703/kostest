@@ -55,7 +55,11 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         <div className="space-y-6 lg:col-span-2">
           <AdminBookingDetailsCard booking={booking} />
           <AdminBookingPaymentCard booking={booking} payments={bookingPayments} />
-          <AdminBookingOpsCard bookingId={id} ops={ops} />
+          <AdminBookingOpsCard
+            bookingId={id}
+            totalAmountCents={booking.totalAmountCents ?? null}
+            ops={ops}
+          />
         </div>
         <div className="lg:col-span-1">
           <BookingActivityTimeline events={activityEvents} className="lg:sticky lg:top-20" />

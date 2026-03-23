@@ -22,7 +22,7 @@ const Navigation = () => {
   const showNavSearch = pathname !== "/";
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200 font-poppins">
+    <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Navigation Bar */}
         <nav

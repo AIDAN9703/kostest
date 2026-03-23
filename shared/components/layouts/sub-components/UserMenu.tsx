@@ -45,7 +45,7 @@ export default function UserMenu({ user, navigationData }: UserMenuProps) {
           align="end"
           side="bottom"
           sideOffset={8}
-          className="w-[280px] p-4 font-poppins bg-white rounded-xl shadow-xl"
+          className="w-[280px] p-4 bg-white rounded-xl shadow-xl"
         >
           {/* Shared menu item styles - parent handles spacing */}
           <div className="space-y-1">

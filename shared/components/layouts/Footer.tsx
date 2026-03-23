@@ -40,7 +40,7 @@ const footerData = {
 
 export default function Footer() {
   return (
-    <footer className="font-poppins">
+    <footer>
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-14 lg:py-16">
         <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-10 lg:gap-6">
           {/* Brand */}

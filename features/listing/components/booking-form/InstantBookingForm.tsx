@@ -89,10 +89,7 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
   };
 
   return (
-    <div
-      className="bg-white rounded-3xl shadow-lg p-7 w-full max-w-[560px]"
-      style={{ fontFamily: "Poppins, var(--font-sans)" }}
-    >
+    <div className="bg-white rounded-3xl shadow-lg p-7 w-full max-w-[560px]">
       <FormHeader
         price={formState.selectedPricingTier?.price}
         hours={formState.selectedPricingTier?.hours}

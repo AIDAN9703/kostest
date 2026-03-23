@@ -89,10 +89,7 @@ export default function RequestBookingForm({ boat }: RequestBookingFormProps) {
   };
 
   return (
-    <div
-      className="bg-white p-7 w-full max-w-[560px]"
-      style={{ fontFamily: "Poppins, var(--font-sans)" }}
-    >
+    <div className="bg-white p-7 w-full max-w-[560px]">
       <FormHeader
         price={formState.selectedPricingTier?.price}
         hours={formState.selectedPricingTier?.hours}

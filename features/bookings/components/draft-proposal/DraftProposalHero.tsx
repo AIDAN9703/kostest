@@ -43,7 +43,7 @@ export function DraftProposalHero({ data }: DraftProposalHeroProps) {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary/90">
               Your Charter Proposal
             </p>
-            <h1 className="mt-1 font-poppins text-2xl font-semibold text-primary drop-shadow-sm sm:text-3xl md:text-4xl">
+            <h1 className="mt-1 text-2xl font-semibold text-primary drop-shadow-sm sm:text-3xl md:text-4xl">
               {data.customerName}&rsquo;s Experience
             </h1>
             <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-primary/90">

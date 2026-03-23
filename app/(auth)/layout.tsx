@@ -13,7 +13,7 @@ const Layout = async ({ children }: { children: ReactNode }) => {
   }
   
   return (
-    <main className="min-h-screen relative font-[family-name:var(--font-poppins)]">
+    <main className="min-h-screen relative">
       {/* Background image - fixed position, covers entire viewport */}
       <div className="fixed inset-0 -z-10">
         <Image

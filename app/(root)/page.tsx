@@ -3,7 +3,6 @@ import { Loader2 } from "lucide-react";
 import {
   HeroSection,
   FeaturedFleet,
-  PopularExperiences,
   ClientsShowcase,
   LocationsSection,
   BrandsCarousel,

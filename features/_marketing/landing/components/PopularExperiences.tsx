@@ -62,7 +62,7 @@ const fadeInUpAnimation = {
 
 export default function PopularExperiences() {
   return (
-    <section className="relative py-6 sm:py-12 font-poppins">
+    <section className="relative py-6 sm:py-12">
       <div className="w-full">
         {/* Section Header */}
         <motion.div
@@ -73,7 +73,7 @@ export default function PopularExperiences() {
           className="mb-5"
         >
           <div className="max-w-xl text-right ml-auto">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-medium text-primary leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary leading-tight">
               Charter for every occasion
             </h2>
             <p className="text-slate-600 mt-2 text-sm sm:text-lg font-light">
@@ -107,7 +107,7 @@ export default function PopularExperiences() {
                   />
                   {/* Content Overlay */}
                   <div className="absolute inset-0 p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col justify-end bg-linear-to-t from-black/60 via-black/20 to-transparent">
-                    <h3 className="text-white text-base sm:text-lg md:text-xl lg:text-2xl font-poppins font-medium truncate">
+                    <h3 className="text-white text-base sm:text-lg md:text-xl lg:text-2xl font-bold truncate">
                       {experience.title}
                     </h3>
                     <p className="text-white/90 text-xs sm:text-sm md:text-base font-light line-clamp-2">

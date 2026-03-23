@@ -163,7 +163,7 @@ export default function BookingDetailsClient({
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)]">
       <div className="max-w-7xl 2xl:max-w-8xl mx-auto w-full flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6 sm:py-8 lg:py-10 xl:py-12 2xl:py-16">
-        <h1 className="text-sm font-bold font-poppins text-gray-900 mb-4 sm:mb-6 xl:mb-8">
+        <h1 className="text-sm font-bold text-gray-900 mb-4 sm:mb-6 xl:mb-8">
           You're almost done!
         </h1>
         <div className="grid grid-cols-1 xl:grid-cols-3 2xl:grid-cols-4 gap-6 lg:gap-8 xl:gap-12 2xl:gap-16 items-start">

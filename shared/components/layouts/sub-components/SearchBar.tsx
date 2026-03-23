@@ -119,7 +119,7 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
               isCompact ? "Search location..." : "Where can we take you?"
             }
             className={cn(
-              "w-full text-black font-poppins font-thin bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-0 ring-0 ring-offset-0 shadow-none px-2",
+              "w-full text-black font-thin bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-0 ring-0 ring-offset-0 shadow-none px-2",
               isCompact ? "h-10 text-sm" : "h-12 sm:h-14 text-base md:text-lg",
             )}
             containerClassName="w-full"

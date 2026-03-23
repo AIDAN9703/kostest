@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ReactNode } from "react";
 import { Toaster } from "@/shared/components/ui/toaster";
-import localFont from "next/font/local";
+import { Montserrat } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import GoogleMapsScript from "@/shared/lib/providers/GoogleMapsScript";
 import { ImageKitProvider } from "@imagekit/next";
@@ -10,75 +10,10 @@ import CookiesConsent from "@/shared/components/CookiesConsent";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import Script from "next/script";
 
-const openSans = localFont({
-  src: [
-    { path: "/fonts/OpenSans-Regular.ttf", style: "normal" },
-    { path: "/fonts/OpenSans-Italic.ttf", style: "italic" },
-    { path: "/fonts/OpenSans-Bold.ttf", weight: "700", style: "normal" },
-    { path: "/fonts/OpenSans-BoldItalic.ttf", weight: "700", style: "italic" },
-    { path: "/fonts/OpenSans-Light.ttf", weight: "300", style: "normal" },
-    { path: "/fonts/OpenSans-Semibold.ttf", weight: "600", style: "normal" },
-  ],
-  variable: "--font-open-sans",
-});
-
-const poppins = localFont({
-  src: [
-    {
-      path: "/fonts/Poppins/Poppins-Regular.ttf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "/fonts/Poppins/Poppins-Italic.ttf",
-      weight: "400",
-      style: "italic",
-    },
-    { path: "/fonts/Poppins/Poppins-Bold.ttf", weight: "700", style: "normal" },
-    {
-      path: "/fonts/Poppins/Poppins-BoldItalic.ttf",
-      weight: "700",
-      style: "italic",
-    },
-    {
-      path: "/fonts/Poppins/Poppins-Light.ttf",
-      weight: "300",
-      style: "normal",
-    },
-    {
-      path: "/fonts/Poppins/Poppins-LightItalic.ttf",
-      weight: "300",
-      style: "italic",
-    },
-    {
-      path: "/fonts/Poppins/Poppins-Medium.ttf",
-      weight: "500",
-      style: "normal",
-    },
-    {
-      path: "/fonts/Poppins/Poppins-MediumItalic.ttf",
-      weight: "500",
-      style: "italic",
-    },
-    {
-      path: "/fonts/Poppins/Poppins-SemiBold.ttf",
-      weight: "600",
-      style: "normal",
-    },
-    {
-      path: "/fonts/Poppins/Poppins-SemiBoldItalic.ttf",
-      weight: "600",
-      style: "italic",
-    },
-  ],
-  variable: "--font-poppins",
-});
-
-const bebasNeue = localFont({
-  src: [
-    { path: "/fonts/BebasNeue-Regular.ttf", weight: "400", style: "normal" },
-  ],
-  variable: "--bebas-neue",
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  variable: "--font-montserrat",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -194,9 +129,7 @@ const RootLayout = async ({ children }: { children: ReactNode }) => {
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
       </head>
-      <body
-        className={`${openSans.className} ${bebasNeue.variable} ${openSans.variable} ${poppins.variable} antialiased`}
-      >
+      <body className={`${montserrat.className} ${montserrat.variable} antialiased`}>
         <GoogleMapsScript />
         <ImageKitProvider
           urlEndpoint={process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || ""}

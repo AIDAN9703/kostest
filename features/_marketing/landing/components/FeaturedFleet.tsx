@@ -24,7 +24,7 @@ export default function FeaturedFleet({ boats }: FeaturedFleetProps) {
   const scrollNext = useCallback(() => api?.scrollNext(), [api]);
 
   return (
-    <section className="py-8 sm:py-16 font-poppins">
+    <section className="py-8 sm:py-16">
       <div className="w-full">
         {/* Header */}
         <motion.div
@@ -35,7 +35,7 @@ export default function FeaturedFleet({ boats }: FeaturedFleetProps) {
           className="flex items-end justify-between mb-2"
         >
           <div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-primary leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary leading-tight">
               The Featured Fleet
             </h2>
             <p className="text-foreground text-sm sm:text-base font-light max-w-md">

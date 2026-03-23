@@ -29,7 +29,7 @@ export default function BrandsCarousel() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section className="py-8 sm:py-16 bg-white font-poppins">
+    <section className="py-8 sm:py-16 bg-white">
       <div className="w-full">
         {/* Section Header */}
         <motion.div
@@ -39,7 +39,7 @@ export default function BrandsCarousel() {
           transition={{ duration: 0.5 }}
           className="text-center mb-4"
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-semibold text-primary">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary">
             Brands Who Trust Us
           </h2>
           <p className=" text-foreground mt-2 text-sm sm:text-base font-light max-w-lg mx-auto">

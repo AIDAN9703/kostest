@@ -528,9 +528,9 @@ export function AdminBookingsTable({
                     >
                       <OpsRowContent
                         bookingId={booking.id}
+                        totalAmountCents={booking.totalAmountCents}
                         opsExpenseCents={booking.opsExpenseCents}
                         opsGmvCents={booking.opsGmvCents}
-                        opsRevenueCents={booking.opsRevenueCents}
                         opsPaidCents={booking.opsPaidCents}
                         opsBalanceOwnerCents={booking.opsBalanceOwnerCents}
                         opsBalanceClientCents={booking.opsBalanceClientCents}
@@ -542,7 +542,6 @@ export function AdminBookingsTable({
                         opsCaptainPaid={booking.opsCaptainPaid}
                         opsAllPaid={booking.opsAllPaid}
                         opsSheetsSent={booking.opsSheetsSent}
-                        opsAgentCode={booking.opsAgentCode}
                         opsCommissionAgentCents={booking.opsCommissionAgentCents}
                         opsCommissionKosCents={booking.opsCommissionKosCents}
                         opsCommissionCents={booking.opsCommissionCents}

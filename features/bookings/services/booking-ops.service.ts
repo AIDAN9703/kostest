@@ -4,8 +4,9 @@
  */
 
 import { db } from "@/database/db";
-import { bookingOps } from "@/database/schema";
+import { bookingOps, bookingPricing } from "@/database/schema";
 import { eq } from "drizzle-orm";
+import { computeOpsRevenueCents } from "@/shared/lib/utils/ops-revenue";
 
 export interface BookingOpsData {
   expenseCents: number | null;
@@ -32,7 +33,6 @@ export interface BookingOpsData {
 export interface BookingOpsInput {
   expenseCents?: number | null;
   gmvCents?: number | null;
-  revenueCents?: number | null;
   paidCents?: number | null;
   balanceOwnerCents?: number | null;
   balanceClientCents?: number | null;
@@ -86,12 +86,42 @@ export const bookingOpsService = {
 
   async upsert(bookingId: string, input: BookingOpsInput): Promise<BookingOpsData> {
     const now = new Date();
+    const existing = await this.getByBookingId(bookingId);
+
+    const [pricingRow] = await db
+      .select({ total: bookingPricing.totalAmountCents })
+      .from(bookingPricing)
+      .where(eq(bookingPricing.bookingId, bookingId))
+      .limit(1);
+    const totalAmountCents =
+      pricingRow?.total != null ? Number(pricingRow.total) : null;
+
+    const expenseForCalc =
+      input.expenseCents !== undefined
+        ? input.expenseCents
+        : existing?.expenseCents ?? null;
+    const computedRevenueCents = computeOpsRevenueCents(
+      totalAmountCents,
+      expenseForCalc
+    );
+
+    const mergeForInsert = <K extends keyof BookingOpsInput>(
+      key: K
+    ): BookingOpsData[K] => {
+      if (input[key] !== undefined) {
+        return input[key] as BookingOpsData[K];
+      }
+      if (existing) {
+        return existing[key as keyof BookingOpsData] as BookingOpsData[K];
+      }
+      return null as BookingOpsData[K];
+    };
+
     const setValues: Record<string, unknown> = { updatedAt: now };
 
     const fields: (keyof BookingOpsInput)[] = [
       "expenseCents",
       "gmvCents",
-      "revenueCents",
       "paidCents",
       "balanceOwnerCents",
       "balanceClientCents",
@@ -112,28 +142,29 @@ export const bookingOpsService = {
     for (const f of fields) {
       if (input[f] !== undefined) setValues[f] = input[f];
     }
+    setValues.revenueCents = computedRevenueCents;
 
     const insertValues = {
       bookingId,
-      expenseCents: input.expenseCents ?? null,
-      gmvCents: input.gmvCents ?? null,
-      revenueCents: input.revenueCents ?? null,
-      paidCents: input.paidCents ?? null,
-      balanceOwnerCents: input.balanceOwnerCents ?? null,
-      balanceClientCents: input.balanceClientCents ?? null,
-      crewName: input.crewName ?? null,
-      opsNote: input.opsNote ?? null,
-      contractSigned: input.contractSigned ?? null,
-      connected: input.connected ?? null,
-      clientPaid: input.clientPaid ?? null,
-      captainPaid: input.captainPaid ?? null,
-      allPaid: input.allPaid ?? null,
-      sheetsSent: input.sheetsSent ?? null,
-      agentCode: input.agentCode ?? null,
-      commissionAgentCents: input.commissionAgentCents ?? null,
-      commissionKosCents: input.commissionKosCents ?? null,
-      commissionCents: input.commissionCents ?? null,
-      sourceOverride: input.sourceOverride ?? null,
+      expenseCents: mergeForInsert("expenseCents"),
+      gmvCents: mergeForInsert("gmvCents"),
+      revenueCents: computedRevenueCents,
+      paidCents: mergeForInsert("paidCents"),
+      balanceOwnerCents: mergeForInsert("balanceOwnerCents"),
+      balanceClientCents: mergeForInsert("balanceClientCents"),
+      crewName: mergeForInsert("crewName"),
+      opsNote: mergeForInsert("opsNote"),
+      contractSigned: mergeForInsert("contractSigned"),
+      connected: mergeForInsert("connected"),
+      clientPaid: mergeForInsert("clientPaid"),
+      captainPaid: mergeForInsert("captainPaid"),
+      allPaid: mergeForInsert("allPaid"),
+      sheetsSent: mergeForInsert("sheetsSent"),
+      agentCode: mergeForInsert("agentCode"),
+      commissionAgentCents: mergeForInsert("commissionAgentCents"),
+      commissionKosCents: mergeForInsert("commissionKosCents"),
+      commissionCents: mergeForInsert("commissionCents"),
+      sourceOverride: mergeForInsert("sourceOverride"),
     } satisfies typeof bookingOps.$inferInsert;
 
     const [row] = await db
