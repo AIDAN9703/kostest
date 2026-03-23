@@ -27,7 +27,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
   const { isActive } = useActiveRoute();
 
   return (
-    <div className="hidden lg:flex items-center gap-4">
+    <div className="hidden lg:flex items-center gap-5">
       {isAdmin && (
         <Link
           href="/admin"
@@ -44,7 +44,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
             <NavigationMenuItem key={item.href} className="relative">
               {item.type === "dropdown" && (item.items || item.sections) ? (
                 <>
-                  <NavigationMenuTrigger className="text-[15px] font-semibold text-primary data-[state=open]:bg-transparent data-[active]:bg-transparent hover:bg-transparent focus:bg-transparent h-auto py-0 px-0 bg-transparent">
+                  <NavigationMenuTrigger className="text-base font-semibold text-primary data-[state=open]:bg-transparent data-[active]:bg-transparent hover:bg-transparent focus:bg-transparent h-auto py-0 px-0 bg-transparent">
                     {item.label}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent className="right-0 left-auto">
@@ -54,7 +54,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
                     >
                       {item.sections?.map((section, sectionIndex) => (
                         <div key={`section-${sectionIndex}`} className="flex flex-col min-w-0">
-                          <h3 className="text-[13px] font-semibold text-primary mb-2 leading-5">
+                          <h3 className="text-sm font-semibold text-primary mb-2 leading-snug sm:text-base">
                             {section.title}
                           </h3>
                           <div className="flex flex-col space-y-0.5">
@@ -68,7 +68,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
                                     ? "noopener noreferrer"
                                     : undefined
                                 }
-                                className="block py-1.5 px-2 text-[13px] leading-5 font-normal text-muted-foreground hover:text-primary hover:bg-muted/75 rounded-lg transition-colors whitespace-nowrap"
+                                className="block py-2 px-2 text-sm leading-snug font-normal text-muted-foreground hover:text-primary hover:bg-muted/75 rounded-lg transition-colors whitespace-nowrap sm:text-[15px] sm:leading-5"
                               >
                                 {subItem.label}
                               </Link>
@@ -80,7 +80,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
                         <Link
                           key={subItem.href}
                           href={subItem.href}
-                          className="block py-1.5 px-2 -mx-2 text-[13px] leading-5 font-normal text-muted-foreground hover:text-primary hover:bg-muted/30 rounded-lg transition-colors whitespace-nowrap"
+                          className="block py-2 px-2 -mx-2 text-sm leading-snug font-normal text-muted-foreground hover:text-primary hover:bg-muted/30 rounded-lg transition-colors whitespace-nowrap sm:text-[15px] sm:leading-5"
                         >
                           {subItem.label}
                         </Link>
@@ -92,7 +92,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
                 <NavigationMenuLink
                   href={item.href}
                   className={cn(
-                    "text-[15px] font-semibold text-primary transition-colors hover:text-primary py-2",
+                    "text-base font-semibold text-primary transition-colors hover:text-primary py-2",
                     isActive(item.href, true) && "underline underline-offset-4"
                   )}
                 >

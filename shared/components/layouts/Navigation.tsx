@@ -28,8 +28,8 @@ const Navigation = () => {
         <nav
           className={
             showNavSearch
-              ? "flex items-center justify-between h-16 gap-4"
-              : "flex items-center justify-between h-20 gap-4"
+              ? "flex items-center justify-between min-h-[4.25rem] gap-4 py-1"
+              : "flex items-center justify-between min-h-[5.25rem] gap-4 py-1"
           }
           role="navigation"
           aria-label="Main navigation"
@@ -46,8 +46,8 @@ const Navigation = () => {
               <Image
                 src="/icons/transparent-logo.png"
                 alt="Logo"
-                width={40}
-                height={40}
+                width={48}
+                height={48}
                 className="rounded-full filter-blue"
                 priority
               />
@@ -57,14 +57,14 @@ const Navigation = () => {
           {/* Center section: Search Bar (all pages except home) */}
           {showNavSearch && (
             <div className="hidden md:flex flex-1 max-w-2xl mx-4 lg:mx-8">
-              <Suspense fallback={<div className="w-full h-10" />}>
+              <Suspense fallback={<div className="w-full min-h-11" />}>
                 <SearchBar variant="compact" />
               </Suspense>
             </div>
           )}
 
           {/* Right section: Navigation + User menu */}
-          <div className="hidden lg:flex items-center gap-6">
+          <div className="hidden lg:flex items-center gap-7">
             <DesktopNavigation navigationData={navigationData} isAdmin={isAdmin} />
             <UserMenu user={user} navigationData={navigationData} />
           </div>
@@ -78,7 +78,7 @@ const Navigation = () => {
         {/* Mobile Search Bar (all pages except home) */}
         {showNavSearch && (
           <div className="md:hidden pb-4">
-            <Suspense fallback={<div className="w-full h-10" />}>
+            <Suspense fallback={<div className="w-full min-h-11" />}>
               <SearchBar variant="compact" />
             </Suspense>
           </div>

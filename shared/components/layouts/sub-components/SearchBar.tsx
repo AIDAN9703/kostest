@@ -107,7 +107,7 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
       >
         {/* MapPin Icon */}
         <div className="flex-shrink-0 pl-4">
-          <MapPin size={isCompact ? 16 : 18} className="text-slate-400" />
+          <MapPin size={isCompact ? 20 : 22} className="text-slate-400" />
         </div>
 
         {/* Input Container */}
@@ -119,8 +119,10 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
               isCompact ? "Search location..." : "Where can we take you?"
             }
             className={cn(
-              "w-full text-black font-thin bg-transparent border-0 outline-none focus:outline-none focus:ring-0 focus:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-0 ring-0 ring-offset-0 shadow-none px-2",
-              isCompact ? "h-10 text-sm" : "h-12 sm:h-14 text-base md:text-lg",
+              "w-full bg-transparent font-normal text-black outline-none ring-0 ring-offset-0 focus:border-0 focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-0 shadow-none px-2",
+              isCompact
+                ? "min-h-11 h-11 text-base leading-normal"
+                : "h-12 text-base sm:h-14 md:text-lg",
             )}
             containerClassName="w-full"
             defaultValue={currentLocation}
@@ -133,13 +135,13 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
         {/* Search Button */}
         <button
           type="submit"
-          className={cn(
-            "flex-shrink-0 rounded-full bg-primary hover:bg-primary/90 text-white flex items-center justify-center transition-colors m-2",
-            isCompact ? "h-8 w-8" : "h-12 sm:h-14 w-12 sm:w-14",
+            className={cn(
+            "m-2 flex flex-shrink-0 items-center justify-center rounded-full bg-primary text-white transition-colors hover:bg-primary/90",
+            isCompact ? "h-10 min-h-10 w-10" : "h-12 w-12 sm:h-14 sm:w-14",
           )}
           aria-label="Search"
         >
-          <Search size={isCompact ? 16 : 20} />
+          <Search size={isCompact ? 20 : 22} />
         </button>
       </form>
     </div>

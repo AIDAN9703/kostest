@@ -29,10 +29,10 @@ export default function UserMenu({ user, navigationData }: UserMenuProps) {
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="h-10 w-10 rounded-full p-0"
+            className="h-11 w-11 rounded-full p-0"
             aria-label="User menu"
           >
-            <Avatar className="h-10 w-10">
+            <Avatar className="h-11 w-11">
               <AvatarImage
                 src={user?.profileImage || user?.image || ""}
                 alt="User profile image"
@@ -56,7 +56,7 @@ export default function UserMenu({ user, navigationData }: UserMenuProps) {
                 return (
                   <DropdownMenuItem
                     key={item.href}
-                    className="cursor-pointer py-2 text-[15px] font-semibold text-primary hover:bg-gray-50 rounded-lg focus:bg-gray-50"
+                    className="cursor-pointer py-2.5 text-base font-semibold text-primary hover:bg-gray-50 rounded-lg focus:bg-gray-50"
                     asChild
                   >
                     <Link href={item.href} className="flex items-center gap-3">
@@ -73,7 +73,7 @@ export default function UserMenu({ user, navigationData }: UserMenuProps) {
             {/* Section 2: Account & Help */}
             <div>
               <DropdownMenuItem
-                className="cursor-pointer py-2 text-[15px] font-normal text-muted-foreground hover:bg-gray-50 rounded-lg focus:bg-gray-50"
+                className="cursor-pointer py-2.5 text-base font-normal text-muted-foreground hover:bg-gray-50 rounded-lg focus:bg-gray-50"
                 asChild
               >
                 <Link
@@ -85,7 +85,7 @@ export default function UserMenu({ user, navigationData }: UserMenuProps) {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
-                className="cursor-pointer py-2 text-[15px] font-normal text-muted-foreground hover:bg-gray-50 rounded-lg focus:bg-gray-50"
+                className="cursor-pointer py-2.5 text-base font-normal text-muted-foreground hover:bg-gray-50 rounded-lg focus:bg-gray-50"
                 asChild
               >
                 <Link href="/faq" className="flex items-center gap-3">
@@ -104,10 +104,10 @@ export default function UserMenu({ user, navigationData }: UserMenuProps) {
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-base font-semibold text-primary transition-colors">
+                  <h3 className="text-lg font-semibold text-primary transition-colors">
                     List your boat
                   </h3>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Start earning from your boat today!
                   </p>
                 </div>
@@ -125,7 +125,7 @@ export default function UserMenu({ user, navigationData }: UserMenuProps) {
 
             {/* Section 4: Log out */}
             <DropdownMenuItem
-              className="cursor-pointer py-2 text-[15px] font-semibold text-primary hover:bg-gray-50 rounded-lg focus:bg-gray-50"
+              className="cursor-pointer py-2.5 text-base font-semibold text-primary hover:bg-gray-50 rounded-lg focus:bg-gray-50"
               onClick={() => signOut()}
             >
               <div className="flex items-center gap-3">
@@ -142,7 +142,7 @@ export default function UserMenu({ user, navigationData }: UserMenuProps) {
   return (
     <Button
       variant="outline"
-      className="h-10 px-4 text-[15px] font-semibold text-gray-700 hover:text-primary hover:border-primary transition-colors"
+      className="h-11 min-h-11 px-5 text-base font-semibold text-gray-700 hover:text-primary hover:border-primary transition-colors"
       asChild
     >
       <Link href="/sign-in">Sign In</Link>

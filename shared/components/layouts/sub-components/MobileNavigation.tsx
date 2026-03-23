@@ -52,7 +52,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
           className="text-primary hover:text-primary/80 transition-colors lg:hidden"
           aria-label="Open menu"
         >
-          <Menu className="w-10 h-10" />
+          <Menu className="h-11 w-11 shrink-0" strokeWidth={2} />
         </button>
       </SheetTrigger>
 
@@ -73,17 +73,17 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               <div className="flex-1 min-w-0">
                 {user ? (
                   <>
-                    <p className="text-[15px] font-semibold text-primary truncate">
+                    <p className="text-base font-semibold text-primary truncate">
                       {user.name || "User"}
                     </p>
                     {user.email && (
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="text-base text-muted-foreground truncate">
                         {user.email}
                       </p>
                     )}
                   </>
                 ) : (
-                  <p className="text-[15px] font-semibold text-primary">
+                  <p className="text-base font-semibold text-primary">
                     Welcome to KOS
                   </p>
                 )}
@@ -101,7 +101,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                       <button
                         onClick={() => toggleExpanded(item.href)}
                         className={cn(
-                          "flex items-center justify-between w-full px-4 py-3 text-[15px] font-semibold text-primary rounded-lg transition-colors",
+                          "flex items-center justify-between w-full px-4 py-3 text-base font-semibold text-primary rounded-lg transition-colors",
                           expandedItems.includes(item.href)
                             ? "bg-primary/5"
                             : "hover:bg-gray-50",
@@ -124,7 +124,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                               key={`section-${sectionIndex}`}
                               className="mb-4"
                             >
-                              <h4 className="text-sm font-semibold text-primary uppercase tracking-wider mb-2">
+                              <h4 className="text-base font-semibold text-primary uppercase tracking-wider mb-2">
                                 {section.title}
                               </h4>
                               <div className="space-y-1">
@@ -143,7 +143,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                                         : undefined
                                     }
                                     className={cn(
-                                      "block px-3 py-2 text-[15px] font-normal rounded-lg transition-colors",
+                                      "block px-3 py-2.5 text-base font-normal rounded-lg transition-colors",
                                       isActive(subItem.href, false)
                                         ? "text-primary font-semibold bg-primary/5"
                                         : "text-muted-foreground hover:text-primary hover:bg-gray-50",
@@ -162,7 +162,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                               key={subItem.href}
                               href={subItem.href}
                               className={cn(
-                                "block px-3 py-2 text-[15px] font-normal rounded-lg transition-colors",
+                                "block px-3 py-2.5 text-base font-normal rounded-lg transition-colors",
                                 isActive(subItem.href, false)
                                   ? "text-primary font-semibold bg-primary/5"
                                   : "text-muted-foreground hover:text-primary hover:bg-gray-50",
@@ -178,7 +178,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                     <Link
                       href={item.href}
                       className={cn(
-                        "block px-4 py-3 text-[15px] font-semibold rounded-lg transition-colors",
+                        "block px-4 py-3 text-base font-semibold rounded-lg transition-colors",
                         isActive(item.href, true)
                           ? "text-primary bg-primary/5"
                           : "text-primary hover:bg-gray-50",
@@ -198,7 +198,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               <Button
                 onClick={() => signOut()}
                 variant="outline"
-                className="w-full h-11 text-[15px] font-semibold text-primary hover:text-primary"
+                className="w-full h-12 text-base font-semibold text-primary hover:text-primary"
               >
                 Sign out
               </Button>
@@ -206,7 +206,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
               <SheetClose asChild>
                 <Button
                   asChild
-                  className="w-full h-11 text-[15px] font-semibold bg-primary hover:bg-primary/90 text-white"
+                  className="w-full h-12 text-base font-semibold bg-primary hover:bg-primary/90 text-white"
                 >
                   <Link href="/sign-in">Sign In</Link>
                 </Button>
