@@ -1,10 +1,7 @@
 import { getBoatById } from "@/features/boats/actions/boat-actions";
 import { notFound } from "next/navigation";
 import BoatDetails from "@/features/listing/components/BoatDetails";
-import {
-  RequestBookingForm,
-  InstantBookingForm,
-} from "@/features/listing/components/booking-form";
+import { RequestBookingForm, InstantBookingForm } from "@/features/listing/components/booking-form";
 import { MobileBookingBar } from "@/features/listing/components/booking-form/MobileBookingBar";
 import { ImageGallery } from "@/features/listing/components/sub-components/ImageGallery";
 import { Metadata } from "next";
@@ -71,9 +68,7 @@ export async function generateMetadata({
             const prices = boat.pricingTiers.map((tier) => tier.price);
             const minPrice = Math.min(...prices);
             const maxPrice = Math.max(...prices);
-            return minPrice === maxPrice
-              ? `$${minPrice}/hour`
-              : `$${minPrice}-$${maxPrice}/hour`;
+            return minPrice === maxPrice ? `$${minPrice}/hour` : `$${minPrice}-$${maxPrice}/hour`;
           })()
         : "Contact for pricing";
 
@@ -167,12 +162,8 @@ export default async function BoatPage({ params }: BoatPageProps) {
               offers: boat.pricingTiers?.length
                 ? {
                     "@type": "AggregateOffer",
-                    lowPrice: Math.min(
-                      ...boat.pricingTiers.map((tier) => tier.price)
-                    ),
-                    highPrice: Math.max(
-                      ...boat.pricingTiers.map((tier) => tier.price)
-                    ),
+                    lowPrice: Math.min(...boat.pricingTiers.map((tier) => tier.price)),
+                    highPrice: Math.max(...boat.pricingTiers.map((tier) => tier.price)),
                     priceCurrency: "USD",
                     availability: "https://schema.org/InStock",
                     url: `https://www.kosyachts.com/boats/${boat.id}`,
@@ -199,7 +190,7 @@ export default async function BoatPage({ params }: BoatPageProps) {
           }}
         />
 
-        <main className="min-h-screen bg-white sm:pt-6 pb-16 lg:pb-0">
+        <main className="min-h-screen bg-white pb-28 pt-0 sm:pt-6 md:pb-16 lg:pb-0">
           {/* Full-width image gallery on mobile, constrained on desktop */}
           <div className="sm:pl-4">
             <ImageGallery

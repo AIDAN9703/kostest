@@ -20,6 +20,7 @@ import { PassengerSelection } from "./shared/PassengerSelection";
 import { CaptainSelection } from "./shared/CaptainSelection";
 import { PriceSummary } from "./shared/PriceSummary";
 import { FormHeader } from "./shared/FormHeader";
+import type { BookingPickerLayout } from "./shared/booking-picker-layout";
 
 // Import hooks
 import { useBookingFormState } from "./hooks/useBookingFormState";
@@ -27,9 +28,10 @@ import { useActivePricingTiers } from "./hooks/usePriceCalculation";
 
 interface InstantBookingFormProps {
   boat: Boat;
+  pickerLayout?: BookingPickerLayout;
 }
 
-export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
+export default function InstantBookingForm({ boat, pickerLayout = "popover" }: InstantBookingFormProps) {
   const router = useRouter();
   const activePricingTiers = useActivePricingTiers(boat);
 
@@ -103,12 +105,14 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
             currentDate={formState.uiDate}
             onDateSelected={(date) => formState.setDate?.(date)}
             boat={boat}
+            layout={pickerLayout}
           />
 
           <PricingDisplay
             activeTiers={formState.activePricingTiers}
             control={form.control}
             selectedPricingTier={formState.selectedPricingTier}
+            layout={pickerLayout}
           />
 
           <TimeSelection
@@ -119,6 +123,7 @@ export default function InstantBookingForm({ boat }: InstantBookingFormProps) {
             duration={formState.selectedPricingTier?.hours}
             onTimeSelected={(time) => formState.setTime?.(time)}
             boat={boat}
+            layout={pickerLayout}
           />
 
           <PassengerSelection

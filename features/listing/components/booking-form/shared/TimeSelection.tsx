@@ -1,19 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Control } from "react-hook-form";
 import { FormField, FormItem, FormMessage } from "@/shared/components/ui/form";
 import { BookingRequest } from "@/features/_validation/validations";
 import { TimeSlotsDisplay } from "./TimeSlotsDisplay";
 import { createDateTimeISO } from "@/shared/lib/utils/date-helpers";
 import { AlarmClockPlus } from "lucide-react";
-import { Button } from "@/shared/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/shared/components/ui/popover";
 import { cn } from "@/shared/lib/utils/general-utils";
+import type { BookingPickerLayout } from "./booking-picker-layout";
 
 export function TimeSelection({
   control,
@@ -23,6 +23,7 @@ export function TimeSelection({
   duration,
   onTimeSelected,
   boat,
+  layout = "popover",
 }: {
   control: Control<BookingRequest>;
   currentTime: string;
@@ -31,96 +32,68 @@ export function TimeSelection({
   duration?: number;
   onTimeSelected?: (time: string) => void;
   boat?: { timezone?: string | null };
+  layout?: BookingPickerLayout;
 }) {
   const [open, setOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
 
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
   return (
     <FormField
       control={control}
       name="startDateTime"
-      render={({ field }: any) => (
+      render={({ field }: { field: { onChange: (v: string) => void } }) => (
         <FormItem>
           <div className="w-full border-b border-gray-100 p-4">
-            <div className="flex items-center gap-3 w-full">
+            <div className="flex w-full items-center gap-3">
               {selectedDate ? (
-                isMobile ? (
-                  <>
+                layout === "inline" ? (
+                  <div className="w-full">
                     <button
                       type="button"
-                      className="flex items-center gap-3 w-full"
-                      onClick={() => setMobileOpen(true)}
+                      className="flex w-full cursor-pointer items-center gap-3 text-left"
+                      onClick={() => setOpen((o) => !o)}
+                      aria-expanded={open}
                     >
-                      <div className="flex-1 text-left">
+                      <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold text-primary">
-                          {currentTime || "Select Start Time"}
+                          {currentTime || "Select start time"}
                         </div>
-                        <div className="text-xs text-slate-500">
-                          Choose your start time
-                        </div>
+                        <div className="text-xs text-slate-500">Choose your start time</div>
                       </div>
-                      <AlarmClockPlus className="h-5 w-5 text-primary" />
+                      <AlarmClockPlus
+                        className={cn(
+                          "h-5 w-5 shrink-0 text-primary transition-transform",
+                          open && "rotate-180"
+                        )}
+                      />
                     </button>
-                    {mobileOpen && (
-                      <div
-                        className="fixed inset-0 z-1000"
-                        role="dialog"
-                        aria-modal="true"
-                      >
-                        <div
-                          className="absolute inset-0 bg-black/40"
-                          onClick={() => setMobileOpen(false)}
+                    {open && (
+                      <div className="mt-3 max-h-[min(50vh,320px)] overflow-y-auto overscroll-y-contain rounded-xl border border-border bg-card p-3 shadow-sm [-webkit-overflow-scrolling:touch]">
+                        <TimeSlotsDisplay
+                          date={selectedDate}
+                          boatId={boatId}
+                          selectedTime={currentTime}
+                          duration={duration}
+                          onTimeSelect={(time) => {
+                            if (onTimeSelected) {
+                              onTimeSelected(time);
+                            } else {
+                              const newDateTimeISO = createDateTimeISO(selectedDate, time, boat);
+                              field.onChange(newDateTimeISO);
+                            }
+                            setOpen(false);
+                          }}
                         />
-                        <div className="absolute inset-x-0 bottom-0 bg-white rounded-t-2xl shadow-2xl max-h-[80vh] overflow-hidden">
-                          <div className="px-4 pt-4 pb-2 border-b">
-                            <div className="text-base font-semibold">
-                              Start time
-                            </div>
-                          </div>
-                          <div className="p-4 overflow-y-auto max-h-[70vh]">
-                            <TimeSlotsDisplay
-                              date={selectedDate}
-                              boatId={boatId}
-                              selectedTime={currentTime}
-                              duration={duration}
-                              onTimeSelect={(time) => {
-                                if (onTimeSelected) {
-                                  onTimeSelected(time);
-                                } else {
-                                  const newDateTimeISO = createDateTimeISO(
-                                    selectedDate!,
-                                    time,
-                                    boat
-                                  );
-                                  field.onChange(newDateTimeISO);
-                                }
-                                setMobileOpen(false);
-                              }}
-                            />
-                          </div>
-                        </div>
                       </div>
                     )}
-                  </>
+                  </div>
                 ) : (
                   <Popover
                     open={open}
                     onOpenChange={(o) => {
-                      // Only allow opening when enabled (selectedDate present)
                       setOpen(o);
                       if (o) {
-                        const trigger =
-                          document?.activeElement as HTMLElement | null;
-                        const triggerWidth =
-                          trigger?.closest("[data-ts-trigger]")?.clientWidth;
+                        const trigger = document?.activeElement as HTMLElement | null;
+                        const triggerWidth = trigger?.closest("[data-ts-trigger]")?.clientWidth;
                         if (triggerWidth) {
                           document.documentElement.style.setProperty(
                             "--trigger-width",
@@ -133,19 +106,17 @@ export function TimeSelection({
                     <PopoverTrigger asChild>
                       <div
                         data-ts-trigger
-                        className="flex items-center gap-3 w-full cursor-pointer"
+                        className="flex w-full cursor-pointer items-center gap-3"
                       >
-                        <div className="flex-1 text-left">
+                        <div className="min-w-0 flex-1 text-left">
                           <div className="text-sm font-semibold text-primary">
-                            {currentTime ? currentTime : "Select Start Time"}
+                            {currentTime ? currentTime : "Select start time"}
                           </div>
-                          <div className="text-xs text-slate-500">
-                            Choose your start time
-                          </div>
+                          <div className="text-xs text-slate-500">Choose your start time</div>
                         </div>
                         <AlarmClockPlus
                           className={cn(
-                            "h-5 w-5 text-primary transition-transform",
+                            "h-5 w-5 shrink-0 text-primary transition-transform",
                             open && "rotate-180"
                           )}
                         />
@@ -158,7 +129,7 @@ export function TimeSelection({
                       avoidCollisions={false}
                       onOpenAutoFocus={(e) => e.preventDefault()}
                       onCloseAutoFocus={(e) => e.preventDefault()}
-                      className="w-(--trigger-width) max-w-[560px] p-4 rounded-xl border border-slate-200 shadow-xs bg-white"
+                      className="w-(--trigger-width) max-w-[560px] rounded-xl border border-slate-200 bg-white p-4 shadow-xs"
                     >
                       <TimeSlotsDisplay
                         date={selectedDate}
@@ -169,11 +140,7 @@ export function TimeSelection({
                           if (onTimeSelected) {
                             onTimeSelected(time);
                           } else {
-                            const newDateTimeISO = createDateTimeISO(
-                              selectedDate!,
-                              time,
-                              boat
-                            );
+                            const newDateTimeISO = createDateTimeISO(selectedDate, time, boat);
                             field.onChange(newDateTimeISO);
                           }
                           setOpen(false);
@@ -183,14 +150,10 @@ export function TimeSelection({
                   </Popover>
                 )
               ) : (
-                <div className="flex items-center gap-3 w-full cursor-not-allowed opacity-50">
+                <div className="flex w-full cursor-not-allowed items-center gap-3 opacity-50">
                   <div className="flex-1 text-left">
-                    <div className="text-sm font-semibold text-primary">
-                      Select a date first
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      Start time unlocks after selecting date
-                    </div>
+                    <div className="text-sm font-semibold text-primary">Select a date first</div>
+                    <div className="text-xs text-slate-500">Start time unlocks after selecting a date</div>
                   </div>
                   <AlarmClockPlus className="h-5 w-5 text-primary" />
                 </div>

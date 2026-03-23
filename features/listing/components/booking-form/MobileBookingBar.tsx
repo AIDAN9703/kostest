@@ -4,22 +4,20 @@ import { Boat } from "@/shared/lib/types/types";
 import { PricingTier } from "@/shared/lib/types/types";
 import { Button } from "@/shared/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-} from "@/shared/components/ui/dialog";
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/shared/components/ui/drawer";
 import { getBoatStartingHourlyLabel } from "@/shared/lib/utils/pricing-utils";
 import { useState } from "react";
 import { RequestBookingForm, InstantBookingForm } from ".";
-import { useSession } from "next-auth/react";
-import { Sparkles } from "lucide-react";
-import Image from "next/image";
+import { CalendarCheck, ChevronUp, X } from "lucide-react";
 import { BoatWithTiers } from "@/features/boats/boat.types";
+import { cn } from "@/shared/lib/utils/general-utils";
 
-/**
- * Boat type with pricing tiers - required for pricing display
- */
 type BoatWithPricingTiers = Boat & {
   pricingTiers?: PricingTier[] | null;
   hourlyRate?: number | null;
@@ -30,54 +28,90 @@ interface MobileBookingBarProps {
 }
 
 export function MobileBookingBar({ boat }: MobileBookingBarProps) {
-  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
-
-  // New starting hourly display
   const startingHourly = getBoatStartingHourlyLabel(boat as BoatWithTiers);
 
   return (
     <>
-      {/* Mobile Booking Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-navy-200/50 p-3 z-50 sm:hidden shadow-2xl">
-        <div className="flex items-center justify-between max-w-sm mx-auto">
-          {/* Pricing Display */}
-          <div className="flex flex-col">
-            <div className="flex items-baseline gap-1">
-              <span className="text-xl font-bold text-navy-900">
-                From {startingHourly}
-              </span>
-            </div>
+      <div
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-40 md:hidden",
+          "border-t border-border bg-card/95 text-card-foreground",
+          "shadow-[0_-10px_40px_-10px_rgba(15,23,42,0.18)] backdrop-blur-md",
+          "px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+          "transition-[transform,opacity] duration-300 ease-out motion-reduce:transition-none",
+          open && "pointer-events-none translate-y-full opacity-0"
+        )}
+      >
+        <div className="mx-auto flex max-w-lg items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Starting at
+            </p>
+            <p className="truncate text-lg font-bold leading-tight tracking-tight text-foreground">
+              {startingHourly}
+            </p>
           </div>
-
-          {/* Book Button */}
           <Button
+            type="button"
+            size="lg"
+            className="h-12 shrink-0 gap-2 rounded-2xl px-5 text-base font-semibold shadow-md"
             onClick={() => setOpen(true)}
-            className="bg-coral-500 hover:bg-coral-600 text-white px-6 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 font-semibold flex items-center gap-2"
+            aria-expanded={open}
+            aria-controls="boat-booking-drawer"
           >
-            <Sparkles className="h-4 w-4" />
-            Book Now
+            <CalendarCheck className="size-5 shrink-0" aria-hidden />
+            <span className="hidden sm:inline">Book now</span>
+            <span className="sm:hidden">Book</span>
+            <ChevronUp
+              className={cn(
+                "size-4 shrink-0 opacity-80 transition-transform duration-300",
+                open && "-rotate-180"
+              )}
+              aria-hidden
+            />
           </Button>
         </div>
       </div>
 
-      {/* Booking Dialog */}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[420px] p-0 gap-0 rounded-2xl border-0 shadow-2xl max-h-[90vh] overflow-y-auto">
-          <DialogTitle className="text-lg text-center font-bold text-primary p-4">
-            Book Your Charter
-          </DialogTitle>
+      <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground={false}>
+        <DrawerContent
+          id="boat-booking-drawer"
+          className="flex max-h-[92dvh] flex-col gap-0 px-0 pb-[env(safe-area-inset-bottom)]"
+        >
+          <DrawerHeader className="relative shrink-0 space-y-1 border-b border-border px-5 pb-4 pt-1 text-left">
+            <DrawerClose asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-0 h-11 w-11 rounded-full text-muted-foreground hover:text-foreground"
+                aria-label="Close booking"
+              >
+                <X className="size-5" strokeWidth={2} />
+              </Button>
+            </DrawerClose>
+            <DrawerTitle className="pr-14 text-left text-xl font-bold leading-snug tracking-tight text-foreground">
+              Book your charter
+            </DrawerTitle>
+            <DrawerDescription className="text-left text-base leading-snug text-muted-foreground">
+              {boat.name}
+            </DrawerDescription>
+          </DrawerHeader>
 
-          {/* Form Content */}
-          <div className="p-4">
+          <div
+            className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 py-4 [-webkit-overflow-scrolling:touch]"
+            role="region"
+            aria-label="Booking form"
+          >
             {boat.instantBook ? (
-              <InstantBookingForm boat={boat} />
+              <InstantBookingForm boat={boat} pickerLayout="inline" />
             ) : (
-              <RequestBookingForm boat={boat} />
+              <RequestBookingForm boat={boat} pickerLayout="inline" />
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </DrawerContent>
+      </Drawer>
     </>
   );
 }
