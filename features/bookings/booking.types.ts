@@ -1,12 +1,12 @@
 /**
  * Booking Types - Single source of truth for all booking-related types
- * 
+ *
  * TYPE CATEGORIES:
  * 1. Server Types - Date objects, used in service layer and server components
  * 2. Client Types - ISO strings for dates, used in client components after serialization
  * 3. Form Types - User input types with string dates (forms always produce strings)
  * 4. Display Types - Formatted for specific UI contexts (calendar, profile, etc.)
- * 
+ *
  * MONEY CONVENTION:
  * - All monetary values in database/service layer are in CENTS (integers)
  * - Types with "Cents" suffix indicate cents values
@@ -16,20 +16,27 @@
 import type { PricingTier } from "@/shared/lib/types/types";
 import type { Cents } from "@/shared/lib/utils/money-utils";
 import type { PaymentDisplayStatus } from "@/shared/lib/utils/payment-display";
-import type { 
-  BookingStatus, 
-  BookingType, 
+import type {
+  BookingStatus,
+  BookingType,
   BookingSource,
   PaymentStatus,
   PaymentType,
-  AdminNoteType
+  AdminNoteType,
 } from "@/database/types";
 
 // Re-export PricingTier for convenience (also used by boats feature)
 export type { PricingTier } from "@/shared/lib/types/types";
 
 // Re-export relevant database types
-export type { BookingStatus, BookingType, BookingSource, PaymentStatus, PaymentType, AdminNoteType };
+export type {
+  BookingStatus,
+  BookingType,
+  BookingSource,
+  PaymentStatus,
+  PaymentType,
+  AdminNoteType,
+};
 
 // ============================================================================
 // NEW STRUCTURED TYPES (Use these going forward)
@@ -143,13 +150,13 @@ export interface BookingWithRelations {
   bookingType: BookingType;
   bookingStatus: BookingStatus;
   source: BookingSource | null;
-  
+
   // Customer info
   userId: string | null;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
-  
+
   // Booking details
   boatId: string;
   pricingTierId: string | null;
@@ -160,15 +167,15 @@ export interface BookingWithRelations {
   needsCaptain: boolean | null;
   pickupLocation: string | null;
   dropoffLocation: string | null;
-  
+
   // Admin assignment
   assignedAdminId: string | null;
-  
+
   // Cancellation info
   cancelledAt: Date | null;
   cancellationReason: string | null;
   cancelledBy: string | null;
-  
+
   // Timestamps
   createdAt: Date;
   updatedAt: Date;
@@ -193,7 +200,7 @@ export interface BookingWithRelations {
   adminNotes: BookingAdminNoteEntry[];
   /** Append-only activity log (status, notes, contacts, Stripe, …) */
   activityEvents: BookingActivityEventEntry[];
-  
+
   // Joined boat info
   boat?: {
     id: string;
@@ -204,7 +211,7 @@ export interface BookingWithRelations {
     timezone: string | null;
     ownerId: string | null;
   } | null;
-  
+
   // Joined user info (customer)
   user?: {
     id: string;
@@ -213,7 +220,7 @@ export interface BookingWithRelations {
     email: string;
     profileImage: string | null;
   } | null;
-  
+
   // Assigned admin info
   assignedAdmin?: {
     id: string;
@@ -230,7 +237,7 @@ export interface BookingWithRelations {
 /**
  * Booking list item for admin tables
  * Returned by BookingService.getAllBookings()
- * 
+ *
  * Note: When passed to client components, dates become ISO strings due to React serialization
  * All monetary values are in CENTS
  */
@@ -254,14 +261,14 @@ export interface BookingListItem {
   startDateTime: Date;
   endDateTime: Date | null;
   numberOfPassengers: number;
-  
+
   // Pricing in cents (from booking_pricing)
   totalAmountCents: number;
   currency: string;
-  
+
   needsCaptain: boolean | null;
   createdAt: Date;
-  
+
   // Joined boat info
   boatId: string | null;
   bookingGroupId: string | null;
@@ -269,14 +276,14 @@ export interface BookingListItem {
   boatName: string | null;
   boatCategory: string | null;
   boatMainImage: string | null;
-  
+
   // Joined user info (customer)
   userId: string | null;
   userFirstName: string | null;
   userLastName: string | null;
   userEmail: string | null;
   userProfileImage: string | null;
-  
+
   // Assigned admin info
   assignedAdminId: string | null;
   assignedAdminFirstName: string | null;
@@ -289,7 +296,11 @@ export interface BookingListItem {
   /** Stored copy of REV (booking total − expense); recomputed on each ops save. */
   opsRevenueCents?: number | null;
   opsPaidCents?: number | null;
+  /** Cumulative paid out to boat owner (ops). */
+  opsSentToOwnerCents?: number | null;
+  /** Stored copy of expense − sent to owner; recomputed on each ops save. */
   opsBalanceOwnerCents?: number | null;
+  /** Stored copy of client balance (GMV − PAID); recomputed on save. GMV uses ops field or quote total. */
   opsBalanceClientCents?: number | null;
   opsCrewName?: string | null;
   opsNote?: string | null;
@@ -315,8 +326,7 @@ export interface BookingDetails extends BookingListItem {
   pricingTierId: string | null;
   paymentMethod: string | null;
   updatedAt: Date;
-  
-  
+
   // Pricing breakdown in cents (from booking_pricing)
   basePriceCents: number | null;
   captainFeeCents: number | null;
@@ -325,14 +335,14 @@ export interface BookingDetails extends BookingListItem {
   taxAmountCents: number | null;
   discountAmountCents: number | null;
   depositAmountCents: number | null;
-  
+
   isMultiDay: boolean | null;
   pickupLocation: string | null;
   dropoffLocation: string | null;
   cancellationReason: string | null;
   cancelledAt: Date | null;
   expiresAt: Date | null;
-  
+
   // Extended boat info
   boatCapacity: number | null;
   boatTimezone: string | null;
@@ -412,7 +422,7 @@ export interface BookingCalendarEvent {
   borderColor: string;
   textColor: string;
   extendedProps: {
-    type?: 'booking';
+    type?: "booking";
     bookingId?: string;
     customerName: string;
     customerEmail: string;

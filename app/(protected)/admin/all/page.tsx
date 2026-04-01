@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { inquiryService } from "@/features/inquiries/inquiry.service";
+import { userService } from "@/features/users/user.service";
 import AdminAllContent from "./AdminAllContent";
 
 export default async function AllPage() {
@@ -15,9 +16,10 @@ export default async function AllPage() {
     );
   }
 
-  const [bookingsResult, inquiriesResult] = await Promise.all([
+  const [bookingsResult, inquiriesResult, admins] = await Promise.all([
     bookingService.getAllBookings({ limit: 100 }),
     inquiryService.getAllInquiries({ limit: 100 }),
+    userService.getAdmins(),
   ]);
 
   const items = [
@@ -35,9 +37,9 @@ export default async function AllPage() {
         bookingId: b.id,
         totalAmountCents: b.totalAmountCents ?? null,
         opsExpenseCents: b.opsExpenseCents,
+        opsGmvCents: b.opsGmvCents,
         opsPaidCents: b.opsPaidCents,
-        opsBalanceOwnerCents: b.opsBalanceOwnerCents,
-        opsBalanceClientCents: b.opsBalanceClientCents,
+        opsSentToOwnerCents: b.opsSentToOwnerCents,
         opsCrewName: b.opsCrewName,
         opsNote: b.opsNote,
         opsContractSigned: b.opsContractSigned,
@@ -51,6 +53,7 @@ export default async function AllPage() {
         opsCommissionKosCents: b.opsCommissionKosCents,
         opsCommissionCents: b.opsCommissionCents,
         opsSourceOverride: b.opsSourceOverride,
+        assignedAdminId: b.assignedAdminId,
       })),
     ...inquiriesResult.inquiries.map((i) => ({
         id: i.id,
@@ -83,7 +86,7 @@ export default async function AllPage() {
         </p>
       </div>
 
-      <AdminAllContent items={items} />
+      <AdminAllContent items={items} admins={admins} />
     </div>
   );
 }

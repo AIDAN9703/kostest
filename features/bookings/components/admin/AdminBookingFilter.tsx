@@ -4,17 +4,9 @@ import React, { useMemo } from "react";
 import { useQueryStates } from "nuqs";
 import { FilterBar, FilterSearch, FilterSelect } from "@/shared/admin/filters";
 import { bookingSearchParams } from "@/features/bookings/searchParams";
-import {
-  bookingStatusEnum,
-  bookingTypeEnum,
-} from "@/database/schema";
+import { bookingStatusEnum, bookingTypeEnum } from "@/database/schema";
 import { PAYMENT_DISPLAY_STATUSES } from "@/shared/lib/utils/payment-display";
-import {
-  SlidersHorizontal,
-  DollarSign,
-  Calendar,
-  User,
-} from "lucide-react";
+import { SlidersHorizontal, DollarSign, Calendar, User } from "lucide-react";
 import { Switch } from "@/shared/components/ui/switch";
 import { Label } from "@/shared/components/ui/label";
 import { Input } from "@/shared/components/ui/input";
@@ -94,10 +86,7 @@ export function AdminBookingFilter({ admins }: { admins: AdminOption[] }) {
     });
   };
 
-  const adminOptions = useMemo(
-    () => admins.map((a) => a.id),
-    [admins]
-  );
+  const adminOptions = useMemo(() => admins.map((a) => a.id), [admins]);
 
   const getAdminLabel = (id: string) => {
     const admin = admins.find((a) => a.id === id);
@@ -200,17 +189,13 @@ function AdvancedFiltersToggle({
                     <Input
                       type="date"
                       value={filters.dateFrom ?? ""}
-                      onChange={(e) =>
-                        updateFilter({ dateFrom: e.target.value || null })
-                      }
+                      onChange={(e) => updateFilter({ dateFrom: e.target.value || null })}
                       className="h-8 text-sm"
                     />
                     <Input
                       type="date"
                       value={filters.dateTo ?? ""}
-                      onChange={(e) =>
-                        updateFilter({ dateTo: e.target.value || null })
-                      }
+                      onChange={(e) => updateFilter({ dateTo: e.target.value || null })}
                       className="h-8 text-sm"
                     />
                   </div>
@@ -223,9 +208,7 @@ function AdvancedFiltersToggle({
                       value={filters.minAmount ?? ""}
                       onChange={(e) =>
                         updateFilter({
-                          minAmount: e.target.value
-                            ? parseInt(e.target.value, 10)
-                            : null,
+                          minAmount: e.target.value ? parseInt(e.target.value, 10) : null,
                         })
                       }
                       className="h-8 text-sm"
@@ -236,9 +219,7 @@ function AdvancedFiltersToggle({
                       value={filters.maxAmount ?? ""}
                       onChange={(e) =>
                         updateFilter({
-                          maxAmount: e.target.value
-                            ? parseInt(e.target.value, 10)
-                            : null,
+                          maxAmount: e.target.value ? parseInt(e.target.value, 10) : null,
                         })
                       }
                       className="h-8 text-sm"
@@ -256,8 +237,7 @@ function AdvancedFiltersToggle({
                     }
                     onValueChange={(v) =>
                       updateFilter({
-                        needsCaptain:
-                          v === "yes" ? true : v === "no" ? false : null,
+                        needsCaptain: v === "yes" ? true : v === "no" ? false : null,
                       })
                     }
                   >

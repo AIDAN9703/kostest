@@ -39,11 +39,8 @@ function hint(map: Record<string, string>, key: string | null | undefined) {
   return map[key.toUpperCase()] ?? "Current state for this booking.";
 }
 
-export function AdminBookingProfileHeader({
-  booking,
-}: AdminBookingProfileHeaderProps) {
-  const paymentDesc =
-    PAYMENT_DISPLAY_DESCRIPTIONS[booking.paymentDisplayStatus] ?? "—";
+export function AdminBookingProfileHeader({ booking }: AdminBookingProfileHeaderProps) {
+  const paymentDesc = PAYMENT_DISPLAY_DESCRIPTIONS[booking.paymentDisplayStatus] ?? "—";
 
   return (
     <Card className="overflow-hidden rounded-3xl">
@@ -100,10 +97,7 @@ export function AdminBookingProfileHeader({
                 <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Payment
                 </h3>
-                <StatusBadge
-                  status={booking.paymentDisplayStatus}
-                  title={paymentDesc}
-                />
+                <StatusBadge status={booking.paymentDisplayStatus} title={paymentDesc} />
                 <p className="text-sm text-muted-foreground">{paymentDesc}</p>
               </div>
 

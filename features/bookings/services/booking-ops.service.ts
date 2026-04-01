@@ -6,7 +6,11 @@
 import { db } from "@/database/db";
 import { bookingOps, bookingPricing } from "@/database/schema";
 import { eq } from "drizzle-orm";
-import { computeOpsRevenueCents } from "@/shared/lib/utils/ops-revenue";
+import {
+  computeOpsBalanceClientCents,
+  computeOpsBalanceOwnerCents,
+  computeOpsRevenueCents,
+} from "@/shared/lib/utils/ops-revenue";
 
 export interface BookingOpsData {
   expenseCents: number | null;
@@ -15,6 +19,7 @@ export interface BookingOpsData {
   paidCents: number | null;
   balanceOwnerCents: number | null;
   balanceClientCents: number | null;
+  sentToOwnerCents: number | null;
   crewName: string | null;
   opsNote: string | null;
   contractSigned: boolean | null;
@@ -34,8 +39,11 @@ export interface BookingOpsInput {
   expenseCents?: number | null;
   gmvCents?: number | null;
   paidCents?: number | null;
+  /** Stripped at upsert; recomputed as expense − sent to owner. */
   balanceOwnerCents?: number | null;
+  /** Stripped at upsert; recomputed as ops GMV − PAID (with quote fallback). */
   balanceClientCents?: number | null;
+  sentToOwnerCents?: number | null;
   crewName?: string | null;
   opsNote?: string | null;
   contractSigned?: boolean | null;
@@ -68,6 +76,7 @@ export const bookingOpsService = {
       paidCents: row.paidCents,
       balanceOwnerCents: row.balanceOwnerCents,
       balanceClientCents: row.balanceClientCents,
+      sentToOwnerCents: row.sentToOwnerCents,
       crewName: row.crewName,
       opsNote: row.opsNote,
       contractSigned: row.contractSigned,
@@ -88,6 +97,12 @@ export const bookingOpsService = {
     const now = new Date();
     const existing = await this.getByBookingId(bookingId);
 
+    const {
+      balanceClientCents: _ignoreClientBal,
+      balanceOwnerCents: _ignoreOwnerBal,
+      ...inputRest
+    } = input;
+
     const [pricingRow] = await db
       .select({ total: bookingPricing.totalAmountCents })
       .from(bookingPricing)
@@ -97,19 +112,49 @@ export const bookingOpsService = {
       pricingRow?.total != null ? Number(pricingRow.total) : null;
 
     const expenseForCalc =
-      input.expenseCents !== undefined
-        ? input.expenseCents
+      inputRest.expenseCents !== undefined
+        ? inputRest.expenseCents
         : existing?.expenseCents ?? null;
     const computedRevenueCents = computeOpsRevenueCents(
       totalAmountCents,
       expenseForCalc
     );
 
+    const mergedExpense =
+      inputRest.expenseCents !== undefined
+        ? inputRest.expenseCents
+        : existing?.expenseCents ?? null;
+    const mergedSent =
+      inputRest.sentToOwnerCents !== undefined
+        ? inputRest.sentToOwnerCents
+        : existing?.sentToOwnerCents ?? null;
+    const mergedGmv =
+      inputRest.gmvCents !== undefined
+        ? inputRest.gmvCents
+        : existing?.gmvCents ?? null;
+    const mergedPaid =
+      inputRest.paidCents !== undefined
+        ? inputRest.paidCents
+        : existing?.paidCents ?? null;
+
+    const effectiveInput: BookingOpsInput & {
+      balanceOwnerCents: number;
+      balanceClientCents: number;
+    } = {
+      ...inputRest,
+      balanceOwnerCents: computeOpsBalanceOwnerCents(mergedExpense, mergedSent),
+      balanceClientCents: computeOpsBalanceClientCents(
+        mergedGmv,
+        mergedPaid,
+        totalAmountCents
+      ),
+    };
+
     const mergeForInsert = <K extends keyof BookingOpsInput>(
       key: K
     ): BookingOpsData[K] => {
-      if (input[key] !== undefined) {
-        return input[key] as BookingOpsData[K];
+      if (effectiveInput[key] !== undefined) {
+        return effectiveInput[key] as BookingOpsData[K];
       }
       if (existing) {
         return existing[key as keyof BookingOpsData] as BookingOpsData[K];
@@ -125,6 +170,7 @@ export const bookingOpsService = {
       "paidCents",
       "balanceOwnerCents",
       "balanceClientCents",
+      "sentToOwnerCents",
       "crewName",
       "opsNote",
       "contractSigned",
@@ -140,7 +186,7 @@ export const bookingOpsService = {
       "sourceOverride",
     ];
     for (const f of fields) {
-      if (input[f] !== undefined) setValues[f] = input[f];
+      if (effectiveInput[f] !== undefined) setValues[f] = effectiveInput[f];
     }
     setValues.revenueCents = computedRevenueCents;
 
@@ -152,6 +198,7 @@ export const bookingOpsService = {
       paidCents: mergeForInsert("paidCents"),
       balanceOwnerCents: mergeForInsert("balanceOwnerCents"),
       balanceClientCents: mergeForInsert("balanceClientCents"),
+      sentToOwnerCents: mergeForInsert("sentToOwnerCents"),
       crewName: mergeForInsert("crewName"),
       opsNote: mergeForInsert("opsNote"),
       contractSigned: mergeForInsert("contractSigned"),
@@ -183,6 +230,7 @@ export const bookingOpsService = {
       paidCents: row.paidCents,
       balanceOwnerCents: row.balanceOwnerCents,
       balanceClientCents: row.balanceClientCents,
+      sentToOwnerCents: row.sentToOwnerCents,
       crewName: row.crewName,
       opsNote: row.opsNote,
       contractSigned: row.contractSigned,

@@ -19,10 +19,7 @@ interface UserRecentBookingsProps {
   bookings?: BookingListItemShared[];
 }
 
-export function AdminUserRecentBookings({
-  userId,
-  bookings,
-}: UserRecentBookingsProps) {
+export function AdminUserRecentBookings({ userId, bookings }: UserRecentBookingsProps) {
   return (
     <Card className="overflow-hidden">
       <CardHeader className="pb-4">
@@ -51,9 +48,7 @@ export function AdminUserRecentBookings({
       <CardContent>
         {!bookings || bookings.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-sm text-muted-foreground">
-              This user hasn't made any bookings yet.
-            </p>
+            <p className="text-sm text-muted-foreground">This user hasn't made any bookings yet.</p>
           </div>
         ) : (
           <div className="space-y-2">

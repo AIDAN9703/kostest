@@ -6,7 +6,10 @@
  */
 
 import { cn } from "@/shared/lib/utils/general-utils";
-import { PAYMENT_DISPLAY_LABELS, type PaymentDisplayStatus } from "@/shared/lib/utils/payment-display";
+import {
+  PAYMENT_DISPLAY_LABELS,
+  type PaymentDisplayStatus,
+} from "@/shared/lib/utils/payment-display";
 
 // Badge style configurations
 export const BADGE_STYLES = {
@@ -93,9 +96,7 @@ export const ROLE_COLORS = {
 /**
  * Get badge style classes for a given status
  */
-export function getStatusBadgeClass(
-  status: string | boolean | undefined | null,
-): string {
+export function getStatusBadgeClass(status: string | boolean | undefined | null): string {
   if (status === null || status === undefined) return BADGE_STYLES.gray;
 
   // Handle boolean values directly
@@ -122,9 +123,7 @@ export function getRoleBadgeClass(role: string | undefined | null): string {
 /**
  * Format status text for display (replace underscores with spaces, capitalize)
  */
-export function formatStatusText(
-  status: string | boolean | undefined | null,
-): string {
+export function formatStatusText(status: string | boolean | undefined | null): string {
   if (status === null || status === undefined) return "Unknown";
   if (typeof status === "boolean") return status ? "Active" : "Inactive";
 
@@ -152,7 +151,7 @@ export function StatusBadge({ title, status, className }: StatusBadgeProps) {
       className={cn(
         "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
         getStatusBadgeClass(status),
-        className,
+        className
       )}
       title={title}
     >
@@ -175,7 +174,7 @@ export function RoleBadge({ role, className }: RoleBadgeProps) {
       className={cn(
         "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
         getRoleBadgeClass(role),
-        className,
+        className
       )}
     >
       {formatStatusText(role)}

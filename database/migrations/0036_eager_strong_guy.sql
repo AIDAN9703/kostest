@@ -1,0 +1,1 @@
+ALTER TABLE "booking_ops" ADD COLUMN "sent_to_owner_cents" bigint;

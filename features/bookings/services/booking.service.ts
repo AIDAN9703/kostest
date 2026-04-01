@@ -762,6 +762,7 @@ export class BookingService {
       opsGmvCents: bookingOps.gmvCents,
       opsRevenueCents: bookingOps.revenueCents,
       opsPaidCents: bookingOps.paidCents,
+      opsSentToOwnerCents: bookingOps.sentToOwnerCents,
       opsBalanceOwnerCents: bookingOps.balanceOwnerCents,
       opsBalanceClientCents: bookingOps.balanceClientCents,
       opsCrewName: bookingOps.crewName,
@@ -1397,9 +1398,13 @@ export class BookingService {
   }
 
   /**
-   * Assign admin to booking
+   * Assign admin to booking (or clear assignment when adminId is null).
    */
-  async assignAdmin(bookingId: string, adminId: string, performedByUserId: string): Promise<void> {
+  async assignAdmin(
+    bookingId: string,
+    adminId: string | null,
+    performedByUserId: string
+  ): Promise<void> {
     const [row] = await db
       .select({ assignedAdminId: bookings.assignedAdminId })
       .from(bookings)

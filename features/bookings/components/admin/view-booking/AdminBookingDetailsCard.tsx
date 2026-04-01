@@ -1,12 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { format } from "date-fns";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/shared/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
 import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
 import type { BookingDetails } from "@/features/bookings/booking.types";
@@ -28,9 +23,7 @@ function formatDateTime(
 }
 
 export function AdminBookingDetailsCard({ booking }: AdminBookingDetailsCardProps) {
-  const avatarInitial = (
-    booking.customerName || booking.userEmail || "?"
-  )[0].toUpperCase();
+  const avatarInitial = (booking.customerName || booking.userEmail || "?")[0].toUpperCase();
 
   return (
     <Card>
@@ -97,9 +90,7 @@ export function AdminBookingDetailsCard({ booking }: AdminBookingDetailsCardProp
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Boat
-            </h3>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Boat</h3>
             <div className="space-y-3">
               <div className="flex flex-col gap-0.5">
                 <p className="text-sm font-medium leading-tight">{booking.boatName || "—"}</p>
@@ -122,9 +113,7 @@ export function AdminBookingDetailsCard({ booking }: AdminBookingDetailsCardProp
                 <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
                   Capacity
                 </h4>
-                <p className="text-sm font-medium">
-                  {booking.boatCapacity ?? "—"} people
-                </p>
+                <p className="text-sm font-medium">{booking.boatCapacity ?? "—"} people</p>
               </div>
             </div>
           </div>
@@ -133,9 +122,7 @@ export function AdminBookingDetailsCard({ booking }: AdminBookingDetailsCardProp
         <Separator />
 
         <div className="space-y-4">
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Trip
-          </h3>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Trip</h3>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div className="space-y-1">
               <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
@@ -152,17 +139,13 @@ export function AdminBookingDetailsCard({ booking }: AdminBookingDetailsCardProp
               <p className="font-mono text-sm">{booking.id.substring(0, 8)}…</p>
             </div>
             <div className="space-y-1">
-              <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Start
-              </h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">Start</h4>
               <p className="text-sm font-medium">
                 {formatDateTime(booking.startDateTime, booking.boatTimezone)}
               </p>
             </div>
             <div className="space-y-1">
-              <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                End
-              </h4>
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-500">End</h4>
               <p className="text-sm font-medium">
                 {formatDateTime(booking.endDateTime, booking.boatTimezone)}
               </p>

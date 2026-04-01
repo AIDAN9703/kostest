@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useQueryStates } from "nuqs";
 import { Badge } from "@/shared/components/ui/badge";
 import { Input } from "@/shared/components/ui/input";
 import {
@@ -21,39 +21,110 @@ import {
   TableRow,
 } from "@/shared/components/ui/table";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
-import { computeOpsRevenueCents } from "@/shared/lib/utils/ops-revenue";
-import { format } from "date-fns";
+import {
+  computeOpsBalanceClientCents,
+  computeOpsBalanceOwnerCents,
+  computeOpsRevenueCents,
+} from "@/shared/lib/utils/ops-revenue";
+import {
+  endOfDay,
+  endOfMonth,
+  endOfWeek,
+  format,
+  parse,
+  startOfDay,
+  startOfMonth,
+  startOfWeek,
+  subDays,
+} from "date-fns";
 import { EmptyState } from "@/shared/components/EmptyState";
 import {
   CalendarDays,
   MessageSquare,
   Search,
+  ArrowDown,
+  ArrowUp,
   ArrowUpDown,
   Filter,
-  MoreVertical,
-  Eye,
   Copy,
   Check,
   Flag,
+  CalendarRange,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
 import { Button } from "@/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { InlineOpsCell } from "@/features/bookings/components/admin/InlineOpsCell";
 import { InlineOpsSelectCell } from "@/features/bookings/components/admin/InlineOpsSelectCell";
+import { assignAdminToBooking } from "@/features/bookings/actions/admin-booking.actions";
+import { adminAllSearchParams } from "@/features/admin/adminAllSearchParams";
 
-function CopyTextButton({
-  text,
-  label,
+const ASSIGN_UNASSIGNED = "__none__";
+
+export type AdminAllAdminOption = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+};
+
+function formatAdminOptionName(admin: AdminAllAdminOption): string {
+  const n = [admin.firstName, admin.lastName].filter(Boolean).join(" ").trim();
+  return n || admin.email || "Unknown";
+}
+
+function AssignAdminCell({
+  bookingId,
+  assignedAdminId,
+  admins,
 }: {
-  text: string;
-  label: "email" | "phone";
+  bookingId: string;
+  assignedAdminId: string | null;
+  admins: AdminAllAdminOption[];
 }) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+  const value = assignedAdminId ?? ASSIGN_UNASSIGNED;
+
+  if (admins.length === 0) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+
+  return (
+    <Select
+      value={value}
+      disabled={pending}
+      onValueChange={async (v) => {
+        const next = v === ASSIGN_UNASSIGNED ? null : v;
+        setPending(true);
+        try {
+          const res = await assignAdminToBooking(bookingId, next);
+          if (res.success) router.refresh();
+        } finally {
+          setPending(false);
+        }
+      }}
+    >
+      <SelectTrigger
+        className="h-8 max-w-[10rem] border-border/80 text-xs"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <SelectValue placeholder="Unassigned" />
+      </SelectTrigger>
+      <SelectContent align="start" position="popper" onClick={(e) => e.stopPropagation()}>
+        <SelectItem value={ASSIGN_UNASSIGNED} className="text-xs">
+          Unassigned
+        </SelectItem>
+        {admins.map((admin) => (
+          <SelectItem key={admin.id} value={admin.id} className="text-xs">
+            {formatAdminOptionName(admin)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function CopyTextButton({ text, label }: { text: string; label: "email" | "phone" }) {
   const [copied, setCopied] = useState(false);
   const trimmed = text.trim();
   const isEmpty = !trimmed;
@@ -109,9 +180,9 @@ export interface UnifiedItemBooking extends UnifiedItemBase {
   /** From booking_pricing — used with expense to show REV (total − expense). */
   totalAmountCents?: number | null;
   opsExpenseCents?: number | null;
+  opsGmvCents?: number | null;
   opsPaidCents?: number | null;
-  opsBalanceOwnerCents?: number | null;
-  opsBalanceClientCents?: number | null;
+  opsSentToOwnerCents?: number | null;
   opsCrewName?: string | null;
   opsNote?: string | null;
   opsContractSigned?: boolean | null;
@@ -125,6 +196,8 @@ export interface UnifiedItemBooking extends UnifiedItemBase {
   opsCommissionKosCents?: number | null;
   opsCommissionCents?: number | null;
   opsSourceOverride?: string | null;
+  /** booking.assigned_admin_id */
+  assignedAdminId: string | null;
 }
 
 export interface UnifiedItemInquiry extends UnifiedItemBase {
@@ -139,7 +212,7 @@ function formatOpsRevenueCell(item: UnifiedItemBooking): string {
 }
 
 /** Inquiry rows: spacer cells for booking-only ops columns (see booking row). */
-const BOOKING_OPS_INLINE_PLACEHOLDERS = 11;
+const BOOKING_OPS_INLINE_PLACEHOLDERS = 12;
 
 function countCheckedFlags(item: UnifiedItemBooking): number {
   return [
@@ -194,7 +267,10 @@ function OpsStatusFlagsButton({
           </p>
           <div className="space-y-3">
             {specs.map(({ field, label, v }) => (
-              <div key={field} className="flex items-center justify-between gap-4 border-b border-border/60 pb-3 last:border-0 last:pb-0">
+              <div
+                key={field}
+                className="flex items-center justify-between gap-4 border-b border-border/60 pb-3 last:border-0 last:pb-0"
+              >
                 <span className="text-sm leading-snug text-foreground">{label}</span>
                 <InlineOpsCell bookingId={bookingId} field={field} value={v} isCheckbox />
               </div>
@@ -206,23 +282,53 @@ function OpsStatusFlagsButton({
   );
 }
 
-/** Second line of date cell: start–end for bookings, or single time */
-function formatDateCellTimeLine(item: UnifiedItem): string {
-  if (!item.date) return "";
+/** Compact date column: avoids one long horizontal line that pushes GMV away. */
+function DateCellContent({ item }: { item: UnifiedItem }) {
+  if (!item.date) return null;
   const start = new Date(item.date);
+  const title =
+    item.type === "booking" && item.endDate
+      ? `${format(start, "MMM d, yyyy h:mm a")} → ${format(new Date(item.endDate), "MMM d, yyyy h:mm a")}`
+      : format(start, "MMM d, yyyy h:mm a");
+
   if (item.type === "booking" && item.endDate) {
     const end = new Date(item.endDate);
-    const sameCalendarDay =
-      format(start, "yyyy-MM-dd") === format(end, "yyyy-MM-dd");
-    return sameCalendarDay
-      ? `${format(start, "h:mm a")} – ${format(end, "h:mm a")}`
-      : `${format(start, "MMM d, h:mm a")} – ${format(end, "MMM d, h:mm a")}`;
+    const sameCalendarDay = format(start, "yyyy-MM-dd") === format(end, "yyyy-MM-dd");
+    if (sameCalendarDay) {
+      return (
+        <div className="min-w-0 space-y-0.5" title={title}>
+          <div className="leading-tight text-foreground">{format(start, "MMM d, yyyy")}</div>
+          <div className="text-xs leading-snug text-muted-foreground tabular-nums">
+            {format(start, "h:mm a")} – {format(end, "h:mm a")}
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div className="min-w-0 space-y-0.5" title={title}>
+        <div className="leading-tight text-foreground">
+          {format(start, "MMM d")} – {format(end, "MMM d, yyyy")}
+        </div>
+        <div className="text-xs leading-snug text-muted-foreground tabular-nums">
+          {format(start, "h:mm a")} → {format(end, "h:mm a")}
+        </div>
+      </div>
+    );
   }
-  return format(start, "h:mm a");
+
+  return (
+    <div className="min-w-0 space-y-0.5" title={title}>
+      <div className="leading-tight text-foreground">{format(start, "MMM d, yyyy")}</div>
+      <div className="text-xs leading-snug text-muted-foreground tabular-nums">
+        {format(start, "h:mm a")}
+      </div>
+    </div>
+  );
 }
 
 interface AdminAllContentProps {
   items: UnifiedItem[];
+  admins: AdminAllAdminOption[];
 }
 
 const TYPE_OPTIONS = [
@@ -232,10 +338,72 @@ const TYPE_OPTIONS = [
 ] as const;
 
 const SORT_OPTIONS = [
-  { value: "date-desc", label: "Newest first" },
-  { value: "date-asc", label: "Oldest first" },
+  { value: "date-desc", label: "Date: newest first" },
+  { value: "date-asc", label: "Date: oldest first" },
   { value: "amount-desc", label: "GMV / total (high → low)" },
 ] as const;
+
+function getItemDateMs(item: UnifiedItem): number | null {
+  if (!item.date) return null;
+  const t = new Date(item.date).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+const YMD = "yyyy-MM-dd";
+
+function parseYmdStart(ymd: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return null;
+  return startOfDay(parse(ymd, YMD, new Date()));
+}
+
+function parseYmdEnd(ymd: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return null;
+  return endOfDay(parse(ymd, YMD, new Date()));
+}
+
+/** When either bound is set, rows without a date are excluded. */
+function itemMatchesDateRange(item: UnifiedItem, dateFrom: string, dateTo: string): boolean {
+  let df = dateFrom.trim();
+  let dt = dateTo.trim();
+  if (!df && !dt) return true;
+
+  const ms = getItemDateMs(item);
+  if (ms == null) return false;
+
+  if (df && dt && df > dt) [df, dt] = [dt, df];
+
+  const d = new Date(ms);
+  if (df) {
+    const from = parseYmdStart(df);
+    if (from && d < from) return false;
+  }
+  if (dt) {
+    const to = parseYmdEnd(dt);
+    if (to && d > to) return false;
+  }
+  return true;
+}
+
+/** Date sort: missing dates last; tie-break by id for stable order. */
+function compareByDateDesc(a: UnifiedItem, b: UnifiedItem): number {
+  const ta = getItemDateMs(a);
+  const tb = getItemDateMs(b);
+  if (ta == null && tb == null) return a.id.localeCompare(b.id);
+  if (ta == null) return 1;
+  if (tb == null) return -1;
+  if (tb !== ta) return tb - ta;
+  return a.id.localeCompare(b.id);
+}
+
+function compareByDateAsc(a: UnifiedItem, b: UnifiedItem): number {
+  const ta = getItemDateMs(a);
+  const tb = getItemDateMs(b);
+  if (ta == null && tb == null) return a.id.localeCompare(b.id);
+  if (ta == null) return 1;
+  if (tb == null) return -1;
+  if (ta !== tb) return ta - tb;
+  return a.id.localeCompare(b.id);
+}
 
 function getTypeBadge(type: string) {
   switch (type) {
@@ -264,11 +432,14 @@ function getTypeBadge(type: string) {
   }
 }
 
-export default function AdminAllContent({ items }: AdminAllContentProps) {
-  const searchParams = useSearchParams();
-  const [typeFilter, setTypeFilter] = useState<string>(() => searchParams.get("type") || "all");
-  const [sort, setSort] = useState<string>(() => searchParams.get("sort") || "date-desc");
-  const [search, setSearch] = useState<string>(() => searchParams.get("q") || "");
+export default function AdminAllContent({ items, admins }: AdminAllContentProps) {
+  const router = useRouter();
+  const [filters, setFilters] = useQueryStates(adminAllSearchParams, {
+    clearOnDefault: true,
+    shallow: false,
+  });
+
+  const hasDateFilter = Boolean(filters.dateFrom?.trim() || filters.dateTo?.trim());
 
   const stats = useMemo(() => {
     const byType = { booking: 0, inquiry: 0 };
@@ -284,12 +455,12 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
   const filteredAndSortedItems = useMemo(() => {
     let result = [...items];
 
-    if (typeFilter !== "all") {
-      result = result.filter((i) => i.type === typeFilter);
+    if (filters.type !== "all") {
+      result = result.filter((i) => i.type === filters.type);
     }
 
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
+    if (filters.q.trim()) {
+      const q = filters.q.trim().toLowerCase();
       result = result.filter((i) => {
         const phone = (i.customerPhone ?? "").toLowerCase();
         return (
@@ -300,34 +471,28 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
       });
     }
 
-    switch (sort) {
+    if (filters.dateFrom.trim() || filters.dateTo.trim()) {
+      result = result.filter((i) =>
+        itemMatchesDateRange(i, filters.dateFrom, filters.dateTo),
+      );
+    }
+
+    switch (filters.sort) {
       case "date-asc":
-        result.sort((a, b) => {
-          const ta = a.date ? new Date(a.date).getTime() : 0;
-          const tb = b.date ? new Date(b.date).getTime() : 0;
-          return ta - tb;
-        });
+        result.sort(compareByDateAsc);
         break;
       case "date-desc":
-        result.sort((a, b) => {
-          const ta = a.date ? new Date(a.date).getTime() : 0;
-          const tb = b.date ? new Date(b.date).getTime() : 0;
-          return tb - ta;
-        });
+        result.sort(compareByDateDesc);
         break;
       case "amount-desc":
         result.sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0));
         break;
       default:
-        result.sort((a, b) => {
-          const ta = a.date ? new Date(a.date).getTime() : 0;
-          const tb = b.date ? new Date(b.date).getTime() : 0;
-          return tb - ta;
-        });
+        result.sort(compareByDateDesc);
     }
 
     return result;
-  }, [items, typeFilter, search, sort]);
+  }, [items, filters.type, filters.q, filters.sort, filters.dateFrom, filters.dateTo]);
 
   return (
     <div className="flex flex-1 flex-col gap-6">
@@ -356,12 +521,12 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search by name, email, or phone..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={filters.q}
+              onChange={(e) => setFilters({ q: e.target.value })}
               className="pl-9 rounded-xl"
             />
           </div>
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <Select value={filters.type} onValueChange={(v) => setFilters({ type: v as typeof filters.type })}>
             <SelectTrigger className="w-[160px] rounded-xl">
               <Filter className="h-4 w-4 mr-1.5" />
               <SelectValue />
@@ -374,7 +539,7 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
               ))}
             </SelectContent>
           </Select>
-          <Select value={sort} onValueChange={setSort}>
+          <Select value={filters.sort} onValueChange={(v) => setFilters({ sort: v as typeof filters.sort })}>
             <SelectTrigger className="w-[160px] rounded-xl">
               <ArrowUpDown className="h-4 w-4 mr-1.5" />
               <SelectValue />
@@ -387,6 +552,127 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
               ))}
             </SelectContent>
           </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                className={`rounded-xl gap-1.5 ${hasDateFilter ? "border-primary/40 bg-primary/5" : ""}`}
+              >
+                <CalendarRange className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Date range</span>
+                <span className="sm:hidden">Dates</span>
+                {hasDateFilter ? (
+                  <span className="max-w-[9rem] truncate text-xs font-normal text-muted-foreground">
+                    {filters.dateFrom || "…"}–{filters.dateTo || "…"}
+                  </span>
+                ) : null}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[min(100vw-2rem,22rem)] p-4" align="start">
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm font-medium">Date range</p>
+                  <p className="text-xs text-muted-foreground">
+                    Matches each row’s primary date (charter start or inquiry date). Rows with no date
+                    are hidden while a range is set.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <label className="text-xs text-muted-foreground">
+                    From
+                    <Input
+                      type="date"
+                      className="mt-1 rounded-lg"
+                      value={filters.dateFrom}
+                      onChange={(e) => setFilters({ dateFrom: e.target.value })}
+                    />
+                  </label>
+                  <label className="text-xs text-muted-foreground">
+                    To
+                    <Input
+                      type="date"
+                      className="mt-1 rounded-lg"
+                      value={filters.dateTo}
+                      onChange={(e) => setFilters({ dateTo: e.target.value })}
+                    />
+                  </label>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      const now = new Date();
+                      setFilters({
+                        dateFrom: format(startOfWeek(now, { weekStartsOn: 1 }), YMD),
+                        dateTo: format(endOfWeek(now, { weekStartsOn: 1 }), YMD),
+                      });
+                    }}
+                  >
+                    This week
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      const now = new Date();
+                      setFilters({
+                        dateFrom: format(startOfDay(subDays(now, 6)), YMD),
+                        dateTo: format(endOfDay(now), YMD),
+                      });
+                    }}
+                  >
+                    Last 7 days
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      const now = new Date();
+                      setFilters({
+                        dateFrom: format(startOfDay(subDays(now, 29)), YMD),
+                        dateTo: format(endOfDay(now), YMD),
+                      });
+                    }}
+                  >
+                    Last 30 days
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      const now = new Date();
+                      setFilters({
+                        dateFrom: format(startOfMonth(now), YMD),
+                        dateTo: format(endOfMonth(now), YMD),
+                      });
+                    }}
+                  >
+                    This month
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-xs"
+                  onClick={() => setFilters({ dateFrom: "", dateTo: "" })}
+                  disabled={!hasDateFilter}
+                >
+                  Clear dates
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
         <p className="text-sm text-muted-foreground">
           Showing {filteredAndSortedItems.length} of {items.length}
@@ -403,7 +689,9 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
               description={
                 items.length === 0
                   ? "Bookings and inquiries will appear here."
-                  : "Try adjusting your filters or search."
+                  : hasDateFilter
+                    ? "Nothing in this date range on the loaded list. Widen the range or clear dates."
+                    : "Try adjusting your filters or search."
               }
             />
           </div>
@@ -413,7 +701,28 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
               <TableRow className="hover:bg-transparent">
                 <TableHead className="whitespace-nowrap">Type</TableHead>
                 <TableHead className="whitespace-nowrap">Customer</TableHead>
-                <TableHead className="whitespace-nowrap">Date</TableHead>
+                <TableHead className="whitespace-nowrap min-w-[8rem]">Assigned</TableHead>
+                <TableHead className="whitespace-normal">
+                  <button
+                    type="button"
+                    className="inline-flex max-w-[7rem] flex-wrap items-center gap-1 text-left font-medium text-foreground hover:underline"
+                    onClick={() => {
+                      if (filters.sort === "date-desc") {
+                        setFilters({ sort: "date-asc" });
+                      } else {
+                        setFilters({ sort: "date-desc" });
+                      }
+                    }}
+                    title="Sort by date (newest ↔ oldest)"
+                  >
+                    <span>Date</span>
+                    {filters.sort === "date-desc" ? (
+                      <ArrowDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                    ) : filters.sort === "date-asc" ? (
+                      <ArrowUp className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                    ) : null}
+                  </button>
+                </TableHead>
                 <TableHead
                   className="align-middle text-right whitespace-nowrap px-1.5"
                   title="From booking pricing (total charter / quote)"
@@ -423,22 +732,44 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
                 <TableHead className="align-middle whitespace-nowrap px-1.5">Expense</TableHead>
                 <TableHead className="align-middle whitespace-nowrap px-1.5">REV</TableHead>
                 <TableHead className="align-middle whitespace-nowrap px-1.5">Paid</TableHead>
-                <TableHead className="align-middle whitespace-nowrap px-1.5">Balance owner</TableHead>
-                <TableHead className="align-middle whitespace-nowrap px-1.5">Balance client</TableHead>
-                <TableHead className="align-middle whitespace-nowrap px-1.5 max-w-[4rem]">Crew</TableHead>
-                <TableHead className="align-middle whitespace-nowrap px-1.5 max-w-[4rem]">Note</TableHead>
-                <TableHead className="align-middle whitespace-nowrap px-1.5">Status flags</TableHead>
-                <TableHead className="align-middle whitespace-nowrap px-1.5">Commission (agent)</TableHead>
-                <TableHead className="align-middle whitespace-nowrap px-1.5">Commission (KOS)</TableHead>
+                <TableHead
+                  className="align-middle whitespace-nowrap px-1.5 max-w-[4.5rem]"
+                  title="Cumulative sent to boat owner; edits adjust balance owner"
+                >
+                  Sent owner
+                </TableHead>
+                <TableHead
+                  className="align-middle whitespace-nowrap px-1.5"
+                  title="Expense − sent to owner (computed on save)"
+                >
+                  Balance owner
+                </TableHead>
+                <TableHead
+                  className="align-middle whitespace-nowrap px-1.5"
+                  title="Charter balance owed by client: GMV − PAID (quote total if ops GMV empty)"
+                >
+                  Balance client
+                </TableHead>
+                <TableHead className="align-middle whitespace-nowrap px-1.5 max-w-[4rem]">
+                  Crew
+                </TableHead>
+                <TableHead className="align-middle whitespace-nowrap px-1.5 max-w-[4rem]">
+                  Note
+                </TableHead>
+                <TableHead className="align-middle whitespace-nowrap px-1.5">
+                  Status flags
+                </TableHead>
+                <TableHead className="align-middle whitespace-nowrap px-1.5">Comm(agent)</TableHead>
+                <TableHead className="align-middle whitespace-nowrap px-1.5">Comm(KOS)</TableHead>
                 <TableHead className="align-middle whitespace-nowrap px-1.5">Source</TableHead>
-                <TableHead className="whitespace-nowrap text-right px-1.5" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredAndSortedItems.map((item) => (
                 <TableRow
                   key={`${item.type}-${item.id}`}
-                  className="group hover:bg-muted/30 transition-colors"
+                  className="group cursor-pointer hover:bg-muted/30 transition-colors"
+                  onClick={() => router.push(item.href)}
                 >
                   <TableCell className="whitespace-nowrap">{getTypeBadge(item.type)}</TableCell>
                   <TableCell className="align-top min-w-[200px] max-w-[260px]">
@@ -450,12 +781,14 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
                         </span>
                         <CopyTextButton text={item.customerEmail} label="email" />
                       </div>
-                      <div className="flex items-center gap-0.5 min-w-0">
-                        <span className="text-sm text-muted-foreground truncate">
-                          {item.customerPhone?.trim() ? item.customerPhone.trim() : "—"}
-                        </span>
-                        <CopyTextButton text={item.customerPhone ?? ""} label="phone" />
-                      </div>
+                      {item.customerPhone?.trim() ? (
+                        <div className="flex items-center gap-0.5 min-w-0">
+                          <span className="text-sm text-muted-foreground truncate">
+                            {item.customerPhone.trim()}
+                          </span>
+                          <CopyTextButton text={item.customerPhone} label="phone" />
+                        </div>
+                      ) : null}
                       {item.type === "inquiry" && item.needsContact && (
                         <span className="inline-block text-xs text-amber-600 dark:text-amber-400">
                           Needs contact
@@ -463,15 +796,24 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
                       )}
                     </div>
                   </TableCell>
-                  <TableCell className="whitespace-nowrap">
+                  <TableCell
+                    className="align-top min-w-[8rem] max-w-[11rem]"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {item.type === "booking" ? (
+                      <AssignAdminCell
+                        bookingId={item.bookingId}
+                        assignedAdminId={item.assignedAdminId}
+                        admins={admins}
+                      />
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="align-top min-w-0 max-w-[6.5rem] whitespace-normal sm:max-w-[7.5rem]">
                     {item.date ? (
-                      <div className="text-sm">
-                        <div className="text-foreground">
-                          {format(new Date(item.date), "MMM d, yyyy")}
-                        </div>
-                        <div className="text-muted-foreground tabular-nums">
-                          {formatDateCellTimeLine(item)}
-                        </div>
+                      <div className="text-sm break-words">
+                        <DateCellContent item={item} />
                       </div>
                     ) : (
                       <span className="text-muted-foreground text-sm">—</span>
@@ -483,12 +825,17 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
                         {formatCentsAsCurrency(item.amount * 100)}
                       </span>
                     ) : (
-                      <span className="inline-flex min-h-7 items-center justify-end text-muted-foreground">—</span>
+                      <span className="inline-flex min-h-7 items-center justify-end text-muted-foreground">
+                        —
+                      </span>
                     )}
                   </TableCell>
                   {item.type === "booking" ? (
                     <>
-                      <TableCell className="align-middle px-1.5">
+                      <TableCell
+                        className="align-middle px-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <InlineOpsCell
                           bookingId={item.bookingId}
                           field="expenseCents"
@@ -503,7 +850,10 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
                           {formatOpsRevenueCell(item)}
                         </span>
                       </TableCell>
-                      <TableCell className="align-middle px-1.5">
+                      <TableCell
+                        className="align-middle px-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <InlineOpsCell
                           bookingId={item.bookingId}
                           field="paidCents"
@@ -513,27 +863,50 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
                           placeholder="—"
                         />
                       </TableCell>
-                      <TableCell className="align-middle px-1.5">
+                      <TableCell
+                        className="align-middle px-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <InlineOpsCell
                           bookingId={item.bookingId}
-                          field="balanceOwnerCents"
-                          value={item.opsBalanceOwnerCents}
+                          field="sentToOwnerCents"
+                          value={item.opsSentToOwnerCents}
                           isCents
                           compact
                           placeholder="—"
                         />
                       </TableCell>
-                      <TableCell className="align-middle px-1.5">
-                        <InlineOpsCell
-                          bookingId={item.bookingId}
-                          field="balanceClientCents"
-                          value={item.opsBalanceClientCents}
-                          isCents
-                          compact
-                          placeholder="—"
-                        />
+                      <TableCell
+                        className="align-middle px-1.5 whitespace-nowrap"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span className="inline-flex min-h-7 items-center text-xs tabular-nums text-foreground">
+                          {formatCentsAsCurrency(
+                            computeOpsBalanceOwnerCents(
+                              item.opsExpenseCents,
+                              item.opsSentToOwnerCents
+                            )
+                          )}
+                        </span>
                       </TableCell>
-                      <TableCell className="align-middle max-w-[5rem] px-1.5">
+                      <TableCell
+                        className="align-middle px-1.5 whitespace-nowrap"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <span className="inline-flex min-h-7 items-center text-xs tabular-nums text-foreground">
+                          {formatCentsAsCurrency(
+                            computeOpsBalanceClientCents(
+                              item.opsGmvCents,
+                              item.opsPaidCents,
+                              item.totalAmountCents
+                            )
+                          )}
+                        </span>
+                      </TableCell>
+                      <TableCell
+                        className="align-middle max-w-[5rem] px-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <InlineOpsCell
                           bookingId={item.bookingId}
                           field="crewName"
@@ -542,7 +915,10 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
                           placeholder="—"
                         />
                       </TableCell>
-                      <TableCell className="align-middle max-w-[5rem] px-1.5">
+                      <TableCell
+                        className="align-middle max-w-[5rem] px-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <InlineOpsCell
                           bookingId={item.bookingId}
                           field="opsNote"
@@ -551,10 +927,16 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
                           placeholder="—"
                         />
                       </TableCell>
-                      <TableCell className="align-middle px-1.5 whitespace-nowrap">
+                      <TableCell
+                        className="align-middle px-1.5 whitespace-nowrap"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <OpsStatusFlagsButton bookingId={item.bookingId} item={item} />
                       </TableCell>
-                      <TableCell className="align-middle px-1.5">
+                      <TableCell
+                        className="align-middle px-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <InlineOpsCell
                           bookingId={item.bookingId}
                           field="commissionAgentCents"
@@ -564,7 +946,10 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
                           placeholder="—"
                         />
                       </TableCell>
-                      <TableCell className="align-middle px-1.5">
+                      <TableCell
+                        className="align-middle px-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <InlineOpsCell
                           bookingId={item.bookingId}
                           field="commissionKosCents"
@@ -574,7 +959,10 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
                           placeholder="—"
                         />
                       </TableCell>
-                      <TableCell className="align-middle px-1.5">
+                      <TableCell
+                        className="align-middle px-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <InlineOpsSelectCell
                           bookingId={item.bookingId}
                           variant="source"
@@ -595,26 +983,6 @@ export default function AdminAllContent({ items }: AdminAllContentProps) {
                       ))}
                     </>
                   )}
-                  <TableCell className="whitespace-nowrap text-right">
-                    <div className="flex justify-end">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4" />
-                            <span className="sr-only">Actions</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild>
-                            <Link href={item.href} className="cursor-pointer">
-                              <Eye className="h-4 w-4 mr-2" />
-                              View
-                            </Link>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

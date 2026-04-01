@@ -106,20 +106,24 @@ export async function denyBookingRequest(bookingId: string, reason: string) {
   }
 }
 
-/** Assign admin to booking */
-export async function assignAdminToBooking(bookingId: string, adminId: string) {
+/** Assign admin to booking, or pass null to unassign */
+export async function assignAdminToBooking(bookingId: string, adminId: string | null) {
   try {
     const authResult = await getAdminSession();
     if (authResult.error) return { success: false, error: authResult.error };
-    if (!bookingId || !adminId) {
-      return { success: false, error: "Booking ID and Admin ID are required" };
+    if (!bookingId) {
+      return { success: false, error: "Booking ID is required" };
     }
 
     await bookingService.assignAdmin(bookingId, adminId, authResult.session!.user.id!);
     revalidatePath("/admin/bookings");
+    revalidatePath("/admin/all");
     revalidatePath(`/admin/bookings/${bookingId}`);
 
-    return { success: true, message: "Admin assigned successfully" };
+    return {
+      success: true,
+      message: adminId == null ? "Admin unassigned" : "Admin assigned successfully",
+    };
   } catch (error) {
     console.error("Error assigning admin:", error);
     return {

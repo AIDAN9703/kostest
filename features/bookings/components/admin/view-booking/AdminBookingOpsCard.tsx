@@ -16,7 +16,11 @@ import {
 import { updateBookingOps } from "@/features/bookings/actions/booking-ops.actions";
 import type { BookingOpsData } from "@/features/bookings/services/booking-ops.service";
 import { dollarsToCents, formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
-import { computeOpsRevenueCents } from "@/shared/lib/utils/ops-revenue";
+import {
+  computeOpsBalanceClientCents,
+  computeOpsBalanceOwnerCents,
+  computeOpsRevenueCents,
+} from "@/shared/lib/utils/ops-revenue";
 import {
   OPS_SELECT_NONE,
   OPS_SOURCE_OPTIONS,
@@ -44,15 +48,20 @@ function parseDollarsToCents(value: string): number | null {
   return dollarsToCents(parsed);
 }
 
-export function AdminBookingOpsCard({ bookingId, totalAmountCents, ops }: AdminBookingOpsCardProps) {
+export function AdminBookingOpsCard({
+  bookingId,
+  totalAmountCents,
+  ops,
+}: AdminBookingOpsCardProps) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [expenseCents, setExpenseCents] = useState(centsToDisplay(ops?.expenseCents));
   const [gmvCents, setGmvCents] = useState(centsToDisplay(ops?.gmvCents));
   const [paidCents, setPaidCents] = useState(centsToDisplay(ops?.paidCents));
-  const [balanceOwnerCents, setBalanceOwnerCents] = useState(centsToDisplay(ops?.balanceOwnerCents));
-  const [balanceClientCents, setBalanceClientCents] = useState(centsToDisplay(ops?.balanceClientCents));
+  const [sentToOwnerCents, setSentToOwnerCents] = useState(
+    centsToDisplay(ops?.sentToOwnerCents)
+  );
   const [crewName, setCrewName] = useState(ops?.crewName ?? "");
   const [opsNote, setOpsNote] = useState(ops?.opsNote ?? "");
   const [contractSigned, setContractSigned] = useState(ops?.contractSigned ?? false);
@@ -62,23 +71,49 @@ export function AdminBookingOpsCard({ bookingId, totalAmountCents, ops }: AdminB
   const [allPaid, setAllPaid] = useState(ops?.allPaid ?? false);
   const [sheetsSent, setSheetsSent] = useState(ops?.sheetsSent ?? false);
 
-  const [sourceOverride, setSourceOverride] = useState(normalizeOpsSource(ops?.sourceOverride ?? ""));
-  const [commissionAgentCents, setCommissionAgentCents] = useState(centsToDisplay(ops?.commissionAgentCents));
-  const [commissionKosCents, setCommissionKosCents] = useState(centsToDisplay(ops?.commissionKosCents));
+  const [sourceOverride, setSourceOverride] = useState(
+    normalizeOpsSource(ops?.sourceOverride ?? "")
+  );
+  const [commissionAgentCents, setCommissionAgentCents] = useState(
+    centsToDisplay(ops?.commissionAgentCents)
+  );
+  const [commissionKosCents, setCommissionKosCents] = useState(
+    centsToDisplay(ops?.commissionKosCents)
+  );
 
   useEffect(() => {
     setSourceOverride(normalizeOpsSource(ops?.sourceOverride ?? ""));
   }, [ops?.sourceOverride]);
+
+  useEffect(() => {
+    setSentToOwnerCents(centsToDisplay(ops?.sentToOwnerCents));
+  }, [ops?.sentToOwnerCents]);
 
   const revenuePreviewCents = useMemo(
     () => computeOpsRevenueCents(totalAmountCents, parseDollarsToCents(expenseCents)),
     [totalAmountCents, expenseCents]
   );
 
-  const splitHint = useMemo(
-    () => getCommissionSplitForSource(sourceOverride),
-    [sourceOverride]
+  const balanceClientPreviewCents = useMemo(
+    () =>
+      computeOpsBalanceClientCents(
+        parseDollarsToCents(gmvCents),
+        parseDollarsToCents(paidCents),
+        totalAmountCents
+      ),
+    [gmvCents, paidCents, totalAmountCents]
   );
+
+  const balanceOwnerPreviewCents = useMemo(
+    () =>
+      computeOpsBalanceOwnerCents(
+        parseDollarsToCents(expenseCents),
+        parseDollarsToCents(sentToOwnerCents)
+      ),
+    [expenseCents, sentToOwnerCents]
+  );
+
+  const splitHint = useMemo(() => getCommissionSplitForSource(sourceOverride), [sourceOverride]);
 
   const applyCommissionDefaults = () => {
     if (revenuePreviewCents == null || revenuePreviewCents <= 0 || !sourceOverride.trim()) return;
@@ -110,8 +145,7 @@ export function AdminBookingOpsCard({ bookingId, totalAmountCents, ops }: AdminB
         expenseCents: parseDollarsToCents(expenseCents),
         gmvCents: parseDollarsToCents(gmvCents),
         paidCents: parseDollarsToCents(paidCents),
-        balanceOwnerCents: parseDollarsToCents(balanceOwnerCents),
-        balanceClientCents: parseDollarsToCents(balanceClientCents),
+        sentToOwnerCents: parseDollarsToCents(sentToOwnerCents),
         crewName: crewName.trim() || null,
         opsNote: opsNote.trim() || null,
         contractSigned,
@@ -144,7 +178,12 @@ export function AdminBookingOpsCard({ bookingId, totalAmountCents, ops }: AdminB
               Source, money totals, commission, then payments and status flags.
             </p>
           </div>
-          <Button size="sm" onClick={handleSubmit} disabled={saving} className="rounded-xl gap-2 shrink-0">
+          <Button
+            size="sm"
+            onClick={handleSubmit}
+            disabled={saving}
+            className="rounded-xl gap-2 shrink-0"
+          >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Save
           </Button>
@@ -174,7 +213,9 @@ export function AdminBookingOpsCard({ bookingId, totalAmountCents, ops }: AdminB
                   </SelectItem>
                 ))}
                 {sourceOverride &&
-                !OPS_SOURCE_OPTIONS.some((o) => o.toLowerCase() === sourceOverride.toLowerCase()) ? (
+                !OPS_SOURCE_OPTIONS.some(
+                  (o) => o.toLowerCase() === sourceOverride.toLowerCase()
+                ) ? (
                   <SelectItem value={sourceOverride}>{sourceOverride} (legacy)</SelectItem>
                 ) : null}
               </SelectContent>
@@ -242,9 +283,7 @@ export function AdminBookingOpsCard({ bookingId, totalAmountCents, ops }: AdminB
                 className="rounded-xl gap-1.5 shrink-0"
                 onClick={applyCommissionDefaults}
                 disabled={
-                  revenuePreviewCents == null ||
-                  revenuePreviewCents <= 0 ||
-                  !sourceOverride.trim()
+                  revenuePreviewCents == null || revenuePreviewCents <= 0 || !sourceOverride.trim()
                 }
               >
                 <RefreshCw className="h-3.5 w-3.5" />
@@ -283,7 +322,11 @@ export function AdminBookingOpsCard({ bookingId, totalAmountCents, ops }: AdminB
 
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-foreground">Payments &amp; balances</h4>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <p className="text-xs text-muted-foreground">
+              Balance owner is expense minus sent to owner; balance client is GMV (or quote total)
+              minus PAID — both update when you save.
+            </p>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-2">
                 <Label htmlFor="paidCents">PAID</Label>
                 <Input
@@ -296,26 +339,37 @@ export function AdminBookingOpsCard({ bookingId, totalAmountCents, ops }: AdminB
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="balanceOwnerCents">Balance Owner</Label>
+                <Label htmlFor="sentToOwnerCents">Sent owner</Label>
                 <Input
-                  id="balanceOwnerCents"
+                  id="sentToOwnerCents"
                   type="text"
                   placeholder="0.00"
-                  value={balanceOwnerCents}
-                  onChange={(e) => setBalanceOwnerCents(e.target.value)}
-                  className="rounded-xl"
+                  value={sentToOwnerCents}
+                  onChange={(e) => setSentToOwnerCents(e.target.value)}
+                  className="rounded-xl tabular-nums"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="balanceClientCents">Balance Client</Label>
-                <Input
-                  id="balanceClientCents"
-                  type="text"
-                  placeholder="0.00"
-                  value={balanceClientCents}
-                  onChange={(e) => setBalanceClientCents(e.target.value)}
-                  className="rounded-xl"
-                />
+                <Label>Balance Owner</Label>
+                <div
+                  className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2.5 text-sm tabular-nums text-foreground"
+                  title="Expense − sent to owner (saved when you save)"
+                >
+                  {formatCentsAsCurrency(balanceOwnerPreviewCents)}
+                </div>
+                <p className="text-xs text-muted-foreground">Expense − sent owner</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Balance Client</Label>
+                <div
+                  className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2.5 text-sm tabular-nums text-foreground"
+                  title="GMV − PAID (saved automatically when you save)"
+                >
+                  {formatCentsAsCurrency(balanceClientPreviewCents)}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Ops GMV − PAID, or quote total − PAID if GMV is empty
+                </p>
               </div>
             </div>
           </div>
@@ -347,10 +401,25 @@ export function AdminBookingOpsCard({ bookingId, totalAmountCents, ops }: AdminB
             <p className="text-sm font-semibold text-foreground">Status flags</p>
             <div className="flex flex-wrap gap-x-8 gap-y-4">
               {[
-                { id: "contractSigned", label: "Contract signed", checked: contractSigned, set: setContractSigned },
+                {
+                  id: "contractSigned",
+                  label: "Contract signed",
+                  checked: contractSigned,
+                  set: setContractSigned,
+                },
                 { id: "connected", label: "Connected?", checked: connected, set: setConnected },
-                { id: "clientPaid", label: "C Paid? (Client)", checked: clientPaid, set: setClientPaid },
-                { id: "captainPaid", label: "Capt Paid?", checked: captainPaid, set: setCaptainPaid },
+                {
+                  id: "clientPaid",
+                  label: "C Paid? (Client)",
+                  checked: clientPaid,
+                  set: setClientPaid,
+                },
+                {
+                  id: "captainPaid",
+                  label: "Capt Paid?",
+                  checked: captainPaid,
+                  set: setCaptainPaid,
+                },
                 { id: "allPaid", label: "All Paid?", checked: allPaid, set: setAllPaid },
                 { id: "sheetsSent", label: "Sheets?", checked: sheetsSent, set: setSheetsSent },
               ].map(({ id, label, checked, set }) => (

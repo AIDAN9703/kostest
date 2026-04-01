@@ -25,8 +25,12 @@ export const bookingOps = pgTable("booking_ops", {
   gmvCents: bigint("gmv_cents", { mode: "number" }),
   revenueCents: bigint("revenue_cents", { mode: "number" }),
   paidCents: bigint("paid_cents", { mode: "number" }),
+  /** Derived on save: ops expense − sent_to_owner_cents. */
   balanceOwnerCents: bigint("balance_owner_cents", { mode: "number" }),
+  /** Derived on save: ops GMV − PAID (ops GMV falls back to quote total when null). */
   balanceClientCents: bigint("balance_client_cents", { mode: "number" }),
+  /** Cumulative amount sent/paid out to the boat owner (USD cents). Updating this adjusts balance_owner. */
+  sentToOwnerCents: bigint("sent_to_owner_cents", { mode: "number" }),
 
   // Crew/captain name (free text)
   crewName: text("crew_name"),
