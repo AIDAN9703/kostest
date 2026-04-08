@@ -39,6 +39,17 @@ interface Props<T extends FieldValues> {
     data?: { redirectUrl?: string; message: string };
   }>;
   type: "SIGN_IN" | "SIGN_UP";
+  /** Used when the form is embedded (e.g. booking flow modal) so callback returns to this URL */
+  embeddedCallbackUrl?: string;
+  embeddedPrefillEmail?: string;
+  embeddedPrefillPhone?: string;
+  /** Hide the card header when the dialog already has a title */
+  hideHeading?: boolean;
+  /** Lighter chrome for use inside a Dialog */
+  variant?: "page" | "embedded";
+  /** Switch sign-in ↔ sign-up without leaving the page (booking modal) */
+  onSwitchToSignUp?: () => void;
+  onSwitchToSignIn?: () => void;
 }
 
 const AuthForm = <T extends FieldValues>({
@@ -46,14 +57,24 @@ const AuthForm = <T extends FieldValues>({
   schema,
   defaultValues,
   onSubmit,
+  embeddedCallbackUrl,
+  embeddedPrefillEmail,
+  embeddedPrefillPhone,
+  hideHeading = false,
+  variant = "page",
+  onSwitchToSignUp,
+  onSwitchToSignIn,
 }: Props<T>) => {
   const searchParams = useSearchParams();
   const isSignIn = type === "SIGN_IN";
   const { isSubmitting, handleAuth } = useAuth<T>();
 
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
-  const prefilledEmail = searchParams.get("email") || "";
-  const prefilledPhone = searchParams.get("phone") || "";
+  const callbackUrl =
+    embeddedCallbackUrl ?? (searchParams.get("callbackUrl") || "/");
+  const prefilledEmail =
+    embeddedPrefillEmail ?? searchParams.get("email") ?? "";
+  const prefilledPhone =
+    embeddedPrefillPhone ?? searchParams.get("phone") ?? "";
 
   const mergedDefaultValues = {
     ...defaultValues,
@@ -73,19 +94,29 @@ const AuthForm = <T extends FieldValues>({
     await handleAuth(data, onSubmit, callbackUrl, successMessage);
   };
 
+  const isEmbedded = variant === "embedded";
+
   return (
-    <div className="bg-white rounded-xl border width-[400px] border-gray-200 p-6 sm:p-8 shadow-sm">
+    <div
+      className={
+        isEmbedded
+          ? "w-full"
+          : "bg-white rounded-xl border width-[400px] border-gray-200 p-6 sm:p-8 shadow-sm"
+      }
+    >
       {/* Header */}
-      <div className="mb-6 sm:mb-7 text-center">
-        <h1 className="text-lg sm:text-xl font-semibold text-primary">
-          {isSignIn ? "Sign In" : "Create Account"}
-        </h1>
-        <p className="text-gray-500 mt-1 text-sm">
-          {isSignIn
-            ? "Welcome back! Please enter your details."
-            : "Get started with your free account."}
-        </p>
-      </div>
+      {!hideHeading && (
+        <div className={isEmbedded ? "mb-4 text-center" : "mb-6 sm:mb-7 text-center"}>
+          <h1 className="text-lg sm:text-xl font-semibold text-primary">
+            {isSignIn ? "Sign In" : "Create Account"}
+          </h1>
+          <p className="text-gray-500 mt-1 text-sm">
+            {isSignIn
+              ? "Welcome back! Please enter your details."
+              : "Get started with your free account."}
+          </p>
+        </div>
+      )}
 
       {/* Google Sign In */}
       <form action={googleSignIn} className="mb-5">
@@ -164,18 +195,50 @@ const AuthForm = <T extends FieldValues>({
       {/* Footer */}
       <p className="text-sm text-gray-500 mt-6 text-center">
         {isSignIn ? "Don't have an account? " : "Already have an account? "}
+        {isSignIn && onSwitchToSignUp ? (
+          <button
+            type="button"
+            onClick={onSwitchToSignUp}
+            className="font-medium text-primary hover:underline"
+          >
+            Sign up
+          </button>
+        ) : !isSignIn && onSwitchToSignIn ? (
+          <button
+            type="button"
+            onClick={onSwitchToSignIn}
+            className="font-medium text-primary hover:underline"
+          >
+            Sign in
+          </button>
+        ) : (
+          <Link
+            href={
+              (isSignIn ? "/sign-up" : "/sign-in") +
+              (callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : "")
+            }
+            className="font-medium text-primary hover:underline"
+          >
+            {isSignIn ? "Sign up" : "Sign in"}
+          </Link>
+        )}
+        <br />
+        <br />
+        This site is protected by reCAPTCHA, Google{" "}
         <Link
-          href={
-            (isSignIn ? "/sign-up" : "/sign-in") +
-            (callbackUrl !== "/" ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : "")
-          }
+          href="https://policies.google.com/privacy"
           className="font-medium text-primary hover:underline"
         >
-          {isSignIn ? "Sign up" : "Sign in"}
-        </Link>
-        <br />
-        <br />
-        This site is protected by reCAPTCHA, Google <Link href="https://policies.google.com/privacy" className="font-medium text-primary hover:underline">Privacy Policy</Link> and <Link href="/https://policies.google.com/terms" className="font-medium text-primary hover:underline">Terms of Service</Link> apply.
+          Privacy Policy
+        </Link>{" "}
+        and{" "}
+        <Link
+          href="https://policies.google.com/terms"
+          className="font-medium text-primary hover:underline"
+        >
+          Terms of Service
+        </Link>{" "}
+        apply.
       </p>
       
     </div>

@@ -8,7 +8,7 @@ import type { Session } from "next-auth";
  * Centralized authentication helpers to reduce code duplication and ensure
  * consistent auth checks across the application.
  *
- * Note: Route-level protection is handled by proxy.ts (middleware).
+ * Note: Route-level protection is handled by proxy.ts (Next.js middleware entry).
  * These utilities are for:
  * - Getting session data in layouts/pages
  * - Role-based access control in pages
@@ -112,8 +112,7 @@ export async function requireCaptain(): Promise<Session> {
  * @returns Object with session if admin, or error if not
  */
 export async function getAdminSession(): Promise<
-  | { session: Session; error?: never }
-  | { session?: never; error: string }
+  { session: Session; error?: never } | { session?: never; error: string }
 > {
   const session = await auth();
 

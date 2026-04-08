@@ -253,6 +253,13 @@
       "when": 1775078141561,
       "tag": "0036_eager_strong_guy",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1775665519602,
+      "tag": "0038_admin_all_row_highlight",
+      "breakpoints": true
     }
   ]
 }

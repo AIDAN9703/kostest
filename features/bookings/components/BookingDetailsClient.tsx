@@ -2,12 +2,7 @@
 
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import {
-  useQueryStates,
-  parseAsString,
-  parseAsInteger,
-  parseAsBoolean,
-} from "nuqs";
+import { useQueryStates, parseAsString, parseAsInteger, parseAsBoolean } from "nuqs";
 import BookingSummary from "./BookingSummary";
 import BookingAuthSection from "./BookingAuthSection";
 import KnowBeforeYouGo from "./KnowBeforeYouGo";
@@ -21,14 +16,11 @@ import { createInstantBooking } from "@/features/bookings/actions/instant";
 import { createBookingRequest } from "@/features/bookings/actions/request";
 import type { Session } from "next-auth";
 
-export default function BookingDetailsClient({
-  user,
-}: {
-  user: Session["user"] | null;
-}) {
+export default function BookingDetailsClient({ user }: { user: Session["user"] | null }) {
   const router = useRouter();
   const boat = useBoat();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [authModal, setAuthModal] = useState<"sign-in" | "sign-up" | null>(null);
 
   // ✨ NUQS MAGIC: Replace all the complex state management with this
   const [bookingState] = useQueryStates({
@@ -38,13 +30,8 @@ export default function BookingDetailsClient({
     needsCaptain: parseAsBoolean.withDefault(false),
   });
 
-  const { startDateTime, pricingTierId, numberOfPassengers, needsCaptain } =
-    bookingState;
-  const isFormComplete = !!(
-    startDateTime &&
-    pricingTierId &&
-    numberOfPassengers
-  );
+  const { startDateTime, pricingTierId, numberOfPassengers, needsCaptain } = bookingState;
+  const isFormComplete = !!(startDateTime && pricingTierId && numberOfPassengers);
 
   // Simple redirect if no booking data
   useEffect(() => {
@@ -80,8 +67,11 @@ export default function BookingDetailsClient({
 
   const handleBookingSubmit = useCallback(
     async (paymentMethod: "request" | "instant") => {
-      if (!isFormComplete || !user || !boat || !priceBreakdown) {
-        router.push("/sign-in");
+      if (!isFormComplete || !boat || !priceBreakdown) {
+        return;
+      }
+      if (!user) {
+        setAuthModal("sign-in");
         return;
       }
 
@@ -102,18 +92,10 @@ export default function BookingDetailsClient({
             : await createBookingRequest(payload);
 
         if (result?.success) {
-          if (
-            paymentMethod === "instant" &&
-            "paymentUrl" in result &&
-            result.paymentUrl
-          ) {
+          if (paymentMethod === "instant" && "paymentUrl" in result && result.paymentUrl) {
             // For instant bookings, redirect to Stripe (stateless flow)
             window.location.href = result.paymentUrl;
-          } else if (
-            paymentMethod === "request" &&
-            "booking" in result &&
-            result.booking
-          ) {
+          } else if (paymentMethod === "request" && "booking" in result && result.booking) {
             // For request bookings, go to success page with booking data
             const params = new URLSearchParams({
               type: "request",
@@ -178,7 +160,11 @@ export default function BookingDetailsClient({
             />
 
             <div className="py-4 sm:py-6 xl:py-8">
-              <BookingAuthSection user={user} />
+              <BookingAuthSection
+                user={user}
+                authModal={authModal}
+                onAuthModalChange={setAuthModal}
+              />
               <CharterDetailsForm />
             </div>
           </div>
@@ -199,6 +185,7 @@ export default function BookingDetailsClient({
                 boat={{ instantBook: boat.instantBook }}
                 isSubmitting={isSubmitting}
                 onSubmit={handleBookingSubmit}
+                onNeedAuth={() => setAuthModal("sign-in")}
               />
             </div>
           </div>
@@ -210,6 +197,7 @@ export default function BookingDetailsClient({
             boat={{ instantBook: boat.instantBook }}
             isSubmitting={isSubmitting}
             onSubmit={handleBookingSubmit}
+            onNeedAuth={() => setAuthModal("sign-in")}
           />
         </div>
       </div>

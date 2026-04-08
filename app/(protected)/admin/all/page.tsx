@@ -29,6 +29,8 @@ export default async function AllPage() {
         customerName: b.customerName || "N/A",
         customerEmail: b.customerEmail || "",
         customerPhone: b.customerPhone ?? null,
+        /** Charter / trip start — used for sort and date range */
+        sortDate: b.startDateTime,
         date: b.startDateTime,
         endDate: b.endDateTime ?? null,
         href: `/admin/bookings/${b.id}`,
@@ -54,6 +56,7 @@ export default async function AllPage() {
         opsCommissionCents: b.opsCommissionCents,
         opsSourceOverride: b.opsSourceOverride,
         assignedAdminId: b.assignedAdminId,
+        adminAllRowHighlight: b.adminAllRowHighlight ?? null,
       })),
     ...inquiriesResult.inquiries.map((i) => ({
         id: i.id,
@@ -61,17 +64,20 @@ export default async function AllPage() {
         customerName: i.name,
         customerEmail: i.email,
         customerPhone: i.phone ?? null,
+        /** Preferred trip date only — not request/created time */
+        sortDate: i.date ?? null,
         date: i.date ?? i.createdAt,
         endDate: null,
         href: `/admin/inquiries/${i.id}`,
         amount: null as number | null,
         needsContact: i.outcome === "OPEN" && i.stage === "NEEDS_CONTACT",
+        adminAllRowHighlight: i.adminAllRowHighlight ?? null,
       })),
   ].sort((a, b) => {
-    if (!a.date && !b.date) return 0;
-    if (!a.date) return 1;
-    if (!b.date) return -1;
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
+    if (!a.sortDate && !b.sortDate) return 0;
+    if (!a.sortDate) return 1;
+    if (!b.sortDate) return -1;
+    return new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime();
   });
 
   return (

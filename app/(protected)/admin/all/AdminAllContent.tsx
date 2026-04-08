@@ -50,13 +50,29 @@ import {
   Check,
   Flag,
   CalendarRange,
+  Palette,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { InlineOpsCell } from "@/features/bookings/components/admin/InlineOpsCell";
 import { InlineOpsSelectCell } from "@/features/bookings/components/admin/InlineOpsSelectCell";
 import { assignAdminToBooking } from "@/features/bookings/actions/admin-booking.actions";
+import { setAdminAllRowHighlight } from "@/features/admin/actions/admin-all-highlight.actions";
+import {
+  ADMIN_ALL_HIGHLIGHT_IDS,
+  ADMIN_ALL_HIGHLIGHT_LEGEND,
+  adminAllHighlightRowClass,
+  adminAllHighlightSwatchClass,
+} from "@/features/admin/adminAllRowHighlight";
 import { adminAllSearchParams } from "@/features/admin/adminAllSearchParams";
+import { cn } from "@/shared/lib/utils/general-utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/shared/components/ui/dropdown-menu";
 
 const ASSIGN_UNASSIGNED = "__none__";
 
@@ -86,7 +102,7 @@ function AssignAdminCell({
   const value = assignedAdminId ?? ASSIGN_UNASSIGNED;
 
   if (admins.length === 0) {
-    return <span className="text-xs text-muted-foreground">—</span>;
+    return null;
   }
 
   return (
@@ -121,6 +137,84 @@ function AssignAdminCell({
         ))}
       </SelectContent>
     </Select>
+  );
+}
+
+function RowHighlightCell({ item }: { item: UnifiedItem }) {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+  const targetId = item.type === "booking" ? item.bookingId : item.id;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+          disabled={pending}
+          onClick={(e) => e.stopPropagation()}
+          title="Set row color"
+          aria-label="Set row color"
+        >
+          <Palette className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-52" onClick={(e) => e.stopPropagation()}>
+        <DropdownMenuItem
+          className="text-xs"
+          disabled={pending}
+          onSelect={async (e) => {
+            e.preventDefault();
+            setPending(true);
+            try {
+              const res = await setAdminAllRowHighlight(
+                item.type === "booking" ? "booking" : "inquiry",
+                targetId,
+                null
+              );
+              if (res.success) router.refresh();
+            } finally {
+              setPending(false);
+            }
+          }}
+        >
+          Clear highlight
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        {ADMIN_ALL_HIGHLIGHT_IDS.map((id) => (
+          <DropdownMenuItem
+            key={id}
+            className="text-xs"
+            disabled={pending}
+            onSelect={async (e) => {
+              e.preventDefault();
+              setPending(true);
+              try {
+                const res = await setAdminAllRowHighlight(
+                  item.type === "booking" ? "booking" : "inquiry",
+                  targetId,
+                  id
+                );
+                if (res.success) router.refresh();
+              } finally {
+                setPending(false);
+              }
+            }}
+          >
+            <span
+              className={cn(
+                "mr-2 inline-block h-3 w-3 shrink-0 rounded-sm",
+                adminAllHighlightSwatchClass(id)
+              )}
+              aria-hidden
+            />
+            {ADMIN_ALL_HIGHLIGHT_LEGEND[id]}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -164,7 +258,12 @@ export interface UnifiedItemBase {
   customerEmail: string;
   /** Customer phone (booking: customerPhone; inquiry: phone) */
   customerPhone: string | null;
-  /** Primary sort / display anchor: booking start, inquiry preferred date or created */
+  /**
+   * Trip/charter date for sort and date-range filter: booking start, inquiry preferred date only
+   * (not request/created time).
+   */
+  sortDate: Date | null;
+  /** Display date (inquiry may fall back to created when no trip date) */
   date: Date | null;
   /** Booking charter end (inquiries: null) */
   endDate: Date | null;
@@ -172,6 +271,8 @@ export interface UnifiedItemBase {
   amount?: number | null;
   /** Only for inquiries: show subtle "Needs contact" under contact info */
   needsContact?: boolean;
+  /** Admin → All persisted row highlight */
+  adminAllRowHighlight: string | null;
 }
 
 export interface UnifiedItemBooking extends UnifiedItemBase {
@@ -208,7 +309,7 @@ export type UnifiedItem = UnifiedItemBooking | UnifiedItemInquiry;
 
 function formatOpsRevenueCell(item: UnifiedItemBooking): string {
   const rev = computeOpsRevenueCents(item.totalAmountCents, item.opsExpenseCents);
-  return rev != null ? formatCentsAsCurrency(rev) : "—";
+  return rev != null ? formatCentsAsCurrency(rev) : "";
 }
 
 /** Inquiry rows: spacer cells for booking-only ops columns (see booking row). */
@@ -338,14 +439,14 @@ const TYPE_OPTIONS = [
 ] as const;
 
 const SORT_OPTIONS = [
-  { value: "date-desc", label: "Date: newest first" },
-  { value: "date-asc", label: "Date: oldest first" },
+  { value: "date-desc", label: "Trip date: newest first" },
+  { value: "date-asc", label: "Trip date: oldest first" },
   { value: "amount-desc", label: "GMV / total (high → low)" },
 ] as const;
 
-function getItemDateMs(item: UnifiedItem): number | null {
-  if (!item.date) return null;
-  const t = new Date(item.date).getTime();
+function getSortDateMs(item: UnifiedItem): number | null {
+  if (!item.sortDate) return null;
+  const t = new Date(item.sortDate).getTime();
   return Number.isNaN(t) ? null : t;
 }
 
@@ -367,7 +468,7 @@ function itemMatchesDateRange(item: UnifiedItem, dateFrom: string, dateTo: strin
   let dt = dateTo.trim();
   if (!df && !dt) return true;
 
-  const ms = getItemDateMs(item);
+  const ms = getSortDateMs(item);
   if (ms == null) return false;
 
   if (df && dt && df > dt) [df, dt] = [dt, df];
@@ -384,10 +485,10 @@ function itemMatchesDateRange(item: UnifiedItem, dateFrom: string, dateTo: strin
   return true;
 }
 
-/** Date sort: missing dates last; tie-break by id for stable order. */
+/** Trip date sort: missing dates last; tie-break by id for stable order. */
 function compareByDateDesc(a: UnifiedItem, b: UnifiedItem): number {
-  const ta = getItemDateMs(a);
-  const tb = getItemDateMs(b);
+  const ta = getSortDateMs(a);
+  const tb = getSortDateMs(b);
   if (ta == null && tb == null) return a.id.localeCompare(b.id);
   if (ta == null) return 1;
   if (tb == null) return -1;
@@ -396,8 +497,8 @@ function compareByDateDesc(a: UnifiedItem, b: UnifiedItem): number {
 }
 
 function compareByDateAsc(a: UnifiedItem, b: UnifiedItem): number {
-  const ta = getItemDateMs(a);
-  const tb = getItemDateMs(b);
+  const ta = getSortDateMs(a);
+  const tb = getSortDateMs(b);
   if (ta == null && tb == null) return a.id.localeCompare(b.id);
   if (ta == null) return 1;
   if (tb == null) return -1;
@@ -472,9 +573,7 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
     }
 
     if (filters.dateFrom.trim() || filters.dateTo.trim()) {
-      result = result.filter((i) =>
-        itemMatchesDateRange(i, filters.dateFrom, filters.dateTo),
-      );
+      result = result.filter((i) => itemMatchesDateRange(i, filters.dateFrom, filters.dateTo));
     }
 
     switch (filters.sort) {
@@ -526,7 +625,10 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
               className="pl-9 rounded-xl"
             />
           </div>
-          <Select value={filters.type} onValueChange={(v) => setFilters({ type: v as typeof filters.type })}>
+          <Select
+            value={filters.type}
+            onValueChange={(v) => setFilters({ type: v as typeof filters.type })}
+          >
             <SelectTrigger className="w-[160px] rounded-xl">
               <Filter className="h-4 w-4 mr-1.5" />
               <SelectValue />
@@ -539,7 +641,10 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
               ))}
             </SelectContent>
           </Select>
-          <Select value={filters.sort} onValueChange={(v) => setFilters({ sort: v as typeof filters.sort })}>
+          <Select
+            value={filters.sort}
+            onValueChange={(v) => setFilters({ sort: v as typeof filters.sort })}
+          >
             <SelectTrigger className="w-[160px] rounded-xl">
               <ArrowUpDown className="h-4 w-4 mr-1.5" />
               <SelectValue />
@@ -574,8 +679,9 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                 <div>
                   <p className="text-sm font-medium">Date range</p>
                   <p className="text-xs text-muted-foreground">
-                    Matches each row’s primary date (charter start or inquiry date). Rows with no date
-                    are hidden while a range is set.
+                    Uses trip date: charter start for bookings, preferred trip date for inquiries
+                    (not request/created time). Rows with no trip date are hidden while a range is
+                    set.
                   </p>
                 </div>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -679,6 +785,19 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
         </p>
       </div>
 
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border/50 bg-muted/25 px-3 py-2 text-xs text-muted-foreground">
+        <span className="font-medium text-foreground">Color key</span>
+        {ADMIN_ALL_HIGHLIGHT_IDS.map((id) => (
+          <span key={id} className="inline-flex items-center gap-1.5">
+            <span
+              className={cn("h-2.5 w-2.5 shrink-0 rounded-sm", adminAllHighlightSwatchClass(id))}
+              aria-hidden
+            />
+            {ADMIN_ALL_HIGHLIGHT_LEGEND[id]}
+          </span>
+        ))}
+      </div>
+
       {/* Table - all ops inline */}
       <div className="rounded-2xl border border-border/60 bg-card shadow-sm overflow-x-auto">
         {filteredAndSortedItems.length === 0 ? (
@@ -699,13 +818,17 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
           <Table>
             <TableHeader>
               <TableRow className="hover:bg-transparent">
+                <TableHead className="w-10 max-w-10 p-1 text-center" title="Row highlight">
+                  <span className="sr-only">Highlight</span>
+                  <Palette className="mx-auto h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+                </TableHead>
                 <TableHead className="whitespace-nowrap">Type</TableHead>
                 <TableHead className="whitespace-nowrap">Customer</TableHead>
-                <TableHead className="whitespace-nowrap min-w-[8rem]">Assigned</TableHead>
+                <TableHead className="whitespace-nowrap min-w-[8rem] px-1.5">Agent</TableHead>
                 <TableHead className="whitespace-normal">
                   <button
                     type="button"
-                    className="inline-flex max-w-[7rem] flex-wrap items-center gap-1 text-left font-medium text-foreground hover:underline"
+                    className="inline-flex max-w-[9rem] flex-wrap items-center gap-1 text-left font-medium text-foreground hover:underline"
                     onClick={() => {
                       if (filters.sort === "date-desc") {
                         setFilters({ sort: "date-asc" });
@@ -713,11 +836,14 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                         setFilters({ sort: "date-desc" });
                       }
                     }}
-                    title="Sort by date (newest ↔ oldest)"
+                    title="Sort by trip date — charter start or inquiry preferred date (not request time)"
                   >
-                    <span>Date</span>
+                    <span>Trip date</span>
                     {filters.sort === "date-desc" ? (
-                      <ArrowDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                      <ArrowDown
+                        className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                        aria-hidden
+                      />
                     ) : filters.sort === "date-asc" ? (
                       <ArrowUp className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
                     ) : null}
@@ -768,18 +894,31 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
               {filteredAndSortedItems.map((item) => (
                 <TableRow
                   key={`${item.type}-${item.id}`}
-                  className="group cursor-pointer hover:bg-muted/30 transition-colors"
+                  className={cn(
+                    "group cursor-pointer transition-colors",
+                    adminAllHighlightRowClass(item.adminAllRowHighlight) ?? "hover:bg-muted/30"
+                  )}
                   onClick={() => router.push(item.href)}
                 >
+                  <TableCell
+                    className="w-10 max-w-10 p-1 align-middle"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <RowHighlightCell item={item} />
+                  </TableCell>
                   <TableCell className="whitespace-nowrap">{getTypeBadge(item.type)}</TableCell>
                   <TableCell className="align-top min-w-[200px] max-w-[260px]">
                     <div className="space-y-1">
                       <div className="font-medium text-foreground">{item.customerName}</div>
                       <div className="flex items-center gap-0.5 min-w-0">
-                        <span className="text-sm text-muted-foreground truncate">
-                          {item.customerEmail || "—"}
-                        </span>
-                        <CopyTextButton text={item.customerEmail} label="email" />
+                        {item.customerEmail ? (
+                          <>
+                            <span className="text-sm text-muted-foreground truncate">
+                              {item.customerEmail}
+                            </span>
+                            <CopyTextButton text={item.customerEmail} label="email" />
+                          </>
+                        ) : null}
                       </div>
                       {item.customerPhone?.trim() ? (
                         <div className="flex items-center gap-0.5 min-w-0">
@@ -797,7 +936,7 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                     </div>
                   </TableCell>
                   <TableCell
-                    className="align-top min-w-[8rem] max-w-[11rem]"
+                    className="align-middle min-w-[8rem] max-w-[11rem]"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {item.type === "booking" ? (
@@ -806,29 +945,21 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                         assignedAdminId={item.assignedAdminId}
                         admins={admins}
                       />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
+                    ) : null}
                   </TableCell>
-                  <TableCell className="align-top min-w-0 max-w-[6.5rem] whitespace-normal sm:max-w-[7.5rem]">
+                  <TableCell className="align-middle min-w-0 max-w-[6.5rem] whitespace-normal sm:max-w-[7.5rem]">
                     {item.date ? (
                       <div className="text-sm break-words">
                         <DateCellContent item={item} />
                       </div>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">—</span>
-                    )}
+                    ) : null}
                   </TableCell>
                   <TableCell className="align-middle text-right whitespace-nowrap px-1.5">
                     {item.amount != null && item.amount > 0 ? (
                       <span className="inline-flex min-h-7 items-center justify-end font-medium text-foreground tabular-nums">
                         {formatCentsAsCurrency(item.amount * 100)}
                       </span>
-                    ) : (
-                      <span className="inline-flex min-h-7 items-center justify-end text-muted-foreground">
-                        —
-                      </span>
-                    )}
+                    ) : null}
                   </TableCell>
                   {item.type === "booking" ? (
                     <>
@@ -842,13 +973,20 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                           value={item.opsExpenseCents}
                           isCents
                           compact
-                          placeholder="—"
+                          placeholder=""
                         />
                       </TableCell>
                       <TableCell className="align-middle px-1.5">
-                        <span className="inline-flex min-h-7 items-center text-xs font-medium tabular-nums text-emerald-700 dark:text-emerald-300">
-                          {formatOpsRevenueCell(item)}
-                        </span>
+                        {(() => {
+                          const revLabel = formatOpsRevenueCell(item);
+                          return revLabel ? (
+                            <span className="inline-flex min-h-7 items-center text-xs font-medium tabular-nums text-emerald-700 dark:text-emerald-300">
+                              {revLabel}
+                            </span>
+                          ) : (
+                            <span className="inline-flex min-h-7 items-center" />
+                          );
+                        })()}
                       </TableCell>
                       <TableCell
                         className="align-middle px-1.5"
@@ -860,7 +998,7 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                           value={item.opsPaidCents}
                           isCents
                           compact
-                          placeholder="—"
+                          placeholder=""
                         />
                       </TableCell>
                       <TableCell
@@ -873,7 +1011,7 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                           value={item.opsSentToOwnerCents}
                           isCents
                           compact
-                          placeholder="—"
+                          placeholder=""
                         />
                       </TableCell>
                       <TableCell
@@ -912,7 +1050,7 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                           field="crewName"
                           value={item.opsCrewName}
                           compact
-                          placeholder="—"
+                          placeholder=""
                         />
                       </TableCell>
                       <TableCell
@@ -924,7 +1062,7 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                           field="opsNote"
                           value={item.opsNote}
                           compact
-                          placeholder="—"
+                          placeholder=""
                         />
                       </TableCell>
                       <TableCell
@@ -943,7 +1081,7 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                           value={item.opsCommissionAgentCents}
                           isCents
                           compact
-                          placeholder="—"
+                          placeholder=""
                         />
                       </TableCell>
                       <TableCell
@@ -956,7 +1094,7 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                           value={item.opsCommissionKosCents}
                           isCents
                           compact
-                          placeholder="—"
+                          placeholder=""
                         />
                       </TableCell>
                       <TableCell

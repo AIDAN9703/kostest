@@ -1,5 +1,26 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+
+/** Full path + query for safe return after sign-in (preserves booking nuqs, etc.). */
+function callbackUrlFromRequest(req: NextRequest): string {
+  const { pathname, search } = req.nextUrl;
+  return `${pathname}${search || ""}`;
+}
+
+/**
+ * Guest-accessible routes under /bookings (checkout before sign-in; modal auth on details page).
+ * All other /bookings/* paths still require a session.
+ */
+function isPublicGuestBookingPath(pathname: string): boolean {
+  // /bookings/:boatId/details — charter checkout (query string has dates / tier)
+  if (/^\/bookings\/[^/]+\/details$/.test(pathname)) return true;
+  // Public draft acceptance links
+  if (pathname.startsWith("/bookings/draft/")) return true;
+  // Stripe return URL
+  if (pathname.startsWith("/bookings/payment-success")) return true;
+  return false;
+}
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -12,7 +33,7 @@ export default auth((req) => {
   if (pathname.startsWith("/admin")) {
     if (!isLoggedIn) {
       const signInUrl = new URL("/sign-in", req.url);
-      signInUrl.searchParams.set("callbackUrl", pathname);
+      signInUrl.searchParams.set("callbackUrl", callbackUrlFromRequest(req));
       return NextResponse.redirect(signInUrl);
     }
     if (!isAdmin) {
@@ -20,29 +41,41 @@ export default auth((req) => {
     }
   }
 
-  // Protect profile and booking routes — require auth
-  if (pathname.startsWith("/profile") || pathname.startsWith("/bookings")) {
+  // Profile — require auth
+  if (pathname.startsWith("/profile")) {
     if (!isLoggedIn) {
       const signInUrl = new URL("/sign-in", req.url);
-      signInUrl.searchParams.set("callbackUrl", pathname);
+      signInUrl.searchParams.set("callbackUrl", callbackUrlFromRequest(req));
+      return NextResponse.redirect(signInUrl);
+    }
+  }
+
+  // Bookings — require auth except guest checkout / public booking URLs
+  if (pathname.startsWith("/bookings")) {
+    if (!isLoggedIn && !isPublicGuestBookingPath(pathname)) {
+      const signInUrl = new URL("/sign-in", req.url);
+      signInUrl.searchParams.set("callbackUrl", callbackUrlFromRequest(req));
       return NextResponse.redirect(signInUrl);
     }
   }
 
   // Protect admin API routes
   if (pathname.startsWith("/api/admin")) {
-    if (!isLoggedIn) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    if (!isLoggedIn)
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     if (!isAdmin) return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   }
 
   // Protect user-specific API routes
   if (pathname.startsWith("/api/users/profile") || pathname.startsWith("/api/users/stats")) {
-    if (!isLoggedIn) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    if (!isLoggedIn)
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
   // Protect upload API
   if (pathname.startsWith("/api/upload")) {
-    if (!isLoggedIn) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    if (!isLoggedIn)
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }
 
   return NextResponse.next();

@@ -46,6 +46,8 @@ export const bookings = pgTable(
     occasionType: text("occasion_type"),
     addOns: json("add_ons"),
     adminNotes: text("admin_notes"),
+    /** Admin → All: optional row highlight key (e.g. yellow, mint) for workflow organization */
+    adminAllRowHighlight: text("admin_all_row_highlight"),
 
     // ==========================================================================
     // DRAFT FLOW (sent to customer, awaiting acceptance)
