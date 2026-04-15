@@ -89,6 +89,24 @@ export function InquiryCloseActions({
     }
   }
 
+  /** Won + redirect to admin booking form with inquiry prefill */
+  async function handleWonAndCreateBooking() {
+    setLoading("won");
+    const res = await updateInquiryOutcome(inquiryId, "WON", undefined);
+    setLoading(null);
+    if (res.success) {
+      setShowCloseDialog(null);
+      toast({
+        title: "Inquiry marked as won",
+        description: "Opening the booking form with inquiry details…",
+      });
+      router.push(`/admin/bookings/create?inquiryId=${inquiryId}`);
+      router.refresh();
+    } else {
+      toast({ title: "Error", description: res.error, variant: "destructive" });
+    }
+  }
+
   return (
     <>
       {/* Close Inquiry Section */}
@@ -99,10 +117,13 @@ export function InquiryCloseActions({
             size="sm"
             onClick={() => setShowCloseDialog("won")}
             disabled={loading !== null}
-            className="rounded-xl gap-2 bg-green-600 text-white hover:bg-green-700 shadow-sm"
+            className="h-auto min-h-9 rounded-xl gap-2 bg-green-600 px-3 py-2 text-white hover:bg-green-700 shadow-sm"
           >
-            <CheckCircle2 className="h-4 w-4" />
-            Mark as Won
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <span className="inline-flex flex-col items-start gap-0 text-left leading-tight">
+              <span>Mark as won</span>
+              <span className="text-[11px] font-normal opacity-90">+ create booking</span>
+            </span>
           </Button>
           <Button
             variant="destructive"
@@ -126,16 +147,18 @@ export function InquiryCloseActions({
         </div>
       </div>
 
-      {/* Mark as Won Dialog */}
+      {/* Mark as won → create booking */}
       <Dialog
         open={showCloseDialog === "won"}
         onOpenChange={(open) => !open && setShowCloseDialog(null)}
       >
         <DialogContent className="rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Mark as Won</DialogTitle>
+            <DialogTitle>Mark as won &amp; create booking</DialogTitle>
             <DialogDescription>
-              This will mark the inquiry as won and close it.
+              Marks this inquiry as won, then opens the admin booking form with the
+              customer&apos;s contact info and charter preferences filled in. You can pick
+              the boat and finish pricing there.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -147,11 +170,11 @@ export function InquiryCloseActions({
               Cancel
             </Button>
             <Button
-              onClick={() => handleCloseInquiry("WON")}
+              onClick={() => void handleWonAndCreateBooking()}
               disabled={loading === "won"}
               className="rounded-xl gap-2 bg-green-600 text-white hover:bg-green-700"
             >
-              {loading === "won" ? "Marking..." : "Mark as Won"}
+              {loading === "won" ? "Working…" : "Open booking form"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -7,11 +7,17 @@
 export const OPS_SELECT_NONE = "__ops_none__";
 export const OPS_SELECT_CUSTOM = "__ops_custom__";
 
-/** Canonical source values (stored in booking_ops.source_override). */
-export const OPS_SOURCE_OPTIONS = [
-  "Direct",
-  "Referral",
-  "Broker",
+/**
+ * 70% agent / 30% KOS — direct-style sources (see getCommissionSplitForSource).
+ * Order is dropdown order within this group.
+ */
+export const OPS_SOURCE_OPTIONS_AGENT_HEAVY = ["Direct", "Referral", "Broker"] as const;
+
+/**
+ * 67% agent / 33% KOS — platform & KOS-originated leads.
+ * Order is dropdown order within this group.
+ */
+export const OPS_SOURCE_OPTIONS_KOS_LEAD = [
   "KOS Broker",
   "Boatsetter",
   "KOS Website",
@@ -22,6 +28,18 @@ export const OPS_SOURCE_OPTIONS = [
   "Phone",
 ] as const;
 
+/** Section headings in source dropdowns (must match commission math below). */
+export const OPS_SOURCE_GROUP_AGENT_HEAVY_LABEL =
+  "70% agent / 30% KOS — direct & partners";
+export const OPS_SOURCE_GROUP_KOS_LEAD_LABEL =
+  "67% agent / 33% KOS — platform & other leads";
+
+/** Canonical source values (stored in booking_ops.source_override). */
+export const OPS_SOURCE_OPTIONS = [
+  ...OPS_SOURCE_OPTIONS_AGENT_HEAVY,
+  ...OPS_SOURCE_OPTIONS_KOS_LEAD,
+] as const;
+
 export type OpsSource = (typeof OPS_SOURCE_OPTIONS)[number];
 
 /** 70% Agent / 30% KOS */
@@ -29,17 +47,8 @@ const SPLIT_AGENT_HEAVY = { agentPct: 0.7, kosPct: 0.3 } as const;
 /** 33% KOS / 67% Agent */
 const SPLIT_KOS_LEAD = { agentPct: 0.67, kosPct: 0.33 } as const;
 
-const SOURCES_AGENT_HEAVY = new Set<string>(["Direct", "Referral", "Broker"]);
-const SOURCES_KOS_LEAD = new Set<string>([
-  "KOS Broker",
-  "KOS Website",
-  "Instagram",
-  "Phone",
-  "Boatsetter",
-  "GetMyBoat",
-  "Boatpass",
-  "MYC",
-]);
+const SOURCES_AGENT_HEAVY = new Set<string>(OPS_SOURCE_OPTIONS_AGENT_HEAVY);
+const SOURCES_KOS_LEAD = new Set<string>(OPS_SOURCE_OPTIONS_KOS_LEAD);
 
 /**
  * Match DB / legacy text to a canonical OPS_SOURCE_OPTIONS value (case-insensitive).

@@ -61,23 +61,19 @@ const BoatCard = ({
   const isCompact = variant === "compact";
 
   const radius = isCompact ? "rounded-xl" : isFeatured ? "rounded-3xl" : "rounded-2xl";
-  const padding = isCompact
-    ? "px-2 py-2 sm:px-3 sm:py-3.5"
-    : isFeatured
-      ? "px-3 py-3 sm:px-5 sm:py-5"
-      : "p-3 sm:p-4";
+  const padding = isCompact ? "px-3 py-2.5" : isFeatured ? "px-5 py-4" : "px-4 py-3";
   const titleSize = isCompact
-    ? "text-sm font-bold"
+    ? "text-sm font-semibold"
     : isFeatured
-      ? "text-base font-bold sm:text-lg"
-      : "text-sm font-bold sm:text-base";
-  const metaSize = isCompact ? "text-[10px]" : "text-[10px] sm:text-xs";
+      ? "text-lg font-semibold"
+      : "text-base font-semibold";
+  const metaSize = isCompact ? "text-[10px]" : "text-xs";
 
   return (
-    <Link href={`/boats/${boat.id}`} className="block h-full w-full">
+    <Link href={`/boats/${boat.id}`} className="block h-full">
       <div
         className={cn(
-          "group relative bg-white flex flex-col h-full transition-all duration-300 ease-out overflow-hidden border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 shrink-0",
+          "group relative bg-white flex flex-col h-full transition-all duration-300 ease-out font-poppins overflow-hidden border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5",
           radius,
           className
         )}
@@ -192,7 +188,7 @@ const BoatCard = ({
 
         {/* Content - fully stacked, no side-by-side columns */}
         {showDetails && (
-          <div className={cn("flex-1 flex flex-col gap-1 sm:gap-1.5", padding)}>
+          <div className={cn("flex-1 flex flex-col gap-0.5", padding)}>
             {/* Row 1: Location + Rating */}
             <div className="flex items-center justify-between gap-2">
               {hasLocation ? (

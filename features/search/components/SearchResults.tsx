@@ -5,6 +5,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Boat, BoatLocation } from "@/shared/lib/types/types";
 import { Button } from "@/shared/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/components/ui/dropdown-menu";
+import {
   Pagination,
   PaginationContent,
   PaginationItem,
@@ -13,7 +19,7 @@ import {
   PaginationPrevious,
   PaginationEllipsis,
 } from "@/shared/components/ui/pagination";
-import { ArrowUpDown, Loader2, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, Check, Loader2, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/shared/lib/utils/general-utils";
 import BoatCard from "@/shared/components/ui/boat-card";
 import { useSearchURL } from "@/features/search/hooks/useSearchURL";
@@ -159,42 +165,45 @@ export default function SearchResults({
             )}
           </Button>
 
-          {/* Sort Dropdown */}
+          {/* Sort: click/tap menu (hover-only broke on touch devices) */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-500 whitespace-nowrap">Sort by:</span>
-            <div className="relative group">
-              <Button
-                variant="outline"
-                className="h-11 px-4 rounded-2xl border-gray-200 hover:border-gray-300 hover:bg-white
-                         focus:border-[#2C3E50] focus:ring-[#2C3E50] transition-all gap-2 min-w-[180px] justify-between"
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-11 px-4 rounded-2xl border-gray-200 hover:border-gray-300 hover:bg-white
+                           focus:border-[#2C3E50] focus:ring-[#2C3E50] transition-all gap-2 min-w-[180px] justify-between"
+                  aria-label="Sort results"
+                >
+                  <span className="truncate">{getSortLabel(currentSort)}</span>
+                  <ArrowUpDown className="h-4 w-4 shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="end"
+                className="z-50 w-[min(100vw-2rem,220px)] rounded-xl border border-gray-100 bg-white p-1 shadow-lg"
               >
-                <span>{getSortLabel(currentSort)}</span>
-                <ArrowUpDown className="h-4 w-4" />
-              </Button>
-
-              {/* Sort Options Dropdown */}
-              <div
-                className="absolute right-0 mt-2 w-[220px] bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-20
-                            opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200"
-              >
-                <div className="py-1">
-                  {SORT_OPTIONS.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => handleSort(option.value)}
-                      className={cn(
-                        "w-full px-4 py-2 text-left text-sm hover:bg-gray-50 transition-colors",
-                        currentSort === option.value
-                          ? "text-[#2C3E50] font-medium"
-                          : "text-gray-700"
-                      )}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+                {SORT_OPTIONS.map((option) => (
+                  <DropdownMenuItem
+                    key={option.value}
+                    onSelect={() => handleSort(option.value)}
+                    className={cn(
+                      "cursor-pointer justify-between gap-2 rounded-lg px-3 py-2 text-sm focus:bg-gray-50",
+                      currentSort === option.value
+                        ? "text-[#2C3E50] font-medium"
+                        : "text-gray-700"
+                    )}
+                  >
+                    {option.label}
+                    {currentSort === option.value ? (
+                      <Check className="h-4 w-4 shrink-0 text-[#2C3E50]" aria-hidden />
+                    ) : null}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>

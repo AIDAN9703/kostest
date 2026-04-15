@@ -161,7 +161,9 @@ export function InlineOpsCell({
         className={cn(
           "tabular-nums",
           compact
-            ? "h-7 px-1.5 text-xs w-[4.25rem] max-w-[5rem]"
+            ? isCents
+              ? "h-7 min-w-[6.75rem] w-[7.5rem] max-w-[9rem] px-1.5 text-xs"
+              : "h-7 w-[4.25rem] max-w-[5rem] px-1.5 text-xs"
             : "h-8 text-sm min-w-[4rem]"
         )}
       />
@@ -173,7 +175,9 @@ export function InlineOpsCell({
       className={cn(
         "rounded border border-transparent hover:border-border cursor-text tabular-nums",
         compact
-          ? "min-h-7 px-1.5 py-0.5 -mx-0.5 text-xs max-w-[5rem] w-[4.25rem] overflow-hidden text-ellipsis"
+          ? isCents
+            ? "min-h-7 min-w-[6.75rem] w-[7.5rem] max-w-[9rem] whitespace-nowrap px-1.5 py-0.5 -mx-0.5 text-xs"
+            : "min-h-7 max-w-[5rem] w-[4.25rem] overflow-hidden text-ellipsis px-1.5 py-0.5 -mx-0.5 text-xs"
           : "min-h-8 px-2 py-1 -mx-2 -my-1 text-sm",
         className
       )}
@@ -183,6 +187,11 @@ export function InlineOpsCell({
         );
         setEditing(true);
       }}
+      title={
+        compact && isCents && typeof displayValue === "string" && displayValue.length > 0
+          ? displayValue
+          : undefined
+      }
     >
       {saving ? (
         <Loader2 className={cn("animate-spin text-muted-foreground", compact ? "h-3 w-3" : "h-4 w-4")} />

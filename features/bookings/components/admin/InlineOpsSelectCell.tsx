@@ -21,6 +21,7 @@ import {
   normalizeOpsSource,
 } from "@/features/bookings/constants/ops-ui-config";
 import { cn } from "@/shared/lib/utils/general-utils";
+import { OpsSourceSelectMenuItems } from "@/features/bookings/components/admin/OpsSourceSelectMenuItems";
 
 const NONE_SENTINEL = OPS_SELECT_NONE;
 const CUSTOM_SENTINEL = OPS_SELECT_CUSTOM;
@@ -116,14 +117,10 @@ export function InlineOpsSelectCell({
               <SelectValue placeholder="—" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={NONE_SENTINEL} className="text-xs">
-                —
-              </SelectItem>
-              {OPS_SOURCE_OPTIONS.map((opt) => (
-                <SelectItem key={opt} value={opt} className="text-xs">
-                  {opt}
-                </SelectItem>
-              ))}
+              <OpsSourceSelectMenuItems
+                noneSentinel={NONE_SENTINEL}
+                itemClassName="text-xs"
+              />
               {hasLegacyExtra ? (
                 <SelectItem value={normalizedSource} className="text-xs">
                   {normalizedSource} (legacy)

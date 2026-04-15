@@ -786,7 +786,7 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
       </div>
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border border-border/50 bg-muted/25 px-3 py-2 text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">Color key</span>
+        <span className="font-medium text-foreground">Key</span>
         {ADMIN_ALL_HIGHLIGHT_IDS.map((id) => (
           <span key={id} className="inline-flex items-center gap-1.5">
             <span
@@ -868,13 +868,13 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                   className="align-middle whitespace-nowrap px-1.5"
                   title="Expense − sent to owner (computed on save)"
                 >
-                  Balance owner
+                  Bal owner
                 </TableHead>
                 <TableHead
                   className="align-middle whitespace-nowrap px-1.5"
                   title="Charter balance owed by client: GMV − PAID (quote total if ops GMV empty)"
                 >
-                  Balance client
+                  Bal client
                 </TableHead>
                 <TableHead className="align-middle whitespace-nowrap px-1.5 max-w-[4rem]">
                   Crew
@@ -907,13 +907,21 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                     <RowHighlightCell item={item} />
                   </TableCell>
                   <TableCell className="whitespace-nowrap">{getTypeBadge(item.type)}</TableCell>
-                  <TableCell className="align-top min-w-[200px] max-w-[260px]">
-                    <div className="space-y-1">
-                      <div className="font-medium text-foreground">{item.customerName}</div>
-                      <div className="flex items-center gap-0.5 min-w-0">
+                  <TableCell className="align-top min-w-0 w-[12rem] max-w-[12rem] sm:w-[13rem] sm:max-w-[13rem]">
+                    <div className="min-w-0 space-y-1">
+                      <div
+                        className="truncate font-medium text-foreground"
+                        title={item.customerName}
+                      >
+                        {item.customerName}
+                      </div>
+                      <div className="flex min-w-0 items-center gap-0.5">
                         {item.customerEmail ? (
                           <>
-                            <span className="text-sm text-muted-foreground truncate">
+                            <span
+                              className="min-w-0 flex-1 truncate text-sm text-muted-foreground"
+                              title={item.customerEmail}
+                            >
                               {item.customerEmail}
                             </span>
                             <CopyTextButton text={item.customerEmail} label="email" />
@@ -921,8 +929,11 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                         ) : null}
                       </div>
                       {item.customerPhone?.trim() ? (
-                        <div className="flex items-center gap-0.5 min-w-0">
-                          <span className="text-sm text-muted-foreground truncate">
+                        <div className="flex min-w-0 items-center gap-0.5">
+                          <span
+                            className="min-w-0 flex-1 truncate text-sm text-muted-foreground"
+                            title={item.customerPhone.trim()}
+                          >
                             {item.customerPhone.trim()}
                           </span>
                           <CopyTextButton text={item.customerPhone} label="phone" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 
 import Link from "next/link";
 
@@ -25,9 +25,12 @@ import {
   type PricingTierOption,
 } from "./types";
 import type { BookingAddOnInput } from "@/features/bookings/booking.types";
+import type { InquiryBookingPrefill } from "@/features/inquiries/inquiry-booking-prefill";
 
 interface SingleBookingFormProps {
   pricingTiers: PricingTierOption[];
+  /** When opening from an inquiry (won → create booking) */
+  inquiryPrefill?: InquiryBookingPrefill | null;
 }
 
 const INITIAL_STATE: ActionResponse<{
@@ -37,7 +40,10 @@ const INITIAL_STATE: ActionResponse<{
   proposalSent?: boolean;
 }> = { success: false };
 
-export function SingleBookingForm({ pricingTiers }: SingleBookingFormProps) {
+export function SingleBookingForm({
+  pricingTiers,
+  inquiryPrefill = null,
+}: SingleBookingFormProps) {
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [actionState, setActionState] = useState<
@@ -69,13 +75,33 @@ export function SingleBookingForm({ pricingTiers }: SingleBookingFormProps) {
 
   const { data: selectedUser } = useUser(selectedUserId || "");
 
+  const inquiryPrefillApplied = useRef(false);
+  useEffect(() => {
+    if (!inquiryPrefill || inquiryPrefillApplied.current) return;
+    inquiryPrefillApplied.current = true;
+    setCustomerType(inquiryPrefill.customerType);
+    setSelectedUserId("");
+    setCustomerName(inquiryPrefill.customerName);
+    setCustomerEmail(inquiryPrefill.customerEmail);
+    setCustomerPhone(inquiryPrefill.customerPhone);
+    setNumberOfPassengers(inquiryPrefill.numberOfPassengers);
+    if (inquiryPrefill.adminNotes.trim()) {
+      setAdminNotes(inquiryPrefill.adminNotes);
+    }
+    setSection((s) => ({
+      ...s,
+      startDateTime: inquiryPrefill.startDateTime || s.startDateTime,
+      endDateTime: inquiryPrefill.endDateTime || s.endDateTime,
+    }));
+  }, [inquiryPrefill]);
+
   useEffect(() => {
     if (customerType === "existing_user" && selectedUser && selectedUserId) {
       const fullName = `${selectedUser.firstName ?? ""} ${selectedUser.lastName ?? ""}`.trim();
       setCustomerName(fullName || selectedUser.email);
       setCustomerEmail(selectedUser.email);
       setCustomerPhone(selectedUser.phoneNumber ?? "");
-    } else if (!selectedUserId) {
+    } else if (customerType === "existing_user" && !selectedUserId) {
       setCustomerName("");
       setCustomerEmail("");
       setCustomerPhone("");
@@ -202,6 +228,12 @@ export function SingleBookingForm({ pricingTiers }: SingleBookingFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {inquiryPrefill ? (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/35 dark:text-emerald-50">
+          <span className="font-medium">Loaded from inquiry.</span> Customer and trip hints are
+          filled below — choose a boat and pricing, then create the booking.
+        </div>
+      ) : null}
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
           <Card>

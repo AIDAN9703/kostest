@@ -55,7 +55,7 @@ export default function SearchSkeleton() {
             </div>
           </div>
         </div>
-        
+
         {/* Right Side - Map Skeleton (hidden on mobile) */}
         <div className="hidden md:flex md:w-1/3">
           <div className="sticky top-[80px] h-[calc(100vh-80px)] w-full p-4">
@@ -65,12 +65,12 @@ export default function SearchSkeleton() {
                 <div className="h-10 w-10 bg-white rounded-full shadow-md animate-pulse" />
                 <div className="h-10 w-10 bg-white rounded-full shadow-md animate-pulse" />
               </div>
-              
+
               {/* Search Area Button Skeleton */}
               <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
                 <div className="h-10 w-40 bg-white rounded-full shadow-md animate-pulse" />
               </div>
-              
+
               {/* Map Attribution Skeleton */}
               <div className="absolute bottom-2 right-2">
                 <div className="h-4 w-20 bg-white rounded-sm animate-pulse opacity-70" />
@@ -81,4 +81,4 @@ export default function SearchSkeleton() {
       </div>
     </div>
   );
-} 
+}

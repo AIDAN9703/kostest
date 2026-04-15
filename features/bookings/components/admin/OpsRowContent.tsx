@@ -8,8 +8,15 @@ import {
   computeOpsBalanceOwnerCents,
   computeOpsRevenueCents,
 } from "@/shared/lib/utils/ops-revenue";
+import { cn } from "@/shared/lib/utils/general-utils";
+
 export interface OpsRowContentProps {
   bookingId: string;
+  /**
+   * `compact` = dense labels (bookings table expand row).
+   * `comfortable` = booking detail page: plain layout, full words, no per-field boxes.
+   */
+  density?: "compact" | "comfortable";
   totalAmountCents?: number | null;
   opsExpenseCents?: number | null;
   opsGmvCents?: number | null;
@@ -29,13 +36,53 @@ export interface OpsRowContentProps {
   opsSourceOverride?: string | null;
 }
 
-function OpsField({ label, children }: { label: string; children: React.ReactNode }) {
+function OpsField({
+  label,
+  children,
+  density,
+}: {
+  label: string;
+  children: React.ReactNode;
+  density: "compact" | "comfortable";
+}) {
   return (
-    <div className="space-y-1">
-      <dt className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+    <div className="min-w-0 space-y-1">
+      <dt
+        className={cn(
+          "text-muted-foreground",
+          density === "compact"
+            ? "text-xs font-medium uppercase tracking-wider"
+            : "text-sm font-medium"
+        )}
+      >
         {label}
       </dt>
-      <dd>{children}</dd>
+      <dd className="min-w-0">{children}</dd>
+    </div>
+  );
+}
+
+/** Mirrors {@link InlineOpsCell} padding/height so read-only values line up with editable cells */
+function OpsReadonlyValue({
+  children,
+  density,
+  title,
+}: {
+  children: React.ReactNode;
+  density: "compact" | "comfortable";
+  title?: string;
+}) {
+  return (
+    <div
+      title={title}
+      className={cn(
+        "flex tabular-nums text-foreground",
+        density === "comfortable"
+          ? "min-h-8 items-center px-2 py-1 -mx-2 -my-1 text-sm font-medium"
+          : "min-h-7 items-center px-1.5 py-0.5 -mx-0.5 text-xs font-medium"
+      )}
+    >
+      {children}
     </div>
   );
 }
@@ -48,6 +95,7 @@ function StatusFlagsBlock({
   opsCaptainPaid,
   opsAllPaid,
   opsSheetsSent,
+  density,
 }: Pick<
   OpsRowContentProps,
   | "bookingId"
@@ -57,6 +105,7 @@ function StatusFlagsBlock({
   | "opsCaptainPaid"
   | "opsAllPaid"
   | "opsSheetsSent"
+  | "density"
 >) {
   const specs = [
     {
@@ -69,16 +118,27 @@ function StatusFlagsBlock({
     { field: "clientPaid" as const, abbr: "Cli", title: "Client paid", v: opsClientPaid },
     { field: "captainPaid" as const, abbr: "Cap", title: "Captain paid", v: opsCaptainPaid },
     { field: "allPaid" as const, abbr: "All", title: "All paid", v: opsAllPaid },
-    { field: "sheetsSent" as const, abbr: "Sh", title: "Sheets", v: opsSheetsSent },
+    { field: "sheetsSent" as const, abbr: "Sh", title: "Sheets sent", v: opsSheetsSent },
   ];
   return (
     <div className="rounded-lg border border-border/60 p-3" role="group" aria-label="Status flags">
-      <div className="grid grid-cols-3 gap-x-6 gap-y-4 sm:grid-cols-6 sm:gap-x-8">
+      <div
+        className={cn(
+          "grid gap-x-6 gap-y-4",
+          density === "comfortable"
+            ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-6"
+            : "grid-cols-3 sm:grid-cols-6 sm:gap-x-8"
+        )}
+      >
         {specs.map(({ field, abbr, title, v }) => (
-          <div key={field} className="flex flex-col items-center gap-1" title={title}>
-            <span className="text-[10px] font-semibold uppercase leading-none tracking-wide text-foreground">
-              {abbr}
-            </span>
+          <div key={field} className="flex flex-col items-center gap-1.5 text-center" title={title}>
+            {density === "comfortable" ? (
+              <span className="text-xs font-medium leading-snug text-foreground">{title}</span>
+            ) : (
+              <span className="text-[10px] font-semibold uppercase leading-none tracking-wide text-foreground">
+                {abbr}
+              </span>
+            )}
             <InlineOpsCell bookingId={bookingId} field={field} value={v} isCheckbox />
           </div>
         ))}
@@ -87,8 +147,40 @@ function StatusFlagsBlock({
   );
 }
 
+const LABELS = {
+  compact: {
+    expense: "Expense",
+    gmv: "GMV",
+    rev: "REV",
+    source: "Source",
+    commA: "Comm A",
+    commKos: "Comm KOS",
+    paid: "PAID",
+    sentOwner: "Sent owner",
+    balOwner: "Bal Owner",
+    balClient: "Bal Client",
+    crew: "Crew",
+    note: "Note",
+  },
+  comfortable: {
+    expense: "Expense",
+    gmv: "GMV",
+    rev: "Revenue",
+    source: "Source",
+    commA: "Commission (agent)",
+    commKos: "Commission (KOS)",
+    paid: "Paid",
+    sentOwner: "Sent to owner",
+    balOwner: "Balance (owner)",
+    balClient: "Balance (client)",
+    crew: "Crew",
+    note: "Note",
+  },
+} as const;
+
 export function OpsRowContent({
   bookingId,
+  density = "compact",
   totalAmountCents,
   opsExpenseCents,
   opsGmvCents,
@@ -106,6 +198,7 @@ export function OpsRowContent({
   opsCommissionKosCents,
   opsSourceOverride,
 }: OpsRowContentProps) {
+  const L = LABELS[density];
   const revenueCentsDisplay = computeOpsRevenueCents(totalAmountCents, opsExpenseCents);
   const balanceClientDisplay = computeOpsBalanceClientCents(
     opsGmvCents,
@@ -119,8 +212,15 @@ export function OpsRowContent({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-x-4 gap-y-4">
-        <OpsField label="Expense">
+      <div
+        className={cn(
+          "flex flex-wrap items-start",
+          density === "comfortable"
+            ? "gap-x-8 gap-y-5"
+            : "gap-x-3 gap-y-3 md:gap-x-4 md:gap-y-4"
+        )}
+      >
+        <OpsField label={L.expense} density={density}>
           <InlineOpsCell
             bookingId={bookingId}
             field="expenseCents"
@@ -129,7 +229,7 @@ export function OpsRowContent({
             placeholder="—"
           />
         </OpsField>
-        <OpsField label="GMV">
+        <OpsField label={L.gmv} density={density}>
           <InlineOpsCell
             bookingId={bookingId}
             field="gmvCents"
@@ -138,12 +238,12 @@ export function OpsRowContent({
             placeholder="—"
           />
         </OpsField>
-        <OpsField label="REV">
-          <div className="min-h-8 px-2 py-1 text-sm tabular-nums text-foreground font-medium">
+        <OpsField label={L.rev} density={density}>
+          <OpsReadonlyValue density={density}>
             {revenueCentsDisplay != null ? formatCentsAsCurrency(revenueCentsDisplay) : "—"}
-          </div>
+          </OpsReadonlyValue>
         </OpsField>
-        <OpsField label="Source">
+        <OpsField label={L.source} density={density}>
           <InlineOpsSelectCell
             bookingId={bookingId}
             variant="source"
@@ -152,7 +252,7 @@ export function OpsRowContent({
             revenueCentsForCommission={revenueCentsDisplay}
           />
         </OpsField>
-        <OpsField label="Comm A">
+        <OpsField label={L.commA} density={density}>
           <InlineOpsCell
             bookingId={bookingId}
             field="commissionAgentCents"
@@ -161,7 +261,7 @@ export function OpsRowContent({
             placeholder="—"
           />
         </OpsField>
-        <OpsField label="Comm KOS">
+        <OpsField label={L.commKos} density={density}>
           <InlineOpsCell
             bookingId={bookingId}
             field="commissionKosCents"
@@ -170,7 +270,7 @@ export function OpsRowContent({
             placeholder="—"
           />
         </OpsField>
-        <OpsField label="PAID">
+        <OpsField label={L.paid} density={density}>
           <InlineOpsCell
             bookingId={bookingId}
             field="paidCents"
@@ -179,7 +279,7 @@ export function OpsRowContent({
             placeholder="—"
           />
         </OpsField>
-        <OpsField label="Sent owner">
+        <OpsField label={L.sentOwner} density={density}>
           <InlineOpsCell
             bookingId={bookingId}
             field="sentToOwnerCents"
@@ -188,23 +288,23 @@ export function OpsRowContent({
             placeholder="—"
           />
         </OpsField>
-        <OpsField label="Bal Owner">
-          <div
-            className="min-h-8 px-2 py-1 text-sm tabular-nums text-foreground"
+        <OpsField label={L.balOwner} density={density}>
+          <OpsReadonlyValue
+            density={density}
             title="Expense − sent to owner (computed on save)"
           >
             {formatCentsAsCurrency(balanceOwnerDisplay)}
-          </div>
+          </OpsReadonlyValue>
         </OpsField>
-        <OpsField label="Bal Client">
-          <div
-            className="min-h-8 px-2 py-1 text-sm tabular-nums text-foreground"
+        <OpsField label={L.balClient} density={density}>
+          <OpsReadonlyValue
+            density={density}
             title="Client amount still owed: ops GMV − PAID (uses charter quote total if ops GMV is empty)"
           >
             {formatCentsAsCurrency(balanceClientDisplay)}
-          </div>
+          </OpsReadonlyValue>
         </OpsField>
-        <OpsField label="Crew">
+        <OpsField label={L.crew} density={density}>
           <InlineOpsCell
             bookingId={bookingId}
             field="crewName"
@@ -212,17 +312,25 @@ export function OpsRowContent({
             placeholder="—"
           />
         </OpsField>
-        <OpsField label="Note">
+        <OpsField label={L.note} density={density}>
           <InlineOpsCell bookingId={bookingId} field="opsNote" value={opsNote} placeholder="—" />
         </OpsField>
       </div>
 
-      <div className="max-w-xl">
-        <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-          Status
+      <div className={cn(density === "comfortable" ? "w-full" : "w-full md:max-w-4xl")}>
+        <p
+          className={cn(
+            "mb-2 text-muted-foreground",
+            density === "comfortable"
+              ? "text-sm font-medium"
+              : "text-xs font-medium uppercase tracking-wider"
+          )}
+        >
+          {density === "comfortable" ? "Status flags" : "Status"}
         </p>
         <StatusFlagsBlock
           bookingId={bookingId}
+          density={density}
           opsContractSigned={opsContractSigned}
           opsConnected={opsConnected}
           opsClientPaid={opsClientPaid}
