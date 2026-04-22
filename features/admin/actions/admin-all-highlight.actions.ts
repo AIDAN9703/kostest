@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 
 import { db } from "@/database/db";
-import { bookings, generalInquiries } from "@/database/schema";
+import { bookings, inquiry } from "@/database/schema";
 import { isAdminAllHighlightId, type AdminAllHighlightId } from "@/features/admin/adminAllRowHighlight";
 import { getAdminSession } from "@/shared/lib/utils/auth-utils";
 
@@ -36,9 +36,9 @@ export async function setAdminAllRowHighlight(
       revalidatePath(`/admin/bookings/${id}`);
     } else {
       await db
-        .update(generalInquiries)
+        .update(inquiry)
         .set({ adminAllRowHighlight: value, updatedAt: new Date() })
-        .where(eq(generalInquiries.id, id));
+        .where(eq(inquiry.id, id));
       revalidatePath("/admin/all");
       revalidatePath(`/admin/inquiries/${id}`);
     }

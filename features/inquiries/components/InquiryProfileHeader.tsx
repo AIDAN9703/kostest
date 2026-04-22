@@ -2,10 +2,10 @@ import { MessageSquare } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { getStatusBadgeClass } from "@/shared/lib/utils/badge-utils";
 import { formatDate } from "@/shared/lib/utils/general-utils";
-import type { GeneralInquiry } from "@/database/types";
+import type { Inquiry } from "@/database/types";
 
 interface InquiryProfileHeaderProps {
-  inquiry: GeneralInquiry;
+  inquiry: Inquiry;
 }
 
 function formatStage(stage: string) {

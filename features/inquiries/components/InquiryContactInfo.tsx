@@ -6,10 +6,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui/card";
-import type { GeneralInquiry } from "@/database/types";
+import type { Inquiry } from "@/database/types";
 
 interface InquiryContactInfoProps {
-  inquiry: GeneralInquiry;
+  inquiry: Inquiry;
 }
 
 const InfoRow = ({

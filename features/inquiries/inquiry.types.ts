@@ -1,6 +1,6 @@
-import type { GeneralInquiry } from "@/database/types";
+import type { Inquiry } from "@/database/types";
 
-export type InquiryListItem = Pick<GeneralInquiry,
+export type InquiryListItem = Pick<Inquiry,
   | "id"
   | "name"
   | "email"

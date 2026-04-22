@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, timestamp, index, jsonb } from "drizzle-orm/pg-core";
-import { generalInquiries } from "./generalInquiries.table";
+import { inquiry } from "./inquiry";
 import { users } from "./users.table";
 import {
   inquiryEventTypeEnum,
@@ -26,7 +26,7 @@ export const inquiryEvents = pgTable(
   {
     id: uuid("id").defaultRandom().notNull().primaryKey(),
 
-    inquiryId: uuid("inquiry_id").notNull().references(() => generalInquiries.id, { onDelete: "cascade" }),
+    inquiryId: uuid("inquiry_id").notNull().references(() => inquiry.id, { onDelete: "cascade" }),
 
     eventType: inquiryEventTypeEnum("event_type").notNull(),
 

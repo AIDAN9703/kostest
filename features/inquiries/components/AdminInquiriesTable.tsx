@@ -17,14 +17,14 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { MessageSquare, Eye, MoreVertical } from "lucide-react";
 import Link from "next/link";
-import type { GeneralInquiry } from "@/database/types";
+import type { Inquiry } from "@/database/types";
 import { StatusBadge } from "@/shared/lib/utils/badge-utils";
 import { formatDate } from "@/shared/lib/utils/general-utils";
 
-const columnHelper = createColumnHelper<GeneralInquiry>();
+const columnHelper = createColumnHelper<Inquiry>();
 
 interface AdminInquiriesTableProps {
-  inquiries: GeneralInquiry[];
+  inquiries: Inquiry[];
   pagination: {
     page: number;
     limit: number;
@@ -39,7 +39,7 @@ export function AdminInquiriesTable({
   pagination,
   loading,
 }: AdminInquiriesTableProps) {
-  const columns = useMemo<ColumnDef<GeneralInquiry, any>[]>(
+  const columns = useMemo<ColumnDef<Inquiry, any>[]>(
     () => [
       columnHelper.accessor("name", {
         id: "contact",

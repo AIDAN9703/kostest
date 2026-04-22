@@ -1,4 +1,4 @@
-import type { GeneralInquiry } from "@/database/types";
+import type { Inquiry } from "@/database/types";
 
 /** Passed from the create-booking page when `?inquiryId=` is present */
 export type InquiryBookingPrefill = {
@@ -25,7 +25,7 @@ function addHoursToIso(iso: string, hours: number): string {
  * optional trip start/end from requested date & time).
  */
 export function buildInquiryPrefillForBookingForm(
-  inquiry: GeneralInquiry
+  inquiry: Inquiry
 ): InquiryBookingPrefill {
   let startDateTime = "";
   if (inquiry.date) {

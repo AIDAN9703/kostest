@@ -1,15 +1,15 @@
-import { relations } from 'drizzle-orm';
-import { users } from '../tables/users.table';
-import { boats } from '../tables/boats.table';
-import { captainProfiles } from '../tables/captainProfiles.table';
-import { ownerProfiles } from '../tables/ownerProfiles.table';
-import { bookings } from '../tables/bookings.table';
-import { reviews } from '../tables/reviews.table';
-import { notifications } from '../tables/notifications.table';
-import { verifications } from '../tables/verifications.table';
-import { generalInquiries } from '../tables/generalInquiries.table';
-import { inquiryEvents } from '../tables/inquiryEvents.table';
-import { boatBlocking } from '../tables/boatBlocking.table';
+import { relations } from "drizzle-orm";
+import { users } from "../tables/users.table";
+import { boats } from "../tables/boats.table";
+import { captainProfiles } from "../tables/captainProfiles.table";
+import { ownerProfiles } from "../tables/ownerProfiles.table";
+import { bookings } from "../tables/bookings.table";
+import { reviews } from "../tables/reviews.table";
+import { notifications } from "../tables/notifications.table";
+import { verifications } from "../tables/verifications.table";
+import { inquiry } from "../tables/inquiry";
+import { inquiryEvents } from "../tables/inquiryEvents.table";
+import { boatBlocking } from "../tables/boatBlocking.table";
 // Relations for users table
 export const usersRelations = relations(users, ({ one, many }) => ({
   // Profile extensions (1:1)
@@ -21,53 +21,54 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.id],
     references: [ownerProfiles.userId],
   }),
-  
+
   // Boats owned by this user
   ownedBoats: many(boats, {
-    relationName: 'ownerBoats',
+    relationName: "ownerBoats",
   }),
-  
+
   // Boats where this user is primary captain
   captainedBoats: many(boats, {
-    relationName: 'primaryCaptainBoats',
+    relationName: "primaryCaptainBoats",
   }),
-  
+
   // Bookings
   bookings: many(bookings, {
-    relationName: 'userBookings',
+    relationName: "userBookings",
   }),
   boatOwnerBookings: many(bookings, {
-    relationName: 'boatOwnerBookings',
+    relationName: "boatOwnerBookings",
   }),
   captainBookings: many(bookings, {
-    relationName: 'captainBookings',
+    relationName: "captainBookings",
   }),
   reviewedBookings: many(bookings, {
-    relationName: 'reviewedBookings',
+    relationName: "reviewedBookings",
   }),
   assignedBookings: many(bookings, {
-    relationName: 'assignedBookings',
+    relationName: "assignedBookings",
   }),
   cancelledBookings: many(bookings, {
-    relationName: 'cancelledBookings',
+    relationName: "cancelledBookings",
   }),
-  
+
   // Reviews
   reviewsAsReviewer: many(reviews, {
-    relationName: 'reviewerReviews',
+    relationName: "reviewerReviews",
   }),
   reviewsAsReviewed: many(reviews, {
-    relationName: 'reviewedUserReviews',
+    relationName: "reviewedUserReviews",
   }),
   reviewsAsCaptain: many(reviews, {
-    relationName: 'reviewedCaptainReviews',
+    relationName: "reviewedCaptainReviews",
   }),
-  
+
   // Other
   notifications: many(notifications),
   verifications: many(verifications),
-  assignedInquiries: many(generalInquiries),
+  assignedInquiries: many(inquiry, {
+    relationName: "assignedInquiries",
+  }),
   inquiryEventsCreated: many(inquiryEvents),
   createdBlockings: many(boatBlocking),
 }));
-

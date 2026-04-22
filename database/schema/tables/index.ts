@@ -20,7 +20,7 @@ export * from "./payments.table";
 export * from "./reviews.table";
 export * from "./verifications.table";
 export * from "./notifications.table";
-export * from "./generalInquiries.table";
+export * from "./inquiry";
 export * from "./inquiryEvents.table";
 export * from "./blogPosts.table";
 export * from "./boatPricingTiers.table";
@@ -31,4 +31,3 @@ export * from "./events.table";
 export * from "./ticketTiers.table";
 export * from "./eventTicketPurchases.table";
 export * from "./tickets.table";
-

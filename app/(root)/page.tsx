@@ -34,9 +34,9 @@ async function HomeContent() {
           {reviewsResponse.success && reviewsResponse.data && reviewsResponse.data.length > 0 && (
             <TestimonialsSection reviews={reviewsResponse.data} />
           )}
-
-          <RequestToBook />
         </div>
+
+        <RequestToBook />
       </>
     );
   } catch (error) {

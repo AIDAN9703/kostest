@@ -3,7 +3,7 @@
 import { auth } from "@/auth";
 import { db } from "@/database/db";
 import {
-  generalInquiries,
+  inquiry as inquiryTable,
   inquiryEvents,
   inquiryOutcomeEnum,
   type InquiryOutcome,
@@ -44,7 +44,7 @@ export async function createGeneralInquiry(data: GeneralInquiryInput) {
 
     // Create the inquiry in the database
     const result = await db
-      .insert(generalInquiries)
+      .insert(inquiryTable)
       .values({
         name: validatedData.name,
         email: validatedData.email,
@@ -112,11 +112,11 @@ export async function updateInquiryOutcome(id: string, newOutcome: string, reaso
 
     const [existing] = await db
       .select({
-        outcome: generalInquiries.outcome,
-        stage: generalInquiries.stage,
+        outcome: inquiryTable.outcome,
+        stage: inquiryTable.stage,
       })
-      .from(generalInquiries)
-      .where(eq(generalInquiries.id, id));
+      .from(inquiryTable)
+      .where(eq(inquiryTable.id, id));
 
     if (!existing) {
       return { success: false, error: "Inquiry not found" };
@@ -140,9 +140,9 @@ export async function updateInquiryOutcome(id: string, newOutcome: string, reaso
     }
 
     const [result] = await db
-      .update(generalInquiries)
+      .update(inquiryTable)
       .set(updateData)
-      .where(eq(generalInquiries.id, id))
+      .where(eq(inquiryTable.id, id))
       .returning();
 
     const outcomePayload = {
@@ -224,12 +224,12 @@ export async function logContactAttempt(
       return { success: false, error: "Unauthorized" };
     }
 
-    const [inquiry] = await db
-      .select({ stage: generalInquiries.stage, outcome: generalInquiries.outcome })
-      .from(generalInquiries)
-      .where(eq(generalInquiries.id, inquiryId));
+    const [inquiryRow] = await db
+      .select({ stage: inquiryTable.stage, outcome: inquiryTable.outcome })
+      .from(inquiryTable)
+      .where(eq(inquiryTable.id, inquiryId));
 
-    if (!inquiry) {
+    if (!inquiryRow) {
       return { success: false, error: "Inquiry not found" };
     }
 
@@ -242,14 +242,14 @@ export async function logContactAttempt(
     });
 
     let stageUpdated = false;
-    if (inquiry.stage === "NEEDS_CONTACT" && inquiry.outcome === "OPEN") {
+    if (inquiryRow.stage === "NEEDS_CONTACT" && inquiryRow.outcome === "OPEN") {
       await db
-        .update(generalInquiries)
+        .update(inquiryTable)
         .set({
           stage: "CONTACTED",
           updatedAt: new Date(),
         })
-        .where(eq(generalInquiries.id, inquiryId));
+        .where(eq(inquiryTable.id, inquiryId));
 
       await db.insert(inquiryEvents).values({
         inquiryId,
@@ -286,23 +286,23 @@ export async function reopenInquiry(inquiryId: string) {
       return { success: false, error: "Unauthorized" };
     }
 
-    const [inquiry] = await db
+    const [inquiryRow] = await db
       .select({
-        outcome: generalInquiries.outcome,
-        stage: generalInquiries.stage,
+        outcome: inquiryTable.outcome,
+        stage: inquiryTable.stage,
       })
-      .from(generalInquiries)
-      .where(eq(generalInquiries.id, inquiryId));
+      .from(inquiryTable)
+      .where(eq(inquiryTable.id, inquiryId));
 
-    if (!inquiry) {
+    if (!inquiryRow) {
       return { success: false, error: "Inquiry not found" };
     }
 
-    if (inquiry.outcome === "OPEN") {
+    if (inquiryRow.outcome === "OPEN") {
       return { success: false, error: "Inquiry is already open" };
     }
 
-    const previousOutcome = inquiry.outcome;
+    const previousOutcome = inquiryRow.outcome;
 
     type ReopenUpdatePayload = {
       outcome: "OPEN";
@@ -314,11 +314,11 @@ export async function reopenInquiry(inquiryId: string) {
       updatedAt: new Date(),
     };
 
-    if (inquiry.stage === "CONVERTED") {
+    if (inquiryRow.stage === "CONVERTED") {
       updateData.stage = "CONTACTED";
     }
 
-    await db.update(generalInquiries).set(updateData).where(eq(generalInquiries.id, inquiryId));
+    await db.update(inquiryTable).set(updateData).where(eq(inquiryTable.id, inquiryId));
 
     await db.insert(inquiryEvents).values({
       inquiryId,
@@ -329,11 +329,11 @@ export async function reopenInquiry(inquiryId: string) {
       createdBy: session.user.id,
     });
 
-    if (updateData.stage && updateData.stage !== inquiry.stage) {
+    if (updateData.stage && updateData.stage !== inquiryRow.stage) {
       await db.insert(inquiryEvents).values({
         inquiryId,
         eventType: "STAGE_CHANGE",
-        previousStage: inquiry.stage,
+        previousStage: inquiryRow.stage,
         newStage: updateData.stage,
         createdBy: session.user.id,
       });

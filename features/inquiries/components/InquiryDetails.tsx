@@ -6,11 +6,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui/card";
-import type { GeneralInquiry } from "@/database/types";
+import type { Inquiry } from "@/database/types";
 import { formatDate, formatTime12Hour } from "@/shared/lib/utils/general-utils";
 
 interface InquiryDetailsProps {
-  inquiry: GeneralInquiry;
+  inquiry: Inquiry;
 }
 
 const InfoRow = ({

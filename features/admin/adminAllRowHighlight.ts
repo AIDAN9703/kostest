@@ -1,5 +1,5 @@
 /**
- * Admin → All: row highlight keys and styling (persisted on booking / general_inquiry).
+ * Admin → All: row highlight keys and styling (persisted on booking / inquiry).
  * Meaning: see ADMIN_ALL_HIGHLIGHT_LEGEND (aligned with ops color key).
  */
 export const ADMIN_ALL_HIGHLIGHT_IDS = [

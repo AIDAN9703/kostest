@@ -4,7 +4,7 @@ import { emailSchema, phoneRequiredSchema } from "./common";
 /**
  * Shared inquiry validation schemas
  * Single source of truth for all inquiry forms (Request to Book, Term Charter, etc.)
- * Maps to GeneralInquiryInput / createGeneralInquiry server action
+ * Maps to GeneralInquiryInput / createGeneralInquiry (inquiry.actions)
  */
 
 /** Base contact fields - shared across all inquiry types */

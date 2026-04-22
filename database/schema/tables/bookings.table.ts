@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, boolean, timestamp, index, json, integer, unique } from "drizzle-orm/pg-core";
-import { users, boats, boatPricingTiers, generalInquiries, bookingGroups } from "@/database/schema/tables";
+import { users, boats, boatPricingTiers, inquiry, bookingGroups } from "@/database/schema/tables";
 import { bookingStatusEnum, bookingTypeEnum, bookingSourceEnum } from "@/database/schema/enums";
 
 export const bookings = pgTable(
@@ -22,7 +22,7 @@ export const bookings = pgTable(
     captainUserId: uuid("captain_user_id").references(() => users.id, { onDelete: "set null" }),
     pricingTierId: uuid("pricing_tier_id").references(() => boatPricingTiers.id, { onDelete: "set null" }),
     bookingGroupId: uuid("booking_group_id").references(() => bookingGroups.id, { onDelete: "set null" }),
-    inquiryId: uuid("inquiry_id").references(() => generalInquiries.id, { onDelete: "set null" }),
+    inquiryId: uuid("inquiry_id").references(() => inquiry.id, { onDelete: "set null" }),
     assignedAdminId: uuid("assigned_admin_id").references(() => users.id, { onDelete: "set null" }),
 
     // ==========================================================================

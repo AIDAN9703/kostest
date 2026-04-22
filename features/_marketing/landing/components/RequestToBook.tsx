@@ -8,10 +8,7 @@ import { DollarSign, Users, ArrowRight } from "lucide-react";
 import { createGeneralInquiry } from "@/features/inquiries/inquiry.actions";
 import { toast } from "@/shared/lib/hooks/use-toast";
 import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
-import {
-  requestToBookSchema,
-  type RequestToBookFormData,
-} from "@/shared/lib/validation/inquiry";
+import { requestToBookSchema, type RequestToBookFormData } from "@/shared/lib/validation/inquiry";
 
 //UI Imports
 import {
@@ -110,12 +107,12 @@ export default function RequestToBook() {
         setIsSubmitting(false);
       }
     },
-    [form],
+    [form]
   );
 
   return (
-    <section className="py-10 sm:py-16 md:py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="w-full py-10 sm:py-16 md:py-20">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-left sm:text-center mb-6 sm:mb-12">
           <h2 className="text-primary text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
             Ready for your next adventure?
@@ -126,9 +123,9 @@ export default function RequestToBook() {
         </div>
 
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 lg:gap-12">
-          <div className="lg:col-span-7">
-            <Card className="rounded-2xl border shadow-sm">
-              <CardHeader>
+          <div className="w-full min-w-0 lg:col-span-7">
+            <Card className="w-full max-w-none rounded-none border-0 bg-transparent p-0 shadow-none lg:max-w-none lg:rounded-2xl lg:border lg:bg-card lg:shadow-sm">
+              <CardHeader className="space-y-1.5 px-0 pb-4 pt-0 sm:pb-5 lg:p-6 lg:pb-4">
                 <CardTitle className="text-primary text-xl sm:text-2xl font-bold">
                   Request a Quote
                 </CardTitle>
@@ -136,12 +133,9 @@ export default function RequestToBook() {
                   Share your details and we&apos;ll get back within 24 hours
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-0 pb-0 lg:p-6 lg:pt-0">
                 <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(onSubmit)}
-                    className="space-y-4 sm:space-y-6"
-                  >
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 ">
                       <FormField
                         control={form.control}
@@ -150,11 +144,7 @@ export default function RequestToBook() {
                           <FormItem>
                             <FormLabel>Full Name</FormLabel>
                             <FormControl>
-                              <Input
-                                className={inputClass}
-                                placeholder="John Smith"
-                                {...field}
-                              />
+                              <Input className={inputClass} placeholder="John Smith" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -206,11 +196,7 @@ export default function RequestToBook() {
                           <FormItem>
                             <FormLabel>Preferred Date</FormLabel>
                             <FormControl>
-                              <Input
-                                type="date"
-                                className={inputClass}
-                                {...field}
-                              />
+                              <Input type="date" className={inputClass} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -223,11 +209,7 @@ export default function RequestToBook() {
                           <FormItem>
                             <FormLabel>Preferred Time</FormLabel>
                             <FormControl>
-                              <Input
-                                type="time"
-                                className={inputClass}
-                                {...field}
-                              />
+                              <Input type="time" className={inputClass} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -304,24 +286,15 @@ export default function RequestToBook() {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-start gap-3">
                           <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                           </FormControl>
                           <FormLabel className="text-sm font-normal cursor-pointer text-foreground">
                             I agree to the{" "}
-                            <Link
-                              href="/terms-of-service"
-                              className="text-primary hover:underline"
-                            >
+                            <Link href="/terms-of-service" className="text-primary hover:underline">
                               Terms of Service
                             </Link>{" "}
                             and{" "}
-                            <Link
-                              href="/privacy"
-                              className="text-primary hover:underline"
-                            >
+                            <Link href="/privacy" className="text-primary hover:underline">
                               Privacy Policy
                             </Link>
                           </FormLabel>
@@ -336,14 +309,10 @@ export default function RequestToBook() {
                       render={({ field }) => (
                         <FormItem className="flex flex-row items-start gap-3">
                           <FormControl>
-                            <Checkbox
-                              checked={field.value}
-                              onCheckedChange={field.onChange}
-                            />
+                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                           </FormControl>
                           <FormLabel className="text-sm font-normal cursor-pointer text-foreground">
-                            I agree to receive SMS updates. Message & data rates
-                            may apply.
+                            I agree to receive SMS updates. Message & data rates may apply.
                           </FormLabel>
                           <FormMessage />
                         </FormItem>
@@ -366,25 +335,18 @@ export default function RequestToBook() {
 
           <div className="relative flex items-center lg:flex-col">
             <div className="flex-1 h-px lg:h-full lg:w-px bg-border" />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-4 text-sm text-muted-foreground">
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-4 text-sm text-muted-foreground lg:bg-card">
               or
             </span>
           </div>
 
           <div className="lg:col-span-4 flex flex-col items-center justify-center text-center">
-            <h3 className="text-primary text-xl font-bold mb-2">
-              Book Instantly Online
-            </h3>
+            <h3 className="text-primary text-xl font-bold mb-2">Book Instantly Online</h3>
             <p className="text-muted-foreground text-sm mb-6">
-              Browse our fleet and book directly. Real-time availability,
-              instant confirmation.
+              Browse our fleet and book directly. Real-time availability, instant confirmation.
             </p>
             <Link href="/boats/search" className="w-full">
-              <Button
-                variant="default"
-                size="lg"
-                className="w-full h-12 rounded-xl group"
-              >
+              <Button variant="default" size="lg" className="w-full h-12 rounded-xl group">
                 Explore Available Yachts
                 <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>

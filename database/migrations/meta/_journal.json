@@ -260,6 +260,13 @@
       "when": 1775665519602,
       "tag": "0038_admin_all_row_highlight",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1776819104742,
+      "tag": "0039_neat_mathemanic",
+      "breakpoints": true
     }
   ]
 }

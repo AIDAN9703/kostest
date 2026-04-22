@@ -1,12 +1,12 @@
 import { db } from "@/database/db";
 import {
-  generalInquiries,
+  inquiry as inquiryTable,
   inquiryEvents,
   type InquiryStage,
   type InquiryOutcome,
 } from "@/database/schema";
 import { and, count, desc, eq } from "drizzle-orm";
-import type { GeneralInquiry } from "@/database/types";
+import type { Inquiry } from "@/database/types";
 
 export interface InquiryFilterInput {
   stage?: InquiryStage;
@@ -16,7 +16,7 @@ export interface InquiryFilterInput {
 }
 
 export interface PaginatedInquiriesResponse {
-  inquiries: GeneralInquiry[];
+  inquiries: Inquiry[];
   totalCount: number;
   page: number;
   limit: number;
@@ -31,28 +31,28 @@ export class InquiryService {
 
     const conditions = [];
     if (filters?.stage) {
-      conditions.push(eq(generalInquiries.stage, filters.stage));
+      conditions.push(eq(inquiryTable.stage, filters.stage));
     }
     if (filters?.outcome) {
-      conditions.push(eq(generalInquiries.outcome, filters.outcome));
+      conditions.push(eq(inquiryTable.outcome, filters.outcome));
     }
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-    const [inquiries, countResult] = await Promise.all([
+    const [inquiryRows, countResult] = await Promise.all([
       db
         .select()
-        .from(generalInquiries)
+        .from(inquiryTable)
         .where(whereClause)
-        .orderBy(desc(generalInquiries.createdAt))
+        .orderBy(desc(inquiryTable.createdAt))
         .limit(limit)
         .offset(offset),
-      db.select({ value: count() }).from(generalInquiries).where(whereClause),
+      db.select({ value: count() }).from(inquiryTable).where(whereClause),
     ]);
 
     const totalCount = Number(countResult[0]?.value ?? 0);
 
     return {
-      inquiries,
+      inquiries: inquiryRows,
       totalCount,
       page,
       limit,
@@ -60,10 +60,10 @@ export class InquiryService {
     };
   }
 
-  async getInquiryById(id: string): Promise<(GeneralInquiry & { events: unknown[] }) | null> {
+  async getInquiryById(id: string): Promise<(Inquiry & { events: unknown[] }) | null> {
     const [inquiry, events] = await Promise.all([
-      db.query.generalInquiries.findFirst({
-        where: eq(generalInquiries.id, id),
+      db.query.inquiry.findFirst({
+        where: eq(inquiryTable.id, id),
       }),
       db.query.inquiryEvents.findMany({
         where: eq(inquiryEvents.inquiryId, id),
@@ -78,7 +78,7 @@ export class InquiryService {
 
     if (!inquiry) return null;
 
-    return { ...inquiry, events } as GeneralInquiry & { events: unknown[] };
+    return { ...inquiry, events } as Inquiry & { events: unknown[] };
   }
 }
 

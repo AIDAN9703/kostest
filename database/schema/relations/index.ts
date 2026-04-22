@@ -22,7 +22,7 @@ export * from "./payments.relations";
 export * from "./reviews.relations";
 export * from "./verifications.relations";
 export * from "./notifications.relations";
-export * from "./generalInquiries.relations";
+export * from "./inquiry.relations";
 export * from "./inquiryEvents.relations";
 export * from "./boatPricingTiers.relations";
 export * from "./boatBlocking.relations";

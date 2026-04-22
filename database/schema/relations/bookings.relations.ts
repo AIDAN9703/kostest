@@ -1,16 +1,16 @@
-import { relations } from 'drizzle-orm';
-import { bookings } from '../tables/bookings.table';
-import { users } from '../tables/users.table';
-import { boats } from '../tables/boats.table';
-import { boatPricingTiers } from '../tables/boatPricingTiers.table';
-import { bookingGroups } from '../tables/bookingGroups.table';
-import { reviews } from '../tables/reviews.table';
-import { bookingPricing } from '../tables/bookingPricing.table';
-import { bookingStatusHistory } from '../tables/bookingStatusHistory.table';
-import { bookingEvents } from '../tables/bookingEvents.table';
-import { bookingAdminNotes } from '../tables/bookingAdminNotes.table';
-import { bookingOps } from '../tables/bookingOps.table';
-import { generalInquiries } from '../tables/generalInquiries.table';
+import { relations } from "drizzle-orm";
+import { bookings } from "../tables/bookings.table";
+import { users } from "../tables/users.table";
+import { boats } from "../tables/boats.table";
+import { boatPricingTiers } from "../tables/boatPricingTiers.table";
+import { bookingGroups } from "../tables/bookingGroups.table";
+import { reviews } from "../tables/reviews.table";
+import { bookingPricing } from "../tables/bookingPricing.table";
+import { bookingStatusHistory } from "../tables/bookingStatusHistory.table";
+import { bookingEvents } from "../tables/bookingEvents.table";
+import { bookingAdminNotes } from "../tables/bookingAdminNotes.table";
+import { bookingOps } from "../tables/bookingOps.table";
+import { inquiry } from "../tables/inquiry";
 
 // Relations for bookings table
 export const bookingsRelations = relations(bookings, ({ one, many }) => ({
@@ -18,12 +18,12 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   user: one(users, {
     fields: [bookings.userId],
     references: [users.id],
-    relationName: 'userBookings',
+    relationName: "userBookings",
   }),
   boatOwner: one(users, {
     fields: [bookings.boatOwnerId],
     references: [users.id],
-    relationName: 'boatOwnerBookings',
+    relationName: "boatOwnerBookings",
   }),
   boat: one(boats, {
     fields: [bookings.boatId],
@@ -32,7 +32,7 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   captain: one(users, {
     fields: [bookings.captainUserId],
     references: [users.id],
-    relationName: 'captainBookings',
+    relationName: "captainBookings",
   }),
   pricingTier: one(boatPricingTiers, {
     fields: [bookings.pricingTierId],
@@ -42,9 +42,9 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
     fields: [bookings.bookingGroupId],
     references: [bookingGroups.id],
   }),
-  inquiry: one(generalInquiries, {
+  inquiry: one(inquiry, {
     fields: [bookings.inquiryId],
-    references: [generalInquiries.id],
+    references: [inquiry.id],
   }),
 
   // New related tables (1:1 and 1:many)
@@ -62,13 +62,12 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   assignedAdmin: one(users, {
     fields: [bookings.assignedAdminId],
     references: [users.id],
-    relationName: 'assignedBookings',
+    relationName: "assignedBookings",
   }),
   cancelledByUser: one(users, {
     fields: [bookings.cancelledBy],
     references: [users.id],
-    relationName: 'cancelledBookings',
+    relationName: "cancelledBookings",
   }),
   reviews: many(reviews),
 }));
-
