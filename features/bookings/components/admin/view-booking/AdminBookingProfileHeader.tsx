@@ -62,8 +62,8 @@ export function AdminBookingProfileHeader({ booking }: AdminBookingProfileHeader
             )}
           </div>
 
-          <div className="min-w-0 flex-1 space-y-6">
-            <div className="space-y-2">
+          <div className="min-w-0 flex-1 space-y-4">
+            <div className="space-y-1.5">
               <h1 className="text-3xl font-bold tracking-tight md:text-4xl">
                 Booking #{booking.id.slice(0, 6).toUpperCase()}
               </h1>
@@ -79,42 +79,33 @@ export function AdminBookingProfileHeader({ booking }: AdminBookingProfileHeader
               )}
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-1 lg:grid-cols-3">
-              <div className="space-y-3 rounded-lg border border-border bg-card p-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-border/60 pt-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Booking status
-                </h3>
+                </span>
                 <StatusBadge
                   status={booking.bookingStatus}
                   title={hint(BOOKING_STATUS_HINT, booking.bookingStatus)}
                 />
-                <p className="text-sm text-muted-foreground">
-                  {hint(BOOKING_STATUS_HINT, booking.bookingStatus)}
-                </p>
               </div>
-
-              <div className="space-y-3 rounded-lg border border-border bg-card p-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   Payment
-                </h3>
+                </span>
                 <StatusBadge status={booking.paymentDisplayStatus} title={paymentDesc} />
-                <p className="text-sm text-muted-foreground">{paymentDesc}</p>
               </div>
-
-              {booking.bookingType && (
-                <div className="space-y-3 rounded-lg border border-border bg-card p-4">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              {booking.bookingType ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     How it was booked
-                  </h3>
+                  </span>
                   <StatusBadge
                     status={booking.bookingType}
                     title={hint(BOOKING_TYPE_HINT, booking.bookingType)}
                   />
-                  <p className="text-sm text-muted-foreground">
-                    {hint(BOOKING_TYPE_HINT, booking.bookingType)}
-                  </p>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>

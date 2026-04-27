@@ -534,7 +534,6 @@ export function AdminBookingsTable({
                         opsPaidCents={booking.opsPaidCents}
                         opsSentToOwnerCents={booking.opsSentToOwnerCents}
                         opsCrewName={booking.opsCrewName}
-                        opsNote={booking.opsNote}
                         opsContractSigned={booking.opsContractSigned}
                         opsConnected={booking.opsConnected}
                         opsClientPaid={booking.opsClientPaid}

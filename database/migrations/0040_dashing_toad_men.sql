@@ -1,0 +1,1 @@
+ALTER TABLE "booking_ops" DROP COLUMN "ops_note";

@@ -43,7 +43,6 @@ export default async function AllPage() {
         opsPaidCents: b.opsPaidCents,
         opsSentToOwnerCents: b.opsSentToOwnerCents,
         opsCrewName: b.opsCrewName,
-        opsNote: b.opsNote,
         opsContractSigned: b.opsContractSigned,
         opsConnected: b.opsConnected,
         opsClientPaid: b.opsClientPaid,

@@ -8,12 +8,6 @@ export default function AllPageLoading() {
         <Skeleton className="mt-2 h-5 w-96" />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-5">
-        {[...Array(5)].map((_, i) => (
-          <Skeleton key={i} className="h-20 rounded-xl" />
-        ))}
-      </div>
-
       <div className="flex gap-3">
         <Skeleton className="h-10 flex-1 max-w-sm" />
         <Skeleton className="h-10 w-40" />

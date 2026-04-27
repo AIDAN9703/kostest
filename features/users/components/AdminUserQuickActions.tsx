@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -8,20 +9,37 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { Edit, Trash2, MoreVertical } from "lucide-react";
+import { Edit, Trash2, MoreVertical, Anchor, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useDeleteUser } from "@/features/users/hooks/useUserMutations";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/shared/lib/hooks/use-toast";
+import type { CaptainStatus, CrewStatus } from "@/database/types";
+import {
+  canPromoteToCaptain,
+  canPromoteToCrew,
+} from "@/features/profiles/promote-eligibility";
+import { PromoteToCaptainModal } from "@/features/profiles/components/PromoteToCaptainModal";
+import { PromoteToCrewModal } from "@/features/profiles/components/PromoteToCrewModal";
 
 interface UserQuickActionsProps {
   userId: string;
+  displayName: string;
+  captainProfileStatus: CaptainStatus | null;
+  crewProfileStatus: CrewStatus | null;
 }
 
-export function UserQuickActions({ userId }: UserQuickActionsProps) {
+export function UserQuickActions({
+  userId,
+  displayName,
+  captainProfileStatus,
+  crewProfileStatus,
+}: UserQuickActionsProps) {
   const router = useRouter();
   const { toast } = useToast();
   const deleteUser = useDeleteUser();
+  const [captainOpen, setCaptainOpen] = useState(false);
+  const [crewOpen, setCrewOpen] = useState(false);
 
   const handleDelete = () => {
     if (
@@ -56,28 +74,65 @@ export function UserQuickActions({ userId }: UserQuickActionsProps) {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
-          <MoreVertical className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem asChild>
-          <Link href={`/admin/users/${userId}/edit`}>
-            <Edit className="h-4 w-4 mr-2" />
-            Edit User
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onSelect={handleDelete}
-          className="text-destructive cursor-pointer"
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete User
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem asChild>
+            <Link href={`/admin/users/${userId}/edit`}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit User
+            </Link>
+          </DropdownMenuItem>
+          {canPromoteToCaptain(captainProfileStatus) ? (
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                setCaptainOpen(true);
+              }}
+            >
+              <Anchor className="mr-2 h-4 w-4" />
+              Promote to Captain
+            </DropdownMenuItem>
+          ) : null}
+          {canPromoteToCrew(crewProfileStatus) ? (
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                setCrewOpen(true);
+              }}
+            >
+              <UsersRound className="mr-2 h-4 w-4" />
+              Promote to Crew
+            </DropdownMenuItem>
+          ) : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={handleDelete}
+            className="cursor-pointer text-destructive"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete User
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <PromoteToCaptainModal
+        userId={userId}
+        displayName={displayName}
+        open={captainOpen}
+        onOpenChange={setCaptainOpen}
+      />
+      <PromoteToCrewModal
+        userId={userId}
+        displayName={displayName}
+        open={crewOpen}
+        onOpenChange={setCrewOpen}
+      />
+    </>
   );
 }

@@ -32,6 +32,8 @@ async function UserProfile({ userId }: { userId: string }) {
   const user = await userService
     .getUserById(userId, {
       bookings: { limit: 10 },
+      captainProfile: true,
+      crewProfile: true,
     })
     .catch(() => null);
 
@@ -44,7 +46,11 @@ async function UserProfile({ userId }: { userId: string }) {
       {/* Header Card - profile summary */}
       <div className="h-full flex flex-col overflow-hidden bg-card rounded-3xl border border-border shadow-xs">
         <div className="p-6">
-          <UserProfileHeader user={user} />
+          <UserProfileHeader
+            user={user}
+            captainProfileStatus={user.captainProfile?.status ?? null}
+            crewProfileStatus={user.crewProfile?.status ?? null}
+          />
         </div>
       </div>
 

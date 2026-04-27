@@ -14,6 +14,7 @@ import { getAdminSession } from "@/shared/lib/utils/auth-utils";
 import { createCheckoutSessionForBooking } from "@/features/bookings/actions/stripe-checkout";
 
 import { bookingService } from "@/features/bookings/services/booking.service";
+import { bookingCrewService } from "@/features/bookings/services/booking-crew.service";
 import { bookingStatusService } from "@/features/bookings/services/booking-status.service";
 import { bookingNotesService } from "@/features/bookings/services/booking-notes.service";
 import {
@@ -129,6 +130,97 @@ export async function assignAdminToBooking(bookingId: string, adminId: string | 
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to assign admin",
+    };
+  }
+}
+
+/** Add a crew member to `booking_crew` (must have active crew profile). */
+export async function addBookingCrewMember(
+  bookingId: string,
+  crewUserId: string,
+  role?: string | null
+) {
+  try {
+    const authResult = await getAdminSession();
+    if (authResult.error) return { success: false, error: authResult.error };
+    if (!bookingId || !crewUserId) {
+      return { success: false, error: "Booking and crew user are required" };
+    }
+
+    await bookingCrewService.addMember(
+      bookingId,
+      crewUserId,
+      authResult.session!.user.id!,
+      role ?? null
+    );
+
+    revalidatePath("/admin/bookings");
+    revalidatePath("/admin/all");
+    revalidatePath(`/admin/bookings/${bookingId}`);
+
+    return { success: true, message: "Crew member added" };
+  } catch (error) {
+    console.error("Error adding booking crew:", error);
+    const msg = error instanceof Error ? error.message : "Failed to add crew";
+    if (/unique|duplicate/i.test(msg)) {
+      return { success: false, error: "That crew member is already on this booking." };
+    }
+    return { success: false, error: msg };
+  }
+}
+
+/** Remove a `booking_crew` row */
+export async function removeBookingCrewMember(bookingId: string, bookingCrewId: string) {
+  try {
+    const authResult = await getAdminSession();
+    if (authResult.error) return { success: false, error: authResult.error };
+    if (!bookingId || !bookingCrewId) {
+      return { success: false, error: "Booking and crew assignment are required" };
+    }
+
+    await bookingCrewService.removeMember(
+      bookingCrewId,
+      bookingId,
+      authResult.session!.user.id!
+    );
+
+    revalidatePath("/admin/bookings");
+    revalidatePath("/admin/all");
+    revalidatePath(`/admin/bookings/${bookingId}`);
+
+    return { success: true, message: "Crew member removed" };
+  } catch (error) {
+    console.error("Error removing booking crew:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to remove crew",
+    };
+  }
+}
+
+/** Assign captain (`bookings.captain_user_id`), or pass null to unassign */
+export async function assignCaptainToBooking(bookingId: string, captainUserId: string | null) {
+  try {
+    const authResult = await getAdminSession();
+    if (authResult.error) return { success: false, error: authResult.error };
+    if (!bookingId) {
+      return { success: false, error: "Booking ID is required" };
+    }
+
+    await bookingService.assignCaptain(bookingId, captainUserId, authResult.session!.user.id!);
+    revalidatePath("/admin/bookings");
+    revalidatePath("/admin/all");
+    revalidatePath(`/admin/bookings/${bookingId}`);
+
+    return {
+      success: true,
+      message: captainUserId == null ? "Captain unassigned" : "Captain assigned successfully",
+    };
+  } catch (error) {
+    console.error("Error assigning captain:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to assign captain",
     };
   }
 }

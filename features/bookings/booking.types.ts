@@ -290,6 +290,12 @@ export interface BookingListItem {
   assignedAdminLastName: string | null;
   assignedAdminEmail: string | null;
 
+  /** Assigned captain (`bookings.captain_user_id`) — user rows joined for display */
+  captainUserId: string | null;
+  captainFirstName: string | null;
+  captainLastName: string | null;
+  captainEmail: string | null;
+
   // Ops fields (from booking_ops - Excel workflow tracking, all nullable)
   opsExpenseCents?: number | null;
   opsGmvCents?: number | null;
@@ -303,7 +309,6 @@ export interface BookingListItem {
   /** Stored copy of client balance (GMV − PAID); recomputed on save. GMV uses ops field or quote total. */
   opsBalanceClientCents?: number | null;
   opsCrewName?: string | null;
-  opsNote?: string | null;
   opsContractSigned?: boolean | null;
   opsConnected?: boolean | null;
   opsClientPaid?: boolean | null;

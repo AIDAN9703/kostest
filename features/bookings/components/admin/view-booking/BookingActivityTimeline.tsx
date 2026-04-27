@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Anchor,
   Circle,
   FileText,
   GitBranch,
@@ -36,6 +37,7 @@ function iconForEvent(eventType: string) {
   if (eventType === BOOKING_EVENT_TYPES.NOTE_ADDED) return FileText;
   if (eventType === BOOKING_EVENT_TYPES.UPDATED) return Pencil;
   if (eventType === BOOKING_EVENT_TYPES.ASSIGNED_ADMIN_CHANGED) return UserCog;
+  if (eventType === BOOKING_EVENT_TYPES.ASSIGNED_CAPTAIN_CHANGED) return Anchor;
   if (eventType === BOOKING_EVENT_TYPES.DRAFT_PUBLISHED) return Link2;
   return Circle;
 }

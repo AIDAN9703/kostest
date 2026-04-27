@@ -1,17 +1,21 @@
 import NextAuth, { User } from "next-auth"
 import { compare } from "bcryptjs"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { users, captainProfiles, ownerProfiles } from "@/database/schema"
+import { users, captainProfiles, crewProfiles, ownerProfiles } from "@/database/schema"
 import { eq } from "drizzle-orm"
 import { db } from "@/database/db"
 import Google from "next-auth/providers/google"
 
 // Helper function to check if user has captain/owner profiles
 async function getUserProfiles(userId: string) {
-  const [captainProfile, ownerProfile] = await Promise.all([
+  const [captainProfile, crewProfile, ownerProfile] = await Promise.all([
     db.select({ userId: captainProfiles.userId, status: captainProfiles.status })
       .from(captainProfiles)
       .where(eq(captainProfiles.userId, userId))
+      .limit(1),
+    db.select({ userId: crewProfiles.userId, status: crewProfiles.status })
+      .from(crewProfiles)
+      .where(eq(crewProfiles.userId, userId))
       .limit(1),
     db.select({ userId: ownerProfiles.userId })
       .from(ownerProfiles)
@@ -22,6 +26,8 @@ async function getUserProfiles(userId: string) {
   return {
     isCaptain: captainProfile.length > 0,
     captainStatus: captainProfile.length > 0 ? captainProfile[0].status : null,
+    isCrew: crewProfile.length > 0,
+    crewStatus: crewProfile.length > 0 ? crewProfile[0].status : null,
     isOwner: ownerProfile.length > 0,
   };
 }
@@ -89,6 +95,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           isAdmin: user[0].isAdmin,
           isCaptain: profiles.isCaptain,
           captainStatus: profiles.captainStatus,
+          isCrew: profiles.isCrew,
+          crewStatus: profiles.crewStatus,
           isOwner: profiles.isOwner,
           phoneNumber: user[0].phoneNumber || "",
           phoneVerified: user[0].phoneVerified || false,
@@ -122,6 +130,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.isAdmin = user.isAdmin;
         token.isCaptain = user.isCaptain;
         token.captainStatus = user.captainStatus;
+        token.isCrew = user.isCrew;
+        token.crewStatus = user.crewStatus;
         token.isOwner = user.isOwner;
         token.phoneNumber = user.phoneNumber;
         token.phoneVerified = user.phoneVerified;
@@ -181,6 +191,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             const profiles = await getUserProfiles(existingUser[0].id);
             token.isCaptain = profiles.isCaptain;
             token.captainStatus = profiles.captainStatus;
+            token.isCrew = profiles.isCrew;
+            token.crewStatus = profiles.crewStatus;
             token.isOwner = profiles.isOwner;
           }
         }
@@ -194,6 +206,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.isAdmin = token.isAdmin as boolean;
         session.user.isCaptain = token.isCaptain as boolean;
         session.user.captainStatus = token.captainStatus as string | null;
+        session.user.isCrew = (token.isCrew as boolean) ?? false;
+        session.user.crewStatus = (token.crewStatus as string | null) ?? null;
         session.user.isOwner = token.isOwner as boolean;
         session.user.phoneNumber = token.phoneNumber as string;
         session.user.phoneVerified = token.phoneVerified as boolean;

@@ -710,6 +710,7 @@ export class BookingService {
     const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
     const assignedAdmin = aliasedTable(users, "assignedAdmin");
+    const captainUser = aliasedTable(users, "captainUser");
 
     const selectFields = {
       id: bookings.id,
@@ -757,6 +758,10 @@ export class BookingService {
       assignedAdminFirstName: assignedAdmin.firstName,
       assignedAdminLastName: assignedAdmin.lastName,
       assignedAdminEmail: assignedAdmin.email,
+      captainUserId: bookings.captainUserId,
+      captainFirstName: captainUser.firstName,
+      captainLastName: captainUser.lastName,
+      captainEmail: captainUser.email,
       adminAllRowHighlight: bookings.adminAllRowHighlight,
       // Ops fields (from booking_ops - Excel workflow tracking)
       opsExpenseCents: bookingOps.expenseCents,
@@ -767,7 +772,6 @@ export class BookingService {
       opsBalanceOwnerCents: bookingOps.balanceOwnerCents,
       opsBalanceClientCents: bookingOps.balanceClientCents,
       opsCrewName: bookingOps.crewName,
-      opsNote: bookingOps.opsNote,
       opsContractSigned: bookingOps.contractSigned,
       opsConnected: bookingOps.connected,
       opsClientPaid: bookingOps.clientPaid,
@@ -791,6 +795,7 @@ export class BookingService {
         .leftJoin(bookingGroups, eq(bookings.bookingGroupId, bookingGroups.id))
         .leftJoin(users, eq(bookings.userId, users.id))
         .leftJoin(assignedAdmin, eq(bookings.assignedAdminId, assignedAdmin.id))
+        .leftJoin(captainUser, eq(bookings.captainUserId, captainUser.id))
         .where(whereClause)
         .limit(limit)
         .offset(offset)
@@ -841,6 +846,7 @@ export class BookingService {
   async getBookingById(id: string): Promise<BookingDetails | null> {
     const assignedAdmin = aliasedTable(users, "assignedAdmin");
     const boatOwner = aliasedTable(users, "boatOwner");
+    const captainUser = aliasedTable(users, "captainUser");
 
     const [booking] = await db
       .select({
@@ -852,6 +858,9 @@ export class BookingService {
         boatOwnerId: bookings.boatOwnerId,
         boatId: bookings.boatId,
         captainUserId: bookings.captainUserId,
+        captainFirstName: captainUser.firstName,
+        captainLastName: captainUser.lastName,
+        captainEmail: captainUser.email,
         pricingTierId: bookings.pricingTierId,
         customerName: bookings.customerName,
         customerEmail: bookings.customerEmail,
@@ -930,6 +939,7 @@ export class BookingService {
       .leftJoin(users, eq(bookings.userId, users.id))
       .leftJoin(boatOwner, eq(bookings.boatOwnerId, boatOwner.id))
       .leftJoin(assignedAdmin, eq(bookings.assignedAdminId, assignedAdmin.id))
+      .leftJoin(captainUser, eq(bookings.captainUserId, captainUser.id))
       .where(eq(bookings.id, id))
       .limit(1);
 
@@ -1425,6 +1435,36 @@ export class BookingService {
       actorId: performedByUserId,
       previousAdminId: previous,
       newAdminId: adminId,
+    });
+  }
+
+  /**
+   * Assign captain to booking (`bookings.captain_user_id`), or clear when null.
+   */
+  async assignCaptain(
+    bookingId: string,
+    captainUserId: string | null,
+    performedByUserId: string
+  ): Promise<void> {
+    const [row] = await db
+      .select({ captainUserId: bookings.captainUserId })
+      .from(bookings)
+      .where(eq(bookings.id, bookingId))
+      .limit(1);
+    const previous = row?.captainUserId ?? null;
+    if (previous === captainUserId) return;
+    await db
+      .update(bookings)
+      .set({
+        captainUserId,
+        updatedAt: new Date(),
+      })
+      .where(eq(bookings.id, bookingId));
+    await bookingEventsService.logAssignedCaptainChanged({
+      bookingId,
+      actorId: performedByUserId,
+      previousCaptainUserId: previous,
+      newCaptainUserId: captainUserId,
     });
   }
 

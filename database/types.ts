@@ -16,7 +16,9 @@ import {
   reviews,
   boatPricingTiers,
   captainProfiles,
+  crewProfiles,
   ownerProfiles,
+  bookingCrew,
   blogPosts,
   inquiry,
   inquiryEvents,
@@ -34,6 +36,7 @@ import {
   // User enums
   userStatusEnum,
   captainStatusEnum,
+  crewStatusEnum,
   ownerBusinessTypeEnum,
 
   // Boat enums
@@ -153,6 +156,13 @@ export type CaptainStatus = (typeof captainStatusEnum.enumValues)[number];
 export type OwnerProfile = typeof ownerProfiles.$inferSelect;
 export type NewOwnerProfile = typeof ownerProfiles.$inferInsert;
 export type OwnerBusinessType = (typeof ownerBusinessTypeEnum.enumValues)[number];
+
+export type CrewProfile = typeof crewProfiles.$inferSelect;
+export type NewCrewProfile = typeof crewProfiles.$inferInsert;
+export type CrewStatus = (typeof crewStatusEnum.enumValues)[number];
+
+export type BookingCrew = typeof bookingCrew.$inferSelect;
+export type NewBookingCrew = typeof bookingCrew.$inferInsert;
 
 // ========================================
 // REVIEW TYPES

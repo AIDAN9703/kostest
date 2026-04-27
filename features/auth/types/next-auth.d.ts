@@ -10,6 +10,8 @@ declare module "next-auth" {
     // Profile extensions (set when user has captain_profile or owner_profile)
     isCaptain: boolean;
     captainStatus: string | null; // CaptainStatus enum value or null
+    isCrew: boolean;
+    crewStatus: string | null; // CrewStatus enum value or null
     isOwner: boolean;
     phoneVerified: boolean;
     profileImage?: string;
@@ -27,6 +29,8 @@ declare module "next-auth/jwt" {
     isAdmin: boolean;
     isCaptain: boolean;
     captainStatus: string | null;
+    isCrew: boolean;
+    crewStatus: string | null;
     isOwner: boolean;
     phoneNumber: string;
     phoneVerified: boolean;

@@ -30,15 +30,7 @@ export default async function UsersPage({
       >
         <AdminUserFilter />
       </Suspense>
-      <AdminUsersTable
-        users={result.users}
-        pagination={{
-          page: result.page,
-          limit: result.limit,
-          totalCount: result.totalCount,
-          totalPages: result.totalPages,
-        }}
-      />
+      <AdminUsersTable users={result.users} />
       <AdminUserTablePagination
         totalCount={result.totalCount}
         totalPages={result.totalPages}

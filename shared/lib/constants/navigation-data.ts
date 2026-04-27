@@ -304,6 +304,16 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
         iconClassName: "h-5 w-5",
       },
       {
+        label: "Captains",
+        href: "/admin/captains",
+        iconClassName: "h-5 w-5 text-sky-400",
+      },
+      {
+        label: "Crew",
+        href: "/admin/crew",
+        iconClassName: "h-5 w-5 text-cyan-400",
+      },
+      {
         label: "Boats",
         href: "/admin/boats",
         iconClassName: "h-5 w-5",

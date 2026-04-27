@@ -1,13 +1,26 @@
 //drizzle
 import { db } from '@/database/db';
-import { users, ownerProfiles } from '@/database/schema';
-import { and, count, eq, desc, or, ilike } from 'drizzle-orm';
-import { bookings, bookingPricing } from '@/database/schema';
+import {
+  users,
+  captainProfiles,
+  crewProfiles,
+  bookings,
+  bookingPricing,
+} from '@/database/schema';
+import { and, count, eq, desc, or, ilike, getTableColumns } from 'drizzle-orm';
 import { type User   } from '@/database/types';
 
 //types
-import { type UserFilterInput, type CreateUserInput, type UpdateUserInput } from '@/features/users/user.validation';
-import { type PaginatedUsersResponse, type UserWithRelations } from '@/features/users/user.types';
+import {
+  type UserFilterInput,
+  type CreateUserInput,
+  type UpdateUserInput,
+} from '@/features/users/user.validation';
+import {
+  type PaginatedUsersResponse,
+  type UserListItem,
+  type UserWithRelations,
+} from '@/features/users/user.types';
 
 //bcrypt
 import { hash } from 'bcryptjs';
@@ -25,53 +38,57 @@ export class UserService {
     const limit = filters?.limit || 10;
     const offset = (page - 1) * limit;
 
-    // Build queries
-    let query = db.select().from(users);
-    let countQuery = db.select({ count: count() }).from(users);
+    const conditions = [];
 
-    if (filters) {
-      const conditions = [];
-
-      // Search across multiple fields
-      if (filters.search) {
-        conditions.push(
-          or(
-            ilike(users.firstName, `%${filters.search}%`),
-            ilike(users.lastName, `%${filters.search}%`),
-            ilike(users.email, `%${filters.search}%`),
-            ilike(users.username, `%${filters.search}%`)
-          )
-        );
-      }
-
-      // Status filter
-      if (filters.status) {
-        conditions.push(eq(users.status, filters.status));
-      }
-
-      // Admin filter  
-      if (filters.isAdmin !== undefined) {
-        conditions.push(eq(users.isAdmin, filters.isAdmin));
-      }
-
-      // Apply conditions if any exist
-      if (conditions.length > 0) {
-        const whereClause = and(...conditions);
-        query = query.where(whereClause) as any;
-        countQuery = countQuery.where(whereClause) as any;
-      }
+    if (filters?.search) {
+      conditions.push(
+        or(
+          ilike(users.firstName, `%${filters.search}%`),
+          ilike(users.lastName, `%${filters.search}%`),
+          ilike(users.email, `%${filters.search}%`),
+          ilike(users.username, `%${filters.search}%`)
+        )!
+      );
     }
 
-    // Execute in parallel for performance
+    if (filters?.status) {
+      conditions.push(eq(users.status, filters.status));
+    }
+
+    if (filters?.isAdmin !== undefined) {
+      conditions.push(eq(users.isAdmin, filters.isAdmin));
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    const dataBase = db
+      .select({
+        ...getTableColumns(users),
+        captainProfileStatus: captainProfiles.status,
+        crewProfileStatus: crewProfiles.status,
+      })
+      .from(users)
+      .leftJoin(captainProfiles, eq(users.id, captainProfiles.userId))
+      .leftJoin(crewProfiles, eq(users.id, crewProfiles.userId));
+
+    const countBase = db
+      .select({ count: count() })
+      .from(users)
+      .leftJoin(captainProfiles, eq(users.id, captainProfiles.userId))
+      .leftJoin(crewProfiles, eq(users.id, crewProfiles.userId));
+
+    const dataQuery = whereClause ? dataBase.where(whereClause) : dataBase;
+    const countQuery = whereClause ? countBase.where(whereClause) : countBase;
+
     const [usersData, totalCountResult] = await Promise.all([
-      query.orderBy(desc(users.createdAt)).limit(limit).offset(offset),
-      countQuery
+      dataQuery.orderBy(desc(users.createdAt)).limit(limit).offset(offset),
+      countQuery,
     ]);
 
     const totalCount = totalCountResult[0]?.count || 0;
 
     return {
-      users: usersData,
+      users: usersData as UserListItem[],
       totalCount,
       page,
       limit,
@@ -103,6 +120,7 @@ export class UserService {
     options?: {
       ownedBoats?: { limit: number };
       captainProfile?: true;
+      crewProfile?: true;
       bookings?: { limit: number };
       reviewsAsReviewer?: { limit: number };
       notifications?: { limit: number; unreadOnly?: boolean };
@@ -110,9 +128,9 @@ export class UserService {
   ): Promise<UserWithRelations | null> {
     // If no options provided, use simple query
     if (!options || Object.keys(options).length === 0) {
-    const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
-    return user || null;
-  }
+      const [user] = await db.select().from(users).where(eq(users.id, id)).limit(1);
+      return user || null;
+    }
 
     // Build relations object
     const withClause: any = {};
@@ -139,6 +157,15 @@ export class UserService {
             status: true,
             uscgLicensed: true,
           },
+      };
+    }
+
+    if (options.crewProfile) {
+      withClause.crewProfile = {
+        columns: {
+          userId: true,
+          status: true,
+        },
       };
     }
 
@@ -215,9 +242,6 @@ export class UserService {
     return user as UserWithRelations;
   }
 
-  
-
-
   /**
    * Create new user (with password hashing)
    */
@@ -272,44 +296,6 @@ export class UserService {
     await db.delete(users).where(eq(users.id, id));
   }
 
-
-  /**
-   * Get list of available boat owners
-   * Returns only users who have an owner_profile (can own boats)
-   * Used for owner selection in boat create/edit forms
-   */
-  async getBoatOwners(search?: string) {
-    const conditions = [eq(users.status, 'ACTIVE')];
-
-    // Optionally filter by search query
-    if (search) {
-      conditions.push(
-        or(
-          ilike(users.firstName, `%${search}%`),
-          ilike(users.lastName, `%${search}%`),
-          ilike(users.email, `%${search}%`),
-          ilike(users.username, `%${search}%`)
-        )!
-      );
-    }
-
-    const whereClause = and(...conditions);
-
-    return db
-      .select({
-        id: users.id,
-        firstName: users.firstName,
-        lastName: users.lastName,
-        email: users.email,
-        username: users.username,
-        profileImage: users.profileImage,
-      })
-      .from(users)
-      .innerJoin(ownerProfiles, eq(ownerProfiles.userId, users.id))
-      .where(whereClause)
-      .orderBy(desc(users.createdAt))
-      .limit(50);
-  }
 
   /**
    * Get list of admin users

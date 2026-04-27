@@ -2,6 +2,13 @@
 
 import { InlineOpsCell } from "./InlineOpsCell";
 import { InlineOpsSelectCell } from "./InlineOpsSelectCell";
+import { OpsCaptainAssignment } from "./OpsCaptainAssignment";
+import type { CaptainAssignmentOption } from "./OpsCaptainAssignment";
+import { OpsCrewAssignment } from "./OpsCrewAssignment";
+import type {
+  CrewAssignmentMember,
+  CrewAssignmentOption,
+} from "./OpsCrewAssignment";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import {
   computeOpsBalanceClientCents,
@@ -23,7 +30,6 @@ export interface OpsRowContentProps {
   opsPaidCents?: number | null;
   opsSentToOwnerCents?: number | null;
   opsCrewName?: string | null;
-  opsNote?: string | null;
   opsContractSigned?: boolean | null;
   opsConnected?: boolean | null;
   opsClientPaid?: boolean | null;
@@ -34,6 +40,14 @@ export interface OpsRowContentProps {
   opsCommissionKosCents?: number | null;
   opsCommissionCents?: number | null;
   opsSourceOverride?: string | null;
+  /** Booking detail only: when defined, shows captain row above money fields. */
+  captainUserId?: string | null;
+  captainFirstName?: string | null;
+  captainLastName?: string | null;
+  captainEmail?: string | null;
+  captainOptions?: CaptainAssignmentOption[];
+  bookingCrew?: CrewAssignmentMember[];
+  crewOptions?: CrewAssignmentOption[];
 }
 
 function OpsField({
@@ -160,7 +174,6 @@ const LABELS = {
     balOwner: "Bal Owner",
     balClient: "Bal Client",
     crew: "Crew",
-    note: "Note",
   },
   comfortable: {
     expense: "Expense",
@@ -174,7 +187,6 @@ const LABELS = {
     balOwner: "Balance (owner)",
     balClient: "Balance (client)",
     crew: "Crew",
-    note: "Note",
   },
 } as const;
 
@@ -187,7 +199,6 @@ export function OpsRowContent({
   opsPaidCents,
   opsSentToOwnerCents,
   opsCrewName,
-  opsNote,
   opsContractSigned,
   opsConnected,
   opsClientPaid,
@@ -197,6 +208,13 @@ export function OpsRowContent({
   opsCommissionAgentCents,
   opsCommissionKosCents,
   opsSourceOverride,
+  captainUserId,
+  captainFirstName,
+  captainLastName,
+  captainEmail,
+  captainOptions,
+  bookingCrew,
+  crewOptions,
 }: OpsRowContentProps) {
   const L = LABELS[density];
   const revenueCentsDisplay = computeOpsRevenueCents(totalAmountCents, opsExpenseCents);
@@ -212,6 +230,25 @@ export function OpsRowContent({
 
   return (
     <div className="space-y-4">
+      {captainOptions !== undefined ? (
+        <div className="flex flex-wrap items-start gap-8">
+          <OpsCaptainAssignment
+            bookingId={bookingId}
+            captainUserId={captainUserId ?? null}
+            captainFirstName={captainFirstName ?? null}
+            captainLastName={captainLastName ?? null}
+            captainEmail={captainEmail ?? null}
+            captainOptions={captainOptions}
+          />
+          {crewOptions !== undefined ? (
+            <OpsCrewAssignment
+              bookingId={bookingId}
+              assignedCrew={bookingCrew ?? []}
+              crewOptions={crewOptions}
+            />
+          ) : null}
+        </div>
+      ) : null}
       <div
         className={cn(
           "flex flex-wrap items-start",
@@ -311,9 +348,6 @@ export function OpsRowContent({
             value={opsCrewName}
             placeholder="—"
           />
-        </OpsField>
-        <OpsField label={L.note} density={density}>
-          <InlineOpsCell bookingId={bookingId} field="opsNote" value={opsNote} placeholder="—" />
         </OpsField>
       </div>
 

@@ -37,7 +37,6 @@ async function AdminUserCreateEditFormWithData({ userId }: { userId: string }) {
     firstName: userData.firstName || null,
     lastName: userData.lastName || null,
     bio: userData.bio || null,
-    profileImage: userData.profileImage || null,
     username: userData.username,
     email: userData.email,
     phoneNumber: userData.phoneNumber || null,

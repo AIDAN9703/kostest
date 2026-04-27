@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/auth";
-import { userService } from "@/features/users/user.service";
+import { ownerProfileService } from "@/features/profiles/owner-profile.service";
 import { apiSuccess, apiError } from "@/shared/lib/utils/api-helpers";
 
 /**
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get('search') || undefined;
 
-    const owners = await userService.getBoatOwners(search);
+    const owners = await ownerProfileService.getOwnersForAssignment(search);
     return apiSuccess(owners);
   } catch (error) {
     console.error("Error fetching boat owners:", error);

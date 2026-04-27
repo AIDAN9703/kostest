@@ -35,9 +35,6 @@ export const bookingOps = pgTable("booking_ops", {
   // Crew/captain name (free text)
   crewName: text("crew_name"),
 
-  // Ops note (separate from booking.adminNotes if needed for ops-specific notes)
-  opsNote: text("ops_note"),
-
   // Checkboxes
   contractSigned: boolean("contract_signed"),
   connected: boolean("connected"),

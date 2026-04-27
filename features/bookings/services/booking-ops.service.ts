@@ -21,7 +21,6 @@ export interface BookingOpsData {
   balanceClientCents: number | null;
   sentToOwnerCents: number | null;
   crewName: string | null;
-  opsNote: string | null;
   contractSigned: boolean | null;
   connected: boolean | null;
   clientPaid: boolean | null;
@@ -45,7 +44,6 @@ export interface BookingOpsInput {
   balanceClientCents?: number | null;
   sentToOwnerCents?: number | null;
   crewName?: string | null;
-  opsNote?: string | null;
   contractSigned?: boolean | null;
   connected?: boolean | null;
   clientPaid?: boolean | null;
@@ -78,7 +76,6 @@ export const bookingOpsService = {
       balanceClientCents: row.balanceClientCents,
       sentToOwnerCents: row.sentToOwnerCents,
       crewName: row.crewName,
-      opsNote: row.opsNote,
       contractSigned: row.contractSigned,
       connected: row.connected,
       clientPaid: row.clientPaid,
@@ -172,7 +169,6 @@ export const bookingOpsService = {
       "balanceClientCents",
       "sentToOwnerCents",
       "crewName",
-      "opsNote",
       "contractSigned",
       "connected",
       "clientPaid",
@@ -200,7 +196,6 @@ export const bookingOpsService = {
       balanceClientCents: mergeForInsert("balanceClientCents"),
       sentToOwnerCents: mergeForInsert("sentToOwnerCents"),
       crewName: mergeForInsert("crewName"),
-      opsNote: mergeForInsert("opsNote"),
       contractSigned: mergeForInsert("contractSigned"),
       connected: mergeForInsert("connected"),
       clientPaid: mergeForInsert("clientPaid"),
@@ -232,7 +227,6 @@ export const bookingOpsService = {
       balanceClientCents: row.balanceClientCents,
       sentToOwnerCents: row.sentToOwnerCents,
       crewName: row.crewName,
-      opsNote: row.opsNote,
       contractSigned: row.contractSigned,
       connected: row.connected,
       clientPaid: row.clientPaid,

@@ -267,6 +267,20 @@
       "when": 1776819104742,
       "tag": "0039_neat_mathemanic",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1777249853426,
+      "tag": "0040_dashing_toad_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1777262471547,
+      "tag": "0041_narrow_venom",
+      "breakpoints": true
     }
   ]
 }

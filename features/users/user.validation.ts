@@ -1,24 +1,23 @@
 import * as z from "zod";
-import { 
-  userStatusEnum, 
-  authProviderEnum
-} from "@/database/schema";
+import { userStatusEnum, authProviderEnum } from "@/database/schema";
 import { passwordSchema, phoneSchema, emailSchema } from "@/shared/lib/validation/common";
 
-// Common user schema for admin-editable fields only
-// System-managed fields (stripe IDs, verification flags, etc.) are excluded
+// Common user schema for admin create/edit (no profile image URL; captain/crew via promote flows)
 const userBaseSchema = z.object({
   // Personal Information
   firstName: z.string().optional().nullable(),
   lastName: z.string().optional().nullable(),
   bio: z.string().max(500, "Bio must be less than 500 characters").optional().nullable(),
-  profileImage: z.string().url("Must be a valid URL").optional().nullable(),
 
   // Account Information
-  username: z.string()
+  username: z
+    .string()
     .min(3, "Username must be at least 3 characters")
     .max(30, "Username must be less than 30 characters")
-    .regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, underscores, and hyphens"),
+    .regex(
+      /^[a-zA-Z0-9_-]+$/,
+      "Username can only contain letters, numbers, underscores, and hyphens"
+    ),
   email: emailSchema,
   phoneNumber: phoneSchema,
   isAdmin: z.boolean().default(false),
@@ -29,7 +28,8 @@ const userBaseSchema = z.object({
   address: z.string().max(100, "Address must be less than 100 characters").optional().nullable(),
   city: z.string().max(50, "City must be less than 50 characters").optional().nullable(),
   state: z.string().max(50, "State must be less than 50 characters").optional().nullable(),
-  postalCode: z.string()
+  postalCode: z
+    .string()
     .regex(/^[0-9a-zA-Z\s-]{3,10}$/, "Please enter a valid postal/zip code")
     .optional()
     .nullable(),
@@ -52,10 +52,7 @@ export const quickCreateUserSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: emailSchema,
-  phoneNumber: z.preprocess(
-    (v) => (v === "" || v === undefined ? null : v),
-    phoneSchema
-  ),
+  phoneNumber: z.preprocess((v) => (v === "" || v === undefined ? null : v), phoneSchema),
 });
 
 export type QuickCreateUserInput = z.infer<typeof quickCreateUserSchema>;

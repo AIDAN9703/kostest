@@ -2,6 +2,7 @@
 export * from "./boats.table";
 export * from "./users.table";
 export * from "./captainProfiles.table";
+export * from "./crewProfiles.table";
 export * from "./ownerProfiles.table";
 
 // Booking tables
@@ -12,6 +13,7 @@ export * from "./bookingStatusHistory.table";
 export * from "./bookingEvents.table";
 export * from "./bookingAdminNotes.table";
 export * from "./bookingOps.table";
+export * from "./bookingCrew.table";
 
 // Payment tables
 export * from "./payments.table";

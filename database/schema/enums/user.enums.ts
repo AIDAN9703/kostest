@@ -19,6 +19,15 @@ export const captainStatusEnum = pgEnum("CaptainStatus", [
   "SUSPENDED",         // Admin suspended
 ]);
 
+// Crew profile status (same lifecycle as captains; separate enum for DB clarity)
+export const crewStatusEnum = pgEnum("CrewStatus", [
+  "PENDING",
+  "ACTIVE",
+  "INACTIVE",
+  "ON_LEAVE",
+  "SUSPENDED",
+]);
+
 // Owner profile business type
 export const ownerBusinessTypeEnum = pgEnum("OwnerBusinessType", [
   "INDIVIDUAL",        // Personal boat owner

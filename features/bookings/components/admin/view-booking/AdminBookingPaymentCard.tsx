@@ -4,33 +4,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui/card";
-import { SERVICE_FEE_PERCENT_DISPLAY } from "@/shared/lib/constants/fees-constants";
 import { StatusBadge } from "@/shared/lib/utils/badge-utils";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import type { BookingDetails } from "@/features/bookings/booking.types";
 import type { Payment } from "@/database/types";
 import { format } from "date-fns";
-import { AdminBookingMarkPaidButton } from "@/features/bookings/components/admin/view-booking/AdminBookingMarkPaidButton";
+import { AdminBookingMakePaymentButton } from "@/features/bookings/components/admin/view-booking/AdminBookingMakePaymentButton";
 
 interface AdminBookingPaymentCardProps {
   bookingId: string;
   booking: Pick<
     BookingDetails,
-    | "paymentDisplayStatus"
-    | "paymentMethod"
-    | "totalAmountCents"
-    | "totalPaidCents"
-    | "basePriceCents"
-    | "captainFeeCents"
-    | "cleaningFeeCents"
-    | "serviceFeeCents"
-    | "taxAmountCents"
-    | "depositAmountCents"
+    "totalAmountCents" | "totalPaidCents" | "depositAmountCents"
   >;
   payments: Payment[];
   opsGmvCents: number | null;
-  opsPaidCents: number | null;
-  opsClientPaid: boolean | null;
 }
 
 const METHOD_LABELS: Record<string, string> = {
@@ -47,6 +35,7 @@ const METHOD_LABELS: Record<string, string> = {
 function formatPaymentType(type: string) {
   const map: Record<string, string> = {
     FULL_PAYMENT: "Full Payment",
+    PARTIAL: "Partial",
     DEPOSIT: "Deposit",
     REMAINDER: "Remainder",
     REFUND: "Refund",
@@ -60,36 +49,29 @@ export function AdminBookingPaymentCard({
   booking,
   payments,
   opsGmvCents,
-  opsPaidCents,
-  opsClientPaid,
 }: AdminBookingPaymentCardProps) {
   const totalAmount = booking.totalAmountCents ?? 0;
   const totalPaid = booking.totalPaidCents ?? 0;
   const balance = Math.max(0, totalAmount - totalPaid);
 
   return (
-    <Card>
+    <Card className="h-full rounded-2xl border border-border/60 shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-2">
-            <CardTitle className="text-xl">Payment</CardTitle>
-            <StatusBadge status={booking.paymentDisplayStatus} />
-          </div>
-          <AdminBookingMarkPaidButton
+          <CardTitle className="text-lg">Payment</CardTitle>
+          <AdminBookingMakePaymentButton
             bookingId={bookingId}
             charterTotalCents={booking.totalAmountCents ?? null}
             totalPaidFromPaymentsCents={booking.totalPaidCents ?? 0}
             opsGmvCents={opsGmvCents}
-            currentPaidCents={opsPaidCents}
-            clientPaid={opsClientPaid}
           />
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
         <p className="text-xs text-muted-foreground">
           Due / paid / balance use the <strong>payment ledger</strong> below.{' '}
-          <strong>Mark as paid</strong> adds a manual succeeded payment for any gap, then matches
-          ops PAID.
+          <strong>Make payment</strong> records a manual offline payment and updates ops PAID when
+          the total reaches GMV (or the quote total if GMV is not set).
         </p>
         {/* Summary row */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -115,28 +97,6 @@ export function AdminBookingPaymentCard({
               />
             )}
         </div>
-
-        {/* Pricing breakdown — collapsed by default to keep the page scannable */}
-        <details className="group rounded-lg border border-border/60 bg-muted/30">
-          <summary className="cursor-pointer list-none px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground marker:content-none [&::-webkit-details-marker]:hidden">
-            <span className="group-open:hidden">Show pricing breakdown</span>
-            <span className="hidden group-open:inline">Hide pricing breakdown</span>
-          </summary>
-          <div className="divide-y border-t text-sm">
-            <LineItem label="Base Price" cents={booking.basePriceCents} />
-            <LineItem label="Captain Fee" cents={booking.captainFeeCents} />
-            <LineItem label="Cleaning Fee" cents={booking.cleaningFeeCents} />
-            <LineItem
-              label={`Card Processing Fee (${SERVICE_FEE_PERCENT_DISPLAY}%)`}
-              cents={booking.serviceFeeCents}
-            />
-            <LineItem label="Tax" cents={booking.taxAmountCents} />
-            <div className="flex justify-between px-3 py-2 font-semibold">
-              <span>Total</span>
-              <span>{formatCentsAsCurrency(totalAmount)}</span>
-            </div>
-          </div>
-        </details>
 
         {/* Payment history */}
         <div>
@@ -212,22 +172,6 @@ function SummaryItem({
         {label}
       </p>
       <p className={`text-lg font-semibold ${className ?? ""}`}>{value}</p>
-    </div>
-  );
-}
-
-function LineItem({
-  label,
-  cents,
-}: {
-  label: string;
-  cents: number | null | undefined;
-}) {
-  if (cents == null || cents === 0) return null;
-  return (
-    <div className="flex justify-between px-3 py-2">
-      <span className="text-muted-foreground">{label}</span>
-      <span>{formatCentsAsCurrency(cents)}</span>
     </div>
   );
 }

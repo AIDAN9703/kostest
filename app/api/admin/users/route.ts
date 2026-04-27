@@ -77,7 +77,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Service handles password hashing and timestamps
     const newUser = await userService.createUser(validation.data);
 
     return apiSuccess(newUser, 201);

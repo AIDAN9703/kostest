@@ -145,6 +145,32 @@ export class BookingEventsService {
     });
   }
 
+  async logAssignedCaptainChanged(params: {
+    bookingId: string;
+    actorId: string;
+    previousCaptainUserId: string | null;
+    newCaptainUserId: string | null;
+  }): Promise<void> {
+    const prev = params.previousCaptainUserId ?? "—";
+    const next = params.newCaptainUserId ?? "—";
+    await this.logEvent({
+      bookingId: params.bookingId,
+      eventType: BOOKING_EVENT_TYPES.ASSIGNED_CAPTAIN_CHANGED,
+      actorType: "admin",
+      actorId: params.actorId,
+      channel: "admin_portal",
+      previousState: { captainUserId: params.previousCaptainUserId },
+      newState: { captainUserId: params.newCaptainUserId },
+      displayMessage:
+        params.newCaptainUserId == null
+          ? "Captain unassigned"
+          : params.previousCaptainUserId == null
+            ? "Captain assigned"
+            : "Assigned captain changed",
+      metadata: { previousCaptainUserId: prev, newCaptainUserId: next },
+    });
+  }
+
   async logDraftPublished(params: {
     bookingId: string;
     actorId: string | null;
@@ -182,6 +208,50 @@ export class BookingEventsService {
       contactMethod: params.contactMethod,
       content: params.content ?? "Customer contacted",
       displayMessage: `Contact logged (${params.contactMethod})`,
+    });
+  }
+
+  async logBookingCrewMemberAdded(params: {
+    bookingId: string;
+    actorId: string;
+    bookingCrewId: string;
+    crewUserId: string;
+    role: string | null;
+  }): Promise<void> {
+    await this.logEvent({
+      bookingId: params.bookingId,
+      eventType: BOOKING_EVENT_TYPES.CREW_MEMBER_ADDED,
+      actorType: "admin",
+      actorId: params.actorId,
+      channel: "admin_portal",
+      displayMessage: params.role
+        ? `Crew added (${params.role})`
+        : "Crew member added",
+      metadata: {
+        bookingCrewId: params.bookingCrewId,
+        crewUserId: params.crewUserId,
+        role: params.role,
+      },
+    });
+  }
+
+  async logBookingCrewMemberRemoved(params: {
+    bookingId: string;
+    actorId: string;
+    bookingCrewId: string;
+    crewUserId: string;
+  }): Promise<void> {
+    await this.logEvent({
+      bookingId: params.bookingId,
+      eventType: BOOKING_EVENT_TYPES.CREW_MEMBER_REMOVED,
+      actorType: "admin",
+      actorId: params.actorId,
+      channel: "admin_portal",
+      displayMessage: "Crew member removed",
+      metadata: {
+        bookingCrewId: params.bookingCrewId,
+        crewUserId: params.crewUserId,
+      },
     });
   }
 

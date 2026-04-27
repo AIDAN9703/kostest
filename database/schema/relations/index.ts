@@ -4,6 +4,7 @@
 export * from "./boats.relations";
 export * from "./users.relations";
 export * from "./captainProfiles.relations";
+export * from "./crewProfiles.relations";
 export * from "./ownerProfiles.relations";
 
 // Booking relations
@@ -14,6 +15,7 @@ export * from "./bookingStatusHistory.relations";
 export * from "./bookingEvents.relations";
 export * from "./bookingAdminNotes.relations";
 export * from "./bookingOps.relations";
+export * from "./bookingCrew.relations";
 
 // Payment relations
 export * from "./payments.relations";
@@ -27,4 +29,3 @@ export * from "./inquiryEvents.relations";
 export * from "./boatPricingTiers.relations";
 export * from "./boatBlocking.relations";
 export * from "./events.relations";
-

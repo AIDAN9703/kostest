@@ -32,11 +32,12 @@ function generateTempPassword(): string {
 
 /** Derive unique username from email (e.g. johndoe_a1b2c3) */
 function deriveUsername(email: string): string {
-  const base = email
-    .split("@")[0]
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, "_")
-    .slice(0, 20) || "user";
+  const base =
+    email
+      .split("@")[0]
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "_")
+      .slice(0, 20) || "user";
   const suffix = randomBytes(3).toString("hex");
   return `${base}_${suffix}`;
 }
@@ -83,9 +84,11 @@ export async function createUserQuick(
 /**
  * Create new user
  */
-export async function createUser(userData: CreateUserInput): Promise<ActionResponse<{ user: User }>> {
+export async function createUser(
+  userData: CreateUserInput
+): Promise<ActionResponse<{ user: User }>> {
   const session = await auth();
-  
+
   if (!session?.user?.isAdmin) {
     return { success: false, error: "You are not authorized to create a user" };
   }
@@ -93,24 +96,23 @@ export async function createUser(userData: CreateUserInput): Promise<ActionRespo
   try {
     const newUser = await userService.createUser(userData);
 
-    revalidatePath('/admin/users');
+    revalidatePath("/admin/users");
     return { success: true, data: { user: newUser } };
   } catch (error) {
     return { success: false, error: toErrorString(error) };
   }
 }
 
-
 /**
  * Update user (partial updates allowed)
  * Since all fields in UpdateUserInput are optional, we can pass partial updates
  */
 export async function updateUser(
-  id: string, 
+  id: string,
   updates: Partial<UpdateUserInput>
 ): Promise<ActionResponse<{ user: User }>> {
   const session = await auth();
-  
+
   if (!session?.user?.isAdmin) {
     return { success: false, error: "You are not authorized to update this user" };
   }
@@ -118,7 +120,7 @@ export async function updateUser(
   try {
     const updatedUser = await userService.updateUser(id, updates);
 
-    revalidatePath('/admin/users');
+    revalidatePath("/admin/users");
     revalidatePath(`/admin/users/${id}`);
     return { success: true, data: { user: updatedUser } };
   } catch (error) {
@@ -131,17 +133,16 @@ export async function updateUser(
  */
 export async function deleteUser(id: string): Promise<ActionResponse<{ message: string }>> {
   const session = await auth();
-  
+
   if (!session?.user?.isAdmin) {
     return { success: false, error: "You are not authorized to delete this user" };
   }
 
   try {
     await userService.deleteUser(id);
-    revalidatePath('/admin/users');
+    revalidatePath("/admin/users");
     return { success: true, data: { message: "User deleted successfully" } };
   } catch (error) {
     return { success: false, error: toErrorString(error) };
   }
 }
-

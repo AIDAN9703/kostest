@@ -17,98 +17,104 @@ function formatDateTime(
     timezone: boatTimezone ?? undefined,
   });
   if (!parsed?.date) return "—";
-  return `${format(parsed.date, "MMM d, yyyy")} ${parsed.time}`.trim() || "—";
+  return format(parsed.date, "MMM d, yyyy h:mm a") || "—";
 }
 
 export function AdminBookingDetailsCard({ booking }: AdminBookingDetailsCardProps) {
+  const customerName = booking.customerName?.trim() || "—";
+  const boatName = booking.boatName?.trim() || "—";
+
+  const interactiveText =
+    "text-foreground underline-offset-4 hover:text-primary hover:underline";
+
+  const sectionHeading =
+    "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
+
   return (
-    <Card className="rounded-2xl border border-border/60 shadow-sm">
+    <Card className="h-full rounded-2xl border border-border/60 shadow-sm">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg">Customer &amp; trip</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-8">
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Customer
-            </h3>
+      <CardContent className="space-y-8">
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-8">
+          <div className="min-w-0 space-y-3">
+            <h3 className={sectionHeading}>Customer</h3>
             <div className="space-y-2 text-sm">
-              <p className="font-medium text-foreground">{booking.customerName || "—"}</p>
-              {booking.userId && (
+              {booking.userId ? (
                 <Link
                   href={`/admin/users/${booking.userId}`}
-                  className="text-xs text-primary hover:underline"
+                  className={`block font-medium ${interactiveText}`}
                 >
-                  View profile
+                  {customerName}
                 </Link>
+              ) : (
+                <p className="font-medium text-foreground">{customerName}</p>
               )}
               {booking.customerEmail ? (
                 <a
                   href={`mailto:${booking.customerEmail}`}
-                  className="block font-medium text-primary hover:underline"
+                  className={`block ${interactiveText}`}
                 >
                   {booking.customerEmail}
                 </a>
-              ) : (
-                <p className="text-muted-foreground">—</p>
-              )}
-              <p className="text-foreground">{booking.customerPhone || "—"}</p>
+              ) : null}
+              {booking.customerPhone ? (
+                <a
+                  href={`tel:${booking.customerPhone.replace(/\s/g, "")}`}
+                  className={`block ${interactiveText}`}
+                >
+                  {booking.customerPhone}
+                </a>
+              ) : null}
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Boat
-            </h3>
-            <div className="space-y-2 text-sm">
-              <p className="font-medium text-foreground">{booking.boatName || "—"}</p>
-              {booking.boatId && (
+          <div className="min-w-0 space-y-3">
+            <h3 className={sectionHeading}>Boat</h3>
+            <div className="text-sm">
+              {booking.boatId ? (
                 <Link
                   href={`/admin/boats/${booking.boatId}`}
-                  className="text-xs text-primary hover:underline"
+                  className={`font-medium ${interactiveText}`}
                 >
-                  View boat
+                  {boatName}
                 </Link>
+              ) : (
+                <p className="font-medium text-foreground">{boatName}</p>
               )}
-              <p className="text-muted-foreground">
-                {booking.boatCategory || "—"}
-                {booking.boatCapacity != null ? ` · ${booking.boatCapacity} guests` : ""}
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-8 border-t border-border/60 pt-8 lg:grid-cols-2 lg:gap-8">
+          <div className="min-w-0 space-y-3 text-sm">
+            <div className="space-y-1">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                From
+              </p>
+              <p className="text-foreground">
+                {formatDateTime(booking.startDateTime, booking.boatTimezone)}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                To
+              </p>
+              <p className="text-foreground">
+                {formatDateTime(booking.endDateTime, booking.boatTimezone)}
               </p>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Trip
-            </h3>
-            <dl className="space-y-2 text-sm">
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Type</dt>
-                <dd className="font-medium capitalize text-right">
-                  {booking.bookingType?.replace(/_/g, " ").toLowerCase() || "—"}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Start</dt>
-                <dd className="text-right font-medium">
-                  {formatDateTime(booking.startDateTime, booking.boatTimezone)}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">End</dt>
-                <dd className="text-right font-medium">
-                  {formatDateTime(booking.endDateTime, booking.boatTimezone)}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Passengers</dt>
-                <dd className="font-medium text-right">{booking.numberOfPassengers ?? "—"}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Booking ID</dt>
-                <dd className="font-mono text-xs text-right">{booking.id.slice(0, 8)}…</dd>
-              </div>
-            </dl>
+          <div className="min-w-0 space-y-8">
+            <div className="space-y-3">
+              <h3 className={sectionHeading}>Passengers</h3>
+              <p className="text-sm text-foreground">{booking.numberOfPassengers ?? "—"}</p>
+            </div>
+            <div className="space-y-3">
+              <h3 className={sectionHeading}>Booking ID</h3>
+              <p className="break-all font-mono text-xs text-foreground">{booking.id}</p>
+            </div>
           </div>
         </div>
       </CardContent>

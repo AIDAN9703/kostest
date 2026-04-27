@@ -7,11 +7,13 @@ import { bookingService } from "@/features/bookings/services/booking.service";
 import { paymentService } from "@/features/payments/payment.service";
 
 /**
- * Marks the charter as received in ops (PAID + client paid) and inserts a **payment** row
- * for any amount not already covered by succeeded, non-refund payments — so Total paid,
- * balance, and payment history match the ops sheet (Stripe + Zelle / offline).
+ * Records a manual (offline) payment for a booking, updates the payment ledger,
+ * and syncs ops PAID + client paid when the cumulative total reaches ops GMV (or quote total).
  */
-export async function markBookingPaidOfflineAction(bookingId: string) {
+export async function recordBookingManualPaymentAction(
+  bookingId: string,
+  amountCents: number
+) {
   try {
     const session = await auth();
     if (!session?.user?.isAdmin) {
@@ -19,6 +21,12 @@ export async function markBookingPaidOfflineAction(bookingId: string) {
     }
     if (!bookingId?.trim()) {
       return { success: false as const, error: "Booking id required" };
+    }
+    if (!Number.isInteger(amountCents) || amountCents <= 0) {
+      return {
+        success: false as const,
+        error: "Enter a valid payment amount greater than zero.",
+      };
     }
 
     const booking = await bookingService.getBookingById(bookingId);
@@ -34,7 +42,7 @@ export async function markBookingPaidOfflineAction(bookingId: string) {
     if (targetPaidCents == null || targetPaidCents <= 0) {
       return {
         success: false as const,
-        error: "Set ops GMV or ensure the booking has a quote total before marking paid.",
+        error: "Set ops GMV or ensure the booking has a quote total before recording a payment.",
       };
     }
 
@@ -44,26 +52,40 @@ export async function markBookingPaidOfflineAction(bookingId: string) {
       return sum + Number(p.amountCents);
     }, 0);
 
-    const deltaCents = targetPaidCents - recordedCents;
-
-    if (deltaCents > 0) {
-      const paymentType =
-        recordedCents === 0 ? ("FULL_PAYMENT" as const) : ("PARTIAL" as const);
-      await paymentService.createPayment({
-        payableType: "BOOKING",
-        payableId: bookingId,
-        paymentType,
-        amountCents: deltaCents,
-        status: "SUCCEEDED",
-        paymentMethodType: "MANUAL",
-        notes: "Recorded via admin — offline / Zelle (linked to ops)",
-        processedAt: new Date(),
-      });
+    const remainingCents = targetPaidCents - recordedCents;
+    if (remainingCents <= 0) {
+      return {
+        success: false as const,
+        error: "This booking has no remaining balance to record.",
+      };
+    }
+    if (amountCents > remainingCents) {
+      return {
+        success: false as const,
+        error: "That amount is more than the remaining balance. Refresh the page and try again.",
+      };
     }
 
+    const newRecordedTotal = recordedCents + amountCents;
+    const paymentType =
+      recordedCents === 0 && newRecordedTotal >= targetPaidCents
+        ? ("FULL_PAYMENT" as const)
+        : ("PARTIAL" as const);
+
+    await paymentService.createPayment({
+      payableType: "BOOKING",
+      payableId: bookingId,
+      paymentType,
+      amountCents,
+      status: "SUCCEEDED",
+      paymentMethodType: "MANUAL",
+      notes: "Recorded via admin — manual / offline payment",
+      processedAt: new Date(),
+    });
+
     await bookingOpsService.upsert(bookingId, {
-      paidCents: targetPaidCents,
-      clientPaid: true,
+      paidCents: newRecordedTotal,
+      clientPaid: newRecordedTotal >= targetPaidCents,
     });
 
     revalidatePath(`/admin/bookings/${bookingId}`);
@@ -72,10 +94,10 @@ export async function markBookingPaidOfflineAction(bookingId: string) {
 
     return { success: true as const };
   } catch (error) {
-    console.error("markBookingPaidOfflineAction:", error);
+    console.error("recordBookingManualPaymentAction:", error);
     return {
       success: false as const,
-      error: error instanceof Error ? error.message : "Failed to update payment",
+      error: error instanceof Error ? error.message : "Failed to record payment",
     };
   }
 }

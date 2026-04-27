@@ -15,7 +15,6 @@ export type OpsField =
   | "gmvCents"
   | "paidCents"
   | "crewName"
-  | "opsNote"
   | "contractSigned"
   | "connected"
   | "clientPaid"

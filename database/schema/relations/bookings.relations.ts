@@ -10,6 +10,7 @@ import { bookingStatusHistory } from "../tables/bookingStatusHistory.table";
 import { bookingEvents } from "../tables/bookingEvents.table";
 import { bookingAdminNotes } from "../tables/bookingAdminNotes.table";
 import { bookingOps } from "../tables/bookingOps.table";
+import { bookingCrew } from "../tables/bookingCrew.table";
 import { inquiry } from "../tables/inquiry";
 
 // Relations for bookings table
@@ -70,4 +71,5 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
     relationName: "cancelledBookings",
   }),
   reviews: many(reviews),
+  crewAssignments: many(bookingCrew),
 }));

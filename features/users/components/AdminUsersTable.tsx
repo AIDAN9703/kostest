@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   useReactTable,
@@ -23,6 +23,8 @@ import {
   Edit,
   Trash2,
   MoreVertical,
+  Anchor,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -32,28 +34,33 @@ import { Badge } from "@/shared/components/ui/badge";
 import { formatDate } from "@/shared/lib/utils/general-utils";
 import { useDeleteUser } from "@/features/users/hooks/useUserMutations";
 import { useToast } from "@/shared/lib/hooks/use-toast";
+import {
+  canPromoteToCaptain,
+  canPromoteToCrew,
+} from "@/features/profiles/promote-eligibility";
+import { PromoteToCaptainModal } from "@/features/profiles/components/PromoteToCaptainModal";
+import { PromoteToCrewModal } from "@/features/profiles/components/PromoteToCrewModal";
 
 interface AdminUsersTableProps {
   users: UserListItem[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalCount: number;
-    totalPages: number;
-  };
   loading?: boolean;
 }
 
 const columnHelper = createColumnHelper<UserListItem>();
 
-export function AdminUsersTable({
-  users,
-  pagination,
-  loading,
-}: AdminUsersTableProps) {
+function listDisplayName(u: UserListItem) {
+  const n = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+  return n || u.email;
+}
+
+export function AdminUsersTable({ users, loading }: AdminUsersTableProps) {
   const router = useRouter();
   const { toast } = useToast();
   const deleteUser = useDeleteUser();
+  const [captainModal, setCaptainModal] = useState<{ id: string; name: string } | null>(
+    null
+  );
+  const [crewModal, setCrewModal] = useState<{ id: string; name: string } | null>(null);
 
   const handleDelete = (userId: string) => {
     if (!confirm("Are you sure? This action cannot be undone.")) return;
@@ -180,16 +187,36 @@ export function AdminUsersTable({
                       Edit User
                     </Link>
                   </DropdownMenuItem>
-                  <>
-                    <DropdownMenuSeparator />
+                  {canPromoteToCaptain(user.captainProfileStatus) ? (
                     <DropdownMenuItem
-                      onSelect={() => handleDelete(user.id)}
-                      className="text-destructive cursor-pointer"
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setCaptainModal({ id: user.id, name: listDisplayName(user) });
+                      }}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Delete User
+                      <Anchor className="mr-2 h-4 w-4" />
+                      Promote to Captain
                     </DropdownMenuItem>
-                  </>
+                  ) : null}
+                  {canPromoteToCrew(user.crewProfileStatus) ? (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setCrewModal({ id: user.id, name: listDisplayName(user) });
+                      }}
+                    >
+                      <UsersRound className="mr-2 h-4 w-4" />
+                      Promote to Crew
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => handleDelete(user.id)}
+                    className="cursor-pointer text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete User
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -234,6 +261,7 @@ export function AdminUsersTable({
   }
 
   return (
+    <>
     <div className="min-w-0 overflow-x-auto">
       <table className="w-full">
           <thead>
@@ -270,5 +298,22 @@ export function AdminUsersTable({
           </tbody>
         </table>
     </div>
+    <PromoteToCaptainModal
+      userId={captainModal?.id ?? null}
+      displayName={captainModal?.name ?? ""}
+      open={captainModal != null}
+      onOpenChange={(open) => {
+        if (!open) setCaptainModal(null);
+      }}
+    />
+    <PromoteToCrewModal
+      userId={crewModal?.id ?? null}
+      displayName={crewModal?.name ?? ""}
+      open={crewModal != null}
+      onOpenChange={(open) => {
+        if (!open) setCrewModal(null);
+      }}
+    />
+    </>
   );
 }

@@ -1,6 +1,7 @@
 import { Avatar, AvatarImage } from "@/shared/components/ui/avatar";
 import { DefaultUserAvatarFallback } from "@/shared/lib/utils/user-utils";
 import { UserQuickActions } from "@/features/users/components/AdminUserQuickActions";
+import type { CaptainStatus, CrewStatus } from "@/database/types";
 
 interface UserProfileHeaderProps {
   user: {
@@ -13,11 +14,15 @@ interface UserProfileHeaderProps {
     isAdmin?: boolean;
     bio?: string | null;
   };
+  captainProfileStatus: CaptainStatus | null;
+  crewProfileStatus: CrewStatus | null;
   isCompact?: boolean;
 }
 
 export function UserProfileHeader({
   user,
+  captainProfileStatus,
+  crewProfileStatus,
   isCompact = false,
 }: UserProfileHeaderProps) {
   const displayName =
@@ -56,7 +61,12 @@ export function UserProfileHeader({
         </div>
 
         <div className="flex-shrink-0 ml-auto">
-          <UserQuickActions userId={user.id} />
+          <UserQuickActions
+            userId={user.id}
+            displayName={displayName}
+            captainProfileStatus={captainProfileStatus}
+            crewProfileStatus={crewProfileStatus}
+          />
         </div>
       </div>
     </div>

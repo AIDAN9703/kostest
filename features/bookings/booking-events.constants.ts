@@ -12,6 +12,12 @@ export const BOOKING_EVENT_TYPES = {
   UPDATED: "booking.updated",
   /** assignedAdminId changed */
   ASSIGNED_ADMIN_CHANGED: "booking.assigned_admin_changed",
+  /** captainUserId changed */
+  ASSIGNED_CAPTAIN_CHANGED: "booking.assigned_captain_changed",
+  /** booking_crew row added */
+  CREW_MEMBER_ADDED: "booking.crew_member_added",
+  /** booking_crew row removed */
+  CREW_MEMBER_REMOVED: "booking.crew_member_removed",
   /** Shareable draft link published */
   DRAFT_PUBLISHED: "booking.draft_published",
 } as const;

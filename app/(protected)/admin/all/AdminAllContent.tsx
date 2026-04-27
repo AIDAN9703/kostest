@@ -285,7 +285,6 @@ export interface UnifiedItemBooking extends UnifiedItemBase {
   opsPaidCents?: number | null;
   opsSentToOwnerCents?: number | null;
   opsCrewName?: string | null;
-  opsNote?: string | null;
   opsContractSigned?: boolean | null;
   opsConnected?: boolean | null;
   opsClientPaid?: boolean | null;
@@ -313,7 +312,7 @@ function formatOpsRevenueCell(item: UnifiedItemBooking): string {
 }
 
 /** Inquiry rows: spacer cells for booking-only ops columns (see booking row). */
-const BOOKING_OPS_INLINE_PLACEHOLDERS = 12;
+const BOOKING_OPS_INLINE_PLACEHOLDERS = 11;
 
 function countCheckedFlags(item: UnifiedItemBooking): number {
   return [
@@ -542,17 +541,6 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
 
   const hasDateFilter = Boolean(filters.dateFrom?.trim() || filters.dateTo?.trim());
 
-  const stats = useMemo(() => {
-    const byType = { booking: 0, inquiry: 0 };
-    for (const item of items) {
-      byType[item.type]++;
-    }
-    return {
-      total: items.length,
-      ...byType,
-    };
-  }, [items]);
-
   const filteredAndSortedItems = useMemo(() => {
     let result = [...items];
 
@@ -595,24 +583,6 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
 
   return (
     <div className="flex flex-1 flex-col gap-6">
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-muted-foreground">Total</p>
-          <p className="text-2xl font-semibold text-foreground">{stats.total}</p>
-        </div>
-        <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-muted-foreground">Bookings</p>
-          <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">{stats.booking}</p>
-        </div>
-        <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
-          <p className="text-xs font-medium text-muted-foreground">Inquiries</p>
-          <p className="text-2xl font-semibold text-purple-600 dark:text-purple-400">
-            {stats.inquiry}
-          </p>
-        </div>
-      </div>
-
       {/* Filters */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-1 flex-wrap items-center gap-3">
@@ -879,9 +849,6 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                 <TableHead className="align-middle whitespace-nowrap px-1.5 max-w-[4rem]">
                   Crew
                 </TableHead>
-                <TableHead className="align-middle whitespace-nowrap px-1.5 max-w-[4rem]">
-                  Note
-                </TableHead>
                 <TableHead className="align-middle whitespace-nowrap px-1.5">
                   Status flags
                 </TableHead>
@@ -1060,18 +1027,6 @@ export default function AdminAllContent({ items, admins }: AdminAllContentProps)
                           bookingId={item.bookingId}
                           field="crewName"
                           value={item.opsCrewName}
-                          compact
-                          placeholder=""
-                        />
-                      </TableCell>
-                      <TableCell
-                        className="align-middle max-w-[5rem] px-1.5"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <InlineOpsCell
-                          bookingId={item.bookingId}
-                          field="opsNote"
-                          value={item.opsNote}
                           compact
                           placeholder=""
                         />

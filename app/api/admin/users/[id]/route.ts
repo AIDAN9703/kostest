@@ -8,13 +8,10 @@ import { apiSuccess, apiError, apiSuccessNoData } from "@/shared/lib/utils/api-h
  * GET /api/admin/users/[id]
  * Fetch single user by ID
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    
+
     // Admin authentication
     const session = await auth();
     if (!session?.user || !session.user.isAdmin) {
@@ -28,7 +25,6 @@ export async function GET(
     }
 
     return apiSuccess(user);
-
   } catch (error) {
     console.error("Error fetching user:", error);
     return apiError("Failed to fetch user");
@@ -39,13 +35,10 @@ export async function GET(
  * PATCH /api/admin/users/[id]
  * Update user (partial updates allowed)
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    
+
     // Admin authentication
     const session = await auth();
     if (!session?.user || !session.user.isAdmin) {
@@ -53,26 +46,20 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    
+
     // Validate with Zod (partial updates OK since all fields are optional)
     const validation = updateUserSchema.safeParse(body);
-    
+
     if (!validation.success) {
       return apiError(
-        `Invalid user data: ${validation.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')}`,
+        `Invalid user data: ${validation.error.errors.map((e) => `${e.path.join(".")}: ${e.message}`).join(", ")}`,
         400
       );
     }
 
-    // Service handles password hashing
     const updatedUser = await userService.updateUser(id, validation.data);
 
-    if (!updatedUser) {
-      return apiError("User not found", 404);
-    }
-
     return apiSuccess(updatedUser);
-
   } catch (error) {
     console.error("Error updating user:", error);
     return apiError("Failed to update user");
@@ -89,7 +76,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    
+
     // Admin authentication
     const session = await auth();
     if (!session?.user || !session.user.isAdmin) {
@@ -99,7 +86,6 @@ export async function DELETE(
     await userService.deleteUser(id);
 
     return apiSuccessNoData("User deleted successfully");
-
   } catch (error) {
     console.error("Error deleting user:", error);
     return apiError("Failed to delete user");

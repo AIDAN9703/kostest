@@ -157,23 +157,6 @@ export function AdminUserCreateEditForm({
               />
               <FormField
                 control={form.control}
-                name="profileImage"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Profile Image URL</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        value={field.value || ""}
-                        placeholder="https://example.com/image.jpg"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
                 name="bio"
                 render={({ field }) => (
                   <FormItem className="md:col-span-2">
