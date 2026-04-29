@@ -26,6 +26,171 @@ const TEXT_PRIMARY = '#1f2937';
 const TEXT_SECONDARY = '#6b7280';
 const BORDER_COLOR = '#e5e7eb';
 const BG_LIGHT = '#f9fafb';
+const BG_WARM = '#fdfcfa';
+const BG_SHELL = '#eef4f3';
+
+/** Minimal escaping for HTML email bodies (names, boat titles). */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+/**
+ * Extra styles for draft charter proposal email only (paired with baseEmailStyles).
+ */
+const proposalEmailStyles = `
+  <style>
+    .proposal-body {
+      background-color: ${BG_SHELL};
+      padding: 28px 16px 40px;
+    }
+    .proposal-shell {
+      max-width: 560px;
+      margin: 0 auto;
+      background-color: ${BG_WARM};
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(39, 68, 92, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(178, 163, 122, 0.25);
+    }
+    .proposal-header {
+      background: linear-gradient(165deg, #1a3042 0%, ${BRAND_NAVY} 48%, #223e54 100%);
+      padding: 36px 28px 32px;
+      text-align: center;
+      border-bottom: 3px solid ${BRAND_GOLD};
+    }
+    .proposal-eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: ${BRAND_GOLD};
+      margin: 0 0 14px;
+    }
+    .proposal-headline {
+      font-family: Georgia, 'Times New Roman', Times, serif;
+      font-size: 26px;
+      font-weight: 400;
+      color: #ffffff;
+      line-height: 1.25;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+    .proposal-subhead {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.82);
+      margin: 12px 0 0;
+      line-height: 1.5;
+      font-weight: 400;
+    }
+    .proposal-content {
+      padding: 36px 32px 40px;
+    }
+    .proposal-greeting {
+      font-size: 17px;
+      color: ${TEXT_PRIMARY};
+      margin: 0 0 18px;
+      font-weight: 600;
+    }
+    .proposal-lead {
+      font-size: 15px;
+      color: ${TEXT_SECONDARY};
+      line-height: 1.75;
+      margin: 0 0 28px;
+    }
+    .proposal-boat-card {
+      background-color: #ffffff;
+      border: 1px solid #e8dfd0;
+      border-radius: 10px;
+      padding: 18px 22px;
+      margin-bottom: 28px;
+      box-shadow: 0 1px 0 rgba(178, 163, 122, 0.15);
+    }
+    .proposal-boat-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: ${TEXT_SECONDARY};
+      margin-bottom: 8px;
+    }
+    .proposal-boat-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: ${BRAND_NAVY};
+      margin: 0;
+      line-height: 1.35;
+    }
+    .proposal-cta-wrap {
+      text-align: center;
+      margin: 8px 0 28px;
+    }
+    .proposal-next {
+      background: linear-gradient(180deg, #f8f6f2 0%, #f3f0ea 100%);
+      border-radius: 10px;
+      border: 1px solid #e5e0d6;
+      padding: 20px 22px;
+      margin: 0;
+    }
+    .proposal-next-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: ${BRAND_NAVY};
+      margin: 0 0 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .proposal-next ul {
+      margin: 0;
+      padding-left: 18px;
+      color: ${TEXT_SECONDARY};
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .proposal-next li {
+      margin-bottom: 6px;
+    }
+    .proposal-next li:last-child {
+      margin-bottom: 0;
+    }
+    .proposal-signoff {
+      margin-top: 32px;
+      font-size: 15px;
+      color: ${TEXT_PRIMARY};
+      line-height: 1.65;
+    }
+    .proposal-footer {
+      background-color: #f4f1eb;
+      padding: 22px 28px;
+      text-align: center;
+      border-top: 1px solid #e8e4dc;
+    }
+    .proposal-footer-muted {
+      font-size: 13px;
+      color: ${TEXT_SECONDARY};
+      margin: 0 0 6px;
+      line-height: 1.55;
+    }
+    .proposal-brand {
+      font-size: 14px;
+      font-weight: 600;
+      color: ${BRAND_NAVY};
+      margin: 8px 0 0;
+      letter-spacing: 0.02em;
+    }
+    @media only screen and (max-width: 600px) {
+      .proposal-content {
+        padding: 28px 22px 32px;
+      }
+      .proposal-headline {
+        font-size: 22px;
+      }
+    }
+  </style>
+`;
 
 /**
  * Base email template styles
@@ -247,6 +412,9 @@ export async function sendDraftBookingEmail(params: {
     ? `Your yacht charter proposal from Kings Of The Sea`
     : `Your yacht charter proposal - ${boatName || 'KOS Yachts'}`;
 
+  const safeName = escapeHtml((customerName || 'there').trim() || 'there');
+  const safeBoat = boatName ? escapeHtml(boatName.trim()) : '';
+
   try {
     const { data, error } = await resend.emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
@@ -254,48 +422,84 @@ export async function sendDraftBookingEmail(params: {
       subject,
       html: `
         <!DOCTYPE html>
-        <html>
+        <html lang="en">
         <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta http-equiv="X-UA-Compatible" content="IE=edge">
           ${baseEmailStyles}
+          ${proposalEmailStyles}
         </head>
-        <body>
-          <div class="email-container">
-            <div class="email-header">
-              <h1>Your Charter Proposal</h1>
-            </div>
-            
-            <div class="email-content">
-              <p class="greeting">Hi ${customerName || 'there'},</p>
-              
-              <p class="message">
-                We've prepared a charter proposal for you${boatName ? ` aboard <strong>${boatName}</strong>` : ''}.
-                Review the details and accept when you're ready.
-              </p>
-              
-              <div class="cta-container">
-                <a href="${draftLink}" class="cta-button" style="background-color: ${BRAND_NAVY}; color: #ffffff !important; text-decoration: none; padding: 14px 32px; border-radius: 6px; font-weight: 600; font-size: 15px; display: inline-block;">View & Accept Proposal</a>
-              </div>
-              
-              <div class="info-box">
-                <div class="info-box-title">What's next?</div>
-                <div class="info-box-text">
-                  Click the button above to view your proposal. You can accept and pay online, or contact us with any questions.
-                </div>
-              </div>
-              
-              <p class="signature">
-                Best regards,<br>
-                <span class="company-name">Kings Of The Sea Yachts</span>
+        <body class="proposal-body">
+          <!-- Preview snippet for inbox clients -->
+          <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
+            Your charter proposal is ready — open to review pricing and accept when you're ready.
+          </div>
+
+          <div class="proposal-shell">
+            <div class="proposal-header">
+              <p class="proposal-eyebrow">Private charter · Proposal</p>
+              <h1 class="proposal-headline">Your charter is ready to review</h1>
+              <p class="proposal-subhead">
+                Review dates, pricing, and options — then accept securely online.${
+                  isGroup ? ' This proposal may include multiple vessels.' : ''
+                }
               </p>
             </div>
-            
-            <div class="email-footer">
-              <p class="email-footer-text">
-                Questions? Reply to this email or contact us at ${FROM_EMAIL}
+
+            <div class="proposal-content">
+              <p class="proposal-greeting">Hi ${safeName},</p>
+
+              <p class="proposal-lead">
+                We've prepared a personalized proposal for your upcoming experience on the water${
+                  safeBoat ? `. Take a look at what's lined up for <strong>${safeBoat}</strong>.` : '.'
+                }
               </p>
-              <p class="company-name">Kings Of The Sea Yachts</p>
+
+              ${
+                safeBoat
+                  ? `
+              <div class="proposal-boat-card">
+                <div class="proposal-boat-label">Yacht</div>
+                <p class="proposal-boat-name">${safeBoat}</p>
+              </div>`
+                  : ''
+              }
+
+              <div class="proposal-cta-wrap">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
+                  <tr>
+                    <td align="center" style="border-radius:10px;background:${BRAND_NAVY};box-shadow:0 4px 16px rgba(39,68,92,0.28);">
+                      <a href="${draftLink}" target="_blank" rel="noopener noreferrer"
+                        style="display:inline-block;padding:16px 36px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;font-weight:600;color:#ffffff !important;text-decoration:none;border-radius:10px;">
+                        View full proposal
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+              </div>
+
+              <div class="proposal-next">
+                <p class="proposal-next-title">What happens next</p>
+                <ul>
+                  <li>Open your proposal to see the full breakdown and add-ons.</li>
+                  <li>Accept when you're ready — you can complete payment online if enabled.</li>
+                  <li>Questions? Reply to this email and our team will help.</li>
+                </ul>
+              </div>
+
+              <p class="proposal-signoff">
+                Warm regards,<br>
+                <span class="company-name" style="display:inline-block;margin-top:8px;">Kings Of The Sea Yachts</span>
+              </p>
+            </div>
+
+            <div class="proposal-footer">
+              <p class="proposal-footer-muted">
+                Questions? Reply directly to this message or write to<br>
+                <a href="mailto:${FROM_EMAIL}" style="color:${BRAND_NAVY};font-weight:600;text-decoration:none;">${FROM_EMAIL}</a>
+              </p>
+              <p class="proposal-brand">Kings Of The Sea Yachts</p>
             </div>
           </div>
         </body>
