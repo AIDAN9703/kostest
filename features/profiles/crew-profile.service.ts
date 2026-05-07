@@ -9,11 +9,7 @@ import type { CrewStatus, UserStatus } from "@/database/types";
 import type { PromoteCrewFormInput } from "@/features/profiles/promote-crew.validation";
 
 /** Profiles in these states cannot be overwritten by admin promote (already crew or restricted). */
-const NON_PROMOTABLE_CREW_STATUSES = new Set<CrewStatus>([
-  "ACTIVE",
-  "ON_LEAVE",
-  "SUSPENDED",
-]);
+const NON_PROMOTABLE_CREW_STATUSES = new Set<CrewStatus>(["ACTIVE", "ON_LEAVE", "SUSPENDED"]);
 
 export type CrewProfileAdminRow = {
   userId: string;
@@ -47,9 +43,7 @@ export class CrewProfileService {
       })
       .from(crewProfiles)
       .innerJoin(users, eq(crewProfiles.userId, users.id))
-      .where(
-        and(eq(crewProfiles.status, "ACTIVE"), eq(users.status, "ACTIVE"))
-      )
+      .where(and(eq(crewProfiles.status, "ACTIVE"), eq(users.status, "ACTIVE")))
       .orderBy(asc(users.lastName), asc(users.firstName))
       .limit(200);
   }

@@ -19,7 +19,6 @@ import {
   bookings,
   boats,
   users,
-  boatPricingTiers,
   bookingPricing,
   bookingStatusHistory,
   bookingEvents,
@@ -27,14 +26,16 @@ import {
   bookingGroups,
   payments,
   bookingOps,
+  boatPricingTiers,
 } from "@/database/schema";
 import { and, count, eq, desc, or, ilike, sql, gte, lte, aliasedTable, inArray } from "drizzle-orm";
 
+import { type BookingFilterInput, type CreateBookingsInput } from "@/features/bookings/booking.validation";
 import {
-  type BookingFilterInput,
-  type BookingUpdateInput,
-  type CreateBookingsInput,
-} from "@/features/bookings/booking.validation";
+  type BookingSingleFieldUpdate,
+  auditSnapshotForBookingField,
+  bookingRowPatchFromSingleFieldUpdate,
+} from "@/features/bookings/booking-single-field-update";
 import {
   type PaginatedBookingsResponse,
   type BookingListItem,
@@ -52,42 +53,13 @@ import {
   calculateBookingPriceCents,
 } from "@/shared/lib/utils/pricing-utils";
 import { dollarsToCents, type Cents } from "@/shared/lib/utils/money-utils";
-import { toDateOrNull, calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
+import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { computePaymentDisplayStatus } from "@/shared/lib/utils/payment-display";
 import { bookingGroupService } from "@/features/booking-groups/booking-group.service";
 import { bookingPricingService } from "@/features/bookings/services/booking-pricing.service";
 import { bookingStatusService } from "@/features/bookings/services/booking-status.service";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
 import { fetchBoatAndTier, fetchBoatsAndTiersBulk } from "@/features/bookings/booking-helpers";
-
-/** Serializable snapshot for booking.updated audit events */
-function bookingAuditSnapshot(b: BookingDetails): Record<string, unknown> {
-  return {
-    customerName: b.customerName,
-    customerEmail: b.customerEmail,
-    customerPhone: b.customerPhone,
-    numberOfPassengers: b.numberOfPassengers,
-    needsCaptain: b.needsCaptain,
-    pickupLocation: b.pickupLocation,
-    dropoffLocation: b.dropoffLocation,
-    startDateTime:
-      b.startDateTime instanceof Date ? b.startDateTime.toISOString() : String(b.startDateTime),
-    endDateTime:
-      b.endDateTime instanceof Date
-        ? b.endDateTime.toISOString()
-        : b.endDateTime
-          ? String(b.endDateTime)
-          : null,
-    boatId: b.boatId,
-    pricingTierId: b.pricingTierId,
-    basePriceCents: b.basePriceCents ?? null,
-    captainFeeCents: b.captainFeeCents ?? null,
-    cleaningFeeCents: b.cleaningFeeCents ?? null,
-    serviceFeeCents: b.serviceFeeCents ?? null,
-    totalAmountCents: b.totalAmountCents ?? null,
-    depositAmountCents: b.depositAmountCents ?? null,
-  };
-}
 
 // ============================================================================
 // BOOKING SERVICE CLASS
@@ -1260,152 +1232,132 @@ export class BookingService {
   }
 
   /**
-   * Update booking fields (partial update with pricing recalculation)
-   * @param updatedByUserId — admin who performed the edit (for audit log)
+   * Reprice booking after switching boats (tier affinity + default tier fallback).
    */
-  async updateBooking(
+  async applyBoatIdChange(bookingId: string, newBoatId: string, before: BookingDetails): Promise<void> {
+    const [boat] = await db
+      .select({
+        id: boats.id,
+        cleaningFee: boats.cleaningFee,
+        depositAmount: boats.depositAmount,
+      })
+      .from(boats)
+      .where(eq(boats.id, newBoatId))
+      .limit(1);
+
+    if (!boat) throw new Error(`Boat not found: ${newBoatId}`);
+
+    let nextTierId: string | null = before.pricingTierId ?? null;
+    let basePriceDollars: number;
+
+    let matchedTier: (typeof boatPricingTiers.$inferSelect) | undefined;
+    if (nextTierId) {
+      const [t] = await db
+        .select()
+        .from(boatPricingTiers)
+        .where(eq(boatPricingTiers.id, nextTierId))
+        .limit(1);
+      if (t?.boatId === newBoatId) matchedTier = t;
+    }
+
+    if (matchedTier) {
+      nextTierId = matchedTier.id;
+      basePriceDollars = matchedTier.price;
+    } else {
+      nextTierId = null;
+      const tiersOnBoat = await db
+        .select()
+        .from(boatPricingTiers)
+        .where(and(eq(boatPricingTiers.boatId, newBoatId), eq(boatPricingTiers.isActive, true)));
+
+      const preferred =
+        tiersOnBoat.find((t) => t.isDefault) ??
+        [...tiersOnBoat].sort((a, b) => a.price - b.price || a.hours - b.hours)[0];
+
+      if (preferred) {
+        nextTierId = preferred.id;
+        basePriceDollars = preferred.price;
+      } else {
+        basePriceDollars = (before.basePriceCents ?? 0) / 100;
+      }
+    }
+
+    const captainFeeDollars = (before.captainFeeCents ?? 0) / 100;
+    const cleaningFeeDollars = boat.cleaningFee ?? 0;
+
+    const breakdown = calculateBookingPriceFromDollars(
+      basePriceDollars,
+      cleaningFeeDollars,
+      captainFeeDollars
+    );
+
+    await db
+      .update(bookings)
+      .set({
+        boatId: newBoatId,
+        pricingTierId: nextTierId,
+        updatedAt: new Date(),
+      })
+      .where(eq(bookings.id, bookingId));
+
+    await db
+      .update(bookingPricing)
+      .set({
+        basePriceCents: breakdown.basePriceCents,
+        cleaningFeeCents: breakdown.cleaningFeeCents || null,
+        captainFeeCents: breakdown.captainFeeCents || null,
+        serviceFeeCents: breakdown.serviceFeeCents,
+        totalAmountCents: breakdown.totalPriceCents,
+        depositAmountCents: dollarsToCents(boat.depositAmount ?? 0) || null,
+      })
+      .where(eq(bookingPricing.bookingId, bookingId));
+  }
+
+  /**
+   * Apply a single validated field change (admin one-field-at-a-time editor).
+   */
+  async applyBookingSingleFieldUpdate(
     id: string,
-    updates: BookingUpdateInput,
-    updatedByUserId?: string | null
+    update: BookingSingleFieldUpdate,
+    actorId: string
   ): Promise<BookingDetails> {
-    // Get current booking
     const current = await this.getBookingById(id);
     if (!current) {
       throw new Error(`Booking not found: ${id}`);
     }
 
-    const beforeSnapshot = bookingAuditSnapshot(current);
+    const previousValue = auditSnapshotForBookingField(update.field, current);
 
-    // Build update object
-    const updateData: Record<string, any> = {
-      updatedAt: new Date(),
-    };
-
-    // Simple field updates
-    if (updates.customerName !== undefined) updateData.customerName = updates.customerName;
-    if (updates.customerEmail !== undefined) updateData.customerEmail = updates.customerEmail;
-    if (updates.customerPhone !== undefined) updateData.customerPhone = updates.customerPhone;
-    if (updates.numberOfPassengers !== undefined)
-      updateData.numberOfPassengers = updates.numberOfPassengers;
-    if (updates.needsCaptain !== undefined) updateData.needsCaptain = updates.needsCaptain;
-    if (updates.pickupLocation !== undefined) updateData.pickupLocation = updates.pickupLocation;
-    if (updates.dropoffLocation !== undefined) updateData.dropoffLocation = updates.dropoffLocation;
-
-    // Handle date updates
-    if (updates.startDateTime !== undefined) {
-      updateData.startDateTime = toDateOrNull(updates.startDateTime);
-    }
-    if (updates.endDateTime !== undefined) {
-      updateData.endDateTime = toDateOrNull(updates.endDateTime);
-    }
-
-    // Handle boat/pricing changes with recalculation
-    const needsPricingRecalc =
-      updates.boatId !== undefined ||
-      updates.pricingTierId !== undefined ||
-      updates.cleaningFee !== undefined ||
-      updates.captainFee !== undefined;
-
-    if (needsPricingRecalc && !updates.manualOverride) {
-      const boatId = updates.boatId ?? current.boatId!;
-      const pricingTierId = updates.pricingTierId;
-
-      // Get boat and pricing tier
-      const [boat] = await db
-        .select({
-          id: boats.id,
-          cleaningFee: boats.cleaningFee,
-          depositAmount: boats.depositAmount,
-        })
-        .from(boats)
-        .where(eq(boats.id, boatId))
-        .limit(1);
-
-      if (!boat) {
-        throw new Error(`Boat not found: ${boatId}`);
+    if (update.field === "boatId") {
+      if (update.value === current.boatId) {
+        return current;
       }
-
-      let basePrice = 0;
-      if (pricingTierId) {
-        const [tier] = await db
-          .select({ price: boatPricingTiers.price })
-          .from(boatPricingTiers)
-          .where(eq(boatPricingTiers.id, pricingTierId))
-          .limit(1);
-        if (tier) basePrice = tier.price;
-      } else if (updates.basePrice !== undefined) {
-        basePrice = updates.basePrice;
-      }
-
-      const cleaningFee = updates.cleaningFee ?? boat.cleaningFee ?? 0;
-      const captainFee = updates.captainFee ?? 0;
-
-      const priceBreakdown = calculateBookingPriceFromDollars(basePrice, cleaningFee, captainFee);
-
-      updateData.boatId = boatId;
-      updateData.pricingTierId = pricingTierId;
-      // Pricing lives in booking_pricing table only (migration 0014 removed from bookings)
+      await this.applyBoatIdChange(id, update.value, current);
+    } else {
+      const rowPatch = bookingRowPatchFromSingleFieldUpdate(update);
       await db
-        .update(bookingPricing)
-        .set({
-          basePriceCents: priceBreakdown.basePriceCents,
-          cleaningFeeCents: priceBreakdown.cleaningFeeCents || null,
-          captainFeeCents: priceBreakdown.captainFeeCents || null,
-          serviceFeeCents: priceBreakdown.serviceFeeCents,
-          totalAmountCents: priceBreakdown.totalPriceCents,
-          depositAmountCents: dollarsToCents(boat.depositAmount ?? 0) || null,
-        })
-        .where(eq(bookingPricing.bookingId, id));
-    } else if (updates.manualOverride && updates.totalAmount !== undefined) {
-      // Manual override - update booking_pricing only (pricing columns removed from bookings)
-      const manualPricingUpdates: Record<string, number | null> = {
-        totalAmountCents: dollarsToCents(updates.totalAmount),
-      };
-      if (updates.cleaningFee != null)
-        manualPricingUpdates.cleaningFeeCents = dollarsToCents(updates.cleaningFee);
-      if (updates.captainFee != null)
-        manualPricingUpdates.captainFeeCents = dollarsToCents(updates.captainFee);
-      await db
-        .update(bookingPricing)
-        .set(manualPricingUpdates)
-        .where(eq(bookingPricing.bookingId, id));
+        .update(bookings)
+        .set({ ...rowPatch, updatedAt: new Date() })
+        .where(eq(bookings.id, id));
     }
 
-    // Update the booking
-    await db.update(bookings).set(updateData).where(eq(bookings.id, id));
-
-    // Return the updated booking
-    const updatedBooking = await this.getBookingById(id);
-    if (!updatedBooking) {
-      throw new Error(`Failed to retrieve updated booking: ${id}`);
+    const next = await this.getBookingById(id);
+    if (!next) {
+      throw new Error(`Failed to load booking after update: ${id}`);
     }
 
-    if (updatedByUserId) {
-      const afterSnapshot = bookingAuditSnapshot(updatedBooking);
-      const changedFields: string[] = [];
-      const previousState: Record<string, unknown> = {};
-      const newState: Record<string, unknown> = {};
-      for (const key of Object.keys(beforeSnapshot)) {
-        const a = JSON.stringify(beforeSnapshot[key]);
-        const b = JSON.stringify(afterSnapshot[key]);
-        if (a !== b) {
-          changedFields.push(key);
-          previousState[key] = beforeSnapshot[key];
-          newState[key] = afterSnapshot[key];
-        }
-      }
-      if (changedFields.length > 0) {
-        await bookingEventsService.logBookingUpdated({
-          bookingId: id,
-          actorId: updatedByUserId,
-          previousState,
-          newState,
-          changedFields,
-        });
-      }
+    const nextValue = auditSnapshotForBookingField(update.field, next);
+    if (JSON.stringify(previousValue) !== JSON.stringify(nextValue)) {
+      await bookingEventsService.logBookingUpdated({
+        bookingId: id,
+        actorId,
+        previousState: { [update.field]: previousValue },
+        newState: { [update.field]: nextValue },
+        changedFields: [update.field],
+      });
     }
 
-    return updatedBooking;
+    return next;
   }
 
   /**

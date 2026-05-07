@@ -5,7 +5,7 @@
  * Only convert: Form inputs (ISO strings) → Date objects for DB
  */
 
-import { toZonedTime, fromZonedTime } from 'date-fns-tz';
+import { toZonedTime, fromZonedTime, formatInTimeZone } from 'date-fns-tz';
 import { timezoneEnum } from '@/database/schema/enums';
 
 export type SupportedTimezones = typeof timezoneEnum.enumValues[number];
@@ -102,4 +102,30 @@ export function calculateEndDateTime(startDateTime: Date, hours: number): Date {
   const end = new Date(startDateTime);
   end.setHours(end.getHours() + hours);
   return end;
+}
+
+/** Value for `<input type="datetime-local" />` representing an instant in the boat's timezone. */
+export function bookingInstantToDatetimeLocalInput(
+  dateTime: Date | string | null | undefined,
+  boatTimezone: SupportedTimezones | string | null | undefined
+): string {
+  if (!dateTime) return "";
+  const d = dateTime instanceof Date ? dateTime : new Date(dateTime);
+  if (isNaN(d.getTime())) return "";
+  const tz = getBoatTimezone({ timezone: boatTimezone ?? undefined });
+  return formatInTimeZone(d, tz, "yyyy-MM-dd'T'HH:mm");
+}
+
+/** Parse naive datetime-local string as boat-local wall time → UTC ISO (for API / DB). */
+export function datetimeLocalInputToUtcISO(
+  localValue: string,
+  boatTimezone: SupportedTimezones | string | null | undefined
+): string | null {
+  const trimmed = localValue?.trim();
+  if (!trimmed) return null;
+  const [dateStr, rest] = trimmed.split("T");
+  if (!dateStr) return null;
+  const timeStr = (rest ?? "00:00").slice(0, 5);
+  const iso = convertBoatDateTimeToUTC(dateStr, timeStr, boatTimezone ?? null);
+  return iso || null;
 }

@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 
 import { AdminBookingProfileHeader } from "@/features/bookings/components/admin/view-booking/AdminBookingProfileHeader";
-import { AdminBookingDetailsCard } from "@/features/bookings/components/admin/view-booking/AdminBookingDetailsCard";
+import {
+  AdminBookingDetailsCard,
+  type BookingTripDetailsSnapshot,
+} from "@/features/bookings/components/admin/view-booking/AdminBookingDetailsCard";
 import { AdminBookingPaymentCard } from "@/features/bookings/components/admin/view-booking/AdminBookingPaymentCard";
 import { AdminBookingOpsSection } from "@/features/bookings/components/admin/view-booking/AdminBookingOpsSection";
 import { BookingActivityTimeline } from "@/features/bookings/components/admin/view-booking/BookingActivityTimeline";
@@ -89,11 +92,40 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     role: row.role,
   }));
 
+  const tripSnapshot: BookingTripDetailsSnapshot = {
+    customerUserId: booking.userId,
+    customerName: booking.customerName ?? "",
+    customerEmail: booking.customerEmail ?? "",
+    customerPhone: booking.customerPhone ?? "",
+    numberOfPassengers: booking.numberOfPassengers,
+    needsCaptain: booking.needsCaptain,
+    pickupLocation: booking.pickupLocation,
+    dropoffLocation: booking.dropoffLocation,
+    startDateTime: booking.startDateTime.toISOString(),
+    endDateTime: booking.endDateTime ? booking.endDateTime.toISOString() : null,
+    boatTimezone: booking.boatTimezone,
+    boatId: booking.boatId,
+    boatName: booking.boatName,
+    selectedBoat:
+      booking.boatId != null
+        ? {
+            id: booking.boatId,
+            name: booking.boatName ?? "",
+            mainImage: booking.boatMainImage,
+            capacity: booking.boatCapacity ?? 0,
+            locationLabel: null,
+            cleaningFee: null,
+            depositAmount: null,
+            crewRequired: null,
+          }
+        : null,
+  };
+
   return (
     <div className="flex w-full flex-1 flex-col gap-6">
       <AdminBookingProfileHeader booking={booking} />
       <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
-        <AdminBookingDetailsCard booking={booking} />
+        <AdminBookingDetailsCard bookingId={id} trip={tripSnapshot} />
         <AdminBookingPaymentCard
           bookingId={id}
           booking={booking}

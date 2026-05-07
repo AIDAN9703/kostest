@@ -28,6 +28,8 @@ interface BoatSelectProps {
   onChange: (boatId: string, boat: BoatForAdminSelect | null) => void;
   placeholder?: string;
   disabled?: boolean;
+  /** When false, hides the X control (e.g. booking must always have a boat). Default true. */
+  showClearButton?: boolean;
 }
 
 export function BoatSelect({
@@ -36,6 +38,7 @@ export function BoatSelect({
   onChange,
   placeholder = "Select boat",
   disabled,
+  showClearButton = true,
 }: BoatSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -187,7 +190,7 @@ export function BoatSelect({
         </PopoverContent>
       </Popover>
 
-      {displayBoat && !disabled && (
+      {showClearButton && displayBoat && !disabled && (
         <button
           type="button"
           className="absolute right-8 top-1/2 -translate-y-1/2 h-4 w-4 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"

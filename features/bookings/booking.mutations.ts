@@ -8,9 +8,9 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { type ActionResponse } from "@/shared/lib/types/types";
 import { bookingService } from "@/features/bookings/services/booking.service";
-import { bookingUpdateSchema, type BookingUpdateInput } from "./booking.validation";
+import { bookingSingleFieldUpdateSchema } from "@/features/bookings/booking-single-field-update";
+import type { BookingDetails } from "@/features/bookings/booking.types";
 import { getOrCreateCheckoutUrl } from "@/features/bookings/actions/stripe-checkout";
-import type { BookingDetails } from "./booking.types";
 
 // ========================================
 // CORE CUD OPERATIONS
@@ -80,16 +80,11 @@ export async function updateBookingStatus(
 }
 
 /**
- * Update booking fields (partial update) with automatic pricing recalculation
- *
- * Uses BookingUpdateInput type which enforces proper pricing logic:
- * - Pricing is automatically recalculated when pricingTierId, boatId, cleaningFee, or captainFee changes
- * - totalAmount and serviceFee are always recalculated unless manualOverride is true
- * - Dates are properly converted from boat timezone to UTC
+ * Admin: update exactly one booking column (validated per-field).
  */
-export async function updateBooking(
+export async function updateBookingSingleField(
   id: string,
-  updates: BookingUpdateInput
+  rawUpdate: unknown
 ): Promise<ActionResponse<{ booking: BookingDetails }>> {
   const session = await auth();
 
@@ -97,27 +92,24 @@ export async function updateBooking(
     return { success: false, error: "Authentication required" };
   }
 
-  // Only admins can update bookings
   if (!session?.user?.isAdmin) {
     return { success: false, error: "Admin access required" };
   }
 
   try {
-    // Validate input
-    const validatedUpdates = bookingUpdateSchema.parse(updates);
+    const actorId = session.user.id;
+    if (!actorId) {
+      return { success: false, error: "Admin user id missing" };
+    }
 
-    const updatedBooking = await bookingService.updateBooking(
-      id,
-      validatedUpdates,
-      session.user.id ?? null
-    );
+    const update = bookingSingleFieldUpdateSchema.parse(rawUpdate);
+    const booking = await bookingService.applyBookingSingleFieldUpdate(id, update, actorId);
     revalidatePath("/admin/bookings");
     revalidatePath(`/admin/bookings/${id}`);
-    return { success: true, data: { booking: updatedBooking } };
+    return { success: true, data: { booking } };
   } catch (error) {
-    console.error("Error updating booking:", error);
+    console.error("Error updating booking field:", error);
 
-    // Handle Zod validation errors
     if (error && typeof error === "object" && "issues" in error) {
       const zodError = error as { issues: Array<{ path: string[]; message: string }> };
       const firstError = zodError.issues[0];
