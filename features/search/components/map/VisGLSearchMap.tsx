@@ -40,17 +40,12 @@ function MapContent({
   } | null>(null);
 
   // State to track currently active info window
-  const [activeInfoWindowId, setActiveInfoWindowId] = useState<string | null>(
-    null
-  );
+  const [activeInfoWindowId, setActiveInfoWindowId] = useState<string | null>(null);
 
   // Function to handle info window activation
-  const handleInfoWindowToggle = useCallback(
-    (locationId: string, isOpen: boolean) => {
-      setActiveInfoWindowId(isOpen ? locationId : null);
-    },
-    []
-  );
+  const handleInfoWindowToggle = useCallback((locationId: string, isOpen: boolean) => {
+    setActiveInfoWindowId(isOpen ? locationId : null);
+  }, []);
 
   // Track when map bounds change
   useEffect(() => {
@@ -200,10 +195,7 @@ function MapContent({
   );
 }
 
-export default function VisGLSearchMap({
-  locations = [],
-  boundingBox,
-}: SearchMapProps) {
+export default function VisGLSearchMap({ locations = [], boundingBox }: SearchMapProps) {
   return (
     <APIProvider apiKey="">
       <Map
@@ -224,7 +216,7 @@ export default function VisGLSearchMap({
         minZoom={3}
         maxZoom={15}
         restriction={MAP_RESTRICTIONS}
-        className="w-full h-full rounded-2xl shadow-lg border border-gray-100"
+        className="w-full h-full"
       >
         <MapContent locations={locations} boundingBox={boundingBox} />
       </Map>

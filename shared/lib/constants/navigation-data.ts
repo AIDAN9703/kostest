@@ -80,37 +80,37 @@ export const navigationData: NavigationData = {
           title: "Locations",
           items: [
             {
-              href: "/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=25.92129499999999&ne_lng=-80.1229&sw_lat=25.7090419531335&sw_lng=-80.31860792381018&zoom_level=13&map_toggle=on",
+              href: "/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=25.92129499999999&ne_lng=-80.1229&sw_lat=25.7090419531335&sw_lng=-80.31860792381018&zoom_level=13",
               label: "Miami",
               type: "link",
             },
             {
-              href: "/boats/search?near=Fort+Lauderdale%2C+FL%2C+USA&ne_lat=26.211927993713&ne_lng=-80.09590395442405&sw_lat=26.07050306928547&sw_lng=-80.20370500560662&zoom_level=13&map_toggle=on",
+              href: "/boats/search?near=Fort+Lauderdale%2C+FL%2C+USA&ne_lat=26.211927993713&ne_lng=-80.09590395442405&sw_lat=26.07050306928547&sw_lng=-80.20370500560662&zoom_level=13",
               label: "Fort Lauderdale",
               type: "link",
             },
             {
-              href: "/boats/search?near=Naples%2C+FL%2C+USA&ne_lat=26.2112380492215&ne_lng=-81.766661003186&sw_lat=26.07891108467754&sw_lng=-81.82036397203399&zoom_level=13&map_toggle=on",
+              href: "/boats/search?near=Naples%2C+FL%2C+USA&ne_lat=26.2112380492215&ne_lng=-81.766661003186&sw_lat=26.07891108467754&sw_lng=-81.82036397203399&zoom_level=13",
               label: "Naples",
               type: "link",
             },
             {
-              href: "/boats/search?near=West+Palm+Beach%2C+FL%2C+USA&ne_lat=27.27923161620977&ne_lng=-79.74194885822209&sw_lat=26.310840379641395&sw_lng=-80.41348816486271&zoom_level=13&map_toggle=on&page=1",
+              href: "/boats/search?near=West+Palm+Beach%2C+FL%2C+USA&ne_lat=27.27923161620977&ne_lng=-79.74194885822209&sw_lat=26.310840379641395&sw_lng=-80.41348816486271&zoom_level=13&page=1",
               label: "West Palm Beach",
               type: "link",
             },
             {
-              href: "/boats/search?near=Connecticut%2C+USA&ne_lat=42.05051096606773&ne_lng=-71.78723902917415&sw_lat=40.95094295977581&sw_lng=-73.7277749818916&zoom_level=13&map_toggle=on",
+              href: "/boats/search?near=Connecticut%2C+USA&ne_lat=42.05051096606773&ne_lng=-71.78723902917415&sw_lat=40.95094295977581&sw_lng=-73.7277749818916&zoom_level=13",
               label: "Connecticut",
               type: "link",
             },
             {
-              href: "/boats/search?near=The+Bahamas&ne_lat=26.393465781093617&ne_lng=-76.4473427890677&sw_lat=22.4431417432063&sw_lng=-79.1335000156302&zoom_level=13&map_toggle=on&page=1",
+              href: "/boats/search?near=The+Bahamas&ne_lat=26.393465781093617&ne_lng=-76.4473427890677&sw_lat=22.4431417432063&sw_lng=-79.1335000156302&zoom_level=13&page=1",
               label: "Bahamas",
               type: "link",
             },
             {
-              href: "/boats/search?near=Dominican+Republic&ne_lat=19.9786989016584&ne_lng=-68.2526000505517&sw_lat=17.36110005053662&sw_lng=-72.00750992566606&zoom_level=13&map_toggle=on",
+              href: "/boats/search?near=Dominican+Republic&ne_lat=19.9786989016584&ne_lng=-68.2526000505517&sw_lat=17.36110005053662&sw_lng=-72.00750992566606&zoom_level=13",
               label: "Dominican Republic",
               type: "link",
             },

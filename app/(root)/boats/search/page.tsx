@@ -65,9 +65,13 @@ function SearchPageContent({
         </div>
       </div>
 
-      {/* Map - Right side (1/3 width) - DESKTOP ONLY */}
-      <div className="hidden md:flex md:w-1/3">
-        <div className="sticky top-[80px] h-[calc(100vh-80px)] w-full">
+      {/* Map - Right side (1/3 width) - DESKTOP ONLY.
+          Sticks just below the navbar; height fills the remaining viewport.
+          Uses --header-h (defined in globals.css) so this never drifts if
+          the navbar height changes, and 100dvh for correct mobile-Safari
+          behavior when the URL bar collapses. */}
+      <div className="hidden md:block md:w-1/3">
+        <div className="sticky top-[var(--header-h)] h-[calc(100dvh-var(--header-h))] w-full">
           <VisGLSearchMap locations={data.locations} boundingBox={boundingBox} />
         </div>
       </div>

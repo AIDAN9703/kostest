@@ -27,7 +27,7 @@ export default function SearchResultsFallback() {
         { 
             name: "Miami", 
             displayName: "Miami, FL, USA",
-            params: "ne_lat=25.8550&ne_lng=-80.1200&sw_lat=25.7090&sw_lng=-80.3200&map_toggle=on" 
+            params: "ne_lat=25.8550&ne_lng=-80.1200&sw_lat=25.7090&sw_lng=-80.3200" 
         },
         { 
             name: "Fort Lauderdale", 

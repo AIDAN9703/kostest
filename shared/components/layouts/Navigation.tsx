@@ -28,7 +28,7 @@ const Navigation = () => {
         <nav
           className={
             showNavSearch
-              ? "flex items-center justify-between min-h-[4.25rem] gap-4 py-1"
+              ? "flex items-center justify-between min-h-[var(--header-h)] gap-4 py-1"
               : "flex items-center justify-between min-h-[5.25rem] gap-4 py-1"
           }
           role="navigation"

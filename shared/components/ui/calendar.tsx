@@ -9,12 +9,7 @@ import { buttonVariants } from "@/shared/components/ui/button";
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
-function Calendar({
-  className,
-  classNames,
-  showOutsideDays = true,
-  ...props
-}: CalendarProps) {
+function Calendar({ className, classNames, showOutsideDays = true, ...props }: CalendarProps) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -41,8 +36,7 @@ function Calendar({
         ),
         month_grid: "w-full table-fixed border-collapse space-y-1",
         weekdays: "grid grid-cols-7 w-full",
-        weekday:
-          "text-muted-foreground rounded-md font-normal text-[0.8rem] text-center p-1",
+        weekday: "text-muted-foreground rounded-md font-normal text-[0.8rem] text-center p-1",
         week: "grid grid-cols-7 w-full mt-2",
         day: cn(
           "relative p-0 text-center text-sm focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent [&:has([aria-selected].day-outside)]:bg-accent/50 [&:has([aria-selected].day-range-end)]:rounded-r-md",
@@ -62,15 +56,13 @@ function Calendar({
         day_outside:
           "day-outside text-muted-foreground aria-selected:bg-accent/50 aria-selected:text-muted-foreground",
         day_disabled: "text-muted-foreground opacity-50",
-        day_range_middle:
-          "aria-selected:bg-accent aria-selected:text-accent-foreground",
+        day_range_middle: "aria-selected:bg-accent aria-selected:text-accent-foreground",
         day_hidden: "invisible",
         ...classNames,
       }}
       components={{
         Chevron: ({ orientation, ...props }) => {
-          const ChevronIcon =
-            orientation === "left" ? ChevronLeft : ChevronRight;
+          const ChevronIcon = orientation === "left" ? ChevronLeft : ChevronRight;
           return <ChevronIcon className="h-4 w-4" {...props} />;
         },
       }}

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "react-day-picker/style.css";
 
 @plugin 'tailwindcss-animate';
 
@@ -154,6 +155,12 @@
     --radius: 0.5rem;
     --color-primary-site: var(--color-primary);
     --color-gold-site: var(--color-gold);
+
+    /* Sticky main-site navbar height. Used by sticky/scroll layouts (e.g.
+       /boats/search map column) so they don't drift if the navbar resizes.
+       Matches Navigation's compact variant (in-nav search). Home uses a
+       taller navbar but has no sticky consumers, so a single value is fine. */
+    --header-h: 4.25rem;
   }
 
   /* Fix scroll locking issues from Radix UI components */

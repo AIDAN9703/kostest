@@ -125,7 +125,6 @@ export default function SearchResults({
     let count = 0;
 
     // Check for various filter parameters
-    if (searchParams.has("date")) count++;
     if (searchParams.has("minPrice") || searchParams.has("maxPrice")) count++;
     if (searchParams.has("minLength") || searchParams.has("maxLength")) count++;
     if (searchParams.has("minYear") || searchParams.has("maxYear")) count++;
@@ -191,9 +190,7 @@ export default function SearchResults({
                     onSelect={() => handleSort(option.value)}
                     className={cn(
                       "cursor-pointer justify-between gap-2 rounded-lg px-3 py-2 text-sm focus:bg-gray-50",
-                      currentSort === option.value
-                        ? "text-[#2C3E50] font-medium"
-                        : "text-gray-700"
+                      currentSort === option.value ? "text-[#2C3E50] font-medium" : "text-gray-700"
                     )}
                   >
                     {option.label}

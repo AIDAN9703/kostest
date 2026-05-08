@@ -42,7 +42,6 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
       currentParams.set("sw_lat", viewport.getSouthWest().lat().toString());
       currentParams.set("sw_lng", viewport.getSouthWest().lng().toString());
       currentParams.set("zoom_level", "13");
-      currentParams.set("map_toggle", "on");
       // Reset to page 1 when location changes
       currentParams.set("page", "1");
 
