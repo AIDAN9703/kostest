@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
-import { adminThemedControl } from "@/shared/admin/admin-themed-frame";
+import { adminThemeSelectControl } from "@/shared/admin/admin-themed-frame";
 import { useThemeConfig } from "@/shared/admin/components/active-theme";
 import { Label } from "@/shared/components/ui/label";
 import {
@@ -45,7 +45,7 @@ export function ThemeSelector() {
         <SelectTrigger
           id="theme-selector"
           className={cn(
-            adminThemedControl(),
+            adminThemeSelectControl(),
             "justify-start gap-2",
             "*:data-[slot=select-value]:w-12"
           )}

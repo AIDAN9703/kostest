@@ -38,7 +38,7 @@ export function ModeToggle() {
       variant="ghost"
       className={cn(
         adminHeaderNeutralChrome,
-        "size-10 shrink-0 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        "size-10 min-h-10 min-w-10 shrink-0 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground group-has-data-[collapsible=icon]/sidebar-wrapper:size-9 group-has-data-[collapsible=icon]/sidebar-wrapper:min-h-9 group-has-data-[collapsible=icon]/sidebar-wrapper:min-w-9"
       )}
       onClick={handleThemeToggle}
     >
