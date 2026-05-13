@@ -1,118 +1,103 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import {
-  getDashboardStats,
-  getRecentInquiries,
-  getTopBlogPosts,
+  getOperationsMtdSummary,
+  getCharterSourceBreakdownMtd,
+  getFollowUpInquiries,
+  getStaleFollowUpCount,
+  getRecentBookingsForDashboard,
   getTodaysBookings,
   getWeeksBookings,
+  type OperationsMtdSummary,
 } from "@/features/admin/dashboard";
-import { NewInquiriesTable } from "@/features/admin/dashboard/NewInquiriesTable";
+import { FollowUpsSection } from "@/features/admin/dashboard/FollowUpsSection";
+import { RecentBookingsSection } from "@/features/admin/dashboard/RecentBookingsSection";
+import { RevenueBySourceSection } from "@/features/admin/dashboard/RevenueBySourceSection";
 import { TodaysBookingsSection } from "@/features/admin/dashboard/TodaysBookingsSection";
-import { SectionCard } from "@/shared/components/SectionCard";
-import { EmptyState } from "@/shared/components/EmptyState";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
+import { format } from "date-fns";
 
-const METRIC_CARDS = [
+const OPS_METRIC_CARDS: {
+  title: string;
+  href: string;
+  getValue: (ops: OperationsMtdSummary) => string;
+}[] = [
   {
-    title: "Fleet Size",
-    subtitle: "Active yachts",
-    emoji: "🚤",
-    href: "/admin/boats",
-    getValue: (stats: Awaited<ReturnType<typeof getDashboardStats>>) =>
-      stats.totalBoats,
-  },
-  {
-    title: "Users",
-    subtitle: "User accounts",
-    emoji: "🏄",
-    href: "/admin/users",
-    getValue: (stats: Awaited<ReturnType<typeof getDashboardStats>>) =>
-      stats.totalUsers,
-  },
-  {
-    title: "Bookings",
-    subtitle: "This month",
-    emoji: "📊",
+    title: "Charter GMV (MTD)",
     href: "/admin/bookings",
-    getValue: (stats: Awaited<ReturnType<typeof getDashboardStats>>) =>
-      stats.bookingsThisMonth,
+    getValue: (ops) => formatCentsAsCurrency(ops.gmvMtdCents),
   },
   {
-    title: "Booking Value",
-    subtitle: "This month",
-    emoji: "💰",
-    href: "/admin/finance",
-    getValue: (stats: Awaited<ReturnType<typeof getDashboardStats>>) =>
-      formatCentsAsCurrency(stats.revenueThisMonthCents),
-    skipFormat: true,
+    title: "Net revenue (MTD)",
+    href: "/admin/bookings",
+    getValue: (ops) => formatCentsAsCurrency(ops.netRevenueMtdCents),
   },
-] as const;
-
-// ============================================================================
-// PAGE COMPONENT
-// ============================================================================
+  {
+    title: "Commissions (MTD)",
+    href: "/admin/bookings",
+    getValue: (ops) => formatCentsAsCurrency(ops.commissionsMtdCents),
+  },
+  {
+    title: "Client balance owed",
+    href: "/admin/bookings",
+    getValue: (ops) =>
+      ops.outstandingClientBalanceCount === 0 ? "0" : String(ops.outstandingClientBalanceCount),
+  },
+];
 
 export default async function AdminDashboardPage() {
-  const [stats, inquiries, blogPosts, todaysBookings, weeksBookings] =
+  const session = await auth();
+  const firstName = session?.user?.name?.split(/\s+/)[0];
+  const welcomeTitle = firstName ? `Welcome back, ${firstName}` : "Welcome back";
+
+  const monthLabel = format(new Date(), "MMMM yyyy");
+
+  const [ops, sourceRows, followUps, staleCount, recentBookings, todaysBookings, weeksBookings] =
     await Promise.all([
-      getDashboardStats(),
-      getRecentInquiries(5),
-      getTopBlogPosts(4),
+      getOperationsMtdSummary(),
+      getCharterSourceBreakdownMtd(),
+      getFollowUpInquiries(6),
+      getStaleFollowUpCount(3),
+      getRecentBookingsForDashboard(6),
       getTodaysBookings(),
       getWeeksBookings(),
     ]);
 
   return (
     <div className="flex flex-1 flex-col space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
-          Welcome back 👋
-        </h1>
+      <header className="space-y-1">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">{welcomeTitle} 👋</h1>
+        <p className="text-muted-foreground">Here&apos;s what&apos;s moving across the fleet</p>
       </header>
 
-      <MetricCards stats={stats} />
+      <MetricCards ops={ops} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <NewInquiriesTable inquiries={inquiries} />
-        <TodaysBookingsSection
-          todaysBookings={todaysBookings}
-          weeksBookings={weeksBookings}
-        />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <RecentBookingsSection bookings={recentBookings} />
+        </div>
+        <TodaysBookingsSection todaysBookings={todaysBookings} weeksBookings={weeksBookings} />
       </div>
 
-      <MarketingSection blogPosts={blogPosts} />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <RevenueBySourceSection rows={sourceRows} monthLabel={monthLabel} />
+        <FollowUpsSection inquiries={followUps} staleCount={staleCount} />
+      </div>
     </div>
   );
 }
 
-// ============================================================================
-// SECTIONS
-// ============================================================================
-
-function MetricCards({
-  stats,
-}: {
-  stats: Awaited<ReturnType<typeof getDashboardStats>>;
-}) {
-  const formatNumber = (num: number) =>
-    new Intl.NumberFormat("en-US").format(num);
-
+function MetricCards({ ops }: { ops: OperationsMtdSummary }) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {METRIC_CARDS.map((config) => {
-        const value = config.getValue(stats);
-        const displayValue =
-          "skipFormat" in config && config.skipFormat
-            ? value
-            : formatNumber(Number(value));
+      {OPS_METRIC_CARDS.map((config) => {
+        const value = config.getValue(ops);
 
         return (
           <MetricCard
-            key={config.href}
+            key={config.title}
             title={config.title}
-            value={String(displayValue)}
-            subtitle={config.subtitle}
-            emoji={config.emoji}
+            value={value}
             linkHref={config.href}
           />
         );
@@ -121,98 +106,29 @@ function MetricCards({
   );
 }
 
-function MarketingSection({
-  blogPosts,
-}: {
-  blogPosts: Awaited<ReturnType<typeof getTopBlogPosts>>;
-}) {
-  const formatNumber = (num: number) =>
-    new Intl.NumberFormat("en-US").format(num);
-
-  return (
-    <SectionCard title="Marketing" subtitle="Content and events">
-      <div className="flex-1 p-6 space-y-6">
-        <div>
-          <div className="text-sm font-semibold text-foreground mb-3">
-            Top blog posts
-          </div>
-          {blogPosts.length === 0 ? (
-            <EmptyState
-              emoji="📰"
-              title="No posts yet"
-              description="Publish a blog post to see performance."
-            />
-          ) : (
-            <div className="space-y-3">
-              {blogPosts.map((post) => (
-                <Link
-                  key={post.id}
-                  href={`/admin/blog/${post.id}/edit`}
-                  className="flex items-center justify-between rounded-xl px-3 py-2 text-sm transition hover:bg-muted/20"
-                >
-                  <span className="font-medium text-foreground">
-                    {post.title}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {formatNumber(post.viewCount)} views
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <div className="text-sm font-semibold text-foreground mb-3">
-            Events
-          </div>
-          <EmptyState
-            emoji="🎉"
-            title="No active events"
-            description="Events will appear here once scheduled."
-          />
-        </div>
-      </div>
-    </SectionCard>
-  );
-}
-
-// ============================================================================
-// COMPONENTS
-// ============================================================================
-
 interface MetricCardProps {
   title: string;
   value: string;
-  subtitle: string;
-  emoji: string;
   linkHref: string;
 }
 
-function MetricCard({
-  title,
-  value,
-  subtitle,
-  emoji,
-  linkHref,
-}: MetricCardProps) {
+function MetricCard({ title, value, linkHref }: MetricCardProps) {
   return (
-    <Link href={linkHref} className="group block">
-      <div className="bg-card border shadow-sm rounded-2xl p-4 hover:shadow-md transition-all duration-200">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-muted-foreground">
-            {title}
-          </h3>
-          <span className="text-lg text-muted-foreground">{emoji}</span>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-semibold text-foreground">
+    <Link
+      href={linkHref}
+      className="group isolate block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+    >
+      <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-card shadow-sm transition-[box-shadow,border-color] duration-200 hover:border-primary/25 hover:shadow-md">
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[38%] bg-gradient-to-t from-primary/18 via-primary/8 to-transparent dark:from-primary/22 dark:via-primary/10"
+          aria-hidden
+        />
+        <div className="relative z-[1] px-5 pb-5 pt-5">
+          <h2 className="text-sm font-semibold leading-snug text-muted-foreground">{title}</h2>
+          <p className="mt-3 text-3xl font-semibold tabular-nums tracking-tight text-foreground">
             {value}
-          </span>
+          </p>
         </div>
-        <p className="text-xs text-muted-foreground font-medium mt-2">
-          {subtitle}
-        </p>
       </div>
     </Link>
   );

@@ -118,7 +118,6 @@ export async function assignAdminToBooking(bookingId: string, adminId: string | 
 
     await bookingService.assignAdmin(bookingId, adminId, authResult.session!.user.id!);
     revalidatePath("/admin/bookings");
-    revalidatePath("/admin/all");
     revalidatePath(`/admin/bookings/${bookingId}`);
 
     return {
@@ -155,7 +154,6 @@ export async function addBookingCrewMember(
     );
 
     revalidatePath("/admin/bookings");
-    revalidatePath("/admin/all");
     revalidatePath(`/admin/bookings/${bookingId}`);
 
     return { success: true, message: "Crew member added" };
@@ -185,7 +183,6 @@ export async function removeBookingCrewMember(bookingId: string, bookingCrewId: 
     );
 
     revalidatePath("/admin/bookings");
-    revalidatePath("/admin/all");
     revalidatePath(`/admin/bookings/${bookingId}`);
 
     return { success: true, message: "Crew member removed" };
@@ -209,7 +206,6 @@ export async function assignCaptainToBooking(bookingId: string, captainUserId: s
 
     await bookingService.assignCaptain(bookingId, captainUserId, authResult.session!.user.id!);
     revalidatePath("/admin/bookings");
-    revalidatePath("/admin/all");
     revalidatePath(`/admin/bookings/${bookingId}`);
 
     return {

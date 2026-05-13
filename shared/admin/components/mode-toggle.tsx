@@ -4,7 +4,9 @@ import { IconBrightness } from "@tabler/icons-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
 
+import { adminHeaderNeutralChrome } from "@/shared/admin/admin-themed-frame";
 import { Button } from "@/shared/components/ui/button";
+import { cn } from "@/shared/lib/utils/general-utils";
 
 export function ModeToggle() {
   const { setTheme, resolvedTheme } = useTheme();
@@ -33,9 +35,11 @@ export function ModeToggle() {
 
   return (
     <Button
-      variant="secondary"
-      size="icon"
-      className="group/toggle size-8"
+      variant="ghost"
+      className={cn(
+        adminHeaderNeutralChrome,
+        "size-10 shrink-0 rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+      )}
       onClick={handleThemeToggle}
     >
       <IconBrightness />

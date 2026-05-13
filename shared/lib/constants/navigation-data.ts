@@ -1,11 +1,14 @@
 import {
   Calendar,
-  Users2,
   User,
   LayoutDashboard,
-  CalendarDays,
-  PartyPopper,
   MessageSquare,
+  Users,
+  UsersRound,
+  Anchor,
+  Ship,
+  PartyPopper,
+  Newspaper,
   Heart,
   type LucideIcon,
 } from "lucide-react";
@@ -228,14 +231,11 @@ export interface AdminNavItem {
   label: string;
   href: string;
   iconClassName?: string;
+  icon?: LucideIcon;
 }
 
-export interface AdminNavGroup {
-  title: string;
-  icon: LucideIcon;
-  iconClassName?: string;
-  items: AdminNavItem[];
-}
+/** Primary admin sidebar + command palette routes (each row has an icon). */
+export type AdminMainNavItem = AdminNavItem & { icon: LucideIcon };
 
 export const ADMIN_QUICK_ACTIONS: AdminNavItem[] = [
   {
@@ -270,84 +270,61 @@ export const ADMIN_QUICK_ACTIONS: AdminNavItem[] = [
   },
 ];
 
-export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
+export const ADMIN_NAV_ITEMS: AdminMainNavItem[] = [
   {
-    title: "Bookings",
-    icon: CalendarDays,
+    label: "Dashboard",
+    href: "/admin",
+    icon: LayoutDashboard,
     iconClassName: "h-5 w-5",
-    items: [
-      {
-        label: "All",
-        href: "/admin/all",
-        iconClassName: "h-5 w-5",
-      },
-      {
-        label: "Bookings",
-        href: "/admin/bookings",
-        iconClassName: "h-5 w-5",
-      },
-      {
-        label: "Inquiries",
-        href: "/admin/inquiries",
-        iconClassName: "h-5 w-5",
-      },
-    ],
   },
   {
-    title: "Entity Management",
-    icon: Users2,
+    label: "Bookings",
+    href: "/admin/bookings",
+    icon: Calendar,
     iconClassName: "h-5 w-5",
-    items: [
-      {
-        label: "Users",
-        href: "/admin/users",
-        iconClassName: "h-5 w-5",
-      },
-      {
-        label: "Captains",
-        href: "/admin/captains",
-        iconClassName: "h-5 w-5 text-sky-400",
-      },
-      {
-        label: "Crew",
-        href: "/admin/crew",
-        iconClassName: "h-5 w-5 text-cyan-400",
-      },
-      {
-        label: "Boats",
-        href: "/admin/boats",
-        iconClassName: "h-5 w-5",
-      },
-    ],
   },
   {
-    title: "Marketing",
+    label: "Inquiries",
+    href: "/admin/inquiries",
+    icon: MessageSquare,
+    iconClassName: "h-5 w-5",
+  },
+  {
+    label: "Users",
+    href: "/admin/users",
+    icon: Users,
+    iconClassName: "h-5 w-5",
+  },
+  {
+    label: "Captains",
+    href: "/admin/captains",
+    icon: Anchor,
+    iconClassName: "h-5 w-5",
+  },
+  {
+    label: "Crew",
+    href: "/admin/crew",
+    icon: UsersRound,
+    iconClassName: "h-5 w-5",
+  },
+  {
+    label: "Boats",
+    href: "/admin/boats",
+    icon: Ship,
+    iconClassName: "h-5 w-5",
+  },
+  {
+    label: "Events",
+    href: "/admin/events",
     icon: PartyPopper,
     iconClassName: "h-5 w-5",
-    items: [
-      {
-        label: "Events",
-        href: "/admin/events",
-        iconClassName: "h-5 w-5",
-      },
-      {
-        label: "Blog Posts",
-        href: "/admin/blog",
-        iconClassName: "h-5 w-5",
-      },
-    ],
   },
-];
-
-export const ADMIN_DASHBOARD_LINK: AdminNavItem = {
-  label: "Dashboard",
-  href: "/admin",
-  iconClassName: "h-5 w-5",
-};
-
-export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
-  ADMIN_DASHBOARD_LINK,
-  ...ADMIN_NAV_GROUPS.flatMap((group) => group.items),
+  {
+    label: "Blog Posts",
+    href: "/admin/blog",
+    icon: Newspaper,
+    iconClassName: "h-5 w-5",
+  },
 ];
 
 export const ADMIN_USER_MENU_ITEMS: AdminNavItem[] = [

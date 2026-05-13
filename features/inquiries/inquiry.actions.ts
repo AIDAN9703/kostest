@@ -74,7 +74,6 @@ export async function createGeneralInquiry(data: GeneralInquiryInput) {
     // Revalidate admin pages that show inquiries
     revalidatePath("/admin/inquiries");
     revalidatePath("/admin");
-    revalidatePath("/admin/all");
 
     return {
       success: true,

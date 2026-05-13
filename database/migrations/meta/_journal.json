@@ -281,6 +281,13 @@
       "when": 1777262471547,
       "tag": "0041_narrow_venom",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1778636321933,
+      "tag": "0042_outgoing_leper_queen",
+      "breakpoints": true
     }
   ]
 }

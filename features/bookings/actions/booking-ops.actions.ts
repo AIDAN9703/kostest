@@ -16,7 +16,6 @@ export async function updateBookingOps(bookingId: string, input: BookingOpsInput
 
     revalidatePath(`/admin/bookings/${bookingId}`);
     revalidatePath("/admin/bookings");
-    revalidatePath("/admin/all");
 
     return { success: true };
   } catch (error) {

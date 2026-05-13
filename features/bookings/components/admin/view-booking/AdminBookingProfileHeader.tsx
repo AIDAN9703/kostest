@@ -14,7 +14,6 @@ interface AdminBookingProfileHeaderProps {
     | "boatName"
     | "boatMainImage"
     | "bookingStatus"
-    | "bookingType"
     | "paymentDisplayStatus"
   >;
 }
@@ -26,12 +25,6 @@ const BOOKING_STATUS_HINT: Record<string, string> = {
   CONFIRMED: "Paid and locked in.",
   CANCELLED: "Cancelled — check cancellation reason and payment status for details.",
   COMPLETED: "Trip finished.",
-};
-
-const BOOKING_TYPE_HINT: Record<string, string> = {
-  REQUEST: "Customer asked to book; you approve then they pay.",
-  INSTANT_BOOK: "Customer paid immediately on the site.",
-  EXTERNAL_BOOKING: "Created in admin (phone/email); lifecycle you control.",
 };
 
 function hint(map: Record<string, string>, key: string | null | undefined) {
@@ -95,17 +88,6 @@ export function AdminBookingProfileHeader({ booking }: AdminBookingProfileHeader
                 </span>
                 <StatusBadge status={booking.paymentDisplayStatus} title={paymentDesc} />
               </div>
-              {booking.bookingType ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    How it was booked
-                  </span>
-                  <StatusBadge
-                    status={booking.bookingType}
-                    title={hint(BOOKING_TYPE_HINT, booking.bookingType)}
-                  />
-                </div>
-              ) : null}
             </div>
           </div>
         </div>

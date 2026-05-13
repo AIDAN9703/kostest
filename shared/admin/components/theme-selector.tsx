@@ -1,7 +1,9 @@
-'use client';
+"use client";
 
-import { useThemeConfig } from '@/shared/admin/components/active-theme';
-import { Label } from '@/shared/components/ui/label';
+import { Fragment } from "react";
+import { adminThemedControl } from "@/shared/admin/admin-themed-frame";
+import { useThemeConfig } from "@/shared/admin/components/active-theme";
+import { Label } from "@/shared/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -10,75 +12,61 @@ import {
   SelectLabel,
   SelectSeparator,
   SelectTrigger,
-  SelectValue
-} from '@/shared/components/ui/select';
+  SelectValue,
+} from "@/shared/components/ui/select";
+import { cn } from "@/shared/lib/utils/general-utils";
 
-const DEFAULT_THEMES = [
+const THEME_GROUPS = [
   {
-    name: 'Default',
-    value: 'default'
+    label: "Default",
+    themes: [
+      { name: "Default", value: "default" },
+      { name: "Gold", value: "gold" },
+      { name: "Blue", value: "blue" },
+      { name: "Green", value: "green" },
+      { name: "Amber", value: "amber" },
+    ],
   },
   {
-    name: 'Gold',
-    value: 'gold'
+    label: "Monospaced",
+    themes: [{ name: "Mono", value: "mono" }],
   },
-  {
-    name: 'Blue',
-    value: 'blue'
-  },
-  {
-    name: 'Green',
-    value: 'green'
-  },
-  {
-    name: 'Amber',
-    value: 'amber'
-  }
-];
-
-const MONO_THEMES = [
-  {
-    name: 'Mono',
-    value: 'mono'
-  }
-];
+] as const;
 
 export function ThemeSelector() {
   const { activeTheme, setActiveTheme } = useThemeConfig();
 
   return (
-    <div className='flex items-center gap-2'>
-      <Label htmlFor='theme-selector' className='sr-only'>
+    <div className="flex shrink-0 items-center gap-2">
+      <Label htmlFor="theme-selector" className="sr-only">
         Theme
       </Label>
       <Select value={activeTheme} onValueChange={setActiveTheme}>
         <SelectTrigger
-          id='theme-selector'
-          className='justify-start gap-2 *:data-[slot=select-value]:w-12 focus-visible:ring-0 focus-visible:ring-offset-0 focus:outline-hidden'
+          id="theme-selector"
+          className={cn(
+            adminThemedControl(),
+            "justify-start gap-2",
+            "*:data-[slot=select-value]:w-12"
+          )}
         >
-          <span className='text-muted-foreground hidden sm:block'>
-            Select a theme:
-          </span>
-          <SelectValue placeholder='Select a theme' />
+          <span className="hidden text-muted-foreground sm:block">Select a theme:</span>
+          <SelectValue placeholder="Select a theme" />
         </SelectTrigger>
-        <SelectContent align='end'>
-          <SelectGroup>
-            <SelectLabel>Default</SelectLabel>
-            {DEFAULT_THEMES.map((theme) => (
-              <SelectItem key={theme.name} value={theme.value}>
-                {theme.name}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-          <SelectSeparator />
-          <SelectGroup>
-            <SelectLabel>Monospaced</SelectLabel>
-            {MONO_THEMES.map((theme) => (
-              <SelectItem key={theme.name} value={theme.value}>
-                {theme.name}
-              </SelectItem>
-            ))}
-          </SelectGroup>
+        <SelectContent align="end">
+          {THEME_GROUPS.map((group, index) => (
+            <Fragment key={group.label}>
+              {index > 0 && <SelectSeparator />}
+              <SelectGroup>
+                <SelectLabel>{group.label}</SelectLabel>
+                {group.themes.map((theme) => (
+                  <SelectItem key={theme.value} value={theme.value}>
+                    {theme.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </Fragment>
+          ))}
         </SelectContent>
       </Select>
     </div>

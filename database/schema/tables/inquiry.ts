@@ -24,8 +24,6 @@ export const inquiry = pgTable(
 
     // Admin fields
     assignedTo: uuid("assigned_to").references(() => users.id, { onDelete: "set null" }),
-    /** Admin → All: optional row highlight key for workflow organization */
-    adminAllRowHighlight: text("admin_all_row_highlight"),
     termsAccepted: boolean("terms_accepted").default(true).notNull(),
 
     // Timestamps

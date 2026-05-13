@@ -320,9 +320,6 @@ export interface BookingListItem {
   opsCommissionKosCents?: number | null;
   opsCommissionCents?: number | null;
   opsSourceOverride?: string | null;
-
-  /** Admin → All row highlight key (nullable text in DB) */
-  adminAllRowHighlight?: string | null;
 }
 
 /**

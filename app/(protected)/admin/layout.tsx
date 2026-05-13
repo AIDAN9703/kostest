@@ -17,7 +17,7 @@ export default async function AdminLayout({
   children: ReactNode;
 }) {
   // Require authentication - middleware already protects this route
-  const session = await requireAuth();
+  await requireAuth();
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
   const activeThemeValue =
@@ -42,7 +42,7 @@ export default async function AdminLayout({
           >
             <AdminSidebar />
             <SidebarInset>
-              <AdminHeader session={session} />
+              <AdminHeader />
               <div className="flex-1 overflow-y-auto p-8">
                 <QueryProvider>{children}</QueryProvider>
               </div>

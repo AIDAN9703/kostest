@@ -90,7 +90,6 @@ export async function recordBookingManualPaymentAction(
 
     revalidatePath(`/admin/bookings/${bookingId}`);
     revalidatePath("/admin/bookings");
-    revalidatePath("/admin/all");
 
     return { success: true as const };
   } catch (error) {

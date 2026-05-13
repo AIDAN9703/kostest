@@ -734,7 +734,6 @@ export class BookingService {
       captainFirstName: captainUser.firstName,
       captainLastName: captainUser.lastName,
       captainEmail: captainUser.email,
-      adminAllRowHighlight: bookings.adminAllRowHighlight,
       // Ops fields (from booking_ops - Excel workflow tracking)
       opsExpenseCents: bookingOps.expenseCents,
       opsGmvCents: bookingOps.gmvCents,

@@ -97,8 +97,8 @@ export function InquiryCloseActions({
     if (res.success) {
       setShowCloseDialog(null);
       toast({
-        title: "Inquiry marked as won",
-        description: "Opening the booking form with inquiry details…",
+        title: "Opening booking form",
+        description: "Inquiry marked as won. Prefilled details from the inquiry when available.",
       });
       router.push(`/admin/bookings/create?inquiryId=${inquiryId}`);
       router.refresh();
@@ -117,20 +117,17 @@ export function InquiryCloseActions({
             size="sm"
             onClick={() => setShowCloseDialog("won")}
             disabled={loading !== null}
-            className="h-auto min-h-9 rounded-xl gap-2 bg-green-600 px-3 py-2 text-white hover:bg-green-700 shadow-sm"
+            className="gap-2 bg-green-600 text-white shadow-sm hover:bg-green-700"
           >
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            <span className="inline-flex flex-col items-start gap-0 text-left leading-tight">
-              <span>Mark as won</span>
-              <span className="text-[11px] font-normal opacity-90">+ create booking</span>
-            </span>
+            <CheckCircle2 className="h-4 w-4" />
+            Create a Booking
           </Button>
           <Button
             variant="destructive"
             size="sm"
             onClick={() => setShowCloseDialog("lost")}
             disabled={loading !== null}
-            className="rounded-xl gap-2"
+            className="gap-2"
           >
             <XCircle className="h-4 w-4" />
             Mark as Lost
@@ -139,7 +136,7 @@ export function InquiryCloseActions({
             size="sm"
             onClick={() => setShowCloseDialog("abandoned")}
             disabled={loading !== null}
-            className="rounded-xl gap-2 bg-slate-600 text-white hover:bg-slate-700 shadow-sm"
+            className="gap-2 bg-slate-600 text-white shadow-sm hover:bg-slate-700"
           >
             <PauseCircle className="h-4 w-4" />
             Mark as Abandoned
@@ -147,18 +144,18 @@ export function InquiryCloseActions({
         </div>
       </div>
 
-      {/* Mark as won → create booking */}
+      {/* Create booking (marks inquiry as won, then pre-filled booking form) */}
       <Dialog
         open={showCloseDialog === "won"}
         onOpenChange={(open) => !open && setShowCloseDialog(null)}
       >
         <DialogContent className="rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Mark as won &amp; create booking</DialogTitle>
+            <DialogTitle>Create a booking</DialogTitle>
             <DialogDescription>
-              Marks this inquiry as won, then opens the admin booking form with the
-              customer&apos;s contact info and charter preferences filled in. You can pick
-              the boat and finish pricing there.
+              This marks the inquiry as won and opens the booking form with contact
+              info, guest count, and charter notes prefilled from the inquiry when
+              available. You choose the boat and finish pricing there.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -174,7 +171,7 @@ export function InquiryCloseActions({
               disabled={loading === "won"}
               className="rounded-xl gap-2 bg-green-600 text-white hover:bg-green-700"
             >
-              {loading === "won" ? "Working…" : "Open booking form"}
+              {loading === "won" ? "Working…" : "Continue"}
             </Button>
           </DialogFooter>
         </DialogContent>

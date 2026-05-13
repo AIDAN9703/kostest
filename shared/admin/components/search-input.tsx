@@ -1,25 +1,32 @@
-'use client';
+"use client";
 
-import { useKBar } from 'kbar';
-import { IconSearch } from '@tabler/icons-react';
-import { Button } from '@/shared/components/ui/button';
+import { useKBar } from "kbar";
+import { IconSearch } from "@tabler/icons-react";
+import {
+  adminHeaderControlBase,
+  adminHeaderNeutralChrome,
+} from "@/shared/admin/admin-themed-frame";
+import { Button } from "@/shared/components/ui/button";
+import { cn } from "@/shared/lib/utils/general-utils";
 
 export default function SearchInput() {
   const { query } = useKBar();
   return (
-    <div className='w-full space-y-2'>
-      <Button
-        variant='outline'
-        className='bg-background text-muted-foreground relative h-9 w-full justify-start rounded-[0.5rem] text-sm font-normal shadow-none sm:pr-12 md:w-40 lg:w-64'
-        onClick={query.toggle}
-      >
-        <IconSearch className='mr-2 h-4 w-4' />
-        Search...
-        <kbd className='bg-muted pointer-events-none absolute top-[0.3rem] right-[0.3rem] hidden h-6 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium opacity-100 select-none sm:flex'>
-          <span className='text-xs'>⌘</span>K
-        </kbd>
-      </Button>
-    </div>
+    <Button
+      type="button"
+      variant="ghost"
+      className={cn(
+        adminHeaderControlBase,
+        adminHeaderNeutralChrome,
+        "relative w-full justify-start rounded-md bg-background text-muted-foreground md:w-40 lg:w-64 sm:pr-12"
+      )}
+      onClick={query.toggle}
+    >
+      <IconSearch className="mr-2 h-4 w-4 shrink-0 opacity-80" />
+      Search...
+      <kbd className="pointer-events-none absolute right-3 top-1/2 hidden h-6 -translate-y-1/2 items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium sm:flex">
+        <span className="text-xs">⌘</span>K
+      </kbd>
+    </Button>
   );
 }
-
