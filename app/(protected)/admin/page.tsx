@@ -4,14 +4,11 @@ import {
   getOperationsMtdSummary,
   getCharterSourceBreakdownMtd,
   getFollowUpInquiries,
-  getStaleFollowUpCount,
-  getRecentBookingsForDashboard,
   getTodaysBookings,
   getWeeksBookings,
   type OperationsMtdSummary,
 } from "@/features/admin/dashboard";
 import { FollowUpsSection } from "@/features/admin/dashboard/FollowUpsSection";
-import { RecentBookingsSection } from "@/features/admin/dashboard/RecentBookingsSection";
 import { RevenueBySourceSection } from "@/features/admin/dashboard/RevenueBySourceSection";
 import { TodaysBookingsSection } from "@/features/admin/dashboard/TodaysBookingsSection";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
@@ -52,16 +49,13 @@ export default async function AdminDashboardPage() {
 
   const monthLabel = format(new Date(), "MMMM yyyy");
 
-  const [ops, sourceRows, followUps, staleCount, recentBookings, todaysBookings, weeksBookings] =
-    await Promise.all([
-      getOperationsMtdSummary(),
-      getCharterSourceBreakdownMtd(),
-      getFollowUpInquiries(6),
-      getStaleFollowUpCount(3),
-      getRecentBookingsForDashboard(6),
-      getTodaysBookings(),
-      getWeeksBookings(),
-    ]);
+  const [ops, sourceRows, followUps, todaysBookings, weeksBookings] = await Promise.all([
+    getOperationsMtdSummary(),
+    getCharterSourceBreakdownMtd(),
+    getFollowUpInquiries(6),
+    getTodaysBookings(),
+    getWeeksBookings(),
+  ]);
 
   return (
     <div className="flex flex-1 flex-col space-y-6">
@@ -72,17 +66,16 @@ export default async function AdminDashboardPage() {
 
       <MetricCards ops={ops} />
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <RecentBookingsSection bookings={recentBookings} />
+      <div className="grid min-h-0 grid-cols-1 gap-6 lg:max-h-[min(42rem,calc(100svh-12rem))] lg:grid-cols-3 lg:items-stretch lg:overflow-hidden">
+        <div className="flex min-h-0 flex-col lg:col-span-2 lg:h-full lg:min-h-0">
+          <TodaysBookingsSection todaysBookings={todaysBookings} weeksBookings={weeksBookings} />
         </div>
-        <TodaysBookingsSection todaysBookings={todaysBookings} weeksBookings={weeksBookings} />
+        <div className="flex min-h-0 flex-col lg:h-full lg:min-h-0">
+          <FollowUpsSection inquiries={followUps} compact />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <RevenueBySourceSection rows={sourceRows} monthLabel={monthLabel} />
-        <FollowUpsSection inquiries={followUps} staleCount={staleCount} />
-      </div>
+      <RevenueBySourceSection rows={sourceRows} monthLabel={monthLabel} />
     </div>
   );
 }

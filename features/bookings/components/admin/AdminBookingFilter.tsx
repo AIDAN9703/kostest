@@ -1,16 +1,32 @@
 "use client";
 
-import React, { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQueryStates } from "nuqs";
-import { FilterBar, FilterSearch, FilterSelect } from "@/shared/admin/filters";
+import {
+  Calendar as CalendarIcon,
+  CalendarDays,
+  Compass,
+  CreditCard,
+  DollarSign,
+  Filter,
+  LayoutList,
+  MessageSquare,
+  Plus,
+  User,
+  X,
+} from "lucide-react";
+
+import { FilterSearch } from "@/shared/admin/filters";
 import { bookingSearchParams } from "@/features/bookings/searchParams";
 import { bookingStatusEnum, bookingTypeEnum } from "@/database/schema";
 import { PAYMENT_DISPLAY_STATUSES } from "@/shared/lib/utils/payment-display";
-import { SlidersHorizontal, DollarSign, Calendar, User } from "lucide-react";
-import { Switch } from "@/shared/components/ui/switch";
-import { Label } from "@/shared/components/ui/label";
-import { Input } from "@/shared/components/ui/input";
+import { useThemeConfig } from "@/shared/admin/components/active-theme";
+import { BookingCreateWizard } from "@/features/bookings/components/admin/BookingCreateWizard";
 import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+import { Label } from "@/shared/components/ui/label";
+import { Switch } from "@/shared/components/ui/switch";
+import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -18,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import { cn } from "@/shared/lib/utils/general-utils";
 
 type AdminOption = {
   id: string;
@@ -27,49 +44,87 @@ type AdminOption = {
   username: string | null;
 };
 
-export function AdminBookingFilter({ admins }: { admins: AdminOption[] }) {
+type BoatOption = {
+  id: string;
+  name: string;
+  capacity: number;
+  cleaningFee?: number | null;
+  depositAmount?: number | null;
+};
+
+type CaptainOption = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+};
+
+/** Friendlier labels for raw enum values shown in selects + chips. */
+const ENUM_LABEL_OVERRIDES: Record<string, string> = {
+  REQUEST: "Request",
+  INSTANT_BOOK: "Instant",
+  EXTERNAL_BOOKING: "Admin-created",
+  DEPOSIT_PAID: "Deposit paid",
+};
+
+function friendlyEnumLabel(value: string): string {
+  return (
+    ENUM_LABEL_OVERRIDES[value] ??
+    value
+      .toLowerCase()
+      .split(/[_\s]+/)
+      .filter(Boolean)
+      .map((p, i) => (i === 0 ? p.charAt(0).toUpperCase() + p.slice(1) : p))
+      .join(" ")
+  );
+}
+
+function getAdminLabel(admin: AdminOption | undefined): string {
+  if (!admin) return "Unknown";
+  const name = [admin.firstName, admin.lastName].filter(Boolean).join(" ").trim();
+  return name || admin.email || admin.username || "Unknown";
+}
+
+export function AdminBookingFilter({
+  admins,
+  boats = [],
+  captains = [],
+}: {
+  admins: AdminOption[];
+  boats?: BoatOption[];
+  captains?: CaptainOption[];
+}) {
+  const { activeTheme } = useThemeConfig();
   const [filters, setFilters] = useQueryStates(bookingSearchParams, {
     clearOnDefault: true,
     shallow: false,
   });
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const updateFilter = (updates: Partial<typeof filters>) => {
     setFilters({ ...updates, page: 1 });
   };
 
-  const activeAdvancedFilters = useMemo(
-    () =>
-      [
-        filters.dateFrom,
-        filters.dateTo,
-        filters.minAmount,
-        filters.maxAmount,
-        filters.needsCaptain,
-      ].filter((v) => v !== undefined && v !== null).length,
-    [filters]
+  /** Count of "real" filter axes applied (excludes search + ops toggle which are view tools). */
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.bookingStatus != null) count += 1;
+    if (filters.paymentStatus != null) count += 1;
+    if (filters.bookingType != null) count += 1;
+    if (filters.assignedAdminId != null) count += 1;
+    if (filters.dateFrom || filters.dateTo) count += 1;
+    if (filters.minAmount != null || filters.maxAmount != null) count += 1;
+    if (filters.needsCaptain != null) count += 1;
+    return count;
+  }, [filters]);
+
+  const hasAnyState = useMemo(
+    () => Boolean(filters.search) || activeFilterCount > 0,
+    [filters.search, activeFilterCount]
   );
 
-  const hasFilters = useMemo(
-    () =>
-      Boolean(filters.search) ||
-      filters.bookingStatus != null ||
-      filters.paymentStatus != null ||
-      filters.bookingType != null ||
-      filters.assignedAdminId != null ||
-      filters.showOps ||
-      activeAdvancedFilters > 0,
-    [
-      filters.search,
-      filters.bookingStatus,
-      filters.paymentStatus,
-      filters.bookingType,
-      filters.assignedAdminId,
-      filters.showOps,
-      activeAdvancedFilters,
-    ]
-  );
-
-  const clearFilters = () => {
+  const clearAll = () => {
     setFilters({
       search: "",
       bookingStatus: null,
@@ -81,129 +136,99 @@ export function AdminBookingFilter({ admins }: { admins: AdminOption[] }) {
       minAmount: null,
       maxAmount: null,
       assignedAdminId: null,
-      showOps: false,
       page: 1,
     });
   };
 
-  const adminOptions = useMemo(() => admins.map((a) => a.id), [admins]);
-
-  const getAdminLabel = (id: string) => {
-    const admin = admins.find((a) => a.id === id);
-    if (!admin) return id;
-    const name = [admin.firstName, admin.lastName].filter(Boolean).join(" ").trim();
-    return name || admin.email || admin.username || "Unknown";
-  };
+  const findAdmin = (id: string) => admins.find((a) => a.id === id);
 
   return (
-    <FilterBar onClear={clearFilters} hasFilters={hasFilters}>
-      <FilterSearch
-        value={filters.search}
-        onChange={(v) => updateFilter({ search: v })}
-        placeholder="Search by customer, boat, email, phone..."
-      />
-      <FilterSelect
-        value={filters.bookingStatus}
-        onChange={(v) => updateFilter({ bookingStatus: v })}
-        options={bookingStatusEnum.enumValues}
-        placeholder="Status"
-        width="w-[140px]"
-      />
-      <FilterSelect
-        value={filters.paymentStatus}
-        onChange={(v) => updateFilter({ paymentStatus: v })}
-        options={[...PAYMENT_DISPLAY_STATUSES]}
-        placeholder="Payment"
-        width="w-[150px]"
-      />
-      <FilterSelect
-        value={filters.bookingType}
-        onChange={(v) => updateFilter({ bookingType: v })}
-        options={bookingTypeEnum.enumValues}
-        placeholder="Type"
-        width="w-[130px]"
-      />
-      <FilterSelect
-        value={filters.assignedAdminId}
-        onChange={(v) => updateFilter({ assignedAdminId: v })}
-        options={adminOptions}
-        placeholder="Admins"
-        width="w-[180px]"
-        renderLabel={getAdminLabel}
-      />
-      <AdvancedFiltersToggle
-        filters={filters}
-        updateFilter={updateFilter}
-        activeCount={activeAdvancedFilters}
-      />
-      <div className="flex items-center gap-2">
-        <Switch
-          id="show-ops"
-          checked={filters.showOps}
-          onCheckedChange={(v) => updateFilter({ showOps: v })}
+    <div className="flex-shrink-0 border-b border-border bg-card">
+      <div className="flex flex-wrap items-center gap-2 px-6 py-3">
+        <FilterSearch
+          value={filters.search}
+          onChange={(v) => updateFilter({ search: v })}
+          placeholder="Search by customer, boat, email, phone..."
         />
-        <Label htmlFor="show-ops" className="text-sm font-medium cursor-pointer">
-          Show ops
-        </Label>
-      </div>
-    </FilterBar>
-  );
-}
 
-function AdvancedFiltersToggle({
-  filters,
-  updateFilter,
-  activeCount,
-}: {
-  filters: ReturnType<typeof useQueryStates<typeof bookingSearchParams>>[0];
-  updateFilter: (updates: Partial<typeof filters>) => void;
-  activeCount: number;
-}) {
-  const [isOpen, setIsOpen] = React.useState(false);
-
-  return (
-    <div className="relative">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setIsOpen(!isOpen)}
-        className="h-9 gap-1.5 border-border"
-      >
-        <SlidersHorizontal className="h-3.5 w-3.5" />
-        <span className="text-sm">Filters</span>
-        {activeCount > 0 && (
-          <span className="ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-primary text-primary-foreground rounded-full">
-            {activeCount}
-          </span>
-        )}
-      </Button>
-
-      {isOpen && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 w-[500px] bg-card rounded-lg border border-border shadow-lg z-50">
+        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9 gap-1.5 rounded-md border border-border bg-card text-foreground hover:bg-muted/60 hover:text-foreground"
+            >
+              <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-sm">Filters</span>
+              {activeFilterCount > 0 && (
+                <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
+                  {activeFilterCount}
+                </span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            sideOffset={6}
+            className={cn(
+              "admin-theme w-[min(95vw,520px)] bg-popover p-0 text-popover-foreground",
+              activeTheme && `theme-${activeTheme}`
+            )}
+          >
             <div className="p-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FilterGroup icon={Calendar} label="Date Range">
-                  <div className="space-y-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <FilterField icon={MessageSquare} label="Booking status">
+                  <EnumSelect
+                    value={filters.bookingStatus}
+                    onChange={(v) => updateFilter({ bookingStatus: v })}
+                    options={bookingStatusEnum.enumValues}
+                    placeholder="Any status"
+                  />
+                </FilterField>
+                <FilterField icon={CreditCard} label="Payment status">
+                  <EnumSelect
+                    value={filters.paymentStatus}
+                    onChange={(v) => updateFilter({ paymentStatus: v })}
+                    options={[...PAYMENT_DISPLAY_STATUSES]}
+                    placeholder="Any payment"
+                  />
+                </FilterField>
+                <FilterField icon={Compass} label="Booking type">
+                  <EnumSelect
+                    value={filters.bookingType}
+                    onChange={(v) => updateFilter({ bookingType: v })}
+                    options={bookingTypeEnum.enumValues}
+                    placeholder="Any type"
+                  />
+                </FilterField>
+                <FilterField icon={User} label="Assigned admin">
+                  <AdminSelect
+                    value={filters.assignedAdminId}
+                    onChange={(v) => updateFilter({ assignedAdminId: v })}
+                    admins={admins}
+                  />
+                </FilterField>
+                <FilterField icon={CalendarIcon} label="Date range" className="sm:col-span-2">
+                  <div className="grid grid-cols-2 gap-2">
                     <Input
                       type="date"
                       value={filters.dateFrom ?? ""}
                       onChange={(e) => updateFilter({ dateFrom: e.target.value || null })}
-                      className="h-8 text-sm"
+                      className="h-9 text-sm"
                     />
                     <Input
                       type="date"
                       value={filters.dateTo ?? ""}
                       onChange={(e) => updateFilter({ dateTo: e.target.value || null })}
-                      className="h-8 text-sm"
+                      className="h-9 text-sm"
                     />
                   </div>
-                </FilterGroup>
-                <FilterGroup icon={DollarSign} label="Amount Range">
-                  <div className="flex gap-2">
+                </FilterField>
+                <FilterField icon={DollarSign} label="Amount">
+                  <div className="grid grid-cols-2 gap-2">
                     <Input
                       type="number"
+                      min={0}
                       placeholder="Min"
                       value={filters.minAmount ?? ""}
                       onChange={(e) =>
@@ -211,10 +236,11 @@ function AdvancedFiltersToggle({
                           minAmount: e.target.value ? parseInt(e.target.value, 10) : null,
                         })
                       }
-                      className="h-8 text-sm"
+                      className="h-9 text-sm"
                     />
                     <Input
                       type="number"
+                      min={0}
                       placeholder="Max"
                       value={filters.maxAmount ?? ""}
                       onChange={(e) =>
@@ -222,18 +248,18 @@ function AdvancedFiltersToggle({
                           maxAmount: e.target.value ? parseInt(e.target.value, 10) : null,
                         })
                       }
-                      className="h-8 text-sm"
+                      className="h-9 text-sm"
                     />
                   </div>
-                </FilterGroup>
-                <FilterGroup icon={User} label="Captain">
+                </FilterField>
+                <FilterField icon={User} label="Captain need">
                   <Select
                     value={
                       filters.needsCaptain === true
                         ? "yes"
                         : filters.needsCaptain === false
                           ? "no"
-                          : "all"
+                          : "any"
                     }
                     onValueChange={(v) =>
                       updateFilter({
@@ -241,41 +267,258 @@ function AdvancedFiltersToggle({
                       })
                     }
                   >
-                    <SelectTrigger className="h-8 text-sm">
+                    <SelectTrigger className="h-9 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Any</SelectItem>
-                      <SelectItem value="yes">With Captain</SelectItem>
-                      <SelectItem value="no">Self-Drive</SelectItem>
+                      <SelectItem value="any">Any</SelectItem>
+                      <SelectItem value="yes">With captain</SelectItem>
+                      <SelectItem value="no">Self-drive</SelectItem>
                     </SelectContent>
                   </Select>
-                </FilterGroup>
+                </FilterField>
               </div>
             </div>
-          </div>
-        </>
+            <div className="flex items-center justify-between border-t border-border bg-muted/30 px-4 py-2.5">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAll}
+                disabled={!hasAnyState}
+                className="h-8 text-xs"
+              >
+                Clear all
+              </Button>
+              <Button size="sm" onClick={() => setPopoverOpen(false)} className="h-8">
+                Done
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        <div className="flex items-center gap-2">
+          <Switch
+            id="show-ops"
+            checked={filters.showOps}
+            onCheckedChange={(v) => updateFilter({ showOps: v })}
+          />
+          <Label htmlFor="show-ops" className="cursor-pointer text-sm font-medium">
+            Show ops
+          </Label>
+        </div>
+
+        <div className="flex-1" />
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setWizardOpen(true)}
+          className="h-9 gap-1.5 rounded-md border border-dashed border-primary/40 bg-primary/5 text-foreground hover:bg-primary/10 hover:text-foreground"
+          title="Prototype 3-step booking creation flow"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          <span className="text-sm">New (beta)</span>
+        </Button>
+
+        <div
+          role="tablist"
+          aria-label="Bookings view"
+          className="inline-flex h-9 items-center rounded-md border border-border bg-card p-0.5"
+        >
+          <ViewToggleButton
+            active={filters.view === "table"}
+            label="Table"
+            icon={LayoutList}
+            onClick={() => updateFilter({ view: "table" })}
+          />
+          <ViewToggleButton
+            active={filters.view === "calendar"}
+            label="Calendar"
+            icon={CalendarDays}
+            onClick={() => updateFilter({ view: "calendar" })}
+          />
+        </div>
+      </div>
+
+      <BookingCreateWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        boats={boats}
+        captains={captains}
+        admins={admins}
+      />
+
+      {activeFilterCount > 0 && (
+        <div className="flex flex-wrap items-center gap-1.5 px-6 pb-3">
+          {filters.bookingStatus && (
+            <FilterChip
+              label={`Status: ${friendlyEnumLabel(filters.bookingStatus)}`}
+              onRemove={() => updateFilter({ bookingStatus: null })}
+            />
+          )}
+          {filters.paymentStatus && (
+            <FilterChip
+              label={`Payment: ${friendlyEnumLabel(filters.paymentStatus)}`}
+              onRemove={() => updateFilter({ paymentStatus: null })}
+            />
+          )}
+          {filters.bookingType && (
+            <FilterChip
+              label={`Type: ${friendlyEnumLabel(filters.bookingType)}`}
+              onRemove={() => updateFilter({ bookingType: null })}
+            />
+          )}
+          {filters.assignedAdminId && (
+            <FilterChip
+              label={`Admin: ${getAdminLabel(findAdmin(filters.assignedAdminId))}`}
+              onRemove={() => updateFilter({ assignedAdminId: null })}
+            />
+          )}
+          {(filters.dateFrom || filters.dateTo) && (
+            <FilterChip
+              label={`Date: ${filters.dateFrom || "…"} → ${filters.dateTo || "…"}`}
+              onRemove={() => updateFilter({ dateFrom: null, dateTo: null })}
+            />
+          )}
+          {(filters.minAmount != null || filters.maxAmount != null) && (
+            <FilterChip
+              label={`Amount: $${filters.minAmount ?? 0}${
+                filters.maxAmount != null ? ` – $${filters.maxAmount}` : "+"
+              }`}
+              onRemove={() => updateFilter({ minAmount: null, maxAmount: null })}
+            />
+          )}
+          {filters.needsCaptain != null && (
+            <FilterChip
+              label={`Captain: ${filters.needsCaptain ? "With" : "Self-drive"}`}
+              onRemove={() => updateFilter({ needsCaptain: null })}
+            />
+          )}
+          <button
+            type="button"
+            onClick={clearAll}
+            className="ml-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Clear all
+          </button>
+        </div>
       )}
     </div>
   );
 }
 
-function FilterGroup({
-  icon: Icon,
+function ViewToggleButton({
+  active,
   label,
-  children,
+  icon: Icon,
+  onClick,
 }: {
+  active: boolean;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-8 items-center gap-1.5 rounded-[6px] px-2.5 text-sm font-medium transition-colors",
+        active
+          ? "bg-muted text-foreground"
+          : "text-muted-foreground hover:text-foreground",
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {label}
+    </button>
+  );
+}
+
+function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onRemove}
+      className="group inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted/60"
+    >
+      {label}
+      <X className="h-3 w-3 text-muted-foreground transition-colors group-hover:text-foreground" />
+    </button>
+  );
+}
+
+interface FilterFieldProps {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   children: React.ReactNode;
-}) {
+  className?: string;
+}
+
+function FilterField({ icon: Icon, label, children, className }: FilterFieldProps) {
   return (
-    <div>
-      <div className="flex items-center gap-1.5 mb-2">
+    <div className={cn("space-y-1.5", className)}>
+      <div className="flex items-center gap-1.5">
         <Icon className="h-3.5 w-3.5 text-muted-foreground" />
         <span className="text-xs font-medium text-foreground">{label}</span>
       </div>
       {children}
     </div>
+  );
+}
+
+function EnumSelect<T extends string>({
+  value,
+  onChange,
+  options,
+  placeholder,
+}: {
+  value: T | null;
+  onChange: (v: T | null) => void;
+  options: readonly T[];
+  placeholder: string;
+}) {
+  return (
+    <Select value={value || "any"} onValueChange={(v) => onChange(v === "any" ? null : (v as T))}>
+      <SelectTrigger className="h-9 text-sm">
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="any">{placeholder}</SelectItem>
+        {options.map((option) => (
+          <SelectItem key={option} value={option}>
+            {friendlyEnumLabel(option)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function AdminSelect({
+  value,
+  onChange,
+  admins,
+}: {
+  value: string | null;
+  onChange: (v: string | null) => void;
+  admins: AdminOption[];
+}) {
+  return (
+    <Select value={value || "any"} onValueChange={(v) => onChange(v === "any" ? null : v)}>
+      <SelectTrigger className="h-9 text-sm">
+        <SelectValue placeholder="Any admin" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="any">Any admin</SelectItem>
+        {admins.map((admin) => (
+          <SelectItem key={admin.id} value={admin.id}>
+            {getAdminLabel(admin)}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

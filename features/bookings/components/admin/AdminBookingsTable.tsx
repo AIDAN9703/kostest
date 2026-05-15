@@ -35,15 +35,17 @@ import {
   XCircle,
   UserCheck,
   Phone,
+  Copy,
+  Check,
+  Plus,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { type BookingListItem } from "@/features/bookings/booking.types";
-import { formatTime12Hour } from "@/shared/lib/utils/general-utils";
+import { cn, formatTime12Hour } from "@/shared/lib/utils/general-utils";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
 import { format } from "date-fns";
-import { StatusBadge } from "@/shared/lib/utils/badge-utils";
 import {
   approveBookingRequest,
   denyBookingRequest,
@@ -53,6 +55,71 @@ import {
 import { useDeleteBooking } from "@/features/bookings/hooks/useBookingMutations";
 import { useToast } from "@/shared/lib/hooks/use-toast";
 import { OpsRowContent } from "./OpsRowContent";
+
+function titleCase(value: string) {
+  return value
+    .toLowerCase()
+    .split(/[_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+/** Prefer ops override; otherwise show a friendly version of the technical booking type. */
+function getDisplaySource(b: BookingListItem): string {
+  if (b.opsSourceOverride && b.opsSourceOverride.trim()) return b.opsSourceOverride.trim();
+  if (!b.bookingType) return "—";
+  return titleCase(b.bookingType);
+}
+
+/** Use ops GMV when admins have set it; otherwise fall back to the quote total. */
+function getDisplayAmountCents(b: BookingListItem): number {
+  if (b.opsGmvCents != null && b.opsGmvCents > 0) return b.opsGmvCents;
+  return b.totalAmountCents ?? 0;
+}
+
+interface CopyableTextProps {
+  value: string;
+  /** Optional label used in the tooltip — e.g. "email", "phone". */
+  label?: string;
+  className?: string;
+}
+
+/** Compact muted line that copies its value with a tiny icon (visible on hover, persists ~1.5s after copy). */
+function CopyableText({ value, label, className }: CopyableTextProps) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard blocked — silent */
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      title={copied ? "Copied!" : `Copy ${label ?? value}`}
+      aria-label={copied ? "Copied to clipboard" : `Copy ${label ?? value}`}
+      className={cn(
+        "group/copy inline-flex max-w-full items-center gap-1.5 rounded-md px-1 -mx-1 py-0.5 text-left text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground",
+        className,
+      )}
+    >
+      <span className="truncate">{value}</span>
+      {copied ? (
+        <Check className="h-3 w-3 shrink-0 text-emerald-600" />
+      ) : (
+        <Copy className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover/copy:opacity-100" />
+      )}
+    </button>
+  );
+}
 
 interface Admin {
   id: string;
@@ -185,39 +252,68 @@ export function AdminBookingsTable({
 
   const columns = useMemo<ColumnDef<BookingListItem, any>[]>(
     () => [
+      columnHelper.accessor("startDateTime", {
+        header: "Date",
+        cell: ({ row }) => {
+          const booking = row.original;
+          const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(
+            booking.startDateTime,
+          );
+          const { time: endTime } = booking.endDateTime
+            ? parseDateTimeInBoatTimezone(booking.endDateTime)
+            : { time: "" };
+          return (
+            <div className="text-sm">
+              <div className="font-medium text-foreground tabular-nums">
+                {startDate ? format(startDate, "MMM d, yyyy") : "—"}
+              </div>
+              <div className="text-xs text-muted-foreground tabular-nums">
+                {startTime ? formatTime12Hour(startTime) : ""}
+                {endTime && ` - ${formatTime12Hour(endTime)}`}
+              </div>
+            </div>
+          );
+        },
+      }),
       columnHelper.accessor("customerName", {
         header: "Customer",
         cell: ({ row }) => {
           const booking = row.original;
           const displayName = booking.customerName || booking.userEmail || "Unknown";
           return (
-            <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-full bg-muted overflow-hidden shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60">
                 {booking.userProfileImage ? (
                   <Image
                     src={booking.userProfileImage}
                     alt={displayName}
-                    width={28}
-                    height={28}
-                    className="object-cover w-full h-full"
+                    width={36}
+                    height={36}
+                    className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex items-center justify-center h-full bg-primary text-primary-foreground text-xs font-medium">
+                  <div className="flex h-full w-full items-center justify-center bg-primary/15 text-sm font-medium text-foreground">
                     {displayName.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
               <div className="min-w-0">
-                <div className="font-medium text-foreground text-sm truncate">{displayName}</div>
+                <div className="truncate text-sm font-medium leading-tight text-foreground">
+                  {displayName}
+                </div>
                 {booking.customerEmail && (
-                  <div className="text-xs text-muted-foreground truncate">
-                    {booking.customerEmail}
-                  </div>
+                  <CopyableText
+                    value={booking.customerEmail}
+                    label="email"
+                    className="mt-0.5 max-w-[14rem]"
+                  />
                 )}
                 {booking.customerPhone && (
-                  <div className="text-xs text-muted-foreground truncate">
-                    {booking.customerPhone}
-                  </div>
+                  <CopyableText
+                    value={booking.customerPhone}
+                    label="phone"
+                    className="max-w-[14rem]"
+                  />
                 )}
               </div>
             </div>
@@ -229,20 +325,20 @@ export function AdminBookingsTable({
         cell: ({ row }) => {
           const booking = row.original;
           return (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               {booking.boatMainImage && (
-                <div className="h-7 w-7 rounded overflow-hidden bg-muted shrink-0">
+                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-muted ring-1 ring-border/60">
                   <Image
                     src={booking.boatMainImage}
                     alt={booking.boatName || "Boat"}
-                    width={28}
-                    height={28}
-                    className="object-cover w-full h-full"
+                    width={36}
+                    height={36}
+                    className="h-full w-full object-cover"
                   />
                 </div>
               )}
-              <div className="min-w-0 flex items-center gap-2">
-                <span className="font-medium text-foreground text-sm truncate">
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="truncate text-sm font-medium text-foreground">
                   {booking.boatName || "Unknown"}
                 </span>
                 {booking.bookingGroupId && (
@@ -255,51 +351,107 @@ export function AdminBookingsTable({
           );
         },
       }),
-      columnHelper.accessor("startDateTime", {
-        header: "Date & Time",
+      columnHelper.display({
+        id: "captain",
+        header: "Captain",
         cell: ({ row }) => {
           const booking = row.original;
-          const startDateTime = booking.startDateTime;
-          const endDateTime = booking.endDateTime;
-
-          // startDateTime is NOT NULL in database, so no null check needed
-          const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(startDateTime);
-          const { time: endTime } = endDateTime
-            ? parseDateTimeInBoatTimezone(endDateTime)
-            : { time: "" };
-
+          if (booking.captainUserId) {
+            const captainName =
+              booking.captainFirstName || booking.captainLastName
+                ? `${booking.captainFirstName || ""} ${booking.captainLastName || ""}`.trim()
+                : booking.captainEmail || "Captain";
+            return (
+              <div className="text-sm">
+                <div className="truncate font-medium text-foreground">{captainName}</div>
+              </div>
+            );
+          }
+          if (booking.needsCaptain) {
+            return (
+              <span className="text-xs italic text-amber-700 dark:text-amber-400">
+                Captain needed
+              </span>
+            );
+          }
+          return <span className="text-sm text-muted-foreground">—</span>;
+        },
+      }),
+      columnHelper.accessor("totalAmountCents", {
+        header: "GMV",
+        cell: ({ row }) => {
+          const booking = row.original;
+          const amount = getDisplayAmountCents(booking);
+          const usesOpsOverride =
+            booking.opsGmvCents != null &&
+            booking.opsGmvCents > 0 &&
+            booking.opsGmvCents !== booking.totalAmountCents;
           return (
             <div className="text-sm">
-              <div className="font-medium text-foreground">
-                {startDate ? format(startDate, "MMM d") : "—"}
+              <div className="font-semibold tabular-nums text-foreground">
+                {formatCentsAsCurrency(amount)}
               </div>
-              <div className="text-xs text-muted-foreground">
-                {startTime ? formatTime12Hour(startTime) : ""}
-                {endTime && ` - ${formatTime12Hour(endTime)}`}
+              {usesOpsOverride && (
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Ops override
+                </div>
+              )}
+            </div>
+          );
+        },
+      }),
+      columnHelper.display({
+        id: "revenue",
+        header: "Revenue",
+        cell: ({ row }) => {
+          const booking = row.original;
+          const gmv = getDisplayAmountCents(booking);
+          const expenseCents = booking.opsExpenseCents;
+
+          // No expenses recorded yet — admin needs to add them before revenue is meaningful.
+          if (expenseCents == null) {
+            return (
+              <Link
+                href={`/admin/bookings/${booking.id}#ops`}
+                className="inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground"
+                title="No expenses entered — add to calculate revenue"
+              >
+                <Plus className="h-3 w-3" />
+                Add expenses
+              </Link>
+            );
+          }
+
+          const revenue = gmv - expenseCents;
+          const isNegative = revenue < 0;
+          return (
+            <div className="text-sm">
+              <div
+                className={cn(
+                  "font-semibold tabular-nums",
+                  isNegative
+                    ? "text-rose-700 dark:text-rose-400"
+                    : "text-emerald-700 dark:text-emerald-400",
+                )}
+              >
+                {formatCentsAsCurrency(revenue)}
               </div>
             </div>
           );
         },
       }),
       columnHelper.display({
-        id: "status",
-        header: "Status",
+        id: "source",
+        header: "Source",
         cell: ({ row }) => {
           const booking = row.original;
+          const source = getDisplaySource(booking);
           return (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">
-                  Booking
-                </span>
-                <StatusBadge status={booking.bookingStatus} />
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground shrink-0">
-                  Payment
-                </span>
-                <StatusBadge status={booking.paymentDisplayStatus} />
-              </div>
+            <div className="text-sm">
+              <div className="truncate text-foreground">{source}</div>
+              {booking.opsAgentCode && (
+                <div className="text-xs text-muted-foreground">{booking.opsAgentCode}</div>
+              )}
             </div>
           );
         },
@@ -317,20 +469,9 @@ export function AdminBookingsTable({
               ? `${booking.assignedAdminFirstName || ""} ${booking.assignedAdminLastName || ""}`.trim()
               : booking.assignedAdminEmail || "Unknown";
           return (
-            <div className="text-sm">
-              <div className="font-medium text-foreground truncate">{adminName}</div>
-              {/* contactedAt removed - derive from booking_admin_notes if needed */}
-            </div>
+            <div className="truncate text-sm font-medium text-foreground">{adminName}</div>
           );
         },
-      }),
-      columnHelper.accessor("totalAmountCents", {
-        header: "Amount",
-        cell: (info) => (
-          <div className="font-medium text-foreground text-sm">
-            {formatCentsAsCurrency(info.getValue() || 0)}
-          </div>
-        ),
       }),
       columnHelper.display({
         id: "actions",
@@ -342,6 +483,8 @@ export function AdminBookingsTable({
           const isLoading = actionLoading === booking.id;
 
           return (
+            // Stop the row click from triggering when admins use the actions menu.
+            <div onClick={(e) => e.stopPropagation()} className="flex justify-end">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={isLoading}>
@@ -440,6 +583,7 @@ export function AdminBookingsTable({
                 </>
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           );
         },
       }),
@@ -497,7 +641,7 @@ export function AdminBookingsTable({
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="px-3 py-2 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
+                  className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
                 >
                   {header.isPlaceholder ? null : (
                     <div>{flexRender(header.column.columnDef.header, header.getContext())}</div>
@@ -513,9 +657,12 @@ export function AdminBookingsTable({
             const colCount = row.getVisibleCells().length;
             return (
               <React.Fragment key={row.id}>
-                <tr className="hover:bg-muted/50 transition-colors">
+                <tr
+                  onClick={() => router.push(`/admin/bookings/${booking.id}`)}
+                  className="cursor-pointer transition-colors hover:bg-muted/40"
+                >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-3 py-2">
+                    <td key={cell.id} className="px-4 py-4 align-middle">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}

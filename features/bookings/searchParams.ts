@@ -30,6 +30,8 @@ export const bookingSearchParams = {
   assignedAdminId: parseAsString,
   bookingGroupId: parseAsString,
   showOps: parseAsBoolean.withDefault(false),
+  /** Layout for the bookings page — "table" (default) or "calendar". */
+  view: parseAsStringEnum(["table", "calendar"] as const).withDefault("table"),
   page: parseAsInteger.withDefault(1),
   limit: parseAsInteger.withDefault(10),
 };
