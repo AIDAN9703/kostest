@@ -187,7 +187,7 @@ export class BookingService {
         addOnsCents,
         cleaningFeeCents: dollarsToCents(boat.cleaningFee ?? 0),
         depositAmountCents: depositCents || undefined,
-        currency: "USD",
+        currency: boat.currency ?? "USD",
       });
 
       await bookingStatusService.createInitialHistory(
@@ -418,7 +418,7 @@ export class BookingService {
       serviceFeeCents: priceBreakdown.serviceFeeCents,
       depositAmountCents: depositAmountCents || null,
       totalAmountCents: priceBreakdown.totalPriceCents,
-      currency: "USD",
+      currency: boat.currency ?? "USD",
     });
 
     await bookingStatusService.createInitialHistory(
@@ -508,6 +508,8 @@ export class BookingService {
       })
       .returning();
 
+    const bookingCurrency = boat.currency ?? "USD";
+
     // Create pricing record via pricing service
     await bookingPricingService.createPricing({
       bookingId: newBooking.id,
@@ -517,7 +519,7 @@ export class BookingService {
       serviceFeeCents: priceBreakdown.serviceFeeCents,
       depositAmountCents: depositAmountCents || null,
       totalAmountCents: priceBreakdown.totalPriceCents,
-      currency: "USD",
+      currency: bookingCurrency,
     });
 
     // Create status history
@@ -534,7 +536,7 @@ export class BookingService {
       payableId: newBooking.id,
       paymentType: "FULL_PAYMENT",
       amountCents: priceBreakdown.totalPriceCents,
-      currency: "USD",
+      currency: bookingCurrency,
       status: "SUCCEEDED",
       paymentMethodType: "STRIPE_CHECKOUT",
       stripePaymentIntentId: input.stripePaymentIntentId ?? null,
@@ -716,6 +718,7 @@ export class BookingService {
       needsCaptain: bookings.needsCaptain,
       createdAt: bookings.createdAt,
       boatId: bookings.boatId,
+      pricingTierId: bookings.pricingTierId,
       bookingGroupId: bookings.bookingGroupId,
       bookingGroupName: bookingGroups.name,
       boatName: boats.name,
@@ -1239,6 +1242,7 @@ export class BookingService {
         id: boats.id,
         cleaningFee: boats.cleaningFee,
         depositAmount: boats.depositAmount,
+        currency: boats.currency,
       })
       .from(boats)
       .where(eq(boats.id, newBoatId))
@@ -1308,6 +1312,7 @@ export class BookingService {
         serviceFeeCents: breakdown.serviceFeeCents,
         totalAmountCents: breakdown.totalPriceCents,
         depositAmountCents: dollarsToCents(boat.depositAmount ?? 0) || null,
+        currency: boat.currency ?? "USD",
       })
       .where(eq(bookingPricing.bookingId, bookingId));
   }

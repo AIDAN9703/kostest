@@ -10,6 +10,7 @@ import { AdminBookingOpsSection } from "@/features/bookings/components/admin/vie
 import { BookingActivityTimeline } from "@/features/bookings/components/admin/view-booking/BookingActivityTimeline";
 
 import { bookingService } from "@/features/bookings/services/booking.service";
+import { bookingExpenseLineService } from "@/features/bookings/services/booking-expense-line.service";
 import { bookingOpsService } from "@/features/bookings/services/booking-ops.service";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
 import { bookingCrewService } from "@/features/bookings/services/booking-crew.service";
@@ -25,10 +26,11 @@ interface BookingDetailsPageProps {
 
 export default async function BookingDetailsPage({ params }: BookingDetailsPageProps) {
   const { id } = await params;
-  const [booking, ops, rawEvents, bookingPayments, captains, bookingCrewRows, crewPool] =
+  const [booking, ops, expenseLines, rawEvents, bookingPayments, captains, bookingCrewRows, crewPool] =
     await Promise.all([
       bookingService.getBookingById(id),
       bookingOpsService.getByBookingId(id),
+      bookingExpenseLineService.getLines(id),
       bookingEventsService.listByBookingId(id),
       paymentService.getBookingPayments(id),
       captainProfileService.getCaptainsForAssignment(),
@@ -136,6 +138,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_minmax(0,22rem)] lg:gap-8">
         <AdminBookingOpsSection
           bookingId={id}
+          currency={booking.currency ?? "USD"}
           totalAmountCents={booking.totalAmountCents ?? null}
           opsExpenseCents={ops?.expenseCents ?? null}
           opsGmvCents={ops?.gmvCents ?? null}
@@ -158,6 +161,8 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
           captainOptions={captainOptions}
           bookingCrew={bookingCrew}
           crewOptions={crewOptions}
+          expenseLines={expenseLines}
+          pricingTierId={booking.pricingTierId ?? null}
         />
         <BookingActivityTimeline events={activityEvents} className="lg:sticky lg:top-20" />
       </div>

@@ -271,6 +271,7 @@ export interface BookingListItem {
 
   // Joined boat info
   boatId: string | null;
+  pricingTierId: string | null;
   bookingGroupId: string | null;
   bookingGroupName: string | null;
   boatName: string | null;
@@ -408,6 +409,8 @@ export interface SafeBoatData {
   cleaningFee: number | null;
   locationLabel: string | null;
   timezone?: string | null;
+  /** ISO 4217 currency for this boat's pricing (defaults to "USD" upstream). */
+  currency?: string;
 }
 
 // ============================================================================

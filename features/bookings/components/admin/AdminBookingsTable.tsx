@@ -55,6 +55,8 @@ import {
 import { useDeleteBooking } from "@/features/bookings/hooks/useBookingMutations";
 import { useToast } from "@/shared/lib/hooks/use-toast";
 import { OpsRowContent } from "./OpsRowContent";
+import { BookingExpensesModal } from "./BookingExpensesModal";
+import { computeOpsRevenueCents } from "@/shared/lib/utils/ops-revenue";
 
 function titleCase(value: string) {
   return value
@@ -161,6 +163,7 @@ export function AdminBookingsTable({
   const { toast } = useToast();
   const deleteBooking = useDeleteBooking();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [expensesModalBooking, setExpensesModalBooking] = useState<BookingListItem | null>(null);
 
   const admins = adminsProp;
 
@@ -389,7 +392,7 @@ export function AdminBookingsTable({
           return (
             <div className="text-sm">
               <div className="font-semibold tabular-nums text-foreground">
-                {formatCentsAsCurrency(amount)}
+                {formatCentsAsCurrency(amount, { currency: booking.currency ?? "USD" })}
               </div>
               {usesOpsOverride && (
                 <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -405,27 +408,41 @@ export function AdminBookingsTable({
         header: "Revenue",
         cell: ({ row }) => {
           const booking = row.original;
-          const gmv = getDisplayAmountCents(booking);
           const expenseCents = booking.opsExpenseCents;
 
-          // No expenses recorded yet — admin needs to add them before revenue is meaningful.
           if (expenseCents == null) {
             return (
-              <Link
-                href={`/admin/bookings/${booking.id}#ops`}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpensesModalBooking(booking);
+                }}
                 className="inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground"
                 title="No expenses entered — add to calculate revenue"
               >
                 <Plus className="h-3 w-3" />
                 Add expenses
-              </Link>
+              </button>
             );
           }
 
-          const revenue = gmv - expenseCents;
-          const isNegative = revenue < 0;
+          const revenue = computeOpsRevenueCents(
+            booking.opsGmvCents,
+            booking.totalAmountCents,
+            expenseCents
+          );
+          const isNegative = revenue != null && revenue < 0;
           return (
-            <div className="text-sm">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpensesModalBooking(booking);
+              }}
+              className="text-left text-sm transition-colors hover:opacity-80"
+              title="Edit expense breakdown"
+            >
               <div
                 className={cn(
                   "font-semibold tabular-nums",
@@ -434,9 +451,11 @@ export function AdminBookingsTable({
                     : "text-emerald-700 dark:text-emerald-400",
                 )}
               >
-                {formatCentsAsCurrency(revenue)}
+                {revenue != null
+                  ? formatCentsAsCurrency(revenue, { currency: booking.currency ?? "USD" })
+                  : "—"}
               </div>
-            </div>
+            </button>
           );
         },
       }),
@@ -675,6 +694,7 @@ export function AdminBookingsTable({
                     >
                       <OpsRowContent
                         bookingId={booking.id}
+                        currency={booking.currency ?? "USD"}
                         totalAmountCents={booking.totalAmountCents}
                         opsExpenseCents={booking.opsExpenseCents}
                         opsGmvCents={booking.opsGmvCents}
@@ -751,6 +771,19 @@ export function AdminBookingsTable({
           </div>
         </div>
       )}
+
+      {expensesModalBooking ? (
+        <BookingExpensesModal
+          open={!!expensesModalBooking}
+          onOpenChange={(open) => {
+            if (!open) setExpensesModalBooking(null);
+          }}
+          bookingId={expensesModalBooking.id}
+          totalAmountCents={expensesModalBooking.totalAmountCents}
+          opsGmvCents={expensesModalBooking.opsGmvCents}
+          currency={expensesModalBooking.currency ?? "USD"}
+        />
+      ) : null}
     </div>
   );
 }

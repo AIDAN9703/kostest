@@ -30,15 +30,20 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { pricingTierSchema, PricingTierInput } from "@/features/boats/boat.validation";
-import { Plus, Edit, Trash, Clock, DollarSign, Check } from "lucide-react";
+import { Plus, Edit, Trash, Clock } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
+import { getCurrencySymbol } from "@/shared/lib/constants/currencies";
+import { formatCurrency } from "@/shared/lib/utils/general-utils";
 
 interface PricingTiersProps {
   tiers: PricingTierInput[];
   onChange: (tiers: PricingTierInput[]) => void;
+  /** ISO 4217 currency code from the parent boat form (e.g. "USD", "EUR"). */
+  currency?: string;
 }
 
-export function PricingTiers({ tiers = [], onChange }: PricingTiersProps) {
+export function PricingTiers({ tiers = [], onChange, currency = "USD" }: PricingTiersProps) {
+  const symbol = getCurrencySymbol(currency);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentTier, setCurrentTier] = useState<PricingTierInput | null>(null);
   const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -190,9 +195,8 @@ export function PricingTiers({ tiers = [], onChange }: PricingTiersProps) {
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <div className="text-lg font-semibold mr-2 flex items-center">
-                      <DollarSign className="h-4 w-4" />
-                      {tier.price}
+                    <div className="text-lg font-semibold mr-2 tabular-nums">
+                      {formatCurrency(tier.price, currency)}
                     </div>
                     <Button 
                       type="button" 
@@ -262,12 +266,12 @@ export function PricingTiers({ tiers = [], onChange }: PricingTiersProps) {
               </div>
               
               <div className="space-y-2">
-                <FormLabel>Price <span className="text-red-500">*</span></FormLabel>
+                <FormLabel>Price ({symbol}) <span className="text-red-500">*</span></FormLabel>
                 <Input 
                   type="number"
                   min="0" 
                   step="0.01"
-                  placeholder="Price in USD"
+                  placeholder={`Price in ${currency.toUpperCase()}`}
                   {...tierForm.register("price", {
                     setValueAs: (v) => v === "" ? undefined : parseFloat(v) || 0,
                     onChange: (e) => {

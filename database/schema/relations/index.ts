@@ -16,6 +16,7 @@ export * from "./bookingEvents.relations";
 export * from "./bookingAdminNotes.relations";
 export * from "./bookingOps.relations";
 export * from "./bookingCrew.relations";
+export * from "./bookingExpenseLines.relations";
 
 // Payment relations
 export * from "./payments.relations";

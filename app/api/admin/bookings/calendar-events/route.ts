@@ -126,6 +126,7 @@ export async function GET(request: NextRequest) {
           bookingStatus: b.bookingStatus,
           paymentDisplayStatus: b.paymentDisplayStatus,
           totalAmountCents: b.totalAmountCents,
+          currency: b.currency ?? "USD",
           opsGmvCents: b.opsGmvCents ?? null,
           opsExpenseCents: b.opsExpenseCents ?? null,
           needsCaptain: b.needsCaptain,

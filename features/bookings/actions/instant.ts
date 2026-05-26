@@ -58,6 +58,7 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
         instantBook: boats.instantBook,
         mainImage: boats.mainImage,
         crewRequired: boats.crewRequired,
+        currency: boats.currency,
       })
       .from(boats)
       .where(eq(boats.id, data.boatId));
@@ -90,13 +91,15 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
       0 // Captain service is included in base price
     );
     
+    const boatCurrency = (boat.currency ?? "USD").toUpperCase();
+
     // Create a Stripe Checkout Session
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
           price_data: {
-            currency: 'usd',
+            currency: boatCurrency.toLowerCase(),
             product_data: {
               name: `${boat.name} - ${pricingTier.name || `${pricingTier.hours}hr Charter`}`,
               images: [boat.mainImage || "https://via.placeholder.com/800x600.png?text=Boat+Image"],
@@ -127,6 +130,7 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
         serviceFee: priceBreakdown.serviceFee.toString(),
         totalAmount: priceBreakdown.totalPrice.toString(),
         depositAmount: (boat.depositAmount || 0).toString(),
+        currency: boatCurrency,
         createdAt: new Date().toISOString(),
       },
       mode: 'payment',

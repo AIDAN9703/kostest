@@ -32,6 +32,10 @@ import {
 } from "@/shared/components/ui/dialog";
 import { bookingSearchParams } from "@/features/bookings/searchParams";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
+import {
+  computeEffectiveGmvCents,
+  computeOpsRevenueCents,
+} from "@/shared/lib/utils/ops-revenue";
 import { cn } from "@/shared/lib/utils/general-utils";
 
 type CalendarView = "dayGridMonth" | "listWeek";
@@ -47,6 +51,7 @@ interface ExtendedProps {
   bookingStatus: string;
   paymentDisplayStatus: string;
   totalAmountCents: number;
+  currency: string | null;
   opsGmvCents: number | null;
   opsExpenseCents: number | null;
   needsCaptain: boolean | null;
@@ -249,8 +254,11 @@ function BookingEventDialog({
       : null;
   const startDate = new Date(event.start);
   const endDate = event.end ? new Date(event.end) : null;
-  const gmvCents = p.opsGmvCents && p.opsGmvCents > 0 ? p.opsGmvCents : p.totalAmountCents;
-  const revenueCents = p.opsExpenseCents != null ? gmvCents - p.opsExpenseCents : null;
+  const gmvCents = computeEffectiveGmvCents(p.opsGmvCents, p.totalAmountCents) ?? 0;
+  const revenueCents =
+    p.opsExpenseCents != null
+      ? computeOpsRevenueCents(p.opsGmvCents, p.totalAmountCents, p.opsExpenseCents)
+      : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -300,12 +308,16 @@ function BookingEventDialog({
           <div className="grid grid-cols-2 gap-2 pt-1">
             <Tile
               label="GMV"
-              value={formatCentsAsCurrency(gmvCents)}
+              value={formatCentsAsCurrency(gmvCents, { currency: p.currency ?? "USD" })}
               tone="neutral"
             />
             <Tile
               label="Revenue"
-              value={revenueCents != null ? formatCentsAsCurrency(revenueCents) : "—"}
+              value={
+                revenueCents != null
+                  ? formatCentsAsCurrency(revenueCents, { currency: p.currency ?? "USD" })
+                  : "—"
+              }
               tone={revenueCents == null ? "muted" : revenueCents < 0 ? "negative" : "positive"}
             />
           </div>

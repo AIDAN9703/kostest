@@ -1,16 +1,33 @@
 /**
- * Ops REV is derived from the booking quote total (GMV) minus ops expense.
- * Source of truth for GMV: `booking_pricing.total_amount_cents`.
+ * Ops GMV uses ops override when set; otherwise falls back to the booking quote total.
+ */
+export function computeEffectiveGmvCents(
+  opsGmvCents: number | null | undefined,
+  charterTotalCents: number | null | undefined
+): number | null {
+  if (opsGmvCents != null && !Number.isNaN(Number(opsGmvCents))) {
+    return Math.round(Number(opsGmvCents));
+  }
+  if (charterTotalCents == null || Number.isNaN(Number(charterTotalCents))) {
+    return null;
+  }
+  return Math.round(Number(charterTotalCents));
+}
+
+/**
+ * Ops REV is derived from effective GMV minus ops expense (owner payout aggregate).
  */
 export function computeOpsRevenueCents(
-  totalAmountCents: number | null | undefined,
+  opsGmvCents: number | null | undefined,
+  charterTotalCents: number | null | undefined,
   expenseCents: number | null | undefined
 ): number | null {
-  if (totalAmountCents == null || Number.isNaN(Number(totalAmountCents))) {
+  const effectiveGmv = computeEffectiveGmvCents(opsGmvCents, charterTotalCents);
+  if (effectiveGmv == null) {
     return null;
   }
   const expense = expenseCents ?? 0;
-  return Math.round(Number(totalAmountCents) - expense);
+  return Math.round(effectiveGmv - expense);
 }
 
 /**
@@ -23,7 +40,7 @@ export function computeOpsBalanceClientCents(
   paidCents: number | null | undefined,
   charterTotalCents?: number | null
 ): number {
-  const gmv = opsGmvCents ?? charterTotalCents ?? 0;
+  const gmv = computeEffectiveGmvCents(opsGmvCents, charterTotalCents) ?? 0;
   return gmv - (paidCents ?? 0);
 }
 

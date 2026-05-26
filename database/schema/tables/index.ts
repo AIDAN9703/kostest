@@ -14,6 +14,7 @@ export * from "./bookingEvents.table";
 export * from "./bookingAdminNotes.table";
 export * from "./bookingOps.table";
 export * from "./bookingCrew.table";
+export * from "./bookingExpenseLines.table";
 
 // Payment tables
 export * from "./payments.table";

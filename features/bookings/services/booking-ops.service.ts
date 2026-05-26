@@ -112,7 +112,12 @@ export const bookingOpsService = {
       inputRest.expenseCents !== undefined
         ? inputRest.expenseCents
         : existing?.expenseCents ?? null;
+    const mergedGmv =
+      inputRest.gmvCents !== undefined
+        ? inputRest.gmvCents
+        : existing?.gmvCents ?? null;
     const computedRevenueCents = computeOpsRevenueCents(
+      mergedGmv,
       totalAmountCents,
       expenseForCalc
     );
@@ -125,10 +130,6 @@ export const bookingOpsService = {
       inputRest.sentToOwnerCents !== undefined
         ? inputRest.sentToOwnerCents
         : existing?.sentToOwnerCents ?? null;
-    const mergedGmv =
-      inputRest.gmvCents !== undefined
-        ? inputRest.gmvCents
-        : existing?.gmvCents ?? null;
     const mergedPaid =
       inputRest.paidCents !== undefined
         ? inputRest.paidCents

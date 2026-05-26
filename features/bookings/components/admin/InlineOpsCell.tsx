@@ -40,6 +40,8 @@ interface InlineOpsCellProps {
   /** Narrow inputs for dense tables (Admin → All). */
   compact?: boolean;
   className?: string;
+  /** ISO 4217 currency for cents fields. Defaults to USD. */
+  currency?: string;
 }
 
 function parseCents(value: string): number | null {
@@ -58,6 +60,7 @@ export function InlineOpsCell({
   placeholder = "—",
   compact = false,
   className,
+  currency = "USD",
 }: InlineOpsCellProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -70,7 +73,7 @@ export function InlineOpsCell({
 
   const displayValue =
     isCents && typeof value === "number"
-      ? formatCentsAsCurrency(value)
+      ? formatCentsAsCurrency(value, { currency })
       : isCheckbox
         ? value
           ? "✓"

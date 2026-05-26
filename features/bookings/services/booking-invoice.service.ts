@@ -69,7 +69,12 @@ export async function createDraftBookingInvoice(
     firstDraftBooking.userId ?? undefined
   );
 
-  const currency = "usd";
+  // Read currency from the first booking's pricing — all bookings in a group
+  // share the same boat owner, but we treat the first booking's currency as
+  // authoritative for the invoice (Stripe invoices are single-currency).
+  const firstPricing = pricingByBooking.get(firstBookingId);
+  const invoiceCurrency = (firstPricing?.currency ?? "USD").toUpperCase();
+  const currency = invoiceCurrency.toLowerCase();
   const dateStr = new Date(firstDraftBooking.startDateTime).toLocaleDateString(
     "en-US",
     { weekday: "long", month: "long", day: "numeric", year: "numeric" }
@@ -125,7 +130,7 @@ export async function createDraftBookingInvoice(
     payableId: firstBookingId,
     paymentType: paymentType as "DEPOSIT" | "FULL_PAYMENT",
     amountCents: totalCents,
-    currency: "USD",
+    currency: invoiceCurrency,
     status: "PENDING",
     paymentMethodType: "STRIPE_INVOICE",
     stripeInvoiceId: sent.id!,

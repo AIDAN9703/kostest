@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, boolean, integer, timestamp, index, unique, doublePrecision } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, boolean, integer, bigint, timestamp, index, unique, doublePrecision } from "drizzle-orm/pg-core";
 import { boats } from "@/database/schema/tables";
 
 
@@ -14,7 +14,9 @@ export const boatPricingTiers = pgTable("boat_pricing_tier", {
     description: text("description"), // Optional description
     isActive: boolean("is_active").default(true).notNull(),
     isDefault: boolean("is_default").default(false),
-    
+    /** Default owner payout for this tier (USD cents). Used to prefill booking expense lines. */
+    ownerPayoutCents: bigint("owner_payout_cents", { mode: "number" }),
+
     // Timestamps
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).defaultNow().notNull(),

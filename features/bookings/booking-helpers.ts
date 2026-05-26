@@ -13,6 +13,7 @@ export type BoatForBooking = {
   cleaningFee: number | null;
   depositAmount: number | null;
   crewRequired: boolean;
+  currency: string;
 };
 
 export type TierForBooking = {
@@ -39,6 +40,7 @@ export async function fetchBoatAndTier(
       cleaningFee: boats.cleaningFee,
       depositAmount: boats.depositAmount,
       crewRequired: boats.crewRequired,
+      currency: boats.currency,
     })
     .from(boats)
     .where(eq(boats.id, boatId))
@@ -68,6 +70,7 @@ export async function fetchBoatAndTier(
       cleaningFee: boat.cleaningFee,
       depositAmount: boat.depositAmount,
       crewRequired: boat.crewRequired ?? false,
+      currency: boat.currency ?? "USD",
     },
     tier,
   };
@@ -81,6 +84,7 @@ export type BoatForBulkBooking = {
   cleaningFee: number | null;
   depositAmount: number | null;
   crewRequired: boolean;
+  currency: string;
 };
 
 export type TierForBulkBooking = {
@@ -111,6 +115,7 @@ export async function fetchBoatsAndTiersBulk(
             cleaningFee: boats.cleaningFee,
             depositAmount: boats.depositAmount,
             crewRequired: boats.crewRequired,
+            currency: boats.currency,
           })
           .from(boats)
           .where(inArray(boats.id, boatIds))
@@ -139,6 +144,7 @@ export async function fetchBoatsAndTiersBulk(
         cleaningFee: b.cleaningFee,
         depositAmount: b.depositAmount,
         crewRequired: b.crewRequired ?? false,
+        currency: b.currency ?? "USD",
       },
     ])
   );

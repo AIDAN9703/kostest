@@ -51,6 +51,7 @@ export default function AdminAddUpdateBoatForm({
       lengthFt: 1,
       capacity: 1,
       features: ["Standard features"],
+      currency: "USD",
       pricingTiers: [],
 
       // Boolean fields

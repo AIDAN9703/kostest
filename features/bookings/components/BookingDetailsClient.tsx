@@ -61,6 +61,7 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
       cleaningFee: boat.cleaningFee ?? null,
       locationLabel: boat.locationLabel ?? null,
       timezone: (boat.timezone as string | null) ?? null,
+      currency: boat.currency ?? "USD",
     }),
     [boat]
   );

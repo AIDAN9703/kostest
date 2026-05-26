@@ -15,7 +15,7 @@ interface AdminBookingPaymentCardProps {
   bookingId: string;
   booking: Pick<
     BookingDetails,
-    "totalAmountCents" | "totalPaidCents" | "depositAmountCents"
+    "totalAmountCents" | "totalPaidCents" | "depositAmountCents" | "currency"
   >;
   payments: Payment[];
   opsGmvCents: number | null;
@@ -53,6 +53,9 @@ export function AdminBookingPaymentCard({
   const totalAmount = booking.totalAmountCents ?? 0;
   const totalPaid = booking.totalPaidCents ?? 0;
   const balance = Math.max(0, totalAmount - totalPaid);
+  const bookingCurrency = booking.currency ?? "USD";
+  const fmtBooking = (cents: number) =>
+    formatCentsAsCurrency(cents, { currency: bookingCurrency });
 
   return (
     <Card className="h-full rounded-2xl border border-border/60 shadow-sm">
@@ -77,23 +80,23 @@ export function AdminBookingPaymentCard({
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <SummaryItem
             label="Total Due"
-            value={formatCentsAsCurrency(totalAmount)}
+            value={fmtBooking(totalAmount)}
           />
           <SummaryItem
             label="Total Paid"
-            value={formatCentsAsCurrency(totalPaid)}
+            value={fmtBooking(totalPaid)}
             className={totalPaid > 0 ? "text-green-700" : undefined}
           />
           <SummaryItem
             label="Balance"
-            value={formatCentsAsCurrency(balance)}
+            value={fmtBooking(balance)}
             className={balance > 0 ? "text-amber-600" : undefined}
           />
           {booking.depositAmountCents != null &&
             booking.depositAmountCents > 0 && (
               <SummaryItem
                 label="Deposit Required"
-                value={formatCentsAsCurrency(booking.depositAmountCents)}
+                value={fmtBooking(booking.depositAmountCents)}
               />
             )}
         </div>
@@ -140,7 +143,9 @@ export function AdminBookingPaymentCard({
                         }`}
                       >
                         {p.paymentType === "REFUND" ? "−" : ""}
-                        {formatCentsAsCurrency(Number(p.amountCents))}
+                        {formatCentsAsCurrency(Number(p.amountCents), {
+                          currency: p.currency ?? bookingCurrency,
+                        })}
                       </td>
                       <td className="px-3 py-2">
                         <StatusBadge status={p.status} />

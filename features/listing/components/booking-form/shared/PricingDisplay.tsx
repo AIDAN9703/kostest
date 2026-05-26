@@ -20,6 +20,8 @@ interface PricingDisplayProps {
   control: Control<BookingRequest>;
   selectedPricingTier?: PricingTier | null;
   layout?: BookingPickerLayout;
+  /** ISO 4217 currency from the boat (e.g. "USD", "EUR"). Falls back to USD. */
+  currency?: string;
 }
 
 export function PricingDisplay({
@@ -27,6 +29,7 @@ export function PricingDisplay({
   control,
   selectedPricingTier,
   layout = "popover",
+  currency = "USD",
 }: PricingDisplayProps) {
   const [open, setOpen] = useState(false);
 
@@ -69,7 +72,7 @@ export function PricingDisplay({
                         ) : null}
                       </div>
                       <div className="text-right">
-                        <div className="font-bold text-primary">{formatCurrency(tier.price)}</div>
+                        <div className="font-bold text-primary">{formatCurrency(tier.price, currency)}</div>
                         <div className="text-xs text-gray-500">plus fees</div>
                       </div>
                     </button>
@@ -107,7 +110,7 @@ export function PricingDisplay({
                         {tier.name ? <div className="text-sm text-gray-600">{tier.name}</div> : null}
                       </div>
                       <div className="ml-4 text-right">
-                        <div className="font-bold text-primary">{formatCurrency(tier.price)}</div>
+                        <div className="font-bold text-primary">{formatCurrency(tier.price, currency)}</div>
                         <div className="text-xs text-gray-500">plus fees</div>
                       </div>
                     </div>

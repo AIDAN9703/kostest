@@ -24,6 +24,8 @@ export interface OpsRowContentProps {
    * `comfortable` = booking detail page: plain layout, full words, no per-field boxes.
    */
   density?: "compact" | "comfortable";
+  /** ISO 4217 currency from booking_pricing.currency (defaults to "USD"). */
+  currency?: string;
   totalAmountCents?: number | null;
   opsExpenseCents?: number | null;
   opsGmvCents?: number | null;
@@ -193,6 +195,7 @@ const LABELS = {
 export function OpsRowContent({
   bookingId,
   density = "compact",
+  currency = "USD",
   totalAmountCents,
   opsExpenseCents,
   opsGmvCents,
@@ -217,7 +220,12 @@ export function OpsRowContent({
   crewOptions,
 }: OpsRowContentProps) {
   const L = LABELS[density];
-  const revenueCentsDisplay = computeOpsRevenueCents(totalAmountCents, opsExpenseCents);
+  const fmt = (cents: number) => formatCentsAsCurrency(cents, { currency });
+  const revenueCentsDisplay = computeOpsRevenueCents(
+    opsGmvCents,
+    totalAmountCents,
+    opsExpenseCents
+  );
   const balanceClientDisplay = computeOpsBalanceClientCents(
     opsGmvCents,
     opsPaidCents,
@@ -264,6 +272,7 @@ export function OpsRowContent({
             value={opsExpenseCents}
             isCents
             placeholder="—"
+            currency={currency}
           />
         </OpsField>
         <OpsField label={L.gmv} density={density}>
@@ -273,11 +282,12 @@ export function OpsRowContent({
             value={opsGmvCents}
             isCents
             placeholder="—"
+            currency={currency}
           />
         </OpsField>
         <OpsField label={L.rev} density={density}>
           <OpsReadonlyValue density={density}>
-            {revenueCentsDisplay != null ? formatCentsAsCurrency(revenueCentsDisplay) : "—"}
+            {revenueCentsDisplay != null ? fmt(revenueCentsDisplay) : "—"}
           </OpsReadonlyValue>
         </OpsField>
         <OpsField label={L.source} density={density}>
@@ -296,6 +306,7 @@ export function OpsRowContent({
             value={opsCommissionAgentCents}
             isCents
             placeholder="—"
+            currency={currency}
           />
         </OpsField>
         <OpsField label={L.commKos} density={density}>
@@ -305,6 +316,7 @@ export function OpsRowContent({
             value={opsCommissionKosCents}
             isCents
             placeholder="—"
+            currency={currency}
           />
         </OpsField>
         <OpsField label={L.paid} density={density}>
@@ -314,6 +326,7 @@ export function OpsRowContent({
             value={opsPaidCents}
             isCents
             placeholder="—"
+            currency={currency}
           />
         </OpsField>
         <OpsField label={L.sentOwner} density={density}>
@@ -323,6 +336,7 @@ export function OpsRowContent({
             value={opsSentToOwnerCents}
             isCents
             placeholder="—"
+            currency={currency}
           />
         </OpsField>
         <OpsField label={L.balOwner} density={density}>
@@ -330,7 +344,7 @@ export function OpsRowContent({
             density={density}
             title="Expense − sent to owner (computed on save)"
           >
-            {formatCentsAsCurrency(balanceOwnerDisplay)}
+            {fmt(balanceOwnerDisplay)}
           </OpsReadonlyValue>
         </OpsField>
         <OpsField label={L.balClient} density={density}>
@@ -338,7 +352,7 @@ export function OpsRowContent({
             density={density}
             title="Client amount still owed: ops GMV − PAID (uses charter quote total if ops GMV is empty)"
           >
-            {formatCentsAsCurrency(balanceClientDisplay)}
+            {fmt(balanceClientDisplay)}
           </OpsReadonlyValue>
         </OpsField>
         <OpsField label={L.crew} density={density}>

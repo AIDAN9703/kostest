@@ -1,0 +1,145 @@
+/**
+ * Booking Expense Line Service
+ * Manages typed expense breakdown per booking; aggregates OWNER_PAYOUT into booking_ops.expense_cents.
+ */
+
+import { db } from "@/database/db";
+import {
+  bookingExpenseLines,
+  bookings,
+  boatPricingTiers,
+  bookingOps,
+} from "@/database/schema";
+import { asc, eq } from "drizzle-orm";
+import { bookingOpsService } from "@/features/bookings/services/booking-ops.service";
+import type {
+  BookingExpenseLine,
+  BookingExpenseLineInput,
+} from "@/features/bookings/booking-expense.types";
+
+function mapRow(row: typeof bookingExpenseLines.$inferSelect): BookingExpenseLine {
+  return {
+    id: row.id,
+    bookingId: row.bookingId,
+    category: row.category,
+    amountCents: row.amountCents,
+    label: row.label,
+    sortOrder: row.sortOrder,
+    source: row.source,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+export const bookingExpenseLineService = {
+  async getLines(bookingId: string): Promise<BookingExpenseLine[]> {
+    const rows = await db
+      .select()
+      .from(bookingExpenseLines)
+      .where(eq(bookingExpenseLines.bookingId, bookingId))
+      .orderBy(asc(bookingExpenseLines.sortOrder), asc(bookingExpenseLines.createdAt));
+
+    if (rows.length > 0) {
+      return rows.map(mapRow);
+    }
+
+    const [opsRow] = await db
+      .select({ expenseCents: bookingOps.expenseCents })
+      .from(bookingOps)
+      .where(eq(bookingOps.bookingId, bookingId))
+      .limit(1);
+
+    if (opsRow?.expenseCents != null) {
+      return [
+        {
+          id: null,
+          bookingId,
+          category: "OWNER_PAYOUT",
+          amountCents: opsRow.expenseCents,
+          label: null,
+          sortOrder: 0,
+          source: "MANUAL",
+          isSynthetic: true,
+        },
+      ];
+    }
+
+    return [];
+  },
+
+  async getDefaultsForBooking(bookingId: string): Promise<BookingExpenseLineInput[]> {
+    const [booking] = await db
+      .select({ pricingTierId: bookings.pricingTierId })
+      .from(bookings)
+      .where(eq(bookings.id, bookingId))
+      .limit(1);
+
+    if (!booking?.pricingTierId) {
+      return [];
+    }
+
+    const [tier] = await db
+      .select({ ownerPayoutCents: boatPricingTiers.ownerPayoutCents })
+      .from(boatPricingTiers)
+      .where(eq(boatPricingTiers.id, booking.pricingTierId))
+      .limit(1);
+
+    if (tier?.ownerPayoutCents == null) {
+      return [];
+    }
+
+    return [
+      {
+        category: "OWNER_PAYOUT",
+        amountCents: tier.ownerPayoutCents,
+        label: null,
+        sortOrder: 0,
+        source: "BOAT_DEFAULT",
+      },
+    ];
+  },
+
+  async saveLines(
+    bookingId: string,
+    lines: BookingExpenseLineInput[]
+  ): Promise<BookingExpenseLine[]> {
+    const now = new Date();
+    const ownerPayoutTotal = lines
+      .filter((line) => line.category === "OWNER_PAYOUT")
+      .reduce((sum, line) => sum + line.amountCents, 0);
+
+    const savedLines = await db.transaction(async (tx) => {
+      await tx
+        .delete(bookingExpenseLines)
+        .where(eq(bookingExpenseLines.bookingId, bookingId));
+
+      if (lines.length === 0) {
+        return [];
+      }
+
+      const inserted = await tx
+        .insert(bookingExpenseLines)
+        .values(
+          lines.map((line, index) => ({
+            bookingId,
+            category: line.category,
+            amountCents: line.amountCents,
+            label: line.label ?? null,
+            sortOrder: line.sortOrder ?? index,
+            source: line.source ?? "MANUAL",
+            createdAt: now,
+            updatedAt: now,
+          }))
+        )
+        .returning();
+
+      return inserted.map(mapRow);
+    });
+
+    await bookingOpsService.upsert(bookingId, {
+      expenseCents: ownerPayoutTotal > 0 ? ownerPayoutTotal : null,
+    });
+
+    return savedLines;
+  },
+};

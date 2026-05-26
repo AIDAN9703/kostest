@@ -19,6 +19,7 @@ import {
   crewProfiles,
   ownerProfiles,
   bookingCrew,
+  bookingExpenseLines,
   blogPosts,
   inquiry,
   inquiryEvents,
@@ -48,6 +49,8 @@ import {
   bookingTypeEnum,
   bookingSourceEnum,
   adminNoteTypeEnum,
+  bookingExpenseCategoryEnum,
+  bookingExpenseLineSourceEnum,
 
   // Payment enums
   paymentStatusEnum,
@@ -129,6 +132,13 @@ export type BookingStatus = (typeof bookingStatusEnum.enumValues)[number];
 export type BookingType = (typeof bookingTypeEnum.enumValues)[number];
 export type BookingSource = (typeof bookingSourceEnum.enumValues)[number];
 export type AdminNoteType = (typeof adminNoteTypeEnum.enumValues)[number];
+export type BookingExpenseCategory =
+  (typeof bookingExpenseCategoryEnum.enumValues)[number];
+export type BookingExpenseLineSource =
+  (typeof bookingExpenseLineSourceEnum.enumValues)[number];
+
+export type BookingExpenseLineRow = typeof bookingExpenseLines.$inferSelect;
+export type NewBookingExpenseLineRow = typeof bookingExpenseLines.$inferInsert;
 
 // ========================================
 // PAYMENT TYPES

@@ -288,6 +288,13 @@
       "when": 1778636321933,
       "tag": "0042_outgoing_leper_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1779824145868,
+      "tag": "0045_nice_darkstar",
+      "breakpoints": true
     }
   ]
 }

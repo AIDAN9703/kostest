@@ -1,6 +1,7 @@
 export * from "./auth.enums";
 export * from "./blog.enums";
 export * from "./booking.enums";
+export * from "./bookingExpense.enums";
 export * from "./boat.enums";
 export * from "./notification.enums";
 export * from "./payment.enums";

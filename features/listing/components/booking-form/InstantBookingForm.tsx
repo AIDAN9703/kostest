@@ -95,6 +95,7 @@ export default function InstantBookingForm({ boat, pickerLayout = "popover" }: I
       <FormHeader
         price={formState.selectedPricingTier?.price}
         hours={formState.selectedPricingTier?.hours}
+        currency={boat.currency}
       />
 
       <Form {...form}>
@@ -113,6 +114,7 @@ export default function InstantBookingForm({ boat, pickerLayout = "popover" }: I
             control={form.control}
             selectedPricingTier={formState.selectedPricingTier}
             layout={pickerLayout}
+            currency={boat.currency}
           />
 
           <TimeSelection

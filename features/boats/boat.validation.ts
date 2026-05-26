@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { boatCategoryEnum } from "@/database/schema";
+import { SUPPORTED_CURRENCIES } from "@/shared/lib/constants/currencies";
 
 // URL regex for simple URL validation
 const URL_REGEX = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
@@ -60,6 +61,7 @@ export const boatBaseSchema = z.object({
   virtualTourUrl: z.string().refine((v) => !v || v.startsWith("http"), "Must be a valid URL").optional().nullable(),
   
   // Pricing (tiers only)
+  currency: z.enum(SUPPORTED_CURRENCIES).default("USD"),
   pricingTiers: z.array(pricingTierSchema).optional(),
   weeklyRate: z.number().positive().optional().nullable(),
   monthlyRate: z.number().positive().optional().nullable(),

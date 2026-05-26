@@ -26,6 +26,8 @@ export default function BookingPricingSection({
     boat.cleaningFee || 0,
     0 // Captain fee included in base price
   );
+  const currency = boat.currency ?? "USD";
+  const fmt = (amount: number) => formatCurrency(amount, currency);
 
   const priceItems = [
     {
@@ -67,7 +69,7 @@ export default function BookingPricingSection({
               {item.isIncluded ? (
                 <span className="text-emerald-600">Included</span>
               ) : (
-                <span className="text-gray-900">{formatCurrency(item.amount)}</span>
+                <span className="text-gray-900">{fmt(item.amount)}</span>
               )}
             </p>
           </div>
@@ -77,7 +79,7 @@ export default function BookingPricingSection({
       <div className="pt-4 border-t border-gray-100">
         <div className="flex items-center justify-between">
           <p className="text-lg font-semibold text-gray-900">Total</p>
-          <p className="text-xl font-bold text-primary">{formatCurrency(priceBreakdown.totalPrice)}</p>
+          <p className="text-xl font-bold text-primary">{fmt(priceBreakdown.totalPrice)}</p>
         </div>
         <p className="text-xs text-gray-500 mt-1">
           Final price includes all fees and taxes

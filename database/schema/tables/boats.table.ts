@@ -40,6 +40,9 @@ export const boats = pgTable("boat",{
     virtualTourUrl: text("virtual_tour_url"),
     
     // Pricing (all pricing now driven by tiers; weekly/monthly remain optional)
+    // `currency` is the ISO 4217 code (e.g. "USD", "EUR") used for all tier
+    // prices, fees, and downstream booking_pricing/payment records for this boat.
+    currency: text("currency").default("USD").notNull(),
     weeklyRate: doublePrecision("weekly_rate"),
     monthlyRate: doublePrecision("monthly_rate"),
     depositAmount: doublePrecision("deposit_amount"),

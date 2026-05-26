@@ -30,12 +30,25 @@ export async function cachedFetch<T>(
   )();
 }
 
-export function formatCurrency(amount: number): string {
+/**
+ * Format a dollar/euro/pound amount (major units, not cents).
+ *
+ * Defaults to USD with whole-dollar precision for backward compatibility,
+ * but accepts any ISO 4217 currency code. The currency typically comes from
+ * `boat.currency` or `bookingPricing.currency` — pass it explicitly so the
+ * UI matches the underlying record (e.g. "€1,200" vs "$1,200").
+ */
+export function formatCurrency(
+  amount: number,
+  currency: string = 'USD',
+  options: { showCents?: boolean } = {},
+): string {
+  const showCents = options.showCents ?? false;
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    currency: currency.toUpperCase(),
+    minimumFractionDigits: showCents ? 2 : 0,
+    maximumFractionDigits: showCents ? 2 : 0,
   }).format(amount);
 }
 

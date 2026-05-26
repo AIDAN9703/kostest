@@ -11,6 +11,7 @@ import { bookingEvents } from "../tables/bookingEvents.table";
 import { bookingAdminNotes } from "../tables/bookingAdminNotes.table";
 import { bookingOps } from "../tables/bookingOps.table";
 import { bookingCrew } from "../tables/bookingCrew.table";
+import { bookingExpenseLines } from "../tables/bookingExpenseLines.table";
 import { inquiry } from "../tables/inquiry";
 
 // Relations for bookings table
@@ -57,6 +58,7 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   events: many(bookingEvents),
   adminNotes: many(bookingAdminNotes),
   ops: one(bookingOps),
+  expenseLines: many(bookingExpenseLines),
   // Note: payments relation is handled via payable_type/payable_id in payments table
 
   // Admin assignment (current operational state)

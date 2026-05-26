@@ -1,23 +1,61 @@
 "use client";
 
+import { useState } from "react";
+import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { OpsRowContent, type OpsRowContentProps } from "@/features/bookings/components/admin/OpsRowContent";
+import {
+  OpsRowContent,
+  type OpsRowContentProps,
+} from "@/features/bookings/components/admin/OpsRowContent";
+import { BookingExpensesModal } from "@/features/bookings/components/admin/BookingExpensesModal";
+import type { BookingExpenseLine } from "@/features/bookings/booking-expense.types";
+
+export interface AdminBookingOpsSectionProps extends OpsRowContentProps {
+  expenseLines: BookingExpenseLine[];
+  pricingTierId?: string | null;
+}
 
 /**
  * Same ops field layout as Admin → All (inline cells + status flags).
  */
-export function AdminBookingOpsSection(props: OpsRowContentProps) {
+export function AdminBookingOpsSection({
+  expenseLines,
+  pricingTierId: _pricingTierId,
+  ...opsProps
+}: AdminBookingOpsSectionProps) {
+  void _pricingTierId;
+  const [modalOpen, setModalOpen] = useState(false);
+
   return (
-    <Card className="rounded-2xl border border-border/60 shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg">Ops</CardTitle>
-        <p className="text-xs text-muted-foreground">
-          Same fields as the &ldquo;All&rdquo; table — edits save when you leave each field.
-        </p>
-      </CardHeader>
-      <CardContent>
-        <OpsRowContent {...props} density="comfortable" />
-      </CardContent>
-    </Card>
+    <>
+      <Card id="ops" className="rounded-2xl border border-border/60 shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="text-lg">Ops</CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Same fields as the &ldquo;All&rdquo; table — edits save when you leave each field.
+              </p>
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={() => setModalOpen(true)}>
+              Edit breakdown
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <OpsRowContent {...opsProps} density="comfortable" />
+        </CardContent>
+      </Card>
+
+      <BookingExpensesModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        bookingId={opsProps.bookingId}
+        totalAmountCents={opsProps.totalAmountCents}
+        opsGmvCents={opsProps.opsGmvCents}
+        currency={opsProps.currency}
+        initialLines={expenseLines}
+      />
+    </>
   );
 }

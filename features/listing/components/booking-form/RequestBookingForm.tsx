@@ -96,6 +96,7 @@ export default function RequestBookingForm({ boat, pickerLayout = "popover" }: R
       <FormHeader
         price={formState.selectedPricingTier?.price}
         hours={formState.selectedPricingTier?.hours}
+        currency={boat.currency}
       />
 
       <Form {...form}>
@@ -114,6 +115,7 @@ export default function RequestBookingForm({ boat, pickerLayout = "popover" }: R
             control={form.control}
             selectedPricingTier={formState.selectedPricingTier}
             layout={pickerLayout}
+            currency={boat.currency}
           />
 
           <TimeSelection
