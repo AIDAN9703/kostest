@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation";
 
-import { AdminBookingProfileHeader } from "@/features/bookings/components/admin/view-booking/AdminBookingProfileHeader";
+import { AdminBookingHeader } from "@/features/bookings/components/admin/view-booking/AdminBookingHeader";
 import {
   AdminBookingDetailsCard,
   type BookingTripDetailsSnapshot,
 } from "@/features/bookings/components/admin/view-booking/AdminBookingDetailsCard";
 import { AdminBookingPaymentCard } from "@/features/bookings/components/admin/view-booking/AdminBookingPaymentCard";
 import { AdminBookingOpsSection } from "@/features/bookings/components/admin/view-booking/AdminBookingOpsSection";
+import { AdminBookingChecklistCard } from "@/features/bookings/components/admin/view-booking/AdminBookingChecklistCard";
+import { AdminBookingQuickActionsCard } from "@/features/bookings/components/admin/view-booking/AdminBookingQuickActionsCard";
 import { BookingActivityTimeline } from "@/features/bookings/components/admin/view-booking/BookingActivityTimeline";
 
 import { bookingService } from "@/features/bookings/services/booking.service";
@@ -17,6 +19,7 @@ import { bookingCrewService } from "@/features/bookings/services/booking-crew.se
 import { paymentService } from "@/features/payments/payment.service";
 import { captainProfileService } from "@/features/profiles/captain-profile.service";
 import { crewProfileService } from "@/features/profiles/crew-profile.service";
+import { computeBookingChecklist } from "@/features/bookings/booking-checklist";
 
 import type { BookingActivityEventEntry } from "@/features/bookings/booking.types";
 
@@ -123,9 +126,28 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         : null,
   };
 
+  const checklistItems = computeBookingChecklist({
+    bookingStatus: booking.bookingStatus,
+    totalAmountCents: booking.totalAmountCents,
+    totalPaidCents: booking.totalPaidCents,
+    captainUserId: booking.captainUserId,
+    opsContractSigned: ops?.contractSigned ?? null,
+    opsCaptainPaid: ops?.captainPaid ?? null,
+    opsGmvCents: ops?.gmvCents ?? null,
+    opsExpenseCents: ops?.expenseCents ?? null,
+    opsSentToOwnerCents: ops?.sentToOwnerCents ?? null,
+  });
+
+  // Hide the "send payment link" quick action once the booking is fully paid
+  // or has been refunded — nothing meaningful left to collect.
+  const allowPaymentLink =
+    (booking.totalAmountCents ?? 0) > 0 &&
+    (booking.totalPaidCents ?? 0) < (booking.totalAmountCents ?? 0) &&
+    booking.bookingStatus !== "CANCELLED";
+
   return (
     <div className="flex w-full flex-1 flex-col gap-6">
-      <AdminBookingProfileHeader booking={booking} />
+      <AdminBookingHeader booking={booking} />
       <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
         <AdminBookingDetailsCard bookingId={id} trip={tripSnapshot} />
         <AdminBookingPaymentCard
@@ -164,7 +186,14 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
           expenseLines={expenseLines}
           pricingTierId={booking.pricingTierId ?? null}
         />
-        <BookingActivityTimeline events={activityEvents} className="lg:sticky lg:top-20" />
+        <div className="space-y-6 lg:sticky lg:top-20">
+          <AdminBookingChecklistCard bookingId={id} items={checklistItems} />
+          <AdminBookingQuickActionsCard
+            bookingId={id}
+            allowPaymentLink={allowPaymentLink}
+          />
+          <BookingActivityTimeline events={activityEvents} />
+        </div>
       </div>
     </div>
   );

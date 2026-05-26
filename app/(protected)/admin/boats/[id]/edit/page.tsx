@@ -7,6 +7,7 @@ import {
 import AdminAddUpdateBoatForm from "@/features/boats/components/forms/admin-create-edit-boat-form";
 import { Suspense } from "react";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { normalizeCurrency } from "@/shared/lib/constants/currencies";
 
 interface AdminBoatEditPageProps {
   params: Promise<{ id: string }>;
@@ -85,6 +86,7 @@ async function BoatFormWithData({ boatId }: { boatId: string }) {
     virtualTourUrl: boatData.virtualTourUrl || null,
 
     // Pricing
+    currency: normalizeCurrency(boatData.currency),
     pricingTiers: formattedPricingTiers,
     weeklyRate: boatData.weeklyRate || null,
     monthlyRate: boatData.monthlyRate || null,
