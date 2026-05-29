@@ -39,10 +39,7 @@ export default async function BoatDetailPage({ params }: BoatDetailPageProps) {
 
   return (
     <div className="flex flex-1 flex-col space-y-6">
-      {/* Header Card - profile summary */}
       <AdminBoatProfileHeader boat={boatData} actions={boatActions} />
-
-      {/* Info Cards - bento style */}
       <AdminBoatDetails boat={boatData} />
     </div>
   );

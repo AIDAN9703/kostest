@@ -22,10 +22,6 @@ import {
   DropdownMenuSubTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import {
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   CalendarCheck,
   Eye,
   Mail,
@@ -54,9 +50,15 @@ import {
 } from "@/features/bookings/actions/admin-booking.actions";
 import { useDeleteBooking } from "@/features/bookings/hooks/useBookingMutations";
 import { useToast } from "@/shared/lib/hooks/use-toast";
-import { OpsRowContent } from "./OpsRowContent";
 import { BookingExpensesModal } from "./BookingExpensesModal";
+import {
+  OpsCaptainAssignment,
+  type CaptainAssignmentOption,
+} from "@/features/bookings/components/admin/OpsCaptainAssignment";
 import { computeOpsRevenueCents } from "@/shared/lib/utils/ops-revenue";
+
+const tableInlineActionClass =
+  "inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground";
 
 function titleCase(value: string) {
   return value
@@ -110,7 +112,7 @@ function CopyableText({ value, label, className }: CopyableTextProps) {
       aria-label={copied ? "Copied to clipboard" : `Copy ${label ?? value}`}
       className={cn(
         "group/copy inline-flex max-w-full items-center gap-1.5 rounded-md px-1 -mx-1 py-0.5 text-left text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground",
-        className,
+        className
       )}
     >
       <span className="truncate">{value}</span>
@@ -120,6 +122,21 @@ function CopyableText({ value, label, className }: CopyableTextProps) {
         <Copy className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover/copy:opacity-100" />
       )}
     </button>
+  );
+}
+
+/** table-fixed column sizing — keeps date legible; customer/boat truncate instead of forcing horizontal scroll */
+function bookingTableCellClass(columnId: string) {
+  return cn(
+    "px-2 py-3 align-middle sm:px-3 lg:px-4 lg:py-3.5",
+    columnId === "date" && "w-[8.75rem] max-w-[8.75rem]",
+    columnId === "customerName" && "max-w-0 overflow-hidden",
+    columnId === "boatName" && "max-w-0 min-w-[8.5rem] overflow-hidden",
+    columnId === "captain" && "hidden max-w-0 lg:table-cell",
+    (columnId === "totalAmountCents" || columnId === "revenue") && "whitespace-nowrap",
+    columnId === "source" && "hidden max-w-0 xl:table-cell",
+    columnId === "assignedAdmin" && "hidden max-w-0 lg:table-cell",
+    columnId === "actions" && "w-11 max-w-11 px-1"
   );
 }
 
@@ -133,31 +150,18 @@ interface Admin {
 
 interface AdminBookingsTableProps {
   bookings: BookingListItem[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalCount: number;
-    totalPages: number;
-  };
   loading?: boolean;
-  onPageChange?: (page: number) => void;
   admins?: Admin[];
-  /** When true, pagination UI is hidden (use external Link-based pagination) */
-  hidePagination?: boolean;
-  /** When true, show expandable ops row below each booking */
-  showOps?: boolean;
+  captains?: CaptainAssignmentOption[];
 }
 
 const columnHelper = createColumnHelper<BookingListItem>();
 
 export function AdminBookingsTable({
   bookings,
-  pagination,
   loading = false,
-  onPageChange,
   admins: adminsProp = [],
-  hidePagination,
-  showOps = false,
+  captains: captainsProp = [],
 }: AdminBookingsTableProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -252,27 +256,27 @@ export function AdminBookingsTable({
     [handleAction]
   );
 
-
   const columns = useMemo<ColumnDef<BookingListItem, any>[]>(
     () => [
       columnHelper.accessor("startDateTime", {
+        id: "date",
         header: "Date",
         cell: ({ row }) => {
           const booking = row.original;
           const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(
-            booking.startDateTime,
+            booking.startDateTime
           );
           const { time: endTime } = booking.endDateTime
             ? parseDateTimeInBoatTimezone(booking.endDateTime)
             : { time: "" };
           return (
-            <div className="text-sm">
-              <div className="font-medium text-foreground tabular-nums">
+            <div className="text-sm leading-snug">
+              <div className="whitespace-nowrap font-medium tabular-nums text-foreground">
                 {startDate ? format(startDate, "MMM d, yyyy") : "—"}
               </div>
-              <div className="text-xs text-muted-foreground tabular-nums">
+              <div className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
                 {startTime ? formatTime12Hour(startTime) : ""}
-                {endTime && ` - ${formatTime12Hour(endTime)}`}
+                {endTime ? ` – ${formatTime12Hour(endTime)}` : ""}
               </div>
             </div>
           );
@@ -284,40 +288,40 @@ export function AdminBookingsTable({
           const booking = row.original;
           const displayName = booking.customerName || booking.userEmail || "Unknown";
           return (
-            <div className="flex items-center gap-3">
-              <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+              <div className="hidden h-8 w-8 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60 sm:block">
                 {booking.userProfileImage ? (
                   <Image
                     src={booking.userProfileImage}
                     alt={displayName}
-                    width={36}
-                    height={36}
+                    width={32}
+                    height={32}
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-primary/15 text-sm font-medium text-foreground">
+                  <div className="flex h-full w-full items-center justify-center bg-primary/15 text-xs font-medium text-foreground">
                     {displayName.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-medium leading-tight text-foreground">
                   {displayName}
                 </div>
-                {booking.customerEmail && (
+                {booking.customerEmail ? (
                   <CopyableText
                     value={booking.customerEmail}
                     label="email"
-                    className="mt-0.5 max-w-[14rem]"
+                    className="mt-0.5 hidden w-full lg:inline-flex"
                   />
-                )}
-                {booking.customerPhone && (
+                ) : null}
+                {booking.customerPhone ? (
                   <CopyableText
                     value={booking.customerPhone}
                     label="phone"
-                    className="max-w-[14rem]"
+                    className="hidden w-full xl:inline-flex"
                   />
-                )}
+                ) : null}
               </div>
             </div>
           );
@@ -328,27 +332,27 @@ export function AdminBookingsTable({
         cell: ({ row }) => {
           const booking = row.original;
           return (
-            <div className="flex items-center gap-2.5">
-              {booking.boatMainImage && (
-                <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-muted ring-1 ring-border/60">
+            <div className="flex min-w-0 items-center gap-2">
+              {booking.boatMainImage ? (
+                <div className="hidden h-8 w-8 shrink-0 overflow-hidden rounded-md bg-muted ring-1 ring-border/60 md:block">
                   <Image
                     src={booking.boatMainImage}
                     alt={booking.boatName || "Boat"}
-                    width={36}
-                    height={36}
+                    width={32}
+                    height={32}
                     className="h-full w-full object-cover"
                   />
                 </div>
-              )}
-              <div className="flex min-w-0 items-center gap-2">
+              ) : null}
+              <div className="flex min-w-0 flex-1 items-center gap-1.5">
                 <span className="truncate text-sm font-medium text-foreground">
                   {booking.boatName || "Unknown"}
                 </span>
-                {booking.bookingGroupId && (
-                  <span className="shrink-0 inline-flex items-center rounded-md bg-violet-100 px-1.5 py-0.5 text-xs font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+                {booking.bookingGroupId ? (
+                  <span className="inline-flex max-w-[5.5rem] shrink-0 items-center truncate rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
                     {booking.bookingGroupName || "Group"}
                   </span>
-                )}
+                ) : null}
               </div>
             </div>
           );
@@ -359,25 +363,29 @@ export function AdminBookingsTable({
         header: "Captain",
         cell: ({ row }) => {
           const booking = row.original;
-          if (booking.captainUserId) {
-            const captainName =
-              booking.captainFirstName || booking.captainLastName
-                ? `${booking.captainFirstName || ""} ${booking.captainLastName || ""}`.trim()
-                : booking.captainEmail || "Captain";
-            return (
-              <div className="text-sm">
-                <div className="truncate font-medium text-foreground">{captainName}</div>
-              </div>
-            );
+          const captainOptions = [...captainsProp];
+          if (
+            booking.captainUserId &&
+            !captainOptions.some((c) => c.id === booking.captainUserId)
+          ) {
+            captainOptions.unshift({
+              id: booking.captainUserId,
+              firstName: booking.captainFirstName,
+              lastName: booking.captainLastName,
+              email: booking.captainEmail ?? "",
+            });
           }
-          if (booking.needsCaptain) {
-            return (
-              <span className="text-xs italic text-amber-700 dark:text-amber-400">
-                Captain needed
-              </span>
-            );
-          }
-          return <span className="text-sm text-muted-foreground">—</span>;
+          return (
+            <OpsCaptainAssignment
+              compact
+              bookingId={booking.id}
+              captainUserId={booking.captainUserId}
+              captainFirstName={booking.captainFirstName}
+              captainLastName={booking.captainLastName}
+              captainEmail={booking.captainEmail}
+              captainOptions={captainOptions}
+            />
+          );
         },
       }),
       columnHelper.accessor("totalAmountCents", {
@@ -418,7 +426,7 @@ export function AdminBookingsTable({
                   e.stopPropagation();
                   setExpensesModalBooking(booking);
                 }}
-                className="inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground"
+                className={tableInlineActionClass}
                 title="No expenses entered — add to calculate revenue"
               >
                 <Plus className="h-3 w-3" />
@@ -448,7 +456,7 @@ export function AdminBookingsTable({
                   "font-semibold tabular-nums",
                   isNegative
                     ? "text-rose-700 dark:text-rose-400"
-                    : "text-emerald-700 dark:text-emerald-400",
+                    : "text-emerald-700 dark:text-emerald-400"
                 )}
               >
                 {revenue != null
@@ -466,11 +474,11 @@ export function AdminBookingsTable({
           const booking = row.original;
           const source = getDisplaySource(booking);
           return (
-            <div className="text-sm">
+            <div className="min-w-0 text-sm">
               <div className="truncate text-foreground">{source}</div>
-              {booking.opsAgentCode && (
-                <div className="text-xs text-muted-foreground">{booking.opsAgentCode}</div>
-              )}
+              {booking.opsAgentCode ? (
+                <div className="truncate text-xs text-muted-foreground">{booking.opsAgentCode}</div>
+              ) : null}
             </div>
           );
         },
@@ -487,9 +495,7 @@ export function AdminBookingsTable({
             booking.assignedAdminFirstName || booking.assignedAdminLastName
               ? `${booking.assignedAdminFirstName || ""} ${booking.assignedAdminLastName || ""}`.trim()
               : booking.assignedAdminEmail || "Unknown";
-          return (
-            <div className="truncate text-sm font-medium text-foreground">{adminName}</div>
-          );
+          return <div className="truncate text-sm font-medium text-foreground">{adminName}</div>;
         },
       }),
       columnHelper.display({
@@ -504,104 +510,104 @@ export function AdminBookingsTable({
           return (
             // Stop the row click from triggering when admins use the actions menu.
             <div onClick={(e) => e.stopPropagation()} className="flex justify-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={isLoading}>
-                  <MoreVertical className="h-4 w-4" />
-                  <span className="sr-only">Actions</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {isPendingRequest && (
-                  <>
-                    <DropdownMenuItem
-                      onClick={() => handleApprove(booking.id)}
-                      disabled={isLoading}
-                      className="text-green-600 cursor-pointer"
-                    >
-                      <CheckCircle2 className="mr-2 h-4 w-4" />
-                      Approve
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={isLoading}>
+                    <MoreVertical className="h-4 w-4" />
+                    <span className="sr-only">Actions</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {isPendingRequest && (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => handleApprove(booking.id)}
+                        disabled={isLoading}
+                        className="text-green-600 cursor-pointer"
+                      >
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                        Approve
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDeny(booking.id)}
+                        disabled={isLoading}
+                        className="text-red-600 cursor-pointer"
+                      >
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Deny
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  <DropdownMenuItem asChild>
+                    <Link href={`/admin/bookings/${booking.id}`} className="cursor-pointer">
+                      <Eye className="mr-2 h-4 w-4" />
+                      View Details
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger disabled={isLoading}>
+                      <UserCheck className="mr-2 h-4 w-4" />
+                      Assign Admin
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      {admins.length === 0 ? (
+                        <DropdownMenuItem disabled>No admins available</DropdownMenuItem>
+                      ) : (
+                        admins.map((admin) => {
+                          const adminName =
+                            admin.firstName || admin.lastName
+                              ? `${admin.firstName || ""} ${admin.lastName || ""}`.trim()
+                              : admin.email;
+                          const isAssigned = booking.assignedAdminId === admin.id;
+                          return (
+                            <DropdownMenuItem
+                              key={admin.id}
+                              onClick={() => handleAssignAdmin(booking.id, admin.id)}
+                              disabled={isLoading || isAssigned}
+                              className={isAssigned ? "opacity-50" : ""}
+                            >
+                              {adminName}
+                              {isAssigned && (
+                                <CheckCircle2 className="ml-auto h-4 w-4 text-green-600" />
+                              )}
+                            </DropdownMenuItem>
+                          );
+                        })
+                      )}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                  <DropdownMenuItem
+                    onClick={() => handleMarkContacted(booking.id)}
+                    disabled={isLoading}
+                    className="cursor-pointer"
+                  >
+                    <Phone className="mr-2 h-4 w-4" />
+                    Mark as Contacted
+                  </DropdownMenuItem>
+                  {booking.customerEmail && (
+                    <DropdownMenuItem asChild>
+                      <a href={`mailto:${booking.customerEmail}`} className="cursor-pointer">
+                        <Mail className="mr-2 h-4 w-4" />
+                        Send Email
+                      </a>
                     </DropdownMenuItem>
+                  )}
+                  <>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      onClick={() => handleDeny(booking.id)}
-                      disabled={isLoading}
+                      onClick={() => handleDelete(booking.id)}
                       className="text-red-600 cursor-pointer"
                     >
-                      <XCircle className="mr-2 h-4 w-4" />
-                      Deny
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
                   </>
-                )}
-                <DropdownMenuItem asChild>
-                  <Link href={`/admin/bookings/${booking.id}`} className="cursor-pointer">
-                    <Eye className="mr-2 h-4 w-4" />
-                    View Details
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger disabled={isLoading}>
-                    <UserCheck className="mr-2 h-4 w-4" />
-                    Assign Admin
-                  </DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    {admins.length === 0 ? (
-                      <DropdownMenuItem disabled>No admins available</DropdownMenuItem>
-                    ) : (
-                      admins.map((admin) => {
-                        const adminName =
-                          admin.firstName || admin.lastName
-                            ? `${admin.firstName || ""} ${admin.lastName || ""}`.trim()
-                            : admin.email;
-                        const isAssigned = booking.assignedAdminId === admin.id;
-                        return (
-                          <DropdownMenuItem
-                            key={admin.id}
-                            onClick={() => handleAssignAdmin(booking.id, admin.id)}
-                            disabled={isLoading || isAssigned}
-                            className={isAssigned ? "opacity-50" : ""}
-                          >
-                            {adminName}
-                            {isAssigned && (
-                              <CheckCircle2 className="ml-auto h-4 w-4 text-green-600" />
-                            )}
-                          </DropdownMenuItem>
-                        );
-                      })
-                    )}
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-                <DropdownMenuItem
-                  onClick={() => handleMarkContacted(booking.id)}
-                  disabled={isLoading}
-                  className="cursor-pointer"
-                >
-                  <Phone className="mr-2 h-4 w-4" />
-                  Mark as Contacted
-                </DropdownMenuItem>
-                {booking.customerEmail && (
-                  <DropdownMenuItem asChild>
-                    <a href={`mailto:${booking.customerEmail}`} className="cursor-pointer">
-                      <Mail className="mr-2 h-4 w-4" />
-                      Send Email
-                    </a>
-                  </DropdownMenuItem>
-                )}
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => handleDelete(booking.id)}
-                    className="text-red-600 cursor-pointer"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           );
         },
@@ -615,6 +621,8 @@ export function AdminBookingsTable({
       handleDelete,
       actionLoading,
       admins,
+      captainsProp,
+      setExpensesModalBooking,
     ]
   );
 
@@ -622,16 +630,14 @@ export function AdminBookingsTable({
     data: bookings,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    manualPagination: true,
-    pageCount: pagination.totalPages,
   });
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex min-h-0 flex-1 items-center justify-center rounded-2xl border border-border/60 bg-card">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="text-sm text-muted-foreground mt-2">Loading bookings...</p>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-border border-t-primary" />
+          <p className="text-sm text-muted-foreground">Loading bookings…</p>
         </div>
       </div>
     );
@@ -639,138 +645,63 @@ export function AdminBookingsTable({
 
   if (!bookings || bookings.length === 0) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <CalendarCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">No bookings found</h3>
-          <p className="text-sm text-muted-foreground">
-            Try adjusting your filters or check back later.
-          </p>
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-card/50 p-8 text-center">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+          <CalendarCheck className="h-7 w-7 text-muted-foreground" />
         </div>
+        <h3 className="mb-1 text-lg font-semibold text-foreground">No bookings found</h3>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Try adjusting your filters or check back later.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="min-w-0 overflow-x-auto">
-      <table className="w-full">
-        <thead className="bg-muted sticky top-0 z-10">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="border-b border-border">
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="px-4 py-3 text-left text-[11px] font-semibold text-muted-foreground uppercase tracking-wider"
-                >
-                  {header.isPlaceholder ? null : (
-                    <div>{flexRender(header.column.columnDef.header, header.getContext())}</div>
-                  )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody className="divide-y divide-border bg-card">
-          {table.getRowModel().rows.map((row) => {
-            const booking = row.original;
-            const colCount = row.getVisibleCells().length;
-            return (
-              <React.Fragment key={row.id}>
+    <>
+      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+        <table className="w-full table-fixed">
+          <thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id} className="border-b border-border/70">
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    className={cn(
+                      "sticky top-0 z-10 bg-muted/95 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur supports-[backdrop-filter]:bg-muted/80",
+                      bookingTableCellClass(header.column.id)
+                    )}
+                  >
+                    {header.isPlaceholder ? null : (
+                      <div className="truncate">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      </div>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody className="divide-y divide-border/60">
+            {table.getRowModel().rows.map((row) => {
+              const booking = row.original;
+              return (
                 <tr
+                  key={row.id}
                   onClick={() => router.push(`/admin/bookings/${booking.id}`)}
                   className="cursor-pointer transition-colors hover:bg-muted/40"
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-4 align-middle">
+                    <td key={cell.id} className={bookingTableCellClass(cell.column.id)}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
                 </tr>
-                {showOps && (
-                  <tr className="border-t-2 border-b-2 border-border bg-muted/30 hover:bg-muted/40">
-                    <td
-                      colSpan={colCount}
-                      className="border-l-2 border-l-primary/30 px-3 py-4"
-                    >
-                      <OpsRowContent
-                        bookingId={booking.id}
-                        currency={booking.currency ?? "USD"}
-                        totalAmountCents={booking.totalAmountCents}
-                        opsExpenseCents={booking.opsExpenseCents}
-                        opsGmvCents={booking.opsGmvCents}
-                        opsPaidCents={booking.opsPaidCents}
-                        opsSentToOwnerCents={booking.opsSentToOwnerCents}
-                        opsCrewName={booking.opsCrewName}
-                        opsContractSigned={booking.opsContractSigned}
-                        opsConnected={booking.opsConnected}
-                        opsClientPaid={booking.opsClientPaid}
-                        opsCaptainPaid={booking.opsCaptainPaid}
-                        opsAllPaid={booking.opsAllPaid}
-                        opsSheetsSent={booking.opsSheetsSent}
-                        opsCommissionAgentCents={booking.opsCommissionAgentCents}
-                        opsCommissionKosCents={booking.opsCommissionKosCents}
-                        opsCommissionCents={booking.opsCommissionCents}
-                        opsSourceOverride={booking.opsSourceOverride}
-                      />
-                    </td>
-                  </tr>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </tbody>
-      </table>
-
-      {pagination.totalPages > 1 && !hidePagination && (
-        <div className="flex items-center justify-between px-6 py-3 border-t border-border bg-card">
-          <div className="text-sm text-muted-foreground">
-            Showing {pagination.page * pagination.limit - pagination.limit + 1} to{" "}
-            {Math.min(pagination.page * pagination.limit, pagination.totalCount)} of{" "}
-            {pagination.totalCount} bookings
-          </div>
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange?.(1)}
-              disabled={pagination.page === 1}
-              className="h-8 w-8 p-0"
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange?.(pagination.page - 1)}
-              disabled={pagination.page === 1}
-              className="h-8 w-8 p-0"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm text-foreground px-3">
-              Page {pagination.page} of {pagination.totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange?.(pagination.page + 1)}
-              disabled={pagination.page === pagination.totalPages}
-              className="h-8 w-8 p-0"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPageChange?.(pagination.totalPages)}
-              disabled={pagination.page === pagination.totalPages}
-              className="h-8 w-8 p-0"
-            >
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
       {expensesModalBooking ? (
         <BookingExpensesModal
@@ -784,6 +715,6 @@ export function AdminBookingsTable({
           currency={expensesModalBooking.currency ?? "USD"}
         />
       ) : null}
-    </div>
+    </>
   );
 }

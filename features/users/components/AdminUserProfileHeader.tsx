@@ -33,41 +33,35 @@ export function UserProfileHeader({
     "User" + user.id;
 
   return (
-    <div>
-      <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-        <Avatar
-          className={`${isCompact ? "h-16 w-16" : "h-20 w-20"} ring-2 ring-border`}
-        >
-          <AvatarImage src={user.profileImage || ""} alt={displayName} />
-          <DefaultUserAvatarFallback size={isCompact ? "sm" : "lg"} />
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex min-w-0 items-center gap-4">
+        <Avatar className={isCompact ? "h-14 w-14 shrink-0" : "h-16 w-16 shrink-0"}>
+          <AvatarImage src={user.profileImage || undefined} alt={displayName} />
+          <DefaultUserAvatarFallback size={isCompact ? "sm" : "md"} />
         </Avatar>
 
-        <div className="flex flex-col">
-          <h2
-            className={`${isCompact ? "text-xl" : "text-2xl"} font-bold text-foreground`}
+        <div className="min-w-0">
+          <h1
+            className={`${isCompact ? "text-xl" : "text-2xl"} font-bold tracking-tight text-foreground`}
           >
             {displayName}
-          </h2>
-
-          <span className="text-xs font-mono text-muted-foreground">
-            ID: {user.id}
-          </span>
-
-          {!isCompact && user.bio && (
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+          </h1>
+          <p className="mt-0.5 font-mono text-xs text-muted-foreground">ID: {user.id}</p>
+          {!isCompact && user.bio ? (
+            <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
               {user.bio}
             </p>
-          )}
+          ) : null}
         </div>
+      </div>
 
-        <div className="flex-shrink-0 ml-auto">
-          <UserQuickActions
-            userId={user.id}
-            displayName={displayName}
-            captainProfileStatus={captainProfileStatus}
-            crewProfileStatus={crewProfileStatus}
-          />
-        </div>
+      <div className="shrink-0 sm:ml-4">
+        <UserQuickActions
+          userId={user.id}
+          displayName={displayName}
+          captainProfileStatus={captainProfileStatus}
+          crewProfileStatus={crewProfileStatus}
+        />
       </div>
     </div>
   );

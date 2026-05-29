@@ -1,10 +1,9 @@
-import { Suspense } from "react";
 import { boatService } from "@/features/boats/boat.service";
 import { boatSearchParamsCache } from "@/features/boats/searchParams";
 import { AdminBoatFilter } from "@/features/boats/components/AdminBoatFilter";
-import { AdminBoatsTable } from "@/features/boats/components/AdminBoatsTable";
 import { AdminBoatTablePagination } from "@/features/boats/components/AdminBoatTablePagination";
-import { AdminTableWrapper } from "@/shared/admin/components/AdminTableWrapper";
+import { AdminBoatsTable } from "@/features/boats/components/AdminBoatsTable";
+import { AdminListShell } from "@/shared/admin/components/AdminListShell";
 import { SearchParams } from "next/dist/server/request/search-params";
 
 export default async function BoatsPage({
@@ -40,25 +39,18 @@ export default async function BoatsPage({
   });
 
   return (
-    <AdminTableWrapper>
-      <Suspense fallback={<div className="h-14 border-b border-border animate-pulse" />}>
-        <AdminBoatFilter />
-      </Suspense>
-      <AdminBoatsTable
-        boats={result.boats}
-        pagination={{
-          page: result.page,
-          limit: result.limit,
-          totalCount: result.totalCount,
-          totalPages: result.totalPages,
-        }}
-      />
-      <AdminBoatTablePagination
-        totalCount={result.totalCount}
-        totalPages={result.totalPages}
-        page={result.page}
-        limit={result.limit}
-      />
-    </AdminTableWrapper>
+    <AdminListShell
+      toolbar={<AdminBoatFilter />}
+      pagination={
+        <AdminBoatTablePagination
+          totalCount={result.totalCount}
+          totalPages={result.totalPages}
+          page={result.page}
+          limit={result.limit}
+        />
+      }
+    >
+      <AdminBoatsTable boats={result.boats} />
+    </AdminListShell>
   );
 }

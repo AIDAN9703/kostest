@@ -31,12 +31,7 @@ export function AdminBookingOpsSection({
       <Card id="ops" className="rounded-2xl border border-border/60 shadow-sm">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <CardTitle className="text-lg">Ops</CardTitle>
-              <p className="text-xs text-muted-foreground">
-                Same fields as the &ldquo;All&rdquo; table — edits save when you leave each field.
-              </p>
-            </div>
+            <CardTitle className="text-lg">Ops</CardTitle>
             <Button type="button" variant="outline" size="sm" onClick={() => setModalOpen(true)}>
               Edit breakdown
             </Button>

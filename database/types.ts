@@ -26,10 +26,6 @@ import {
   verifications,
   notifications,
   boatBlocking,
-  events,
-  ticketTiers,
-  eventTicketPurchases,
-  eventTickets,
 } from "./schema/tables";
 
 // Import all enums
@@ -224,22 +220,6 @@ export type NewBlogPost = typeof blogPosts.$inferInsert;
 // Blog enums
 export type PostCategory = (typeof postCategoryEnum.enumValues)[number];
 export type PostStatus = (typeof postStatusEnum.enumValues)[number];
-
-// ========================================
-// EVENT TYPES
-// ========================================
-
-export type Event = typeof events.$inferSelect;
-export type NewEvent = typeof events.$inferInsert;
-
-export type TicketTier = typeof ticketTiers.$inferSelect;
-export type NewTicketTier = typeof ticketTiers.$inferInsert;
-
-export type EventTicketPurchase = typeof eventTicketPurchases.$inferSelect;
-export type NewEventTicketPurchase = typeof eventTicketPurchases.$inferInsert;
-
-export type EventTicket = typeof eventTickets.$inferSelect;
-export type NewEventTicket = typeof eventTickets.$inferInsert;
 
 // ========================================
 // COMMON FILTER TYPES

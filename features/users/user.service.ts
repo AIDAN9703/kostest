@@ -8,6 +8,7 @@ import {
   bookingPricing,
 } from '@/database/schema';
 import { and, count, eq, desc, or, ilike, getTableColumns } from 'drizzle-orm';
+import { resolveAdminListPagination } from '@/shared/admin/list-pagination';
 import { type User   } from '@/database/types';
 
 //types
@@ -34,9 +35,7 @@ export class UserService {
    * Get paginated and filtered users
    */
   async getAllUsers(filters?: UserFilterInput): Promise<PaginatedUsersResponse> {
-    const page = filters?.page || 1;
-    const limit = filters?.limit || 10;
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = resolveAdminListPagination(filters);
 
     const conditions = [];
 

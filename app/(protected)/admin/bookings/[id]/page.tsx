@@ -5,6 +5,7 @@ import {
   AdminBookingDetailsCard,
   type BookingTripDetailsSnapshot,
 } from "@/features/bookings/components/admin/view-booking/AdminBookingDetailsCard";
+import { AdminBookingClientCard } from "@/features/bookings/components/admin/view-booking/AdminBookingClientCard";
 import { AdminBookingPaymentCard } from "@/features/bookings/components/admin/view-booking/AdminBookingPaymentCard";
 import { AdminBookingOpsSection } from "@/features/bookings/components/admin/view-booking/AdminBookingOpsSection";
 import { AdminBookingChecklistCard } from "@/features/bookings/components/admin/view-booking/AdminBookingChecklistCard";
@@ -29,17 +30,32 @@ interface BookingDetailsPageProps {
 
 export default async function BookingDetailsPage({ params }: BookingDetailsPageProps) {
   const { id } = await params;
-  const [booking, ops, expenseLines, rawEvents, bookingPayments, captains, bookingCrewRows, crewPool] =
-    await Promise.all([
-      bookingService.getBookingById(id),
-      bookingOpsService.getByBookingId(id),
-      bookingExpenseLineService.getLines(id),
-      bookingEventsService.listByBookingId(id),
-      paymentService.getBookingPayments(id),
-      captainProfileService.getCaptainsForAssignment(),
-      bookingCrewService.listByBookingId(id),
-      crewProfileService.getCrewForAssignment(),
-    ]);
+  const booking = await bookingService.getBookingById(id);
+  if (!booking) {
+    notFound();
+  }
+
+  const [
+    ops,
+    expenseLines,
+    rawEvents,
+    bookingPayments,
+    captains,
+    bookingCrewRows,
+    crewPool,
+    lifetimeBookingCount,
+  ] = await Promise.all([
+    bookingOpsService.getByBookingId(id),
+    bookingExpenseLineService.getLines(id),
+    bookingEventsService.listByBookingId(id),
+    paymentService.getBookingPayments(id),
+    captainProfileService.getCaptainsForAssignment(),
+    bookingCrewService.listByBookingId(id),
+    crewProfileService.getCrewForAssignment(),
+    booking.userId
+      ? bookingService.countBookingsForUser(booking.userId)
+      : Promise.resolve(0),
+  ]);
 
   const activityEvents: BookingActivityEventEntry[] = rawEvents.map((e) => ({
     id: e.id,
@@ -59,15 +75,8 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         : e.actorEmail || (e.actorType === "system" ? "System" : "—"),
   }));
 
-  if (!booking) {
-    notFound();
-  }
-
   const captainOptions = [...captains];
-  if (
-    booking.captainUserId &&
-    !captains.some((c) => c.id === booking.captainUserId)
-  ) {
+  if (booking.captainUserId && !captains.some((c) => c.id === booking.captainUserId)) {
     captainOptions.unshift({
       id: booking.captainUserId,
       firstName: booking.captainFirstName,
@@ -98,10 +107,6 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
   }));
 
   const tripSnapshot: BookingTripDetailsSnapshot = {
-    customerUserId: booking.userId,
-    customerName: booking.customerName ?? "",
-    customerEmail: booking.customerEmail ?? "",
-    customerPhone: booking.customerPhone ?? "",
     numberOfPassengers: booking.numberOfPassengers,
     needsCaptain: booking.needsCaptain,
     pickupLocation: booking.pickupLocation,
@@ -145,11 +150,39 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     (booking.totalPaidCents ?? 0) < (booking.totalAmountCents ?? 0) &&
     booking.bookingStatus !== "CANCELLED";
 
+  const clientSnapshot = {
+    customerUserId: booking.userId,
+    customerName: booking.customerName ?? "",
+    customerEmail: booking.customerEmail ?? "",
+    customerPhone: booking.customerPhone ?? "",
+    profileImage: booking.userProfileImage,
+    lifetimeBookingCount,
+  };
+
   return (
     <div className="flex w-full flex-1 flex-col gap-6">
       <AdminBookingHeader booking={booking} />
+
+      {/* Client, status, quick actions — one compact row */}
+      <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-3 [&>*]:min-w-0">
+        <AdminBookingClientCard bookingId={id} client={clientSnapshot} />
+        <AdminBookingChecklistCard bookingId={id} items={checklistItems} />
+        <AdminBookingQuickActionsCard bookingId={id} allowPaymentLink={allowPaymentLink} />
+      </div>
+
+      {/* Trip details, then payment one row down */}
       <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
-        <AdminBookingDetailsCard bookingId={id} trip={tripSnapshot} />
+        <AdminBookingDetailsCard
+          bookingId={id}
+          trip={tripSnapshot}
+          captainUserId={booking.captainUserId}
+          captainFirstName={booking.captainFirstName}
+          captainLastName={booking.captainLastName}
+          captainEmail={booking.captainEmail}
+          captainOptions={captainOptions}
+          bookingCrew={bookingCrew}
+          crewOptions={crewOptions}
+        />
         <AdminBookingPaymentCard
           bookingId={id}
           booking={booking}
@@ -157,6 +190,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
           opsGmvCents={ops?.gmvCents ?? null}
         />
       </div>
+
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_minmax(0,22rem)] lg:gap-8">
         <AdminBookingOpsSection
           bookingId={id}
@@ -167,7 +201,6 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
           opsPaidCents={ops?.paidCents ?? null}
           opsSentToOwnerCents={ops?.sentToOwnerCents ?? null}
           opsCrewName={ops?.crewName ?? null}
-          opsContractSigned={ops?.contractSigned ?? null}
           opsConnected={ops?.connected ?? null}
           opsClientPaid={ops?.clientPaid ?? null}
           opsCaptainPaid={ops?.captainPaid ?? null}
@@ -176,24 +209,13 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
           opsCommissionAgentCents={ops?.commissionAgentCents ?? null}
           opsCommissionKosCents={ops?.commissionKosCents ?? null}
           opsSourceOverride={ops?.sourceOverride ?? null}
-          captainUserId={booking.captainUserId}
-          captainFirstName={booking.captainFirstName}
-          captainLastName={booking.captainLastName}
-          captainEmail={booking.captainEmail}
-          captainOptions={captainOptions}
-          bookingCrew={bookingCrew}
-          crewOptions={crewOptions}
           expenseLines={expenseLines}
           pricingTierId={booking.pricingTierId ?? null}
         />
-        <div className="space-y-6 lg:sticky lg:top-20">
-          <AdminBookingChecklistCard bookingId={id} items={checklistItems} />
-          <AdminBookingQuickActionsCard
-            bookingId={id}
-            allowPaymentLink={allowPaymentLink}
-          />
-          <BookingActivityTimeline events={activityEvents} />
-        </div>
+        <BookingActivityTimeline
+          events={activityEvents}
+          className="lg:sticky lg:top-20"
+        />
       </div>
     </div>
   );

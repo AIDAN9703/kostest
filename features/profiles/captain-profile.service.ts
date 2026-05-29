@@ -4,7 +4,7 @@
 
 import { db } from "@/database/db";
 import { captainProfiles, users } from "@/database/schema";
-import { and, asc, count, eq, ilike, or } from "drizzle-orm";
+import { and, asc, eq, ilike, or } from "drizzle-orm";
 import type { CaptainStatus, UserStatus } from "@/database/types";
 import type { PromoteCaptainFormInput } from "@/features/profiles/promote-captain.validation";
 
@@ -15,20 +15,13 @@ export type CaptainProfileAdminRow = {
   firstName: string | null;
   lastName: string | null;
   email: string;
-  username: string | null;
+  phoneNumber: string | null;
+  profileImage: string | null;
   userStatus: UserStatus;
   profileStatus: CaptainStatus;
   uscgLicensed: boolean;
   licenseType: string | null;
   profileUpdatedAt: Date;
-};
-
-export type CaptainProfileAdminListResult = {
-  rows: CaptainProfileAdminRow[];
-  totalCount: number;
-  page: number;
-  limit: number;
-  totalPages: number;
 };
 
 export class CaptainProfileService {
@@ -50,17 +43,11 @@ export class CaptainProfileService {
       .limit(200);
   }
 
-  /** Paginated captain profiles for admin entity table (all statuses). */
+  /** Captain profiles for admin (no pagination — fleet pool is small). */
   async listForAdmin(filters: {
     search?: string | null;
     status?: CaptainStatus | null;
-    page: number;
-    limit: number;
-  }): Promise<CaptainProfileAdminListResult> {
-    const page = Math.max(1, filters.page);
-    const limit = Math.min(100, Math.max(1, filters.limit));
-    const offset = (page - 1) * limit;
-
+  }): Promise<CaptainProfileAdminRow[]> {
     const conditions = [];
     const q = filters.search?.trim();
     if (q) {
@@ -70,7 +57,7 @@ export class CaptainProfileService {
           ilike(users.firstName, pattern),
           ilike(users.lastName, pattern),
           ilike(users.email, pattern),
-          ilike(users.username, pattern)
+          ilike(users.phoneNumber, pattern)
         )!
       );
     }
@@ -78,12 +65,6 @@ export class CaptainProfileService {
       conditions.push(eq(captainProfiles.status, filters.status));
     }
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-    const countBase = db
-      .select({ c: count() })
-      .from(captainProfiles)
-      .innerJoin(users, eq(captainProfiles.userId, users.id));
-    const countQuery = whereClause ? countBase.where(whereClause) : countBase;
 
     const dataBase = db
       .select({
@@ -95,42 +76,33 @@ export class CaptainProfileService {
         firstName: users.firstName,
         lastName: users.lastName,
         email: users.email,
-        username: users.username,
+        phoneNumber: users.phoneNumber,
+        profileImage: users.profileImage,
         userStatus: users.status,
       })
       .from(captainProfiles)
       .innerJoin(users, eq(captainProfiles.userId, users.id));
     const dataQuery = whereClause ? dataBase.where(whereClause) : dataBase;
 
-    const [countResult, rows] = await Promise.all([
-      countQuery,
-      dataQuery
-        .orderBy(asc(users.lastName), asc(users.firstName), asc(users.email))
-        .limit(limit)
-        .offset(offset),
-    ]);
+    const rows = await dataQuery.orderBy(
+      asc(users.firstName),
+      asc(users.lastName),
+      asc(users.email)
+    );
 
-    const totalCount = Number(countResult[0]?.c ?? 0);
-    const totalPages = Math.max(1, Math.ceil(totalCount / limit));
-
-    return {
-      rows: rows.map((r) => ({
-        userId: r.userId,
-        firstName: r.firstName,
-        lastName: r.lastName,
-        email: r.email,
-        username: r.username,
-        userStatus: r.userStatus,
-        profileStatus: r.profileStatus,
-        uscgLicensed: r.uscgLicensed,
-        licenseType: r.licenseType,
-        profileUpdatedAt: r.profileUpdatedAt,
-      })),
-      totalCount,
-      page,
-      limit,
-      totalPages,
-    };
+    return rows.map((r) => ({
+      userId: r.userId,
+      firstName: r.firstName,
+      lastName: r.lastName,
+      email: r.email,
+      phoneNumber: r.phoneNumber,
+      profileImage: r.profileImage,
+      userStatus: r.userStatus,
+      profileStatus: r.profileStatus,
+      uscgLicensed: r.uscgLicensed,
+      licenseType: r.licenseType,
+      profileUpdatedAt: r.profileUpdatedAt,
+    }));
   }
 
   /**

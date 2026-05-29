@@ -1,10 +1,9 @@
-import { Suspense } from "react";
 import { userService } from "@/features/users/user.service";
 import { userSearchParamsCache } from "@/features/users/searchParams";
 import { AdminUserFilter } from "@/features/users/components/AdminUserFilter";
-import { AdminUsersTable } from "@/features/users/components/AdminUsersTable";
 import { AdminUserTablePagination } from "@/features/users/components/AdminUserTablePagination";
-import { AdminTableWrapper } from "@/shared/admin/components/AdminTableWrapper";
+import { AdminUsersTable } from "@/features/users/components/AdminUsersTable";
+import { AdminListShell } from "@/shared/admin/components/AdminListShell";
 import { SearchParams } from "next/dist/server/request/search-params";
 
 export default async function UsersPage({
@@ -24,19 +23,18 @@ export default async function UsersPage({
   });
 
   return (
-    <AdminTableWrapper>
-      <Suspense
-        fallback={<div className="h-14 border-b border-border animate-pulse" />}
-      >
-        <AdminUserFilter />
-      </Suspense>
+    <AdminListShell
+      toolbar={<AdminUserFilter />}
+      pagination={
+        <AdminUserTablePagination
+          totalCount={result.totalCount}
+          totalPages={result.totalPages}
+          page={result.page}
+          limit={result.limit}
+        />
+      }
+    >
       <AdminUsersTable users={result.users} />
-      <AdminUserTablePagination
-        totalCount={result.totalCount}
-        totalPages={result.totalPages}
-        page={result.page}
-        limit={result.limit}
-      />
-    </AdminTableWrapper>
+    </AdminListShell>
   );
 }

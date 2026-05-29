@@ -55,6 +55,7 @@ import {
 import { dollarsToCents, type Cents } from "@/shared/lib/utils/money-utils";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { computePaymentDisplayStatus } from "@/shared/lib/utils/payment-display";
+import { resolveAdminListPagination } from "@/shared/admin/list-pagination";
 import { bookingGroupService } from "@/features/booking-groups/booking-group.service";
 import { bookingPricingService } from "@/features/bookings/services/booking-pricing.service";
 import { bookingStatusService } from "@/features/bookings/services/booking-status.service";
@@ -557,9 +558,7 @@ export class BookingService {
    * Returns cents-based pricing from booking_pricing table
    */
   async getAllBookings(filters?: BookingFilterInput): Promise<PaginatedBookingsResponse> {
-    const page = filters?.page || 1;
-    const limit = filters?.limit || 10;
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = resolveAdminListPagination(filters);
 
     const whereConditions = [];
 
@@ -1422,6 +1421,17 @@ export class BookingService {
       previousCaptainUserId: previous,
       newCaptainUserId: captainUserId,
     });
+  }
+
+  /**
+   * Count bookings for a linked customer account (admin client card).
+   */
+  async countBookingsForUser(userId: string): Promise<number> {
+    const [row] = await db
+      .select({ value: count() })
+      .from(bookings)
+      .where(eq(bookings.userId, userId));
+    return row?.value ?? 0;
   }
 
   /**

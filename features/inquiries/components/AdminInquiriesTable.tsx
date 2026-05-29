@@ -1,13 +1,7 @@
 "use client";
 
-import React, { useMemo } from "react";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  createColumnHelper,
-  type ColumnDef,
-} from "@tanstack/react-table";
+import { useMemo } from "react";
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -20,25 +14,16 @@ import Link from "next/link";
 import type { Inquiry } from "@/database/types";
 import { StatusBadge } from "@/shared/lib/utils/badge-utils";
 import { formatDate } from "@/shared/lib/utils/general-utils";
-
-const columnHelper = createColumnHelper<Inquiry>();
+import { AdminDataTable } from "@/shared/admin/components/AdminDataTable";
 
 interface AdminInquiriesTableProps {
   inquiries: Inquiry[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalCount: number;
-    totalPages: number;
-  };
   loading?: boolean;
 }
 
-export function AdminInquiriesTable({
-  inquiries,
-  pagination,
-  loading,
-}: AdminInquiriesTableProps) {
+const columnHelper = createColumnHelper<Inquiry>();
+
+export function AdminInquiriesTable({ inquiries, loading }: AdminInquiriesTableProps) {
   const columns = useMemo<ColumnDef<Inquiry, any>[]>(
     () => [
       columnHelper.accessor("name", {
@@ -48,17 +33,17 @@ export function AdminInquiriesTable({
           const inquiry = row.original;
           return (
             <div className="min-w-0">
-              <div className="font-medium text-foreground text-sm truncate">
+              <div className="truncate text-sm font-medium text-foreground">
                 {inquiry.name}
               </div>
-              <div className="text-xs text-muted-foreground truncate">
+              <div className="truncate text-xs text-muted-foreground">
                 {inquiry.email}
               </div>
-              {inquiry.phone && (
-                <div className="text-xs text-muted-foreground truncate">
+              {inquiry.phone ? (
+                <div className="truncate text-xs text-muted-foreground">
                   {inquiry.phone}
                 </div>
-              )}
+              ) : null}
             </div>
           );
         },
@@ -96,7 +81,7 @@ export function AdminInquiriesTable({
 
       columnHelper.display({
         id: "actions",
-        header: () => <div className="text-right pr-2">Actions</div>,
+        header: () => <div className="pr-2 text-right">Actions</div>,
         cell: ({ row }) => {
           const inquiry = row.original;
           return (
@@ -113,7 +98,7 @@ export function AdminInquiriesTable({
                       href={`/admin/inquiries/${inquiry.id}`}
                       className="cursor-pointer"
                     >
-                      <Eye className="h-4 w-4 mr-2" />
+                      <Eye className="mr-2 h-4 w-4" />
                       View Details
                     </Link>
                   </DropdownMenuItem>
@@ -127,76 +112,16 @@ export function AdminInquiriesTable({
     []
   );
 
-  const table = useReactTable({
-    data: inquiries,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="h-12 w-12 border-4 border-border border-t-primary rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Loading inquiries...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!inquiries || inquiries.length === 0) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">
-            No inquiries found
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Try adjusting your filters or new inquiries will appear here.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-w-0 overflow-x-auto">
-      <table className="w-full">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-border">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="sticky top-0 z-10 bg-muted px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody className="bg-card divide-y divide-border">
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-muted/50 transition-colors">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3">
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-    </div>
+    <AdminDataTable
+      data={inquiries}
+      columns={columns}
+      clipColumnId="contact"
+      loading={loading}
+      loadingLabel="Loading inquiries…"
+      emptyIcon={MessageSquare}
+      emptyTitle="No inquiries found"
+      emptyDescription="Try adjusting your filters, or new inquiries will appear here."
+    />
   );
 }

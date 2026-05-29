@@ -36,15 +36,17 @@ export default async function AdminLayout({
             defaultOpen={defaultOpen}
             data-admin-theme
             className={cn(
-              "admin-theme bg-background text-foreground font-sans antialiased",
+              "admin-theme bg-background text-foreground font-sans antialiased h-svh overflow-hidden",
               activeThemeValue ? `theme-${activeThemeValue}` : "",
             )}
           >
             <AdminSidebar />
-            <SidebarInset>
+            <SidebarInset className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <AdminHeader />
-              <div className="flex-1 overflow-y-auto p-8">
-                <QueryProvider>{children}</QueryProvider>
+              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-8">
+                <QueryProvider>
+                  <div className="flex h-full min-h-0 w-full flex-col">{children}</div>
+                </QueryProvider>
               </div>
             </SidebarInset>
           </SidebarProvider>

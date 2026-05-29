@@ -46,6 +46,9 @@ function displayAssigned(
   };
 }
 
+const tableAssignButtonClass =
+  "inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground";
+
 interface OpsCaptainAssignmentProps {
   bookingId: string;
   captainUserId: string | null;
@@ -53,6 +56,8 @@ interface OpsCaptainAssignmentProps {
   captainLastName: string | null;
   captainEmail: string | null;
   captainOptions: CaptainAssignmentOption[];
+  /** Bookings table: dashed Captain button / clickable name only */
+  compact?: boolean;
 }
 
 export function OpsCaptainAssignment({
@@ -62,6 +67,7 @@ export function OpsCaptainAssignment({
   captainLastName,
   captainEmail,
   captainOptions,
+  compact = false,
 }: OpsCaptainAssignmentProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -93,6 +99,115 @@ export function OpsCaptainAssignment({
     } finally {
       setPending(false);
     }
+  }
+
+  const assignDialog = (
+    <Dialog
+      open={modalOpen}
+      onOpenChange={(open) => {
+        if (!pending) setModalOpen(open);
+      }}
+    >
+      <DialogContent className="rounded-2xl sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Assign captain</DialogTitle>
+          <DialogDescription>
+            Choose who is running this charter. Only users with an active captain profile are
+            listed.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex max-h-64 flex-col gap-2 overflow-y-auto pr-1">
+          {captainUserId ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-auto w-full justify-start rounded-xl py-2 text-left font-normal"
+              disabled={pending}
+              onClick={() => apply(null)}
+            >
+              Clear assignment (unassigned)
+            </Button>
+          ) : null}
+          {captainOptions.map((c) => (
+            <Button
+              key={c.id}
+              type="button"
+              variant={captainUserId === c.id ? "secondary" : "outline"}
+              className="h-auto w-full justify-start rounded-xl py-2 text-left font-normal"
+              disabled={pending}
+              onClick={() => apply(c.id)}
+            >
+              <span className="block truncate font-medium">{formatCaptainName(c)}</span>
+              <span className="block truncate text-xs font-normal text-muted-foreground">
+                {c.email}
+              </span>
+            </Button>
+          ))}
+          {captainOptions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No active captains yet. Use the button below to create a user, then set up their
+              captain profile so they appear here.
+            </p>
+          ) : null}
+        </div>
+
+        <DialogFooter className="flex-col gap-3 sm:flex-col sm:space-x-0">
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full gap-2 rounded-xl"
+            disabled={pending}
+            asChild
+          >
+            <Link href="/admin/users/create" target="_blank" rel="noopener noreferrer">
+              <UserPlus className="h-4 w-4 shrink-0" aria-hidden />
+              Add captain (new user)
+            </Link>
+          </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            Opens user creation in a new tab. After they have an active captain profile, refresh
+            this page to assign them.
+          </p>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+
+  if (compact) {
+    return (
+      <>
+        <div onClick={(e) => e.stopPropagation()}>
+          {assigned ? (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => setModalOpen(true)}
+              className="max-w-full truncate text-left text-sm font-medium text-foreground transition-colors hover:text-primary"
+              title={formatCaptainName(assigned)}
+            >
+              {formatCaptainName(assigned)}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => setModalOpen(true)}
+              className={tableAssignButtonClass}
+              title="Assign captain"
+            >
+              {pending ? (
+                <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+              ) : (
+                <Plus className="h-3 w-3" aria-hidden />
+              )}
+              Captain
+            </button>
+          )}
+        </div>
+        {assignDialog}
+      </>
+    );
   }
 
   return (
@@ -133,76 +248,7 @@ export function OpsCaptainAssignment({
         </div>
       </div>
 
-      <Dialog
-        open={modalOpen}
-        onOpenChange={(open) => {
-          if (!pending) setModalOpen(open);
-        }}
-      >
-        <DialogContent className="rounded-2xl sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Assign captain</DialogTitle>
-            <DialogDescription>
-              Choose who is running this charter. Only users with an active captain profile are
-              listed.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex max-h-64 flex-col gap-2 overflow-y-auto pr-1">
-            {captainUserId ? (
-              <Button
-                type="button"
-                variant="outline"
-                className="h-auto w-full justify-start rounded-xl py-2 text-left font-normal"
-                disabled={pending}
-                onClick={() => apply(null)}
-              >
-                Clear assignment (unassigned)
-              </Button>
-            ) : null}
-            {captainOptions.map((c) => (
-              <Button
-                key={c.id}
-                type="button"
-                variant={captainUserId === c.id ? "secondary" : "outline"}
-                className="h-auto w-full justify-start rounded-xl py-2 text-left font-normal"
-                disabled={pending}
-                onClick={() => apply(c.id)}
-              >
-                <span className="block truncate font-medium">{formatCaptainName(c)}</span>
-                <span className="block truncate text-xs font-normal text-muted-foreground">
-                  {c.email}
-                </span>
-              </Button>
-            ))}
-            {captainOptions.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                No active captains yet. Use the button below to create a user, then set up their
-                captain profile so they appear here.
-              </p>
-            ) : null}
-          </div>
-
-          <DialogFooter className="flex-col gap-3 sm:flex-col sm:space-x-0">
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full gap-2 rounded-xl"
-              disabled={pending}
-              asChild
-            >
-              <Link href="/admin/users/create" target="_blank" rel="noopener noreferrer">
-                <UserPlus className="h-4 w-4 shrink-0" aria-hidden />
-                Add captain (new user)
-              </Link>
-            </Button>
-            <p className="text-center text-xs text-muted-foreground">
-              Opens user creation in a new tab. After they have an active captain profile, refresh
-              this page to assign them.
-            </p>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {assignDialog}
     </>
   );
 }

@@ -131,6 +131,39 @@ export function formatPhoneNumberE164(phoneNumber: string, defaultCountryCode: s
 }
 
 /**
+ * Formats a phone number for UI display (not for Twilio/API).
+ * US/Canada (+1) numbers render as +1 (724) 688-9698; other values are returned trimmed.
+ */
+export function formatPhoneNumberForDisplay(
+  phoneNumber: string | null | undefined,
+): string {
+  if (!phoneNumber?.trim()) return "";
+
+  const trimmed = phoneNumber.trim();
+  const digits = trimmed.replace(/\D/g, "");
+
+  const formatUsNational = (national: string) =>
+    `(${national.slice(0, 3)}) ${national.slice(3, 6)}-${national.slice(6)}`;
+
+  if (digits.length === 10) {
+    return formatUsNational(digits);
+  }
+
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `+1 ${formatUsNational(digits.slice(1))}`;
+  }
+
+  return trimmed;
+}
+
+/**
+ * Normalizes a phone value for tel: links (E.164 when possible).
+ */
+export function formatPhoneNumberTelHref(phoneNumber: string): string {
+  return formatPhoneNumberE164(phoneNumber);
+}
+
+/**
  * Converts first and last name to a full name string.
  * Returns null if both are empty/undefined.
  */

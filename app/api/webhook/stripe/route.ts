@@ -128,8 +128,6 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   // --- Route by booking type ---
   if (metadata.bookingType === "INSTANT_BOOK") {
     await handleInstantBooking(session, existingPayment);
-  } else if (metadata.type === "EVENT_TICKET" && metadata.eventId) {
-    await handleEventTicketPurchase(session);
   } else {
     // Request bookings, draft pay-now, or payment link flows
     await handleBookingPayment(session, existingPayment);
@@ -425,7 +423,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
     } else {
       // Partial refund
       await paymentService.createRefund(
-        payment.payableType as "BOOKING" | "EVENT_TICKET",
+        payment.payableType as "BOOKING",
         payment.payableId,
         charge.amount_refunded,
         {
@@ -439,87 +437,6 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
     }
   } catch (error) {
     console.error("[Webhook] handleChargeRefunded error:", error);
-  }
-}
-
-// ============================================================================
-// EVENT TICKET PURCHASE
-// ============================================================================
-
-async function handleEventTicketPurchase(session: Stripe.Checkout.Session) {
-  try {
-    const metadata = session.metadata || {};
-    const eventId = metadata.eventId;
-    const customerEmail = metadata.customerEmail || session.customer_details?.email || "";
-    const customerName = metadata.customerName || session.customer_details?.name || "";
-
-    if (!eventId || !customerEmail) {
-      console.error("[Webhook] Missing event ID or customer email");
-      return;
-    }
-
-    let ticketsData;
-    try {
-      ticketsData = JSON.parse(metadata.ticketsData || "[]");
-    } catch {
-      console.error("[Webhook] Invalid ticketsData JSON");
-      return;
-    }
-
-    if (!ticketsData?.length) return;
-
-    const amountPaid = session.amount_total ? session.amount_total / 100 : 0;
-    const confirmationCode = `EVT-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-
-    const { eventTicketPurchases, eventTickets, ticketTiers } = await import("@/database/schema");
-    const { sql } = await import("drizzle-orm");
-
-    // Idempotency: check for existing purchase by payment intent
-    const existingPurchase = await db
-      .select({ id: eventTicketPurchases.id })
-      .from(eventTicketPurchases)
-      .where(eq(eventTicketPurchases.stripePaymentIntentId, session.payment_intent as string))
-      .limit(1);
-
-    if (existingPurchase.length > 0) {
-      console.log(
-        `[Webhook] Event ticket purchase already exists for intent ${session.payment_intent}`
-      );
-      return;
-    }
-
-    const [purchase] = await db
-      .insert(eventTicketPurchases)
-      .values({
-        eventId,
-        buyerName: customerName,
-        buyerEmail: customerEmail,
-        totalAmount: amountPaid.toString(),
-        stripePaymentIntentId: session.payment_intent as string,
-        isPaid: true,
-      })
-      .returning();
-
-    for (const ticketData of ticketsData) {
-      for (let i = 0; i < ticketData.quantity; i++) {
-        await db.insert(eventTickets).values({
-          purchaseId: purchase.id,
-          tierId: ticketData.tierId,
-          ticketCode: `${confirmationCode}-${ticketData.tierId}-${i + 1}`,
-          attendeeName: customerName,
-        });
-      }
-      await db
-        .update(ticketTiers)
-        .set({
-          soldQuantity: sql`${ticketTiers.soldQuantity} + ${ticketData.quantity}`,
-        })
-        .where(eq(ticketTiers.id, ticketData.tierId));
-    }
-
-    console.log(`[Webhook] Event ticket purchase created: ${confirmationCode}`);
-  } catch (error) {
-    console.error("[Webhook] handleEventTicketPurchase error:", error);
   }
 }
 

@@ -1,12 +1,12 @@
 import {
   createSearchParamsCache,
-  createSerializer,
   parseAsBoolean,
   parseAsInteger,
   parseAsString,
   parseAsStringEnum,
 } from "nuqs/server";
 import { boatCategoryEnum } from "@/database/schema";
+import { ADMIN_LIST_DEFAULT_PAGE_SIZE } from "@/shared/admin/list-pagination";
 
 /**
  * Shared search params config for boats page.
@@ -33,9 +33,7 @@ export const boatSearchParams = {
   dayCharter: parseAsBoolean,
   termCharter: parseAsBoolean,
   page: parseAsInteger.withDefault(1),
-  limit: parseAsInteger.withDefault(10),
+  limit: parseAsInteger.withDefault(ADMIN_LIST_DEFAULT_PAGE_SIZE),
 };
 
 export const boatSearchParamsCache = createSearchParamsCache(boatSearchParams);
-
-export const serializeBoatParams = createSerializer(boatSearchParams);

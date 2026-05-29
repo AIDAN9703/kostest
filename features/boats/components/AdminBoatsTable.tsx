@@ -1,14 +1,8 @@
 "use client";
 
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  createColumnHelper,
-  type ColumnDef,
-} from "@tanstack/react-table";
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -25,25 +19,16 @@ import { StatusBadge } from "@/shared/lib/utils/badge-utils";
 import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { useDeleteBoat } from "@/features/boats/hooks/useBoatMutations";
 import { useToast } from "@/shared/lib/hooks/use-toast";
+import { AdminDataTable } from "@/shared/admin/components/AdminDataTable";
 
 interface AdminBoatsTableProps {
   boats: BoatListItem[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalCount: number;
-    totalPages: number;
-  };
   loading?: boolean;
 }
 
 const columnHelper = createColumnHelper<BoatListItem>();
 
-export function AdminBoatsTable({
-  boats,
-  pagination,
-  loading,
-}: AdminBoatsTableProps) {
+export function AdminBoatsTable({ boats, loading }: AdminBoatsTableProps) {
   const router = useRouter();
   const { toast } = useToast();
   const deleteBoat = useDeleteBoat();
@@ -200,75 +185,16 @@ export function AdminBoatsTable({
     []
   );
 
-  const table = useReactTable({
-    data: boats,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="h-12 w-12 border-4 border-border border-t-primary rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Loading boats...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!boats || boats.length === 0) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <Anchor className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">
-            No boats found
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Try adjusting your filters or add a new boat.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-w-0 overflow-x-auto">
-      <table className="w-full">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-border">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="sticky top-0 z-10 bg-muted px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                  >
-                    {header.isPlaceholder ? null : (
-                      <div>
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </div>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody className="bg-card divide-y divide-border">
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-muted/50 transition-colors">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-    </div>
+    <AdminDataTable
+      data={boats}
+      columns={columns}
+      clipColumnId="boat"
+      loading={loading}
+      loadingLabel="Loading boats…"
+      emptyIcon={Anchor}
+      emptyTitle="No boats found"
+      emptyDescription="Try adjusting your filters, or add a new boat to get started."
+    />
   );
 }

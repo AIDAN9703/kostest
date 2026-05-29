@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import FullCalendar from "@fullcalendar/react";
-import type { EventClickArg } from "@fullcalendar/core";
+import type { DatesSetArg, DayCellMountArg, EventClickArg } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
@@ -37,6 +37,7 @@ import {
   computeOpsRevenueCents,
 } from "@/shared/lib/utils/ops-revenue";
 import { cn } from "@/shared/lib/utils/general-utils";
+import { useToast } from "@/shared/lib/hooks/use-toast";
 
 type CalendarView = "dayGridMonth" | "listWeek";
 
@@ -65,6 +66,25 @@ interface SelectedEvent {
   extendedProps: ExtendedProps;
 }
 
+const calendarBodyClassName = cn(
+  "min-h-0 flex-1 overflow-hidden px-3 pb-3",
+  "[&_.fc]:flex [&_.fc]:h-full [&_.fc]:min-h-0 [&_.fc]:flex-col [&_.fc]:text-sm",
+  "[&_.fc-view-harness]:min-h-0 [&_.fc-view-harness]:flex-1 [&_.fc-view-harness]:overflow-auto",
+  // Let day-top (+ button) receive hover; events stay clickable.
+  "[&_.fc-daygrid-day]:pointer-events-none",
+  "[&_.fc-daygrid-day-top]:relative [&_.fc-daygrid-day-top]:z-[2] [&_.fc-daygrid-day-top]:pointer-events-auto",
+  "[&_.fc-daygrid-day-events]:pointer-events-auto",
+  "[&_.fc-event]:pointer-events-auto [&_.fc-event]:cursor-pointer",
+  "[&_.fc-list-event:hover_td]:!bg-muted/40",
+);
+
+type DayMenuState = {
+  dateKey: string;
+  anchor: { top: number; left: number };
+};
+
+const DAY_TRIGGER_SELECTOR = "[data-calendar-day-trigger]";
+
 /**
  * /admin/bookings calendar view — shares URL filter state with the table.
  *
@@ -74,14 +94,20 @@ interface SelectedEvent {
  */
 export function AdminBookingsCalendar() {
   const router = useRouter();
+  const { toast } = useToast();
   const calendarRef = useRef<FullCalendar>(null);
+  const openDayMenuRef = useRef<(menu: DayMenuState | null) => void>(() => {});
   const [filters] = useQueryStates(bookingSearchParams, {
     clearOnDefault: true,
     shallow: false,
   });
   const [currentView, setCurrentView] = useState<CalendarView>("dayGridMonth");
+  const [toolbarTitle, setToolbarTitle] = useState("");
   const [selected, setSelected] = useState<SelectedEvent | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [dayMenu, setDayMenu] = useState<DayMenuState | null>(null);
+
+  openDayMenuRef.current = setDayMenu;
 
   /**
    * Build the events URL. FullCalendar will append `&start=...&end=...` based on
@@ -110,6 +136,55 @@ export function AdminBookingsCalendar() {
     calendarRef.current?.getApi().changeView(view);
   }, []);
 
+  const handleDatesSet = useCallback((arg: DatesSetArg) => {
+    setToolbarTitle(arg.view.title);
+    const viewType = arg.view.type;
+    if (viewType === "dayGridMonth" || viewType === "listWeek") {
+      setCurrentView(viewType);
+    }
+  }, []);
+
+  const handleDayCellDidMount = useCallback((arg: DayCellMountArg) => {
+    if (arg.view.type !== "dayGridMonth") return;
+
+    const host =
+      (arg.el.querySelector(".fc-daygrid-day-top") as HTMLElement | null) ?? arg.el;
+    host.classList.add("group");
+    if (host.querySelector(DAY_TRIGGER_SELECTOR)) return;
+
+    const dateKey = format(arg.date, "yyyy-MM-dd");
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    trigger.dataset.calendarDayTrigger = "true";
+    trigger.setAttribute("aria-label", `Actions for ${format(arg.date, "MMMM d, yyyy")}`);
+    trigger.className = cn(
+      "absolute right-0 top-0 z-20 flex h-6 w-6 items-center justify-center rounded-md",
+      "border border-border bg-card text-foreground shadow-sm",
+      "opacity-0 transition-opacity pointer-events-none",
+      "group-hover:opacity-100 group-hover:pointer-events-auto",
+      "hover:bg-muted focus-visible:opacity-100 focus-visible:pointer-events-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+      arg.isOther && "group-hover:opacity-80",
+    );
+    trigger.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
+
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const rect = trigger.getBoundingClientRect();
+      openDayMenuRef.current({
+        dateKey,
+        anchor: { top: rect.bottom + 4, left: Math.max(8, rect.right - 168) },
+      });
+    });
+
+    host.appendChild(trigger);
+  }, []);
+
+  const handleDayCellWillUnmount = useCallback((arg: DayCellMountArg) => {
+    arg.el.querySelector(DAY_TRIGGER_SELECTOR)?.remove();
+  }, []);
+
   const handleEventClick = useCallback((info: EventClickArg) => {
     if (!info.event.start) return;
     setSelected({
@@ -122,76 +197,105 @@ export function AdminBookingsCalendar() {
   }, []);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 p-6">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-medium text-foreground">Booking schedule</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="inline-flex h-8 items-center rounded-md border border-border bg-card p-0.5">
-            <ViewBtn active={currentView === "dayGridMonth"} onClick={() => handleViewChange("dayGridMonth")}>
-              Month
-            </ViewBtn>
-            <ViewBtn active={currentView === "listWeek"} onClick={() => handleViewChange("listWeek")}>
-              List
-            </ViewBtn>
+    <div className="flex h-full min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
+          <h2 className="text-base font-semibold text-foreground">{toolbarTitle}</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex h-8 items-center rounded-md border border-border bg-card p-0.5">
+              <ViewBtn
+                active={currentView === "dayGridMonth"}
+                onClick={() => handleViewChange("dayGridMonth")}
+              >
+                Month
+              </ViewBtn>
+              <ViewBtn active={currentView === "listWeek"} onClick={() => handleViewChange("listWeek")}>
+                List
+              </ViewBtn>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+              onClick={() => calendarRef.current?.getApi().prev()}
+              aria-label="Previous"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+              onClick={() => calendarRef.current?.getApi().today()}
+              aria-label="Today"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Today
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1.5"
+              onClick={() => calendarRef.current?.getApi().next()}
+              aria-label="Next"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5"
-            onClick={() => calendarRef.current?.getApi().prev()}
-            aria-label="Previous"
-          >
-            <ChevronLeft className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5"
-            onClick={() => calendarRef.current?.getApi().today()}
-            aria-label="Today"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            Today
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5"
-            onClick={() => calendarRef.current?.getApi().next()}
-            aria-label="Next"
-          >
-            <ChevronRight className="h-3.5 w-3.5" />
-          </Button>
+        </div>
+
+        <div className={calendarBodyClassName}>
+          <FullCalendar
+            ref={calendarRef}
+            plugins={[dayGridPlugin, interactionPlugin, listPlugin]}
+            initialView="dayGridMonth"
+            headerToolbar={false}
+            height="100%"
+            editable={false}
+            selectable={false}
+            dayMaxEvents
+            weekends
+            events={eventsUrl}
+            eventClick={handleEventClick}
+            datesSet={handleDatesSet}
+            dayCellDidMount={handleDayCellDidMount}
+            dayCellWillUnmount={handleDayCellWillUnmount}
+            eventDisplay="block"
+            views={{
+              dayGridMonth: {
+                // Column headers are weekdays only (not specific dates).
+                dayHeaderFormat: { weekday: "long" },
+              },
+              listWeek: {
+                dayHeaderFormat: {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  omitCommas: true,
+                },
+              },
+            }}
+            slotLabelFormat={{ hour: "numeric", minute: "2-digit", meridiem: "short" }}
+            eventTimeFormat={{ hour: "numeric", minute: "2-digit", meridiem: "short" }}
+            nowIndicator
+          />
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-card p-3 [&_.fc]:text-sm [&_.fc-toolbar-title]:text-base [&_.fc-toolbar-title]:font-semibold [&_.fc-button]:!bg-transparent [&_.fc-button]:!border-border [&_.fc-button]:!text-foreground [&_.fc-button]:!shadow-none [&_.fc-button-primary:not(:disabled).fc-button-active]:!bg-muted [&_.fc-button-primary:not(:disabled).fc-button-active]:!text-foreground [&_.fc-event]:cursor-pointer [&_.fc-list-event:hover_td]:!bg-muted/40">
-        <FullCalendar
-          ref={calendarRef}
-          plugins={[dayGridPlugin, interactionPlugin, listPlugin]}
-          initialView={currentView}
-          headerToolbar={{
-            left: "title",
-            center: "",
-            right: "",
+      {dayMenu ? (
+        <CalendarDayActionMenu
+          state={dayMenu}
+          onClose={() => setDayMenu(null)}
+          onBlockOffDate={() => {
+            toast({
+              title: "Block off date",
+              description:
+                "Boat blocking is stored in the database but there is no admin UI to create blocks yet.",
+            });
+            setDayMenu(null);
           }}
-          height="auto"
-          editable={false}
-          selectable={false}
-          dayMaxEvents
-          weekends
-          events={eventsUrl}
-          eventClick={handleEventClick}
-          eventDisplay="block"
-          dayHeaderFormat={{ weekday: "short", month: "numeric", day: "numeric" }}
-          slotLabelFormat={{ hour: "numeric", minute: "2-digit", meridiem: "short" }}
-          eventTimeFormat={{ hour: "numeric", minute: "2-digit", meridiem: "short" }}
-          nowIndicator
         />
-      </div>
+      ) : null}
 
       <BookingEventDialog
         open={modalOpen}
@@ -207,6 +311,49 @@ export function AdminBookingsCalendar() {
         }}
       />
     </div>
+  );
+}
+
+function CalendarDayActionMenu({
+  state,
+  onClose,
+  onBlockOffDate,
+}: {
+  state: DayMenuState;
+  onClose: () => void;
+  onBlockOffDate: () => void;
+}) {
+  return (
+    <>
+      <button
+        type="button"
+        className="fixed inset-0 z-40 cursor-default"
+        aria-label="Close day menu"
+        onClick={onClose}
+      />
+      <div
+        role="menu"
+        className="fixed z-50 min-w-[168px] rounded-md border border-border bg-popover p-1 shadow-md"
+        style={{ top: state.anchor.top, left: state.anchor.left }}
+      >
+        <Link
+          href={`/admin/bookings/create?date=${state.dateKey}`}
+          role="menuitem"
+          className="flex w-full rounded-sm px-2 py-1.5 text-sm text-foreground hover:bg-muted"
+          onClick={onClose}
+        >
+          Add booking
+        </Link>
+        <button
+          type="button"
+          role="menuitem"
+          className="flex w-full rounded-sm px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted"
+          onClick={onBlockOffDate}
+        >
+          Block off date
+        </button>
+      </div>
+    </>
   );
 }
 

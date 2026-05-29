@@ -1,6 +1,7 @@
 import { db } from "@/database/db";
 import { blogPosts } from "@/database/schema";
 import { eq, desc, and, or, like, count } from "drizzle-orm";
+import { resolveAdminListPagination } from "@/shared/admin/list-pagination";
 import type {
   BlogDetails,
   BlogListItem,
@@ -27,9 +28,7 @@ export const blogService = {
    * Get paginated and filtered blog posts
    */
   async getAllPosts(filters?: BlogFilterInput): Promise<PaginatedBlogResponse> {
-    const page = filters?.page ?? 1;
-    const limit = filters?.limit ?? 10;
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = resolveAdminListPagination(filters);
 
     const conditions = [];
 

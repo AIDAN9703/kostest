@@ -1,13 +1,7 @@
 "use client";
 
-import React, { useMemo } from "react";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  createColumnHelper,
-  type ColumnDef,
-} from "@tanstack/react-table";
+import { useMemo } from "react";
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -24,6 +18,9 @@ import { StatusBadge } from "@/shared/lib/utils/badge-utils";
 import { formatDate } from "@/shared/lib/utils/general-utils";
 import { useDeleteBlogPost } from "@/features/blog/hooks/useBlogMutations";
 import { useToast } from "@/shared/lib/hooks/use-toast";
+import { AdminDataTable } from "@/shared/admin/components/AdminDataTable";
+
+const COL_WIDTHS = ["30%", "10%", "14%", "14%", "12%", "8%", "12%"];
 
 const categoryLabels: Record<string, string> = {
   FLEET_NEWS: "Fleet News",
@@ -37,22 +34,12 @@ const categoryLabels: Record<string, string> = {
 
 interface AdminBlogsTableProps {
   posts: BlogListItem[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalCount: number;
-    totalPages: number;
-  };
   loading?: boolean;
 }
 
 const columnHelper = createColumnHelper<BlogListItem>();
 
-export function AdminBlogsTable({
-  posts,
-  pagination,
-  loading,
-}: AdminBlogsTableProps) {
+export function AdminBlogsTable({ posts, loading }: AdminBlogsTableProps) {
   const { toast } = useToast();
   const deletePost = useDeleteBlogPost();
 
@@ -224,94 +211,17 @@ export function AdminBlogsTable({
     []
   );
 
-  const table = useReactTable({
-    data: posts,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="h-12 w-12 border-4 border-border border-t-primary rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Loading posts...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!posts || posts.length === 0) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">
-            No blog posts found
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Try adjusting your filters or create a new post.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-w-0 overflow-x-auto">
-      <table className="w-full table-fixed">
-          <colgroup>
-            <col style={{ width: "28%" }} />
-            <col style={{ width: "10%" }} />
-            <col style={{ width: "12%" }} />
-            <col style={{ width: "12%" }} />
-            <col style={{ width: "10%" }} />
-            <col style={{ width: "8%" }} />
-            <col style={{ width: "12%" }} />
-          </colgroup>
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-border">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="sticky top-0 z-10 bg-muted px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                  >
-                    {header.isPlaceholder ? null : (
-                      <div>
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </div>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody className="bg-card divide-y divide-border">
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-muted/50 transition-colors">
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className={
-                      cell.column.id === "post"
-                        ? "px-4 py-3 overflow-hidden"
-                        : "px-4 py-3"
-                    }
-                  >
-                    {flexRender(
-                      cell.column.columnDef.cell,
-                      cell.getContext()
-                    )}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-    </div>
+    <AdminDataTable
+      data={posts}
+      columns={columns}
+      colWidths={COL_WIDTHS}
+      clipColumnId="post"
+      loading={loading}
+      loadingLabel="Loading posts…"
+      emptyIcon={FileText}
+      emptyTitle="No posts found"
+      emptyDescription="Try adjusting your search or filters, or create a new post to get started."
+    />
   );
 }

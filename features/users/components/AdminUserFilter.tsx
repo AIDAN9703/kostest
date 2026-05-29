@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useQueryStates } from "nuqs";
-import { FilterBar, FilterSearch, FilterSelect } from "@/shared/admin/filters";
+import { AdminToolbar, FilterSearch, FilterSelect } from "@/shared/admin/filters";
 import { userSearchParams } from "../searchParams";
 import { userStatusEnum } from "@/database/schema";
 import { Checkbox } from "@/shared/components/ui/checkbox";
@@ -32,7 +32,7 @@ export function AdminUserFilter() {
   };
 
   return (
-    <FilterBar onClear={clearFilters} hasFilters={hasFilters}>
+    <AdminToolbar onClear={clearFilters} hasFilters={hasFilters}>
       <FilterSearch
         value={filters.search}
         onChange={(v) => updateFilter({ search: v })}
@@ -60,6 +60,6 @@ export function AdminUserFilter() {
         placeholder="Status"
         width="w-[120px]"
       />
-    </FilterBar>
+    </AdminToolbar>
   );
 }

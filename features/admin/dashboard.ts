@@ -5,26 +5,16 @@ import {
   bookings,
   bookingOps,
   bookingPricing,
-  users,
-  boats,
   inquiry,
 } from "@/database/schema";
 import { and, asc, count, eq, gte, lte, ne, sql } from "drizzle-orm";
 import { cache } from "react";
-import { startOfDay, endOfDay, addDays, endOfMonth, startOfMonth, subDays } from "date-fns";
+import { startOfDay, endOfDay, addDays, endOfMonth, startOfMonth } from "date-fns";
 import { bookingService } from "@/features/bookings/services/booking.service";
-import { inquiryService } from "@/features/inquiries/inquiry.service";
 
 /* Types */
 import { BookingListItem } from "@/features/bookings/booking.types";
 import { InquiryListItem } from "@/features/inquiries/inquiry.types";
-
-export interface DashboardStats {
-  totalUsers: number;
-  totalBoats: number;
-  bookingsThisMonth: number;
-  revenueThisMonthCents: number;
-}
 
 /** Ops-focused aggregates for trips whose start falls in the current calendar month. */
 export interface OperationsMtdSummary {
@@ -45,48 +35,6 @@ export interface CharterSourceBreakdownRow {
   gmvCents: number;
   bookingCount: number;
 }
-
-// ============================================================================
-// UTILITIES
-// ============================================================================
-
-/**
- * Get start of current month
- */
-function getStartOfMonth(): Date {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1);
-}
-
-// ============================================================================
-// STATS
-// ============================================================================
-
-export const getDashboardStats = cache(async (): Promise<DashboardStats> => {
-  const startOfMonth = getStartOfMonth();
-
-  const [totalUsersResult, totalBoatsResult, currentMonthStats] = await Promise.all([
-    db.select({ count: count() }).from(users),
-    db.select({ count: count() }).from(boats),
-    db
-      .select({
-        bookingsCount: count(bookings.id),
-        revenueCents: sql<number>`COALESCE(SUM(${bookingPricing.totalAmountCents}), 0)`.as(
-          "revenue_cents"
-        ),
-      })
-      .from(bookings)
-      .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
-      .where(gte(bookings.createdAt, startOfMonth)),
-  ]);
-
-  return {
-    totalUsers: Number(totalUsersResult[0]?.count) || 0,
-    totalBoats: Number(totalBoatsResult[0]?.count) || 0,
-    bookingsThisMonth: Number(currentMonthStats[0]?.bookingsCount) || 0,
-    revenueThisMonthCents: Number(currentMonthStats[0]?.revenueCents) || 0,
-  };
-});
 
 function formatSourceLabel(sourceKey: string): string {
   const k = sourceKey.trim();
@@ -211,36 +159,6 @@ export const getFollowUpInquiries = cache(async (limit = 6): Promise<InquiryList
     .limit(limit);
 
   return rows as InquiryListItem[];
-});
-
-/** OPEN + NEEDS_CONTACT with no touch in `olderThanDays` — for a small warning badge. */
-export const getStaleFollowUpCount = cache(async (olderThanDays = 3): Promise<number> => {
-  const cutoff = subDays(new Date(), olderThanDays);
-  const [row] = await db
-    .select({ c: count() })
-    .from(inquiry)
-    .where(
-      and(
-        eq(inquiry.outcome, "OPEN"),
-        eq(inquiry.stage, "NEEDS_CONTACT"),
-        lte(inquiry.updatedAt, cutoff)
-      )
-    );
-  return Number(row?.c ?? 0);
-});
-
-export const getRecentBookingsForDashboard = cache(async (limit = 6): Promise<BookingListItem[]> => {
-  const result = await bookingService.getAllBookings({ limit });
-  return result.bookings;
-});
-
-// ============================================================================
-// RECENT ITEMS
-// ============================================================================
-
-export const getRecentInquiries = cache(async (limit = 6): Promise<InquiryListItem[]> => {
-  const result = await inquiryService.getAllInquiries({ limit });
-  return result.inquiries as InquiryListItem[];
 });
 
 // ============================================================================

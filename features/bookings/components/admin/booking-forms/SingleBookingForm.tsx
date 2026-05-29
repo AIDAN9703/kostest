@@ -26,11 +26,14 @@ import {
 } from "./types";
 import type { BookingAddOnInput } from "@/features/bookings/booking.types";
 import type { InquiryBookingPrefill } from "@/features/inquiries/inquiry-booking-prefill";
+import type { BookingDatePrefill } from "@/features/bookings/lib/booking-create-date-prefill";
 
 interface SingleBookingFormProps {
   pricingTiers: PricingTierOption[];
   /** When opening from an inquiry (won → create booking) */
   inquiryPrefill?: InquiryBookingPrefill | null;
+  /** When opening from admin calendar (`?date=YYYY-MM-DD`) */
+  datePrefill?: BookingDatePrefill | null;
 }
 
 const INITIAL_STATE: ActionResponse<{
@@ -43,6 +46,7 @@ const INITIAL_STATE: ActionResponse<{
 export function SingleBookingForm({
   pricingTiers,
   inquiryPrefill = null,
+  datePrefill = null,
 }: SingleBookingFormProps) {
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
@@ -76,6 +80,18 @@ export function SingleBookingForm({
   const { data: selectedUser } = useUser(selectedUserId || "");
 
   const inquiryPrefillApplied = useRef(false);
+  const datePrefillApplied = useRef(false);
+
+  useEffect(() => {
+    if (!datePrefill || datePrefillApplied.current || inquiryPrefill) return;
+    datePrefillApplied.current = true;
+    setSection((s) => ({
+      ...s,
+      startDateTime: datePrefill.startDateTime,
+      endDateTime: datePrefill.endDateTime,
+    }));
+  }, [datePrefill, inquiryPrefill]);
+
   useEffect(() => {
     if (!inquiryPrefill || inquiryPrefillApplied.current) return;
     inquiryPrefillApplied.current = true;

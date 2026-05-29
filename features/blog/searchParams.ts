@@ -1,12 +1,12 @@
 import {
   createSearchParamsCache,
-  createSerializer,
   parseAsBoolean,
   parseAsInteger,
   parseAsString,
   parseAsStringEnum,
 } from "nuqs/server";
 import { postCategoryEnum, postStatusEnum } from "@/database/schema";
+import { ADMIN_LIST_DEFAULT_PAGE_SIZE } from "@/shared/admin/list-pagination";
 
 /**
  * Shared search params config for blog page.
@@ -19,9 +19,7 @@ export const blogSearchParams = {
   category: parseAsStringEnum(postCategoryEnum.enumValues),
   featured: parseAsBoolean,
   page: parseAsInteger.withDefault(1),
-  limit: parseAsInteger.withDefault(10),
+  limit: parseAsInteger.withDefault(ADMIN_LIST_DEFAULT_PAGE_SIZE),
 };
 
 export const blogSearchParamsCache = createSearchParamsCache(blogSearchParams);
-
-export const serializeBlogParams = createSerializer(blogSearchParams);

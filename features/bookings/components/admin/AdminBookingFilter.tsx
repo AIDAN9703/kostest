@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQueryStates } from "nuqs";
+import Link from "next/link";
 import {
   Calendar as CalendarIcon,
   CalendarDays,
@@ -16,16 +17,13 @@ import {
   X,
 } from "lucide-react";
 
-import { FilterSearch } from "@/shared/admin/filters";
+import { AdminToolbar, FilterSearch } from "@/shared/admin/filters";
 import { bookingSearchParams } from "@/features/bookings/searchParams";
 import { bookingStatusEnum, bookingTypeEnum } from "@/database/schema";
 import { PAYMENT_DISPLAY_STATUSES } from "@/shared/lib/utils/payment-display";
 import { useThemeConfig } from "@/shared/admin/components/active-theme";
-import { BookingCreateWizard } from "@/features/bookings/components/admin/BookingCreateWizard";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { Label } from "@/shared/components/ui/label";
-import { Switch } from "@/shared/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import {
   Select,
@@ -42,21 +40,6 @@ type AdminOption = {
   lastName: string | null;
   email: string;
   username: string | null;
-};
-
-type BoatOption = {
-  id: string;
-  name: string;
-  capacity: number;
-  cleaningFee?: number | null;
-  depositAmount?: number | null;
-};
-
-type CaptainOption = {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string;
 };
 
 /** Friendlier labels for raw enum values shown in selects + chips. */
@@ -85,22 +68,13 @@ function getAdminLabel(admin: AdminOption | undefined): string {
   return name || admin.email || admin.username || "Unknown";
 }
 
-export function AdminBookingFilter({
-  admins,
-  boats = [],
-  captains = [],
-}: {
-  admins: AdminOption[];
-  boats?: BoatOption[];
-  captains?: CaptainOption[];
-}) {
+export function AdminBookingFilter({ admins }: { admins: AdminOption[] }) {
   const { activeTheme } = useThemeConfig();
   const [filters, setFilters] = useQueryStates(bookingSearchParams, {
     clearOnDefault: true,
     shallow: false,
   });
   const [popoverOpen, setPopoverOpen] = useState(false);
-  const [wizardOpen, setWizardOpen] = useState(false);
 
   const updateFilter = (updates: Partial<typeof filters>) => {
     setFilters({ ...updates, page: 1 });
@@ -143,8 +117,40 @@ export function AdminBookingFilter({
   const findAdmin = (id: string) => admins.find((a) => a.id === id);
 
   return (
-    <div className="flex-shrink-0 border-b border-border bg-card">
-      <div className="flex flex-wrap items-center gap-2 px-6 py-3">
+    <div className="shrink-0 space-y-2">
+      <AdminToolbar
+        onClear={clearAll}
+        hasFilters={hasAnyState}
+        activeCount={activeFilterCount > 0 ? activeFilterCount : undefined}
+        trailing={
+          <>
+            <Button asChild size="sm" className="h-9 gap-1.5">
+              <Link href="/admin/bookings/create">
+                <Plus className="h-3.5 w-3.5" />
+                New booking
+              </Link>
+            </Button>
+            <div
+              role="tablist"
+              aria-label="Bookings view"
+              className="inline-flex h-9 items-center rounded-md border border-border bg-muted/40 p-0.5"
+            >
+              <ViewToggleButton
+                active={filters.view === "table"}
+                label="Table"
+                icon={LayoutList}
+                onClick={() => updateFilter({ view: "table" })}
+              />
+              <ViewToggleButton
+                active={filters.view === "calendar"}
+                label="Calendar"
+                icon={CalendarDays}
+                onClick={() => updateFilter({ view: "calendar" })}
+              />
+            </div>
+          </>
+        }
+      >
         <FilterSearch
           value={filters.search}
           onChange={(v) => updateFilter({ search: v })}
@@ -295,61 +301,10 @@ export function AdminBookingFilter({
             </div>
           </PopoverContent>
         </Popover>
-
-        <div className="flex items-center gap-2">
-          <Switch
-            id="show-ops"
-            checked={filters.showOps}
-            onCheckedChange={(v) => updateFilter({ showOps: v })}
-          />
-          <Label htmlFor="show-ops" className="cursor-pointer text-sm font-medium">
-            Show ops
-          </Label>
-        </div>
-
-        <div className="flex-1" />
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setWizardOpen(true)}
-          className="h-9 gap-1.5 rounded-md border border-dashed border-primary/40 bg-primary/5 text-foreground hover:bg-primary/10 hover:text-foreground"
-          title="Prototype 3-step booking creation flow"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          <span className="text-sm">New (beta)</span>
-        </Button>
-
-        <div
-          role="tablist"
-          aria-label="Bookings view"
-          className="inline-flex h-9 items-center rounded-md border border-border bg-card p-0.5"
-        >
-          <ViewToggleButton
-            active={filters.view === "table"}
-            label="Table"
-            icon={LayoutList}
-            onClick={() => updateFilter({ view: "table" })}
-          />
-          <ViewToggleButton
-            active={filters.view === "calendar"}
-            label="Calendar"
-            icon={CalendarDays}
-            onClick={() => updateFilter({ view: "calendar" })}
-          />
-        </div>
-      </div>
-
-      <BookingCreateWizard
-        open={wizardOpen}
-        onOpenChange={setWizardOpen}
-        boats={boats}
-        captains={captains}
-        admins={admins}
-      />
+      </AdminToolbar>
 
       {activeFilterCount > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 px-6 pb-3">
+        <div className="flex flex-wrap items-center gap-1.5 px-1">
           {filters.bookingStatus && (
             <FilterChip
               label={`Status: ${friendlyEnumLabel(filters.bookingStatus)}`}

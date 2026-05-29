@@ -30,6 +30,5 @@ export const paymentMethodTypeEnum = pgEnum("PaymentMethodType", [
 
 // Payable type - what entity the payment is for (polymorphic)
 export const payableTypeEnum = pgEnum("PayableType", [
-  "BOOKING",           // Payment for a booking
-  "EVENT_TICKET"       // Payment for an event ticket
+  "BOOKING", // Payment for a booking
 ]);

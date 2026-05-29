@@ -6,6 +6,7 @@ import {
   type InquiryOutcome,
 } from "@/database/schema";
 import { and, count, desc, eq } from "drizzle-orm";
+import { resolveAdminListPagination } from "@/shared/admin/list-pagination";
 import type { Inquiry } from "@/database/types";
 
 export interface InquiryFilterInput {
@@ -25,9 +26,7 @@ export interface PaginatedInquiriesResponse {
 
 export class InquiryService {
   async getAllInquiries(filters?: InquiryFilterInput): Promise<PaginatedInquiriesResponse> {
-    const page = filters?.page ?? 1;
-    const limit = filters?.limit ?? 10;
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = resolveAdminListPagination(filters);
 
     const conditions = [];
     if (filters?.stage) {

@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import { bookingService } from "@/features/bookings/services/booking.service";
-import { boatService } from "@/features/boats/boat.service";
 import { userService } from "@/features/users/user.service";
 import { captainProfileService } from "@/features/profiles/captain-profile.service";
 import { bookingSearchParamsCache } from "@/features/bookings/searchParams";
@@ -8,7 +7,7 @@ import { AdminBookingFilter } from "@/features/bookings/components/admin/AdminBo
 import { AdminBookingsTable } from "@/features/bookings/components/admin/AdminBookingsTable";
 import { AdminBookingTablePagination } from "@/features/bookings/components/admin/AdminBookingTablePagination";
 import { AdminBookingsCalendar } from "@/features/bookings/components/admin/AdminBookingsCalendar";
-import { AdminTableWrapper } from "@/shared/admin/components/AdminTableWrapper";
+import { AdminListShell } from "@/shared/admin/components/AdminListShell";
 import { SearchParams } from "next/dist/server/request/search-params";
 
 export default async function BookingsPage({
@@ -19,24 +18,22 @@ export default async function BookingsPage({
   await bookingSearchParamsCache.parse(searchParams);
   const params = bookingSearchParamsCache.all();
 
-  // Fetch the small lookup lists once for the page — used by the filter (admins
-  // dropdown) and the prototype "New booking" wizard (boats, captains, admins).
-  const [admins, boats, captains] = await Promise.all([
+  const [admins, captains] = await Promise.all([
     userService.getAdmins(),
-    boatService.getBoatsForAdminSelect(),
     captainProfileService.getCaptainsForAssignment(),
   ]);
 
-  // Calendar view skips the paginated server fetch — the FullCalendar component
-  // pulls its own events via /api/admin/bookings/calendar-events for the visible window.
+  const filter = (
+    <Suspense fallback={<div className="h-14 shrink-0 animate-pulse rounded-2xl bg-muted" />}>
+      <AdminBookingFilter admins={admins} />
+    </Suspense>
+  );
+
   if (params.view === "calendar") {
     return (
-      <AdminTableWrapper>
-        <Suspense fallback={<div className="h-14 border-b border-border animate-pulse" />}>
-          <AdminBookingFilter admins={admins} boats={boats} captains={captains} />
-        </Suspense>
+      <AdminListShell toolbar={filter}>
         <AdminBookingsCalendar />
-      </AdminTableWrapper>
+      </AdminListShell>
     );
   }
 
@@ -57,28 +54,22 @@ export default async function BookingsPage({
   });
 
   return (
-    <AdminTableWrapper>
-      <Suspense fallback={<div className="h-14 border-b border-border animate-pulse" />}>
-        <AdminBookingFilter admins={admins} boats={boats} captains={captains} />
-      </Suspense>
+    <AdminListShell
+      toolbar={filter}
+      pagination={
+        <AdminBookingTablePagination
+          totalCount={result.totalCount}
+          totalPages={result.totalPages}
+          page={result.page}
+          limit={result.limit}
+        />
+      }
+    >
       <AdminBookingsTable
         bookings={result.bookings}
-        pagination={{
-          page: result.page,
-          limit: result.limit,
-          totalCount: result.totalCount,
-          totalPages: result.totalPages,
-        }}
         admins={admins}
-        hidePagination
-        showOps={params.showOps}
+        captains={captains}
       />
-      <AdminBookingTablePagination
-        totalCount={result.totalCount}
-        totalPages={result.totalPages}
-        page={result.page}
-        limit={result.limit}
-      />
-    </AdminTableWrapper>
+    </AdminListShell>
   );
 }

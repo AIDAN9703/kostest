@@ -71,11 +71,6 @@ export function AdminBookingPaymentCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-6">
-        <p className="text-xs text-muted-foreground">
-          Due / paid / balance use the <strong>payment ledger</strong> below.{' '}
-          <strong>Make payment</strong> records a manual offline payment and updates ops PAID when
-          the total reaches GMV (or the quote total if GMV is not set).
-        </p>
         {/* Summary row */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <SummaryItem

@@ -1,14 +1,8 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  createColumnHelper,
-  type ColumnDef,
-} from "@tanstack/react-table";
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -27,7 +21,8 @@ import {
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
+import { Avatar, AvatarImage } from "@/shared/components/ui/avatar";
+import { DefaultUserAvatarFallback } from "@/shared/lib/utils/user-utils";
 import type { UserListItem } from "@/features/users/user.types";
 import { StatusBadge } from "@/shared/lib/utils/badge-utils";
 import { Badge } from "@/shared/components/ui/badge";
@@ -40,6 +35,7 @@ import {
 } from "@/features/profiles/promote-eligibility";
 import { PromoteToCaptainModal } from "@/features/profiles/components/PromoteToCaptainModal";
 import { PromoteToCrewModal } from "@/features/profiles/components/PromoteToCrewModal";
+import { AdminDataTable } from "@/shared/admin/components/AdminDataTable";
 
 interface AdminUsersTableProps {
   users: UserListItem[];
@@ -98,19 +94,13 @@ export function AdminUsersTable({ users, loading }: AdminUsersTableProps) {
 
           return (
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-muted overflow-hidden flex items-center justify-center shrink-0">
-                {user.profileImage ? (
-                  <Image
-                    src={user.profileImage}
-                    alt={`${user.firstName} ${user.lastName}`}
-                    width={36}
-                    height={36}
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <UserCircle2 className="h-5 w-5 text-muted-foreground" />
-                )}
-              </div>
+              <Avatar className="h-9 w-9 shrink-0">
+                <AvatarImage
+                  src={user.profileImage || undefined}
+                  alt={listDisplayName(user)}
+                />
+                <DefaultUserAvatarFallback size="sm" />
+              </Avatar>
               <div className="min-w-0">
                 <div className="font-medium text-foreground text-sm truncate">
                   {user.firstName} {user.lastName}
@@ -227,93 +217,34 @@ export function AdminUsersTable({ users, loading }: AdminUsersTableProps) {
     []
   );
 
-  const table = useReactTable({
-    data: users,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <div className="h-12 w-12 border-4 border-border border-t-primary rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-sm text-muted-foreground">Loading users...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!users || users.length === 0) {
-    return (
-      <div className="flex items-center justify-center p-8">
-        <div className="text-center">
-          <UserCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-foreground mb-2">
-            No users found
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Try adjusting your filters or add a new user.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <>
-    <div className="min-w-0 overflow-x-auto">
-      <table className="w-full">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-border">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="sticky top-0 z-10 bg-muted px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider"
-                  >
-                    {header.isPlaceholder ? null : (
-                      <div>
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </div>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody className="bg-card divide-y divide-border">
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-muted/50 transition-colors">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-    </div>
-    <PromoteToCaptainModal
-      userId={captainModal?.id ?? null}
-      displayName={captainModal?.name ?? ""}
-      open={captainModal != null}
-      onOpenChange={(open) => {
-        if (!open) setCaptainModal(null);
-      }}
-    />
-    <PromoteToCrewModal
-      userId={crewModal?.id ?? null}
-      displayName={crewModal?.name ?? ""}
-      open={crewModal != null}
-      onOpenChange={(open) => {
-        if (!open) setCrewModal(null);
-      }}
-    />
+      <AdminDataTable
+        data={users}
+        columns={columns}
+        clipColumnId="user"
+        loading={loading}
+        loadingLabel="Loading users…"
+        emptyIcon={UserCircle2}
+        emptyTitle="No users found"
+        emptyDescription="Try adjusting your filters, or add a new user to get started."
+      />
+      <PromoteToCaptainModal
+        userId={captainModal?.id ?? null}
+        displayName={captainModal?.name ?? ""}
+        open={captainModal != null}
+        onOpenChange={(open) => {
+          if (!open) setCaptainModal(null);
+        }}
+      />
+      <PromoteToCrewModal
+        userId={crewModal?.id ?? null}
+        displayName={crewModal?.name ?? ""}
+        open={crewModal != null}
+        onOpenChange={(open) => {
+          if (!open) setCrewModal(null);
+        }}
+      />
     </>
   );
 }

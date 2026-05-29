@@ -4,7 +4,7 @@
 
 import { db } from "@/database/db";
 import { crewProfiles, users } from "@/database/schema";
-import { and, asc, count, eq, ilike, or } from "drizzle-orm";
+import { and, asc, eq, ilike, or } from "drizzle-orm";
 import type { CrewStatus, UserStatus } from "@/database/types";
 import type { PromoteCrewFormInput } from "@/features/profiles/promote-crew.validation";
 
@@ -16,19 +16,12 @@ export type CrewProfileAdminRow = {
   firstName: string | null;
   lastName: string | null;
   email: string;
-  username: string | null;
+  phoneNumber: string | null;
+  profileImage: string | null;
   userStatus: UserStatus;
   profileStatus: CrewStatus;
   adminNotes: string | null;
   profileUpdatedAt: Date;
-};
-
-export type CrewProfileAdminListResult = {
-  rows: CrewProfileAdminRow[];
-  totalCount: number;
-  page: number;
-  limit: number;
-  totalPages: number;
 };
 
 export class CrewProfileService {
@@ -48,17 +41,11 @@ export class CrewProfileService {
       .limit(200);
   }
 
-  /** Paginated crew profiles for admin entity table (all statuses). */
+  /** Crew profiles for admin (no pagination — crew pool is small). */
   async listForAdmin(filters: {
     search?: string | null;
     status?: CrewStatus | null;
-    page: number;
-    limit: number;
-  }): Promise<CrewProfileAdminListResult> {
-    const page = Math.max(1, filters.page);
-    const limit = Math.min(100, Math.max(1, filters.limit));
-    const offset = (page - 1) * limit;
-
+  }): Promise<CrewProfileAdminRow[]> {
     const conditions = [];
     const q = filters.search?.trim();
     if (q) {
@@ -68,7 +55,8 @@ export class CrewProfileService {
           ilike(users.firstName, pattern),
           ilike(users.lastName, pattern),
           ilike(users.email, pattern),
-          ilike(users.username, pattern)
+          ilike(users.phoneNumber, pattern),
+          ilike(crewProfiles.adminNotes, pattern)
         )!
       );
     }
@@ -76,12 +64,6 @@ export class CrewProfileService {
       conditions.push(eq(crewProfiles.status, filters.status));
     }
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-
-    const countBase = db
-      .select({ c: count() })
-      .from(crewProfiles)
-      .innerJoin(users, eq(crewProfiles.userId, users.id));
-    const countQuery = whereClause ? countBase.where(whereClause) : countBase;
 
     const dataBase = db
       .select({
@@ -92,41 +74,32 @@ export class CrewProfileService {
         firstName: users.firstName,
         lastName: users.lastName,
         email: users.email,
-        username: users.username,
+        phoneNumber: users.phoneNumber,
+        profileImage: users.profileImage,
         userStatus: users.status,
       })
       .from(crewProfiles)
       .innerJoin(users, eq(crewProfiles.userId, users.id));
     const dataQuery = whereClause ? dataBase.where(whereClause) : dataBase;
 
-    const [countResult, rows] = await Promise.all([
-      countQuery,
-      dataQuery
-        .orderBy(asc(users.lastName), asc(users.firstName), asc(users.email))
-        .limit(limit)
-        .offset(offset),
-    ]);
+    const rows = await dataQuery.orderBy(
+      asc(users.firstName),
+      asc(users.lastName),
+      asc(users.email)
+    );
 
-    const totalCount = Number(countResult[0]?.c ?? 0);
-    const totalPages = Math.max(1, Math.ceil(totalCount / limit));
-
-    return {
-      rows: rows.map((r) => ({
-        userId: r.userId,
-        firstName: r.firstName,
-        lastName: r.lastName,
-        email: r.email,
-        username: r.username,
-        userStatus: r.userStatus,
-        profileStatus: r.profileStatus,
-        adminNotes: r.adminNotes,
-        profileUpdatedAt: r.profileUpdatedAt,
-      })),
-      totalCount,
-      page,
-      limit,
-      totalPages,
-    };
+    return rows.map((r) => ({
+      userId: r.userId,
+      firstName: r.firstName,
+      lastName: r.lastName,
+      email: r.email,
+      phoneNumber: r.phoneNumber,
+      profileImage: r.profileImage,
+      userStatus: r.userStatus,
+      profileStatus: r.profileStatus,
+      adminNotes: r.adminNotes,
+      profileUpdatedAt: r.profileUpdatedAt,
+    }));
   }
 
   /**

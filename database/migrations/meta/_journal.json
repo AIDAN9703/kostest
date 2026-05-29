@@ -295,6 +295,13 @@
       "when": 1779824145868,
       "tag": "0045_nice_darkstar",
       "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1780006335217,
+      "tag": "0046_dizzy_strong_guy",
+      "breakpoints": true
     }
   ]
 }

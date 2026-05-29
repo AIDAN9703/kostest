@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { auth } from "@/auth";
+import { Button } from "@/shared/components/ui/button";
 import {
   getOperationsMtdSummary,
   getCharterSourceBreakdownMtd,
@@ -59,9 +61,17 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="flex flex-1 flex-col space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">{welcomeTitle} 👋</h1>
-        <p className="text-muted-foreground">Here&apos;s what&apos;s moving across the fleet</p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">{welcomeTitle} 👋</h1>
+          <p className="text-muted-foreground">Here&apos;s what&apos;s moving across the fleet</p>
+        </div>
+        <Button asChild className="shrink-0 gap-1.5">
+          <Link href="/admin/bookings/create">
+            <Plus className="h-4 w-4" />
+            New booking
+          </Link>
+        </Button>
       </header>
 
       <MetricCards ops={ops} />

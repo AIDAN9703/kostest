@@ -7,7 +7,6 @@ import {
   UsersRound,
   Anchor,
   Ship,
-  PartyPopper,
   Newspaper,
   Heart,
   type LucideIcon,
@@ -163,11 +162,6 @@ export const navigationData: NavigationData = {
               type: "link",
             },
             {
-              href: "/events",
-              label: "Events",
-              type: "link",
-            },
-            {
               href: "/news",
               label: "News & Blog",
               type: "link",
@@ -263,11 +257,6 @@ export const ADMIN_QUICK_ACTIONS: AdminNavItem[] = [
     href: "/admin/blog/create",
     iconClassName: "h-4 w-4 text-light-200",
   },
-  {
-    label: "Create Event",
-    href: "/admin/events?create=true",
-    iconClassName: "h-4 w-4 text-rose-400",
-  },
 ];
 
 export const ADMIN_NAV_ITEMS: AdminMainNavItem[] = [
@@ -311,12 +300,6 @@ export const ADMIN_NAV_ITEMS: AdminMainNavItem[] = [
     label: "Boats",
     href: "/admin/boats",
     icon: Ship,
-    iconClassName: "h-5 w-5",
-  },
-  {
-    label: "Events",
-    href: "/admin/events",
-    icon: PartyPopper,
     iconClassName: "h-5 w-5",
   },
   {

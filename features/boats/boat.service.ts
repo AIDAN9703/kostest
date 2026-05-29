@@ -10,6 +10,7 @@ import { type BoatForAdminSelect, type PaginatedBoatsResponse } from '@/features
 import { NewBoat } from '@/database/types';
 //utils
 import { toDateOrNull } from '@/shared/lib/utils/date-helpers';
+import { resolveAdminListPagination } from '@/shared/admin/list-pagination';
 import { isValidUUID } from '@/shared/lib/utils/general-utils';
 
 
@@ -64,9 +65,7 @@ export class BoatService {
    * Get paginated and filtered boats with comprehensive filter support
    */
   async getAllBoats(filters?: BoatFilterInput): Promise<PaginatedBoatsResponse> {
-    const page = filters?.page || 1;
-    const limit = filters?.limit || 10;
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = resolveAdminListPagination(filters);
 
     // Build where conditions array
     const whereConditions = [];

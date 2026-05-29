@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { useQueryStates } from "nuqs";
-import { FilterBar, FilterSearch, FilterSelect } from "@/shared/admin/filters";
+import { AdminToolbar, FilterSearch, FilterSelect } from "@/shared/admin/filters";
 import { boatSearchParams } from "../searchParams";
 import { boatCategoryEnum } from "@/database/schema";
 import {
@@ -98,7 +98,7 @@ export function AdminBoatFilter() {
   };
 
   return (
-    <FilterBar onClear={clearFilters} hasFilters={hasFilters}>
+    <AdminToolbar onClear={clearFilters} hasFilters={hasFilters}>
       <FilterSearch
         value={filters.search}
         onChange={(v) => updateFilter({ search: v })}
@@ -156,7 +156,7 @@ export function AdminBoatFilter() {
         updateFilter={updateFilter}
         activeCount={activeAdvancedFilters}
       />
-    </FilterBar>
+    </AdminToolbar>
   );
 }
 

@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { userService } from "@/features/users/user.service";
 import { UserProfileHeader } from "@/features/users/components/AdminUserProfileHeader";
 import { AdminUserPersonalInfo } from "@/features/users/components/AdminUserPersonalInfo";
@@ -43,16 +41,11 @@ async function UserProfile({ userId }: { userId: string }) {
 
   return (
     <div className="flex flex-1 flex-col space-y-6">
-      {/* Header Card - profile summary */}
-      <div className="h-full flex flex-col overflow-hidden bg-card rounded-3xl border border-border shadow-xs">
-        <div className="p-6">
-          <UserProfileHeader
-            user={user}
-            captainProfileStatus={user.captainProfile?.status ?? null}
-            crewProfileStatus={user.crewProfile?.status ?? null}
-          />
-        </div>
-      </div>
+      <UserProfileHeader
+        user={user}
+        captainProfileStatus={user.captainProfile?.status ?? null}
+        crewProfileStatus={user.crewProfile?.status ?? null}
+      />
 
       {/* Info Cards - bubble style */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -70,7 +63,7 @@ function ProfileSkeleton() {
   return (
     <div className="flex flex-1 flex-col space-y-6">
       <Skeleton className="h-5 w-32" />
-      <Skeleton className="h-[140px] rounded-3xl" />
+      <Skeleton className="h-20 w-full max-w-2xl" />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Skeleton className="h-[280px] rounded-xl" />
         <Skeleton className="h-[280px] rounded-xl" />

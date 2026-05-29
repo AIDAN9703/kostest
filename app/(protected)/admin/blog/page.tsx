@@ -1,10 +1,9 @@
-import { Suspense } from "react";
 import { blogService } from "@/features/blog/blog.service";
 import { blogSearchParamsCache } from "@/features/blog/searchParams";
 import { AdminBlogFilter } from "@/features/blog/components/admin/AdminBlogFilter";
-import { AdminBlogsTable } from "@/features/blog/components/admin/AdminBlogsTable";
 import { AdminBlogTablePagination } from "@/features/blog/components/admin/AdminBlogTablePagination";
-import { AdminTableWrapper } from "@/shared/admin/components/AdminTableWrapper";
+import { AdminBlogsTable } from "@/features/blog/components/admin/AdminBlogsTable";
+import { AdminListShell } from "@/shared/admin/components/AdminListShell";
 import { SearchParams } from "next/dist/server/request/search-params";
 
 export default async function BlogPage({
@@ -25,27 +24,18 @@ export default async function BlogPage({
   });
 
   return (
-    <AdminTableWrapper>
-      <Suspense
-        fallback={<div className="h-14 border-b border-border animate-pulse" />}
-      >
-        <AdminBlogFilter />
-      </Suspense>
-      <AdminBlogsTable
-        posts={result.posts}
-        pagination={{
-          page: result.page,
-          limit: result.limit,
-          totalCount: result.totalCount,
-          totalPages: result.totalPages,
-        }}
-      />
-      <AdminBlogTablePagination
-        totalCount={result.totalCount}
-        totalPages={result.totalPages}
-        page={result.page}
-        limit={result.limit}
-      />
-    </AdminTableWrapper>
+    <AdminListShell
+      toolbar={<AdminBlogFilter />}
+      pagination={
+        <AdminBlogTablePagination
+          totalCount={result.totalCount}
+          totalPages={result.totalPages}
+          page={result.page}
+          limit={result.limit}
+        />
+      }
+    >
+      <AdminBlogsTable posts={result.posts} />
+    </AdminListShell>
   );
 }

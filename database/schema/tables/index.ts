@@ -29,8 +29,3 @@ export * from "./blogPosts.table";
 export * from "./boatPricingTiers.table";
 export * from "./boatBlocking.table";
 
-// Event tables
-export * from "./events.table";
-export * from "./ticketTiers.table";
-export * from "./eventTicketPurchases.table";
-export * from "./tickets.table";

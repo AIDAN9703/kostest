@@ -10,7 +10,6 @@ import { payments } from '../tables/payments.table';
  * 
  * For example:
  * - If payable_type = 'BOOKING', use payable_id to look up bookings table
- * - If payable_type = 'EVENT_TICKET', use payable_id to look up event_tickets table
  */
 export const paymentsRelations = relations(payments, ({ }) => ({
   // Polymorphic relations are handled in application code

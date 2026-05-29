@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useQueryStates } from "nuqs";
-import { FilterBar, FilterSearch, FilterSelect } from "@/shared/admin/filters";
+import { AdminToolbar, FilterSearch, FilterSelect } from "@/shared/admin/filters";
 import { blogSearchParams } from "@/features/blog/searchParams";
 import { postCategoryEnum, postStatusEnum } from "@/database/schema";
 
@@ -48,7 +48,7 @@ export function AdminBlogFilter() {
   };
 
   return (
-    <FilterBar onClear={clearFilters} hasFilters={hasFilters}>
+    <AdminToolbar onClear={clearFilters} hasFilters={hasFilters}>
       <FilterSearch
         value={filters.search}
         onChange={(v) => updateFilter({ search: v })}
@@ -98,6 +98,6 @@ export function AdminBlogFilter() {
         width="w-[120px]"
         renderLabel={(v) => (v === "true" ? "Featured" : "Not featured")}
       />
-    </FilterBar>
+    </AdminToolbar>
   );
 }

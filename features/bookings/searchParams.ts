@@ -1,6 +1,5 @@
 import {
   createSearchParamsCache,
-  createSerializer,
   parseAsBoolean,
   parseAsInteger,
   parseAsString,
@@ -11,6 +10,7 @@ import {
   bookingTypeEnum,
 } from "@/database/schema";
 import { PAYMENT_DISPLAY_STATUSES } from "@/shared/lib/utils/payment-display";
+import { ADMIN_LIST_DEFAULT_PAGE_SIZE } from "@/shared/admin/list-pagination";
 
 /**
  * Shared search params config for bookings page.
@@ -29,14 +29,11 @@ export const bookingSearchParams = {
   maxAmount: parseAsInteger,
   assignedAdminId: parseAsString,
   bookingGroupId: parseAsString,
-  showOps: parseAsBoolean.withDefault(false),
   /** Layout for the bookings page — "table" (default) or "calendar". */
   view: parseAsStringEnum(["table", "calendar"] as const).withDefault("table"),
   page: parseAsInteger.withDefault(1),
-  limit: parseAsInteger.withDefault(10),
+  limit: parseAsInteger.withDefault(ADMIN_LIST_DEFAULT_PAGE_SIZE),
 };
 
 export const bookingSearchParamsCache =
   createSearchParamsCache(bookingSearchParams);
-
-export const serializeBookingParams = createSerializer(bookingSearchParams);

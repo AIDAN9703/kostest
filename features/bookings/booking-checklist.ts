@@ -98,7 +98,7 @@ export function computeBookingChecklist(
     {
       id: "captainAssigned",
       label: "Captain assigned",
-      hint: "Auto: captain user is linked on the booking. Assign one in the Ops section.",
+      hint: "Auto: captain user is linked on the booking. Assign one in Trip details.",
       done: !!input.captainUserId,
       kind: "derived",
     },
