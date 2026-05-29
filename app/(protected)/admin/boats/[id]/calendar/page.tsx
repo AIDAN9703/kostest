@@ -1,85 +1,62 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { notFound } from "next/navigation";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import { getBoatById } from "@/features/boats/actions/boat-actions";
 import AdminBoatCalendar from "@/features/boats/components/AdminBoatCalendar";
+import { BoatIcalSubscribeCard } from "@/features/boats/components/admin/BoatIcalSubscribeCard";
+import { buildFeedUrl } from "@/shared/lib/calendar/feed-tokens";
+import { getBaseUrl } from "@/shared/lib/utils/base-url";
 
-interface Boat {
-  id: string;
-  name: string;
-  timezone?: string | null;
+interface BoatCalendarPageProps {
+  params: Promise<{ id: string }>;
 }
 
-export default function BoatCalendarPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const [boat, setBoat] = useState<Boat | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const resolvedParams = await params;
-
-        const boatResponse = await fetch(
-          `/api/admin/boats/${resolvedParams.id}`,
-        );
-        if (!boatResponse.ok) {
-          throw new Error("Failed to fetch boat");
-        }
-        const boatData = await boatResponse.json();
-        setBoat(boatData);
-
-        setLoading(false);
-      } catch (error) {
-        console.error("Error loading boat data:", error);
-        setLoading(false);
-      }
-    }
-
-    loadData();
-  }, [params]);
-
-  if (loading) {
-    return (
-      <div className="p-6">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    );
-  }
+export default async function BoatCalendarPage({ params }: BoatCalendarPageProps) {
+  const { id: boatId } = await params;
+  const boat = await getBoatById(boatId);
 
   if (!boat) {
     notFound();
   }
 
+  let icalFeedUrl: string | null = null;
+  let icalFeedError: string | null = null;
+
+  try {
+    icalFeedUrl = buildFeedUrl(getBaseUrl(), {
+      scope: "bookings",
+      boatId,
+    });
+  } catch {
+    icalFeedError =
+      "Add CALENDAR_FEED_SECRET to .env.local (any long random string), then restart the dev server.";
+  }
+
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
+    <div className="space-y-6 p-6">
       <div className="flex items-center gap-4">
         <Link
-          href={`/admin/boats/${boat.id}`}
-          className="text-gray-500 hover:text-gray-700 transition-colors"
+          href={`/admin/boats/${boatId}`}
+          className="text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{boat.name}</h1>
-          <p className="text-gray-500">Booking Calendar</p>
+          <p className="text-muted-foreground">Booking calendar</p>
         </div>
       </div>
 
-      {/* FullCalendar Component */}
-      <AdminBoatCalendar
-        boatId={boat.id}
+      <BoatIcalSubscribeCard
         boatName={boat.name}
-        timezone={boat.timezone || undefined}
+        feedUrl={icalFeedUrl}
+        errorMessage={icalFeedError}
+      />
+
+      <AdminBoatCalendar
+        boatId={boatId}
+        boatName={boat.name}
+        timezone={boat.timezone ?? undefined}
       />
     </div>
   );
