@@ -106,7 +106,7 @@ export function CustomPlacesAutocomplete({
     setInputValue(defaultValue);
   }, [defaultValue]);
 
-  const { clearSearchValue, clearPlaceDetails } = useSearchStore();
+  const { clearSelectedPlace } = useSearchStore();
 
   // Fetch predictions with debouncing
   const fetchPredictions = useCallback(
@@ -263,11 +263,10 @@ export function CustomPlacesAutocomplete({
       } else {
         setPredictions([]);
         setIsLoading(false);
-        clearSearchValue();
-        clearPlaceDetails();
+        clearSelectedPlace();
       }
     },
-    [fetchPredictions, clearSearchValue, clearPlaceDetails],
+    [fetchPredictions, clearSelectedPlace],
   );
 
   const handlePredictionSelect = useCallback(

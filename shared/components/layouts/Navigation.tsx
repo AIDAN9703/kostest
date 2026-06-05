@@ -6,41 +6,33 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 
-// Import subcomponents
 import MobileNavigation from "./sub-components/MobileNavigation";
 import DesktopNavigation from "./sub-components/DesktopNavigation";
 import UserMenu from "./sub-components/UserMenu";
 import SearchBar from "./sub-components/SearchBar";
-import { navigationData, type NavigationData } from "@/shared/lib/constants/navigation-data";
+import { navigationData } from "@/shared/lib/constants/navigation-data";
 
 const Navigation = () => {
   const { data: session } = useSession();
   const pathname = usePathname();
   const user = session?.user;
   const isAdmin = user?.isAdmin === true;
-  // Show search in nav on all pages except home (hero has its own search bar)
   const showNavSearch = pathname !== "/";
 
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-200">
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Main Navigation Bar */}
         <nav
-          className={
-            showNavSearch
-              ? "flex items-center justify-between min-h-[var(--header-h)] gap-4 py-1"
-              : "flex items-center justify-between min-h-[5.25rem] gap-4 py-1"
-          }
+          className="flex min-h-[var(--header-h)] items-center justify-between gap-3 py-2"
           role="navigation"
           aria-label="Main navigation"
         >
-          {/* Left section: Logo + Mobile Menu */}
-          <div className="flex items-center gap-4">
+          <div className="flex min-w-0 flex-1 items-center gap-3 md:gap-4">
             <MobileNavigation navigationData={navigationData} user={user} />
 
             <Link
               href="/"
-              className="focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-full hover:opacity-80"
+              className="shrink-0 rounded-full hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
               aria-label="Home"
             >
               <Image
@@ -48,41 +40,37 @@ const Navigation = () => {
                 alt="Logo"
                 width={48}
                 height={48}
-                className="rounded-full filter-blue"
+                className="filter-blue rounded-full"
                 priority
               />
             </Link>
+
+            {showNavSearch ? (
+              <div className="hidden min-w-0 flex-1 md:block md:max-w-lg lg:max-w-xl">
+                <Suspense fallback={<div className="h-10 w-full" />}>
+                  <SearchBar variant="compact" />
+                </Suspense>
+              </div>
+            ) : null}
           </div>
 
-          {/* Center section: Search Bar (all pages except home) */}
-          {showNavSearch && (
-            <div className="hidden md:flex flex-1 max-w-2xl mx-4 lg:mx-8">
-              <Suspense fallback={<div className="w-full min-h-11" />}>
-                <SearchBar variant="compact" />
-              </Suspense>
-            </div>
-          )}
-
-          {/* Right section: Navigation + User menu */}
-          <div className="hidden lg:flex items-center gap-7">
+          <div className="hidden shrink-0 items-center gap-7 lg:flex">
             <DesktopNavigation navigationData={navigationData} isAdmin={isAdmin} />
             <UserMenu user={user} navigationData={navigationData} />
           </div>
 
-          {/* Mobile right section */}
-          <div className="flex lg:hidden items-center gap-4">
+          <div className="flex shrink-0 items-center gap-4 lg:hidden">
             <UserMenu user={user} navigationData={navigationData} />
           </div>
         </nav>
 
-        {/* Mobile Search Bar (all pages except home) */}
-        {showNavSearch && (
-          <div className="md:hidden pb-4">
-            <Suspense fallback={<div className="w-full min-h-11" />}>
+        {showNavSearch ? (
+          <div className="pb-3 md:hidden">
+            <Suspense fallback={<div className="h-10 w-full" />}>
               <SearchBar variant="compact" />
             </Suspense>
           </div>
-        )}
+        ) : null}
       </div>
     </header>
   );

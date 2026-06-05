@@ -1,10 +1,8 @@
 "use client";
 
-import { Boat } from "@/shared/lib/types/types";
-import { Button } from "@/shared/components/ui/button";
 import { useState } from "react";
-import { Info } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown } from "lucide-react";
+import { Boat } from "@/shared/lib/types/types";
 import { cn } from "@/shared/lib/utils/general-utils";
 
 interface DescriptionProps {
@@ -13,65 +11,24 @@ interface DescriptionProps {
 
 export function Description({ boat }: DescriptionProps) {
   const [expanded, setExpanded] = useState(false);
-  const description = boat.description || "No description provided.";
-  const isLongDescription = description.length > 350;
-  const displayText = !expanded && isLongDescription
-    ? description.substring(0, 350) + "..."
-    : description;
+  const description = boat.description?.trim() || "No description provided.";
+  const isLong = description.length > 420;
+  const text = !expanded && isLong ? description.slice(0, 420).trimEnd() + "…" : description;
 
   return (
-    <section className="space-y-2">
-      <div className="flex items-center gap-2">
-        <Info className="h-5 w-5 text-primary" />
-        <h2 className="text-2xl font-semibold text-gray-900">
-          About This Charter
-        </h2>
-      </div>
-      
-      <div className={cn(
-        "rounded-xl border border-gray-200",
-        "transition-all duration-200 hover:border-primary/20",
-        "bg-white dark:bg-gray-900 dark:border-gray-800"
-      )}>
-        <div className="p-6">
-          <AnimatePresence initial={false}>
-            <motion.div
-              key={expanded ? "expanded" : "collapsed"}
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <p className="text-gray-700 leading-relaxed dark:text-gray-300 whitespace-pre-line">
-                {displayText}
-              </p>
-            </motion.div>
-          </AnimatePresence>
-          
-          {isLongDescription && (
-            <Button 
-              variant="ghost"
-              onClick={() => setExpanded(!expanded)}
-              aria-expanded={expanded}
-              aria-controls="description-text"
-              className={cn(
-                "mt-4 h-auto font-medium",
-                "text-primary hover:bg-transparent hover:text-primary/90",
-                "focus:ring-2 focus:ring-primary/20 focus:outline-hidden"
-              )}
-            >
-              {expanded ? "Show less" : "Read more"}
-              <motion.span
-                animate={{ rotate: expanded ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
-                className="ml-1 text-xs"
-              >
-                ▼
-              </motion.span>
-            </Button>
-          )}
-        </div>
-      </div>
-    </section>
+    <div>
+      <p className="whitespace-pre-line text-[15px] leading-relaxed text-foreground/80">{text}</p>
+      {isLong && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
+        >
+          {expanded ? "Show less" : "Read more"}
+          <ChevronDown className={cn("size-4 transition-transform", expanded && "rotate-180")} />
+        </button>
+      )}
+    </div>
   );
-} 
+}

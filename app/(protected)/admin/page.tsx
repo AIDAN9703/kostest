@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
 import { auth } from "@/auth";
-import { Button } from "@/shared/components/ui/button";
+import { boatService } from "@/features/boats/boat.service";
+import { NewBookingModal } from "@/features/bookings/components/admin/new-booking-modal";
 import {
   getOperationsMtdSummary,
   getCharterSourceBreakdownMtd,
@@ -51,13 +51,15 @@ export default async function AdminDashboardPage() {
 
   const monthLabel = format(new Date(), "MMMM yyyy");
 
-  const [ops, sourceRows, followUps, todaysBookings, weeksBookings] = await Promise.all([
-    getOperationsMtdSummary(),
-    getCharterSourceBreakdownMtd(),
-    getFollowUpInquiries(6),
-    getTodaysBookings(),
-    getWeeksBookings(),
-  ]);
+  const [ops, sourceRows, followUps, todaysBookings, weeksBookings, pricingTiers] =
+    await Promise.all([
+      getOperationsMtdSummary(),
+      getCharterSourceBreakdownMtd(),
+      getFollowUpInquiries(6),
+      getTodaysBookings(),
+      getWeeksBookings(),
+      boatService.getAllActivePricingTiers(),
+    ]);
 
   return (
     <div className="flex flex-1 flex-col space-y-6">
@@ -66,12 +68,11 @@ export default async function AdminDashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight text-foreground">{welcomeTitle} 👋</h1>
           <p className="text-muted-foreground">Here&apos;s what&apos;s moving across the fleet</p>
         </div>
-        <Button asChild className="shrink-0 gap-1.5">
-          <Link href="/admin/bookings/create">
-            <Plus className="h-4 w-4" />
-            New booking
-          </Link>
-        </Button>
+        <NewBookingModal
+          pricingTiers={pricingTiers}
+          triggerLabel="New booking"
+          triggerClassName="h-10 shrink-0 gap-1.5"
+        />
       </header>
 
       <MetricCards ops={ops} />

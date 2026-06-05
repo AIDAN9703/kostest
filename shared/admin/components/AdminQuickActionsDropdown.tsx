@@ -34,14 +34,15 @@ export function AdminQuickActionsDropdown() {
           <Plus className="size-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        className="w-max max-w-[calc(100vw-2rem)] p-1"
-        align="start"
-      >
+      <DropdownMenuContent className="w-max max-w-[calc(100vw-2rem)] p-1" align="start">
         {ADMIN_QUICK_ACTIONS.map((action) => {
           const Icon = ACTION_ICONS[action.label];
           return (
-            <DropdownMenuItem key={action.href} asChild className="cursor-pointer whitespace-nowrap">
+            <DropdownMenuItem
+              key={action.href}
+              asChild
+              className="cursor-pointer whitespace-nowrap"
+            >
               <Link href={action.href} className="flex items-center gap-2">
                 {Icon && <Icon className="size-4 shrink-0" />}
                 {action.label}

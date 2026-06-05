@@ -11,25 +11,15 @@ import { cn } from "@/shared/lib/utils/general-utils";
 import { cookies } from "next/headers";
 import "./admin-theme.css";
 
-export default async function AdminLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default async function AdminLayout({ children }: { children: ReactNode }) {
   // Require authentication - middleware already protects this route
   await requireAuth();
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
-  const activeThemeValue =
-    cookieStore.get("admin_active_theme")?.value ?? "default";
+  const activeThemeValue = cookieStore.get("admin_active_theme")?.value ?? "default";
 
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <ActiveThemeProvider initialTheme={activeThemeValue}>
         <KBar>
           <SidebarProvider
@@ -37,7 +27,7 @@ export default async function AdminLayout({
             data-admin-theme
             className={cn(
               "admin-theme bg-background text-foreground font-sans antialiased h-svh overflow-hidden",
-              activeThemeValue ? `theme-${activeThemeValue}` : "",
+              activeThemeValue ? `theme-${activeThemeValue}` : ""
             )}
           >
             <AdminSidebar />

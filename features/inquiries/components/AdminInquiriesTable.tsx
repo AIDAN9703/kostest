@@ -116,7 +116,6 @@ export function AdminInquiriesTable({ inquiries, loading }: AdminInquiriesTableP
     <AdminDataTable
       data={inquiries}
       columns={columns}
-      clipColumnId="contact"
       loading={loading}
       loadingLabel="Loading inquiries…"
       emptyIcon={MessageSquare}

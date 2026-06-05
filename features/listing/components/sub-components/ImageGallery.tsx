@@ -13,7 +13,6 @@ import {
   CarouselItem,
   CarouselApi,
 } from "@/shared/components/ui/carousel";
-import { Button } from "@/shared/components/ui/button";
 import ImageGalleryViewAll from "./ImageGalleryViewAll";
 
 interface ImageGalleryProps {
@@ -136,16 +135,6 @@ export function ImageGallery({
             <ChevronRight className="w-5 h-5 text-gray-700" />
           </motion.button>
         </div>
-
-        {/* Enhanced view all photos button */}
-        <Button
-          variant="outline"
-          size="sm"
-          className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-xs hover:bg-white shadow-xs hover:shadow-md border-gray-200/50 font-medium text-gray-700 hover:text-gray-900 transition-all duration-300"
-          onClick={() => openViewAll(0)}
-        >
-          View All Photos
-        </Button>
       </div>
 
       {/* View All Gallery Popup */}

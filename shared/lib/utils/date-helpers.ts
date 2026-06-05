@@ -44,7 +44,10 @@ export function createDateTimeISO(
   if (!date || !time) return "";
   
   const timezone = boat ? getBoatTimezone(boat) : DEFAULT_TIMEZONE;
-  const dateStr = date.toISOString().split('T')[0];
+  // Use the date's LOCAL calendar fields (what the user saw/picked), not its UTC
+  // date. `toISOString()` shifts east-of-UTC users back a day for local-midnight
+  // dates picked in the calendar.
+  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   const boatDateTimeStr = `${dateStr} ${time}:00`;
   const utcDateTime = fromZonedTime(boatDateTimeStr, timezone);
   
@@ -91,6 +94,23 @@ export function parseDateTimeInBoatTimezone(
   return {
     date: boatDateTime,
     time: `${boatDateTime.getHours().toString().padStart(2, "0")}:${boatDateTime.getMinutes().toString().padStart(2, "0")}`
+  };
+}
+
+/**
+ * Get the UTC instants for the start and end of a calendar day in the boat's
+ * timezone. Use this to fetch a day's availability so the window matches the
+ * boat's local day regardless of the viewer's browser timezone.
+ */
+export function getBoatDayBoundsUTC(
+  date: Date,
+  boat?: { timezone?: SupportedTimezones | string | null }
+): { startUTC: Date; endUTC: Date } {
+  const timezone = boat ? getBoatTimezone(boat) : DEFAULT_TIMEZONE;
+  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  return {
+    startUTC: fromZonedTime(`${dateStr} 00:00:00`, timezone),
+    endUTC: fromZonedTime(`${dateStr} 23:59:59`, timezone),
   };
 }
 

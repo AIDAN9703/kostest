@@ -3,14 +3,18 @@
 import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryStates, parseAsString, parseAsInteger, parseAsBoolean } from "nuqs";
+import { Loader2 } from "lucide-react";
+
 import BookingSummary from "./BookingSummary";
 import BookingAuthSection from "./BookingAuthSection";
+import BookingHoldTimer from "./BookingHoldTimer";
 import KnowBeforeYouGo from "./KnowBeforeYouGo";
 import BookingPricingSection from "./BookingPricingSection";
 import BookingSubmitButton from "./BookingSubmitButton";
 import CharterDetailsForm from "./CharterDetailsForm";
 import { useBoat } from "./BoatProvider";
 import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
+import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { BookingRequest } from "@/features/_validation/validations";
 import { createInstantBooking } from "@/features/bookings/actions/instant";
 import { createBookingRequest } from "@/features/bookings/actions/request";
@@ -20,9 +24,10 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
   const router = useRouter();
   const boat = useBoat();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [authModal, setAuthModal] = useState<"sign-in" | "sign-up" | null>(null);
+  const [authModal, setAuthModal] = useState<
+    "menu" | "sign-in" | "sign-up" | null
+  >(null);
 
-  // ✨ NUQS MAGIC: Replace all the complex state management with this
   const [bookingState] = useQueryStates({
     startDateTime: parseAsString,
     pricingTierId: parseAsString,
@@ -33,7 +38,6 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
   const { startDateTime, pricingTierId, numberOfPassengers, needsCaptain } = bookingState;
   const isFormComplete = !!(startDateTime && pricingTierId && numberOfPassengers);
 
-  // Simple redirect if no booking data
   useEffect(() => {
     if (!isFormComplete) {
       if (process.env.NODE_ENV === "development") {
@@ -63,8 +67,13 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
       timezone: (boat.timezone as string | null) ?? null,
       currency: boat.currency ?? "USD",
     }),
-    [boat]
+    [boat],
   );
+
+  const totalLabel = useMemo(() => {
+    if (!priceBreakdown) return "";
+    return formatCurrency(priceBreakdown.totalPrice, safeBoat.currency);
+  }, [priceBreakdown, safeBoat.currency]);
 
   const handleBookingSubmit = useCallback(
     async (paymentMethod: "request" | "instant") => {
@@ -72,7 +81,7 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
         return;
       }
       if (!user) {
-        setAuthModal("sign-in");
+        setAuthModal("menu");
         return;
       }
 
@@ -94,23 +103,11 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
 
         if (result?.success) {
           if (paymentMethod === "instant" && "paymentUrl" in result && result.paymentUrl) {
-            // For instant bookings, redirect to Stripe (stateless flow)
             window.location.href = result.paymentUrl;
           } else if (paymentMethod === "request" && "booking" in result && result.booking) {
-            // For request bookings, go to success page with booking data
-            const params = new URLSearchParams({
-              type: "request",
-              bookingId: result.booking.id || "",
-              boatName: boat.name || "",
-              boatImage: boat.mainImage || "",
-              startDateTime: startDateTime!,
-              hours: String(selectedTier!.hours || ""),
-              basePrice: String(priceBreakdown.basePrice),
-              cleaningFee: String(priceBreakdown.cleaningFee),
-              serviceFee: String(priceBreakdown.serviceFee),
-              totalAmount: String(priceBreakdown.totalPrice),
-            });
-            router.push(`/bookings/${boat.id}/success?${params.toString()}`);
+            router.push(
+              `/bookings/${boat.id}/success?bookingId=${result.booking.id}&type=request`,
+            );
           }
         }
       } catch (error) {
@@ -129,28 +126,34 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
       needsCaptain,
       router,
       priceBreakdown,
-    ]
+    ],
   );
 
-  // Show loading while nuqs initializes or if missing data
-  if (!isFormComplete) {
+  if (!isFormComplete || !selectedTier) {
     return (
-      <div className="flex flex-col min-h-[calc(100vh-80px)]">
-        <div className="max-w-7xl mx-auto w-full flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-coral-500"></div>
-        </div>
+      <div className="flex min-h-[50vh] items-center justify-center bg-white">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-80px)]">
-      <div className="max-w-7xl 2xl:max-w-8xl mx-auto w-full flex-1 px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-6 sm:py-8 lg:py-10 xl:py-12 2xl:py-16">
-        <h1 className="text-sm font-bold text-gray-900 mb-4 sm:mb-6 xl:mb-8">
-          You're almost done!
-        </h1>
-        <div className="grid grid-cols-1 xl:grid-cols-3 2xl:grid-cols-4 gap-6 lg:gap-8 xl:gap-12 2xl:gap-16 items-start">
-          <div className="w-full xl:col-span-2 2xl:col-span-3">
+    <div className="min-h-screen bg-white pb-28 lg:pb-16">
+      <div className="mx-auto max-w-5xl px-4 pt-10 pb-8 sm:px-6 sm:pt-12 sm:pb-10 lg:px-8 lg:pt-14 lg:pb-12">
+        <header className="mb-8 flex items-start justify-between gap-4 sm:mb-10">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              You&apos;re almost there
+            </p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              Complete your charter
+            </h1>
+          </div>
+          <BookingHoldTimer />
+        </header>
+
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-14 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <main className="min-w-0">
             <BookingSummary
               boat={safeBoat}
               selectedTier={selectedTier}
@@ -160,47 +163,83 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
               }}
             />
 
-            <div className="py-4 sm:py-6 xl:py-8">
-              <BookingAuthSection
-                user={user}
-                authModal={authModal}
-                onAuthModalChange={setAuthModal}
-              />
+            <div className="mt-5 border-t border-gray-100 pt-5 sm:mt-6 sm:pt-6">
               <CharterDetailsForm />
             </div>
-          </div>
 
-          <div className="space-y-4 sm:space-y-6 xl:space-y-8 xl:sticky xl:top-6 2xl:top-8 self-start">
-            <KnowBeforeYouGo boatName={boat.name} />
-            <BookingPricingSection
-              boat={safeBoat}
-              selectedTier={selectedTier!}
-              bookingData={{
-                needsCaptain: !!needsCaptain,
-                numberOfPassengers: numberOfPassengers!,
-              }}
-            />
-            <div className="hidden xl:block">
+            <div className="mt-8 space-y-6 border-t border-gray-100 pt-5 sm:mt-9 sm:pt-6 lg:hidden">
+              <KnowBeforeYouGo boatName={boat.name} />
+              <BookingPricingSection
+                boat={safeBoat}
+                selectedTier={selectedTier}
+                bookingData={{
+                  needsCaptain: !!needsCaptain,
+                  numberOfPassengers: numberOfPassengers!,
+                }}
+              />
+            </div>
+          </main>
+
+          <aside className="hidden lg:block">
+            <div className="sticky top-24 space-y-6 rounded-2xl bg-gray-50 p-6">
+              <KnowBeforeYouGo boatName={boat.name} />
+              <BookingPricingSection
+                boat={safeBoat}
+                selectedTier={selectedTier}
+                bookingData={{
+                  needsCaptain: !!needsCaptain,
+                  numberOfPassengers: numberOfPassengers!,
+                }}
+              />
               <BookingSubmitButton
                 user={user}
                 boat={{ instantBook: boat.instantBook }}
                 isSubmitting={isSubmitting}
                 onSubmit={handleBookingSubmit}
-                onNeedAuth={() => setAuthModal("sign-in")}
+                onNeedAuth={() => setAuthModal("menu")}
               />
             </div>
+          </aside>
+        </div>
+
+        <BookingAuthSection
+          authModal={authModal}
+          onAuthModalChange={setAuthModal}
+        />
+      </div>
+
+      {/* Mobile sticky checkout bar */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-sm supports-[backdrop-filter]:bg-white/90 lg:hidden safe-area-pb">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+          <div className="min-w-0 flex-1 pr-2">
+            <p className="text-2xl font-semibold tabular-nums tracking-tight text-foreground">
+              {totalLabel}
+            </p>
+            <p className="text-sm text-muted-foreground">Total</p>
+          </div>
+          <div className="ml-auto shrink-0">
+            <BookingSubmitButton
+              user={user}
+              boat={{ instantBook: boat.instantBook }}
+              isSubmitting={isSubmitting}
+              onSubmit={handleBookingSubmit}
+              onNeedAuth={() => setAuthModal("menu")}
+              layout="bar"
+            />
           </div>
         </div>
-        {/* Mobile sticky action bar */}
-        <div className="xl:hidden fixed bottom-0 inset-x-0 z-30 border-t border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 px-4 py-3 safe-area-pb">
-          <BookingSubmitButton
-            user={user}
-            boat={{ instantBook: boat.instantBook }}
-            isSubmitting={isSubmitting}
-            onSubmit={handleBookingSubmit}
-            onNeedAuth={() => setAuthModal("sign-in")}
-          />
-        </div>
+        {boat.instantBook && user && (
+          <p className="mx-auto mt-2 max-w-5xl text-center text-xs text-muted-foreground">
+            <button
+              type="button"
+              onClick={() => handleBookingSubmit("request")}
+              disabled={isSubmitting}
+              className="font-medium text-foreground underline-offset-2 hover:underline disabled:opacity-50"
+            >
+              Send request instead
+            </button>
+          </p>
+        )}
       </div>
     </div>
   );

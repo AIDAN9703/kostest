@@ -1,6 +1,7 @@
 "use client";
 
-import React from "react";
+import { Zap } from "lucide-react";
+
 import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { SafeBoatData, PricingTier } from "@/features/bookings/booking.types";
 import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
@@ -13,90 +14,84 @@ interface BookingPricingSectionProps {
     needsCaptain: boolean;
     numberOfPassengers: number;
   };
+  showHeading?: boolean;
 }
 
-export default function BookingPricingSection({ 
-  boat, 
-  selectedTier, 
-  bookingData 
+export default function BookingPricingSection({
+  boat,
+  selectedTier,
+  showHeading = true,
 }: BookingPricingSectionProps) {
-  // Use universal pricing function for consistency
   const priceBreakdown = calculateBookingPrice(
     selectedTier.price,
     boat.cleaningFee || 0,
-    0 // Captain fee included in base price
+    0,
   );
   const currency = boat.currency ?? "USD";
   const fmt = (amount: number) => formatCurrency(amount, currency);
 
-  const priceItems = [
+  const lineItems = [
     {
-      label: `${selectedTier.name || 'Charter'} (${selectedTier.hours}h)`,
+      label: `${selectedTier.name || "Charter"} · ${selectedTier.hours}h`,
       amount: priceBreakdown.basePrice,
-      description: `Charter package`
+      included: false,
     },
     {
-      label: "Captain service",
+      label: "Captain",
       amount: priceBreakdown.captainFee,
-      description: "Professional licensed captain",
-      isIncluded: true
+      included: true,
     },
-    ...(priceBreakdown.cleaningFee > 0 ? [{
-      label: "Cleaning fee",
-      amount: priceBreakdown.cleaningFee,
-      description: "One-time cleaning charge",
-      isIncluded: false
-    }] : []),
+    ...(priceBreakdown.cleaningFee > 0
+      ? [
+          {
+            label: "Cleaning fee",
+            amount: priceBreakdown.cleaningFee,
+            included: false,
+          },
+        ]
+      : []),
     {
-      label: "Card processing fee",
+      label: `Processing (${SERVICE_FEE_PERCENT_DISPLAY}%)`,
       amount: priceBreakdown.serviceFee,
-      description: `Card processing fee (${SERVICE_FEE_PERCENT_DISPLAY}%)`,
-      isIncluded: false
-    }
+      included: false,
+    },
   ];
 
   return (
-    <div className="space-y-2">
-      
-      <div className="space-y-3 mb-6">
-        {priceItems.map((item, index) => (
-          <div key={index} className="flex items-center justify-between">
-            <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">{item.label}</p>
-              <p className="text-xs text-gray-500">{item.description}</p>
-            </div>
-            <p className="text-sm font-semibold ml-3">
-              {item.isIncluded ? (
-                <span className="text-emerald-600">Included</span>
-              ) : (
-                <span className="text-gray-900">{fmt(item.amount)}</span>
-              )}
-            </p>
-          </div>
-        ))}
-      </div>
+    <div className="space-y-5">
+      {showHeading && (
+        <h3 className="text-sm font-medium text-foreground">Price details</h3>
+      )}
 
-      <div className="pt-4 border-t border-gray-100">
-        <div className="flex items-center justify-between">
-          <p className="text-lg font-semibold text-gray-900">Total</p>
-          <p className="text-xl font-bold text-primary">{fmt(priceBreakdown.totalPrice)}</p>
-        </div>
-        <p className="text-xs text-gray-500 mt-1">
-          Final price includes all fees and taxes
-        </p>
+      <ul className="space-y-3">
+        {lineItems.map((item) => (
+          <li key={item.label} className="flex items-baseline justify-between gap-4">
+            <span className="text-sm text-muted-foreground">{item.label}</span>
+            <span className="shrink-0 text-sm font-medium tabular-nums text-foreground">
+              {item.included ? (
+                <span className="text-muted-foreground">Included</span>
+              ) : (
+                fmt(item.amount)
+              )}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="flex items-baseline justify-between gap-4 pt-1">
+        <span className="text-base font-semibold text-foreground">Total</span>
+        <span className="text-xl font-semibold tabular-nums tracking-tight text-foreground">
+          {fmt(priceBreakdown.totalPrice)}
+        </span>
       </div>
 
       {boat.instantBook && (
-        <div className="mt-4">
-          <div className="flex items-center space-x-2 mb-1">
-            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-            <p className="text-sm font-medium text-emerald-800">Instant booking</p>
-          </div>
-          <p className="text-xs text-emerald-700">
-            Your card will be charged immediately after confirmation
-          </p>
-        </div>
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Zap className="h-3 w-3 shrink-0" />
+          Charged immediately after you confirm
+        </p>
       )}
     </div>
   );
 }
+

@@ -27,6 +27,11 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { googleSignIn } from "@/features/auth/actions/google-auth";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import {
+  bookingAuthInputClass,
+  bookingAuthMenuButtonClass,
+  bookingAuthPrimaryButtonClass,
+} from "@/features/bookings/components/booking-auth-ui";
 
 interface Props<T extends FieldValues> {
   schema: ZodType<T>;
@@ -119,29 +124,33 @@ const AuthForm = <T extends FieldValues>({
       )}
 
       {/* Google Sign In */}
-      <form action={googleSignIn} className="mb-5">
+      <form action={googleSignIn} className={isEmbedded ? "mb-4" : "mb-5"}>
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
         <button
           type="submit"
-          className="flex items-center justify-center gap-2.5 h-11 sm:h-10 w-full border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all text-sm active:scale-[0.98]"
+          className={
+            isEmbedded
+              ? `${bookingAuthMenuButtonClass} gap-2.5`
+              : "flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-gray-200 text-sm transition-all hover:border-gray-300 hover:bg-gray-50 active:scale-[0.98] sm:h-10"
+          }
         >
           <Image
             src="/icons/google.svg"
             alt="Google"
             width={18}
             height={18}
-            className="sm:w-4 sm:h-4"
+            className="sm:h-4 sm:w-4"
           />
-          <span className="text-gray-600 font-medium">
+          <span className={isEmbedded ? "font-medium text-foreground" : "font-medium text-gray-600"}>
             Continue with Google
           </span>
         </button>
       </form>
 
       {/* Divider */}
-      <div className="relative flex items-center gap-3 mb-5">
+      <div className={`relative flex items-center gap-3 ${isEmbedded ? "mb-4" : "mb-5"}`}>
         <div className="h-px flex-1 bg-gray-200" />
-        <span className="text-xs text-gray-400 uppercase tracking-wide">or</span>
+        <span className="text-xs uppercase tracking-wide text-gray-400">or</span>
         <div className="h-px flex-1 bg-gray-200" />
       </div>
 
@@ -155,7 +164,13 @@ const AuthForm = <T extends FieldValues>({
               name={field as Path<T>}
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-medium text-gray-700 ml-1">
+                  <FormLabel
+                    className={
+                      isEmbedded
+                        ? "text-sm font-semibold text-foreground"
+                        : "ml-1 text-sm font-medium text-gray-700"
+                    }
+                  >
                     {FIELD_NAMES[field.name as keyof typeof FIELD_NAMES]}
                   </FormLabel>
                   <FormControl>
@@ -163,7 +178,11 @@ const AuthForm = <T extends FieldValues>({
                       required
                       type={FIELD_TYPES[field.name as keyof typeof FIELD_TYPES]}
                       {...field}
-                      className="h-10 text-sm"
+                      className={
+                        isEmbedded
+                          ? bookingAuthInputClass
+                          : "h-10 text-sm"
+                      }
                       placeholder={`Enter your ${((FIELD_NAMES[field.name as keyof typeof FIELD_NAMES] ?? field.name) || "").toLowerCase()}`}
                     />
                   </FormControl>
@@ -176,7 +195,11 @@ const AuthForm = <T extends FieldValues>({
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-11 sm:h-10 mt-2 text-sm font-medium active:scale-[0.98] transition-transform"
+            className={
+              isEmbedded
+                ? `${bookingAuthPrimaryButtonClass} mt-1`
+                : "mt-2 h-11 w-full text-sm font-medium transition-transform active:scale-[0.98] sm:h-10"
+            }
           >
             {isSubmitting ? (
               <div className="flex items-center gap-2">

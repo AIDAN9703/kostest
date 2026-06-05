@@ -25,14 +25,6 @@ export function parseNumberParam(param: string | string[] | undefined | null): n
 }
 
 /**
- * Parse string or string[] params to a boolean
- */
-export function parseBooleanParam(param: string | string[] | undefined | null): boolean {
-  const stringValue = parseStringParam(param);
-  return stringValue === 'on' || stringValue === 'true';
-}
-
-/**
  * Parse comma-separated string or string[] params to string array
  */
 export function parseArrayParam(param: string | string[] | undefined | null): string[] {
@@ -83,30 +75,3 @@ export function normalizeSearchParams(
   
   return normalizedParams;
 }
-
-/**
- * Create a URL query string from parameters
- * Can be used in client components
- */
-export function createSearchQueryString(
-  params: Record<string, string | number | boolean | null | undefined>
-): string {
-  const searchParams = new URLSearchParams();
-  
-  // Update or remove each parameter
-  Object.entries(params).forEach(([key, value]) => {
-    if (value === null || value === undefined) {
-      // Skip null/undefined values
-      return;
-    } else if (typeof value === 'boolean') {
-      // Convert boolean values to 'on'/'off' or just delete if false
-      if (value) {
-        searchParams.set(key, 'on');
-      }
-    } else {
-      searchParams.set(key, String(value));
-    }
-  });
-  
-  return searchParams.toString();
-} 

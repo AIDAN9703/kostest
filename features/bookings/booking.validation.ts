@@ -2,6 +2,8 @@ import * as z from "zod";
 import {
   bookingStatusEnum,
   bookingTypeEnum,
+  bookingExpenseCategoryEnum,
+  bookingExpenseLineSourceEnum,
 } from "@/database/schema";
 import { PAYMENT_DISPLAY_STATUSES } from "@/shared/lib/utils/payment-display";
 
@@ -118,3 +120,38 @@ export const createBookingsSchema = z.object({
 });
 
 export type CreateBookingsInput = z.infer<typeof createBookingsSchema>;
+
+/** Typed expense line captured at booking creation (amounts in cents). */
+export const bookingExpenseLineInputSchema = z.object({
+  category: z.enum(bookingExpenseCategoryEnum.enumValues),
+  amountCents: z.number().int().min(0, "Expense must be 0 or greater"),
+  label: z.string().nullable().optional(),
+  sortOrder: z.number().int().optional(),
+  source: z.enum(bookingExpenseLineSourceEnum.enumValues).optional(),
+});
+
+/**
+ * Unified "new booking modal" schema — a single booking plus the financial/ops
+ * data (owner payout + other expenses, GMV, source, sales agent) that the admin
+ * flow used to capture only later on the booking detail page.
+ */
+export const createBookingFullSchema = z.object({
+  booking: bookingSectionSchema,
+  numberOfPassengers: z.number().int().min(1, "Must have at least 1 passenger"),
+  pickupLocation: z.string().nullable().optional(),
+  dropoffLocation: z.string().nullable().optional(),
+  adminNotes: z.string().nullable().optional(),
+  lineItems: z.array(bookingAddOnSchema).optional().default([]),
+  // Financial / ops (booking_ops + booking_expense_line)
+  gmvCents: z.number().int().min(0).nullable().optional(),
+  source: z.string().nullable().optional(),
+  agentCode: z.string().nullable().optional(),
+  expenseLines: z.array(bookingExpenseLineInputSchema).optional().default([]),
+  // Send options (only the Stripe proposal path is wired today)
+  allowPayment: z.boolean().optional().default(false),
+  paymentType: z.enum(["DEPOSIT_ONLY", "FULL_PAYMENT"]).optional().default("FULL_PAYMENT"),
+  sendProposalEmail: z.boolean().optional().default(false),
+  sendProposalSms: z.boolean().optional().default(false),
+});
+
+export type CreateBookingFullInput = z.infer<typeof createBookingFullSchema>;

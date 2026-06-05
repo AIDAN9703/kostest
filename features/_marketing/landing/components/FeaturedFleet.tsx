@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import BoatCard from "@/shared/components/ui/boat-card";
+import BoatListingCard from "@/features/boats/components/BoatListingCard";
 import {
   Carousel,
   CarouselContent,
@@ -85,7 +85,7 @@ export default function FeaturedFleet({ boats }: FeaturedFleetProps) {
                     duration: 0.5,
                   }}
                 >
-                  <BoatCard boat={boat} index={idx} />
+                  <BoatListingCard boat={boat} index={idx} size="lg" />
                 </motion.div>
               </CarouselItem>
             ))}

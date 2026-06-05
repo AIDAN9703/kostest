@@ -222,7 +222,6 @@ export function AdminUsersTable({ users, loading }: AdminUsersTableProps) {
       <AdminDataTable
         data={users}
         columns={columns}
-        clipColumnId="user"
         loading={loading}
         loadingLabel="Loading users…"
         emptyIcon={UserCircle2}

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { bookingService } from "@/features/bookings/services/booking.service";
+import { boatService } from "@/features/boats/boat.service";
 import { userService } from "@/features/users/user.service";
 import { captainProfileService } from "@/features/profiles/captain-profile.service";
 import { bookingSearchParamsCache } from "@/features/bookings/searchParams";
@@ -18,14 +19,15 @@ export default async function BookingsPage({
   await bookingSearchParamsCache.parse(searchParams);
   const params = bookingSearchParamsCache.all();
 
-  const [admins, captains] = await Promise.all([
+  const [admins, captains, pricingTiers] = await Promise.all([
     userService.getAdmins(),
     captainProfileService.getCaptainsForAssignment(),
+    boatService.getAllActivePricingTiers(),
   ]);
 
   const filter = (
     <Suspense fallback={<div className="h-14 shrink-0 animate-pulse rounded-2xl bg-muted" />}>
-      <AdminBookingFilter admins={admins} />
+      <AdminBookingFilter admins={admins} pricingTiers={pricingTiers} />
     </Suspense>
   );
 
@@ -65,11 +67,7 @@ export default async function BookingsPage({
         />
       }
     >
-      <AdminBookingsTable
-        bookings={result.bookings}
-        admins={admins}
-        captains={captains}
-      />
+      <AdminBookingsTable bookings={result.bookings} admins={admins} captains={captains} />
     </AdminListShell>
   );
 }

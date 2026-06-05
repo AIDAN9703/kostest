@@ -5,47 +5,65 @@ import {
   getCoreRowModel,
   flexRender,
   type ColumnDef,
+  type VisibilityState,
 } from "@tanstack/react-table";
 import type { LucideIcon } from "lucide-react";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/shared/components/ui/table";
 import { cn } from "@/shared/lib/utils/general-utils";
 
 interface AdminDataTableProps<TData> {
   data: TData[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   columns: ColumnDef<TData, any>[];
-  /** Optional fixed column widths (enables table-fixed + colgroup). */
-  colWidths?: string[];
-  /** Column id whose cells should clip overflow (e.g. the primary name col). */
-  clipColumnId?: string;
+  columnVisibility?: VisibilityState;
   loading?: boolean;
   loadingLabel?: string;
   emptyIcon: LucideIcon;
   emptyTitle: string;
   emptyDescription: string;
+  onRowClick?: (row: TData) => void;
+}
+
+const headClass =
+  "sticky top-0 z-10 bg-muted/95 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur supports-[backdrop-filter]:bg-muted/80";
+
+type ColumnMeta = {
+  headerClassName?: string;
+  cellClassName?: string;
+};
+
+function getColumnMeta(meta: unknown): ColumnMeta {
+  return (meta ?? {}) as ColumnMeta;
 }
 
 /**
- * Generic admin table card. Owns the scroll container, sticky header, and the
- * loading / empty states so feature tables only define their columns.
- *
- * Designed to sit as the `flex-1` middle child of <AdminListShell>: it fills
- * the available height and scrolls its rows internally with a sticky header.
+ * Admin data table — shadcn Table + TanStack Table (see ui.shadcn.com/docs/components/data-table).
+ * Column widths come from cell content; truncate inside cells where needed.
  */
 export function AdminDataTable<TData>({
   data,
   columns,
-  colWidths,
-  clipColumnId,
+  columnVisibility,
   loading,
   loadingLabel = "Loading…",
   emptyIcon: EmptyIcon,
   emptyTitle,
   emptyDescription,
+  onRowClick,
 }: AdminDataTableProps<TData>) {
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    state: columnVisibility ? { columnVisibility } : undefined,
   });
 
   if (loading) {
@@ -72,55 +90,49 @@ export function AdminDataTable<TData>({
   }
 
   return (
-    <div className="min-h-0 min-w-0 flex-1 overflow-auto rounded-2xl border border-border/60 bg-card shadow-sm">
-      <table className={cn("w-full", colWidths && "table-fixed")}>
-        {colWidths ? (
-          <colgroup>
-            {colWidths.map((w, i) => (
-              <col key={i} style={{ width: w }} />
-            ))}
-          </colgroup>
-        ) : null}
-        <thead>
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+      <Table className="table-auto">
+        <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="border-b border-border/70">
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="sticky top-0 z-10 bg-muted/95 px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur supports-[backdrop-filter]:bg-muted/80"
-                >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                </th>
-              ))}
-            </tr>
+            <TableRow key={headerGroup.id} className="border-border/70 hover:bg-transparent">
+              {headerGroup.headers.map((header) => {
+                const meta = getColumnMeta(header.column.columnDef.meta);
+                return (
+                  <TableHead
+                    key={header.id}
+                    className={cn(headClass, "h-10 p-0 px-1.5", meta.headerClassName)}
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
+                );
+              })}
+            </TableRow>
           ))}
-        </thead>
-        <tbody className="divide-y divide-border/60">
+        </TableHeader>
+        <TableBody>
           {table.getRowModel().rows.map((row) => (
-            <tr
+            <TableRow
               key={row.id}
-              className="group transition-colors hover:bg-muted/40"
+              className={cn(onRowClick && "cursor-pointer")}
+              onClick={onRowClick ? () => onRowClick(row.original) : undefined}
             >
-              {row.getVisibleCells().map((cell) => (
-                <td
-                  key={cell.id}
-                  className={cn(
-                    "px-4 py-3.5",
-                    clipColumnId && cell.column.id === clipColumnId && "overflow-hidden"
-                  )}
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
+              {row.getVisibleCells().map((cell) => {
+                const meta = getColumnMeta(cell.column.columnDef.meta);
+                return (
+                  <TableCell
+                    key={cell.id}
+                    className={cn("p-0 px-1.5 py-2.5", meta.cellClassName)}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
     </div>
   );
 }

@@ -1,103 +1,65 @@
-import { Button } from "@/shared/components/ui/button";
-import { useSearchURL } from "@/features/search/hooks/useSearchURL";
-import { useSearchStore } from "@/features/search/store/useSearchStore";
-import Link from "next/link";
+"use client";
+
 import { useRouter } from "next/navigation";
 
-// Define type for destination
-interface Destination {
-    name: string;
-    displayName: string;
-    params: string;
-}
+import { Button } from "@/shared/components/ui/button";
+import { useSearchURL } from "@/features/search/hooks/useSearchURL";
+
+const POPULAR_DESTINATIONS = [
+  {
+    name: "Miami",
+    params:
+      "near=Miami%2C%20FL%2C%20USA&ne_lat=25.8550&ne_lng=-80.1200&sw_lat=25.7090&sw_lng=-80.3200",
+  },
+  {
+    name: "Fort Lauderdale",
+    params: "near=Fort%20Lauderdale%2C%20FL%2C%20USA",
+  },
+  {
+    name: "Naples",
+    params: "near=Naples%2C%20FL%2C%20USA",
+  },
+] as const;
 
 export default function SearchResultsFallback() {
-    const { clearSearchParams } = useSearchURL();
-    const router = useRouter();
-    
-    // Get search store functions to update search state
-    const { 
-        setSearchValue, 
-        clearPlaceDetails,
-        clearSearchValue 
-    } = useSearchStore();
-    
-    // Popular destinations with Miami coordinates
-    const popularDestinations: Destination[] = [
-        { 
-            name: "Miami", 
-            displayName: "Miami, FL, USA",
-            params: "ne_lat=25.8550&ne_lng=-80.1200&sw_lat=25.7090&sw_lng=-80.3200" 
-        },
-        { 
-            name: "Fort Lauderdale", 
-            displayName: "Fort Lauderdale, FL, USA",
-            params: "near=Fort%20Lauderdale" 
-        },
-        { 
-            name: "Naples", 
-            displayName: "Naples, FL, USA",
-            params: "near=Naples%2C%20FL" 
-        }
-    ];
-    
-    // Handle destination click to update search store state
-    const handleDestinationClick = (destination: Destination) => {
-        // Update search value in store to match selected destination
-        setSearchValue(destination.displayName);
-        
-        // Navigate to the search URL
-        router.push(`/boats/search?${destination.params}`);
-    };
-    
-    // Reset all filters and search state
-    const handleResetAll = () => {
-        clearSearchParams();
-        clearSearchValue();
-        clearPlaceDetails();
-    };
-    
-    return (
-        <div className="pt-32 pb-20 text-center max-w-2xl mx-auto px-4">
-            <div className="mb-8 mx-auto h-px w-16 bg-primary/20" />
-            
-            <h3 className="text-2xl font-medium text-primary mb-4">The water awaits, but no boats here</h3>
-            
-            <p className="text-primary/70 max-w-md mx-auto mb-10">
-                We couldn't find any boats matching your current filters. Let's find you the perfect vessel.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
-                <Button 
-                    onClick={handleResetAll}
-                    className="bg-primary hover:bg-primary/90 text-white"
-                >
-                    Reset All Filters
-                </Button>
-                
-                <Button 
-                    variant="outline"
-                    onClick={() => window.history.back()}
-                    className="border-primary/20 text-primary hover:bg-primary/5"
-                >
-                    Go Back
-                </Button>
-            </div>
-            
-            <div>
-                <p className="text-sm text-primary/80 mb-4">Discover popular destinations</p>
-                <div className="flex flex-wrap gap-3 justify-center">
-                    {popularDestinations.map((destination) => (
-                        <button
-                            key={destination.name}
-                            onClick={() => handleDestinationClick(destination)}
-                            className="px-4 py-2 bg-primary/5 hover:bg-primary/10 text-primary rounded-md text-sm transition-colors"
-                        >
-                            {destination.name}
-                        </button>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
+  const { clearSearchParams } = useSearchURL();
+  const router = useRouter();
+
+  return (
+    <div className="py-16 text-center">
+      <h3 className="mb-2 text-xl font-semibold text-foreground">
+        No boats match your search
+      </h3>
+      <p className="mx-auto mb-8 max-w-md text-sm text-muted-foreground">
+        Try adjusting your filters or exploring a popular destination.
+      </p>
+
+      <div className="mb-10 flex flex-col justify-center gap-3 sm:flex-row">
+        <Button onClick={clearSearchParams} className="rounded-full">
+          Clear all filters
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => window.history.back()}
+          className="rounded-full"
+        >
+          Go back
+        </Button>
+      </div>
+
+      <p className="mb-3 text-sm text-muted-foreground">Popular destinations</p>
+      <div className="flex flex-wrap justify-center gap-2">
+        {POPULAR_DESTINATIONS.map((dest) => (
+          <button
+            key={dest.name}
+            type="button"
+            onClick={() => router.push(`/boats/search?${dest.params}`)}
+            className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-foreground transition hover:border-gray-300 hover:bg-gray-50"
+          >
+            {dest.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }

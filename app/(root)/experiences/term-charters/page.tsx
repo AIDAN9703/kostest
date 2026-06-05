@@ -6,7 +6,7 @@ import { db } from "@/database/db";
 import { boats } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
 import { BoatWithTiers } from "@/features/boats/boat.types";
-import BoatCard from "@/shared/components/ui/boat-card";
+import BoatListingCard from "@/features/boats/components/BoatListingCard";
 
 export const metadata: Metadata = {
   title: "Term Charter Adventures | KOS",
@@ -215,11 +215,12 @@ export default async function TermChartersPage() {
                 className="animate-fade-in-up"
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <BoatCard
+                <BoatListingCard
                   boat={boat}
+                  index={index}
+                  size="md"
                   showPrice={false}
                   showRating={false}
-                  className="text-xs"
                 />
               </div>
             ))}

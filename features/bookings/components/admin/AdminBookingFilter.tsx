@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { useQueryStates } from "nuqs";
-import Link from "next/link";
 import {
   Calendar as CalendarIcon,
   CalendarDays,
@@ -12,7 +11,6 @@ import {
   Filter,
   LayoutList,
   MessageSquare,
-  Plus,
   User,
   X,
 } from "lucide-react";
@@ -33,6 +31,8 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { cn } from "@/shared/lib/utils/general-utils";
+import { NewBookingModal } from "@/features/bookings/components/admin/new-booking-modal";
+import type { PricingTierOption } from "@/features/bookings/components/admin/booking-forms/types";
 
 type AdminOption = {
   id: string;
@@ -68,7 +68,13 @@ function getAdminLabel(admin: AdminOption | undefined): string {
   return name || admin.email || admin.username || "Unknown";
 }
 
-export function AdminBookingFilter({ admins }: { admins: AdminOption[] }) {
+export function AdminBookingFilter({
+  admins,
+  pricingTiers,
+}: {
+  admins: AdminOption[];
+  pricingTiers: PricingTierOption[];
+}) {
   const { activeTheme } = useThemeConfig();
   const [filters, setFilters] = useQueryStates(bookingSearchParams, {
     clearOnDefault: true,
@@ -124,12 +130,16 @@ export function AdminBookingFilter({ admins }: { admins: AdminOption[] }) {
         activeCount={activeFilterCount > 0 ? activeFilterCount : undefined}
         trailing={
           <>
-            <Button asChild size="sm" className="h-9 gap-1.5">
-              <Link href="/admin/bookings/create">
-                <Plus className="h-3.5 w-3.5" />
-                New booking
-              </Link>
-            </Button>
+            <NewBookingModal
+              pricingTiers={pricingTiers}
+              triggerLabel="Add booking"
+              defaultOpen={filters.newBooking === true}
+              onCloseComplete={() => {
+                if (filters.newBooking) {
+                  setFilters({ newBooking: null });
+                }
+              }}
+            />
             <div
               role="tablist"
               aria-label="Bookings view"

@@ -5,6 +5,7 @@ import { users, captainProfiles, crewProfiles, ownerProfiles } from "@/database/
 import { eq } from "drizzle-orm"
 import { db } from "@/database/db"
 import Google from "next-auth/providers/google"
+import { verifyPhoneBookingProof } from "@/shared/lib/auth/phone-booking-proof"
 
 // Helper function to check if user has captain/owner profiles
 async function getUserProfiles(userId: string) {
@@ -49,6 +50,55 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Google({
       clientId: process.env.AUTH_GOOGLE_ID!,
       clientSecret: process.env.AUTH_GOOGLE_SECRET!,
+    }),
+    CredentialsProvider({
+      id: "phone-booking",
+      credentials: {
+        proof: { type: "text" },
+      },
+      async authorize(credentials) {
+        const proof = credentials?.proof?.toString();
+        if (!proof) return null;
+
+        const verified = verifyPhoneBookingProof(proof);
+        if (!verified) return null;
+
+        const user = await db
+          .select({
+            id: users.id,
+            email: users.email,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            isAdmin: users.isAdmin,
+            phoneNumber: users.phoneNumber,
+            phoneVerified: users.phoneVerified,
+            profileImage: users.profileImage,
+          })
+          .from(users)
+          .where(eq(users.id, verified.userId))
+          .limit(1);
+
+        if (user.length === 0 || user[0].phoneNumber !== verified.phone) {
+          return null;
+        }
+
+        const profiles = await getUserProfiles(user[0].id);
+
+        return {
+          id: user[0].id.toString(),
+          email: user[0].email,
+          name: `${user[0].firstName} ${user[0].lastName}`.trim(),
+          isAdmin: user[0].isAdmin,
+          isCaptain: profiles.isCaptain,
+          captainStatus: profiles.captainStatus,
+          isCrew: profiles.isCrew,
+          crewStatus: profiles.crewStatus,
+          isOwner: profiles.isOwner,
+          phoneNumber: user[0].phoneNumber || "",
+          phoneVerified: user[0].phoneVerified || false,
+          profileImage: user[0].profileImage || "",
+        } as User;
+      },
     }),
     CredentialsProvider({
       id: "credentials",

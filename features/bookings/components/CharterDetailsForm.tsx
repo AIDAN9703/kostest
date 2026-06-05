@@ -1,35 +1,32 @@
 "use client";
 
-import React from "react";
+import { Switch } from "@/shared/components/ui/switch";
 
 export default function CharterDetailsForm() {
   return (
-    <div className="space-y-4">
-      <h4 className="font-semibold text-gray-900">Charter details</h4>
-      
-      {/* Checkboxes */}
-      <div className="space-y-3">
-        <label className="flex items-start gap-3">
-          <input 
-            type="checkbox" 
-            className="mt-1 rounded border-gray-300 text-red-600 focus:ring-red-500" 
-            defaultChecked 
-          />
-          <span className="text-sm text-gray-700">
-            Sign me up to receive charter offers and news from this marina by email.
+    <section className="space-y-4">
+      <div>
+        <h3 className="text-sm font-medium text-foreground">Preferences</h3>
+        <p className="mt-0.5 text-sm text-muted-foreground">
+          Optional — you can change these anytime in your account.
+        </p>
+      </div>
+
+      <div>
+        <label className="flex cursor-pointer items-center justify-between gap-4 py-3">
+          <span className="text-sm text-foreground">
+            Email me charter offers and news
           </span>
+          <Switch defaultChecked aria-label="Email offers and news" />
         </label>
-        
-        <label className="flex items-start gap-3">
-          <input 
-            type="checkbox" 
-            className="mt-1 rounded border-gray-300 text-red-600 focus:ring-red-500" 
-          />
-          <span className="text-sm text-gray-700">
-            Yes, I want to get text updates and reminders about my charters.
+
+        <label className="flex cursor-pointer items-center justify-between gap-4 py-3">
+          <span className="text-sm text-foreground">
+            Text me updates and reminders
           </span>
+          <Switch aria-label="Text updates and reminders" />
         </label>
       </div>
-    </div>
+    </section>
   );
 }

@@ -33,8 +33,11 @@ DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content> & {
+    /** Override the grab-handle styling (e.g. a gradient). Defaults to a muted bar. */
+    handleClassName?: string;
+  }
+>(({ className, children, handleClassName, ...props }, ref) => (
   <DrawerPortal>
     <DrawerOverlay />
     <DrawerPrimitive.Content
@@ -45,7 +48,7 @@ const DrawerContent = React.forwardRef<
       )}
       {...props}
     >
-      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
+      <div className={cn("mx-auto mt-3 h-1.5 w-12 rounded-full bg-muted", handleClassName)} />
       {children}
     </DrawerPrimitive.Content>
   </DrawerPortal>

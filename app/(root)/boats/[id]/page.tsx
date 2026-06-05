@@ -1,8 +1,7 @@
 import { getBoatById } from "@/features/boats/actions/boat-actions";
 import { notFound } from "next/navigation";
 import BoatDetails from "@/features/listing/components/BoatDetails";
-import { RequestBookingForm, InstantBookingForm } from "@/features/listing/components/booking-form";
-import { MobileBookingBar } from "@/features/listing/components/booking-form/MobileBookingBar";
+import { BookingForm, MobileBookingDrawer } from "@/features/listing/components/booking-form/v2";
 import { ImageGallery } from "@/features/listing/components/sub-components/ImageGallery";
 import { Metadata } from "next";
 import { and, eq } from "drizzle-orm";
@@ -202,29 +201,23 @@ export default async function BoatPage({ params }: BoatPageProps) {
 
           {/* Content section */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 sm:py-8 py-4">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-10">
-              <div className="lg:col-span-8">
+            <div className="grid grid-cols-1 lg:grid-cols-[5fr_3fr] gap-8 xl:gap-10">
+              <div>
                 <BoatDetails boat={boat} />
               </div>
 
-              {/* Desktop booking form - hidden on mobile, shown on lg+ screens */}
-              <aside className="lg:col-span-4 hidden md:block lg:-mt-16 xl:-mt-24 relative z-20">
+              {/* Desktop booking form - hidden on mobile, shown on md+ screens */}
+              <aside className="hidden md:block lg:-mt-16 xl:-mt-24 relative z-20">
                 <div className="sticky top-24">
-                  <div className="bg-white rounded-xl shadow-xl overflow-hidden">
-                    {boat.instantBook ? (
-                      <InstantBookingForm boat={boat} />
-                    ) : (
-                      <RequestBookingForm boat={boat} />
-                    )}
-                  </div>
+                  <BookingForm boat={boat} />
                 </div>
               </aside>
             </div>
           </div>
 
-          {/* Mobile booking bar - shown on mobile, hidden on lg+ screens */}
+          {/* Mobile booking bar - shown on mobile, hidden on md+ screens */}
           <div className="md:hidden">
-            <MobileBookingBar boat={boat} />
+            <MobileBookingDrawer boat={boat} />
           </div>
         </main>
       </>

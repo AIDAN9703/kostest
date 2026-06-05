@@ -20,8 +20,6 @@ import { useDeleteBlogPost } from "@/features/blog/hooks/useBlogMutations";
 import { useToast } from "@/shared/lib/hooks/use-toast";
 import { AdminDataTable } from "@/shared/admin/components/AdminDataTable";
 
-const COL_WIDTHS = ["30%", "10%", "14%", "14%", "12%", "8%", "12%"];
-
 const categoryLabels: Record<string, string> = {
   FLEET_NEWS: "Fleet News",
   CONSERVATION: "Conservation",
@@ -215,8 +213,6 @@ export function AdminBlogsTable({ posts, loading }: AdminBlogsTableProps) {
     <AdminDataTable
       data={posts}
       columns={columns}
-      colWidths={COL_WIDTHS}
-      clipColumnId="post"
       loading={loading}
       loadingLabel="Loading posts…"
       emptyIcon={FileText}

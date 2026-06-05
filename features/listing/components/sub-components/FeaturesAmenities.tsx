@@ -2,112 +2,57 @@
 
 import { useState } from "react";
 import { Boat } from "@/shared/lib/types/types";
-import {
-  CheckCircle2,
-  Waves,
-  ShieldAlert,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
-import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/shared/lib/utils/general-utils";
+import { CheckList } from "./detail-ui";
 
 interface FeaturesAmenitiesProps {
   boat: Boat;
 }
 
+const INITIAL = 9;
+
 export function FeaturesAmenities({ boat }: FeaturesAmenitiesProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const toggleExpanded = () => {
-    setIsExpanded((prev) => !prev);
-  };
-
-  // Define the number of items to show per category when collapsed
-  const initialVisibleCount = 6;
-
-  // Categorize features for better organization
+  const [expanded, setExpanded] = useState(false);
   const features = boat.features || [];
-  const safetyEquipment = boat.safetyEquipment || [];
+  const safety = boat.safetyEquipment || [];
 
-  if (features.length === 0 && safetyEquipment.length === 0) {
-    return null;
-  }
+  if (features.length === 0 && safety.length === 0) return null;
 
-  const visibleFeatures = isExpanded
-    ? features
-    : features.slice(0, initialVisibleCount);
-  const visibleSafetyItems = isExpanded
-    ? safetyEquipment
-    : safetyEquipment.slice(0, initialVisibleCount);
-
-  // Determine if we need a "Show More" button (if any category has more items than initialVisibleCount)
-  const needsShowMore =
-    features.length > initialVisibleCount ||
-    safetyEquipment.length > initialVisibleCount;
+  const visFeatures = expanded ? features : features.slice(0, INITIAL);
+  const visSafety = expanded ? safety : safety.slice(0, INITIAL);
+  const needsToggle = features.length > INITIAL || safety.length > INITIAL;
 
   return (
-    <div>
-      <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-        Features & Amenities
-      </h2>
-
-      {/* Features Section */}
+    <div className="space-y-6">
       {features.length > 0 && (
-        <div className="mb-8">
-          <h3 className="flex items-center gap-2 text-lg font-medium text-gray-900 mb-4">
-            <Waves className="h-5 w-5 text-primary" />
-            Features
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-8">
-            {visibleFeatures.map((feature, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
-                <span className="text-gray-700">{feature}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Safety Equipment Section */}
-      {safetyEquipment.length > 0 && (
         <div>
-          <h3 className="flex items-center gap-2 text-lg font-medium text-gray-900 mb-4">
-            <ShieldAlert className="h-5 w-5 text-primary" />
-            Safety Equipment
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Features &amp; amenities
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-3 gap-x-8">
-            {visibleSafetyItems.map((item, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
-                <span className="text-gray-700">{item}</span>
-              </div>
-            ))}
-          </div>
+          <CheckList items={visFeatures} />
         </div>
       )}
 
-      {/* Show More / Show Less Button */}
-      {needsShowMore && (
-        <div className="flex justify-center mt-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleExpanded}
-            className="text-primary flex items-center gap-1 hover:bg-primary/5"
-          >
-            {isExpanded ? (
-              <>
-                Show Less <ChevronUp className="h-4 w-4" />
-              </>
-            ) : (
-              <>
-                Show More <ChevronDown className="h-4 w-4" />
-              </>
-            )}
-          </Button>
+      {safety.length > 0 && (
+        <div>
+          <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Safety equipment
+          </h3>
+          <CheckList items={visSafety} />
         </div>
+      )}
+
+      {needsToggle && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="inline-flex items-center gap-1 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
+        >
+          {expanded ? "Show less" : "Show everything"}
+          <ChevronDown className={cn("size-4 transition-transform", expanded && "rotate-180")} />
+        </button>
       )}
     </div>
   );

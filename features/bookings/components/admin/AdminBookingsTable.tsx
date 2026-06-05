@@ -1,14 +1,9 @@
 "use client";
 
 import React, { useState, useMemo, useCallback } from "react";
+import type { VisibilityState } from "@tanstack/react-table";
 import { useRouter } from "next/navigation";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-  createColumnHelper,
-  type ColumnDef,
-} from "@tanstack/react-table";
+import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/shared/components/ui/button";
 import {
   DropdownMenu,
@@ -31,9 +26,9 @@ import {
   XCircle,
   UserCheck,
   Phone,
+  Plus,
   Copy,
   Check,
-  Plus,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -56,9 +51,11 @@ import {
   type CaptainAssignmentOption,
 } from "@/features/bookings/components/admin/OpsCaptainAssignment";
 import { computeOpsRevenueCents } from "@/shared/lib/utils/ops-revenue";
+import { AdminDataTable } from "@/shared/admin/components/AdminDataTable";
+import { useMediaQuery } from "@/shared/lib/hooks/use-media-query";
 
 const tableInlineActionClass =
-  "inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground";
+  "inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md border border-dashed border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground";
 
 function titleCase(value: string) {
   return value
@@ -84,12 +81,10 @@ function getDisplayAmountCents(b: BookingListItem): number {
 
 interface CopyableTextProps {
   value: string;
-  /** Optional label used in the tooltip — e.g. "email", "phone". */
   label?: string;
   className?: string;
 }
 
-/** Compact muted line that copies its value with a tiny icon (visible on hover, persists ~1.5s after copy). */
 function CopyableText({ value, label, className }: CopyableTextProps) {
   const [copied, setCopied] = useState(false);
   const handleCopy = async (e: React.MouseEvent) => {
@@ -100,7 +95,7 @@ function CopyableText({ value, label, className }: CopyableTextProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      /* clipboard blocked — silent */
+      /* clipboard blocked */
     }
   };
 
@@ -111,8 +106,8 @@ function CopyableText({ value, label, className }: CopyableTextProps) {
       title={copied ? "Copied!" : `Copy ${label ?? value}`}
       aria-label={copied ? "Copied to clipboard" : `Copy ${label ?? value}`}
       className={cn(
-        "group/copy inline-flex max-w-full items-center gap-1.5 rounded-md px-1 -mx-1 py-0.5 text-left text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground",
-        className
+        "group/copy inline-flex max-w-full items-center gap-1 rounded-md px-0.5 py-0.5 text-left text-xs text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground",
+        className,
       )}
     >
       <span className="truncate">{value}</span>
@@ -122,21 +117,6 @@ function CopyableText({ value, label, className }: CopyableTextProps) {
         <Copy className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover/copy:opacity-100" />
       )}
     </button>
-  );
-}
-
-/** table-fixed column sizing — keeps date legible; customer/boat truncate instead of forcing horizontal scroll */
-function bookingTableCellClass(columnId: string) {
-  return cn(
-    "px-2 py-3 align-middle sm:px-3 lg:px-4 lg:py-3.5",
-    columnId === "date" && "w-[8.75rem] max-w-[8.75rem]",
-    columnId === "customerName" && "max-w-0 overflow-hidden",
-    columnId === "boatName" && "max-w-0 min-w-[8.5rem] overflow-hidden",
-    columnId === "captain" && "hidden max-w-0 lg:table-cell",
-    (columnId === "totalAmountCents" || columnId === "revenue") && "whitespace-nowrap",
-    columnId === "source" && "hidden max-w-0 xl:table-cell",
-    columnId === "assignedAdmin" && "hidden max-w-0 lg:table-cell",
-    columnId === "actions" && "w-11 max-w-11 px-1"
   );
 }
 
@@ -157,6 +137,12 @@ interface AdminBookingsTableProps {
 
 const columnHelper = createColumnHelper<BookingListItem>();
 
+/** Full-width tables stretch columns by default; w-0 hugs content instead of leaving dead space. */
+const shrinkColumnMeta = {
+  headerClassName: "w-0",
+  cellClassName: "w-0",
+} as const;
+
 export function AdminBookingsTable({
   bookings,
   loading = false,
@@ -168,6 +154,18 @@ export function AdminBookingsTable({
   const deleteBooking = useDeleteBooking();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [expensesModalBooking, setExpensesModalBooking] = useState<BookingListItem | null>(null);
+
+  const isLg = useMediaQuery("(min-width: 1024px)");
+  const isXl = useMediaQuery("(min-width: 1280px)");
+
+  const columnVisibility = useMemo<VisibilityState>(
+    () => ({
+      captain: isLg,
+      assignedAdmin: isLg,
+      source: isXl,
+    }),
+    [isLg, isXl],
+  );
 
   const admins = adminsProp;
 
@@ -261,6 +259,7 @@ export function AdminBookingsTable({
       columnHelper.accessor("startDateTime", {
         id: "date",
         header: "Date",
+        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(
@@ -284,18 +283,19 @@ export function AdminBookingsTable({
       }),
       columnHelper.accessor("customerName", {
         header: "Customer",
+        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           const displayName = booking.customerName || booking.userEmail || "Unknown";
           return (
-            <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
-              <div className="hidden h-8 w-8 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60 sm:block">
+            <div className="flex items-center gap-1.5">
+              <div className="hidden h-7 w-7 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60 sm:block">
                 {booking.userProfileImage ? (
                   <Image
                     src={booking.userProfileImage}
                     alt={displayName}
-                    width={32}
-                    height={32}
+                    width={28}
+                    height={28}
                     className="h-full w-full object-cover"
                   />
                 ) : (
@@ -304,7 +304,7 @@ export function AdminBookingsTable({
                   </div>
                 )}
               </div>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 max-w-[12rem]">
                 <div className="truncate text-sm font-medium leading-tight text-foreground">
                   {displayName}
                 </div>
@@ -329,31 +329,30 @@ export function AdminBookingsTable({
       }),
       columnHelper.accessor("boatName", {
         header: "Boat",
+        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           return (
-            <div className="flex min-w-0 items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {booking.boatMainImage ? (
-                <div className="hidden h-8 w-8 shrink-0 overflow-hidden rounded-md bg-muted ring-1 ring-border/60 md:block">
+                <div className="hidden h-7 w-7 shrink-0 overflow-hidden rounded-md bg-muted ring-1 ring-border/60 md:block">
                   <Image
                     src={booking.boatMainImage}
                     alt={booking.boatName || "Boat"}
-                    width={32}
-                    height={32}
+                    width={28}
+                    height={28}
                     className="h-full w-full object-cover"
                   />
                 </div>
               ) : null}
-              <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                <span className="truncate text-sm font-medium text-foreground">
-                  {booking.boatName || "Unknown"}
+              <span className="block max-w-[12rem] truncate text-sm font-medium text-foreground">
+                {booking.boatName || "Unknown"}
+              </span>
+              {booking.bookingGroupId ? (
+                <span className="shrink-0 rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+                  Group
                 </span>
-                {booking.bookingGroupId ? (
-                  <span className="inline-flex max-w-[5.5rem] shrink-0 items-center truncate rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
-                    {booking.bookingGroupName || "Group"}
-                  </span>
-                ) : null}
-              </div>
+              ) : null}
             </div>
           );
         },
@@ -361,6 +360,7 @@ export function AdminBookingsTable({
       columnHelper.display({
         id: "captain",
         header: "Captain",
+        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           const captainOptions = [...captainsProp];
@@ -390,6 +390,7 @@ export function AdminBookingsTable({
       }),
       columnHelper.accessor("totalAmountCents", {
         header: "GMV",
+        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           const amount = getDisplayAmountCents(booking);
@@ -398,13 +399,13 @@ export function AdminBookingsTable({
             booking.opsGmvCents > 0 &&
             booking.opsGmvCents !== booking.totalAmountCents;
           return (
-            <div className="text-sm">
+            <div className="whitespace-nowrap text-sm">
               <div className="font-semibold tabular-nums text-foreground">
                 {formatCentsAsCurrency(amount, { currency: booking.currency ?? "USD" })}
               </div>
               {usesOpsOverride && (
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                  Ops override
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                  Override
                 </div>
               )}
             </div>
@@ -414,6 +415,7 @@ export function AdminBookingsTable({
       columnHelper.display({
         id: "revenue",
         header: "Revenue",
+        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           const expenseCents = booking.opsExpenseCents;
@@ -427,10 +429,10 @@ export function AdminBookingsTable({
                   setExpensesModalBooking(booking);
                 }}
                 className={tableInlineActionClass}
-                title="No expenses entered — add to calculate revenue"
+                title="Add expenses to calculate revenue"
               >
-                <Plus className="h-3 w-3" />
-                Add expenses
+                <Plus className="h-3 w-3 shrink-0" />
+                Add
               </button>
             );
           }
@@ -448,12 +450,12 @@ export function AdminBookingsTable({
                 e.stopPropagation();
                 setExpensesModalBooking(booking);
               }}
-              className="text-left text-sm transition-colors hover:opacity-80"
+              className="whitespace-nowrap text-left text-sm transition-colors hover:opacity-80"
               title="Edit expense breakdown"
             >
               <div
                 className={cn(
-                  "font-semibold tabular-nums",
+                  "font-semibold tabular-nums whitespace-nowrap",
                   isNegative
                     ? "text-rose-700 dark:text-rose-400"
                     : "text-emerald-700 dark:text-emerald-400"
@@ -470,22 +472,21 @@ export function AdminBookingsTable({
       columnHelper.display({
         id: "source",
         header: "Source",
+        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           const source = getDisplaySource(booking);
           return (
-            <div className="min-w-0 text-sm">
-              <div className="truncate text-foreground">{source}</div>
-              {booking.opsAgentCode ? (
-                <div className="truncate text-xs text-muted-foreground">{booking.opsAgentCode}</div>
-              ) : null}
-            </div>
+            <span className="block max-w-[5.5rem] truncate text-sm text-foreground">
+              {source}
+            </span>
           );
         },
       }),
       columnHelper.display({
         id: "assignedAdmin",
-        header: "Assigned Admin",
+        header: "Admin",
+        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           if (!booking.assignedAdminId) {
@@ -495,12 +496,18 @@ export function AdminBookingsTable({
             booking.assignedAdminFirstName || booking.assignedAdminLastName
               ? `${booking.assignedAdminFirstName || ""} ${booking.assignedAdminLastName || ""}`.trim()
               : booking.assignedAdminEmail || "Unknown";
-          return <div className="truncate text-sm font-medium text-foreground">{adminName}</div>;
+          return (
+            <span className="block max-w-[5.5rem] truncate text-sm font-medium text-foreground">
+              {adminName}
+            </span>
+          );
         },
       }),
       columnHelper.display({
         id: "actions",
         header: "",
+        enableHiding: false,
+        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           const isPendingRequest =
@@ -626,82 +633,19 @@ export function AdminBookingsTable({
     ]
   );
 
-  const table = useReactTable({
-    data: bookings,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  if (loading) {
-    return (
-      <div className="flex min-h-0 flex-1 items-center justify-center rounded-2xl border border-border/60 bg-card">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-border border-t-primary" />
-          <p className="text-sm text-muted-foreground">Loading bookings…</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!bookings || bookings.length === 0) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center rounded-2xl border border-dashed border-border/70 bg-card/50 p-8 text-center">
-        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-          <CalendarCheck className="h-7 w-7 text-muted-foreground" />
-        </div>
-        <h3 className="mb-1 text-lg font-semibold text-foreground">No bookings found</h3>
-        <p className="max-w-sm text-sm text-muted-foreground">
-          Try adjusting your filters or check back later.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <>
-      <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-        <table className="w-full table-fixed">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="border-b border-border/70">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className={cn(
-                      "sticky top-0 z-10 bg-muted/95 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur supports-[backdrop-filter]:bg-muted/80",
-                      bookingTableCellClass(header.column.id)
-                    )}
-                  >
-                    {header.isPlaceholder ? null : (
-                      <div className="truncate">
-                        {flexRender(header.column.columnDef.header, header.getContext())}
-                      </div>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody className="divide-y divide-border/60">
-            {table.getRowModel().rows.map((row) => {
-              const booking = row.original;
-              return (
-                <tr
-                  key={row.id}
-                  onClick={() => router.push(`/admin/bookings/${booking.id}`)}
-                  className="cursor-pointer transition-colors hover:bg-muted/40"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className={bookingTableCellClass(cell.column.id)}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <AdminDataTable
+        data={bookings}
+        columns={columns}
+        columnVisibility={columnVisibility}
+        loading={loading}
+        loadingLabel="Loading bookings…"
+        emptyIcon={CalendarCheck}
+        emptyTitle="No bookings found"
+        emptyDescription="Try adjusting your filters or check back later."
+        onRowClick={(booking) => router.push(`/admin/bookings/${booking.id}`)}
+      />
 
       {expensesModalBooking ? (
         <BookingExpensesModal

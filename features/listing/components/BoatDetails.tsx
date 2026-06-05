@@ -1,54 +1,79 @@
-"use client";
-
+import { Info, Sparkles, Navigation, Ship, ClipboardCheck, BadgeInfo } from "lucide-react";
 import { Boat } from "@/shared/lib/types/types";
-import { ImageGallery } from "./sub-components/ImageGallery";
 import { BasicInfo } from "./sub-components/BasicInfo";
 import { Description } from "./sub-components/Description";
 import { BoatSpecs } from "./sub-components/BoatSpecs";
 import { BookingDetails } from "./sub-components/BookingDetails";
 import { FeaturesAmenities } from "./sub-components/FeaturesAmenities";
-import { Reviews } from "./sub-components/Reviews";
+import { Destinations } from "./sub-components/Destinations";
+import { GoodToKnow } from "./sub-components/GoodToKnow";
+import { Section } from "./sub-components/detail-ui";
 
 interface BoatDetailsProps {
   boat: Boat;
 }
 
 export default function BoatDetails({ boat }: BoatDetailsProps) {
-  // Structure for consistent section spacing
-  const sectionClass = "border-t border-gray-200 py-4 sm:py-10";
+  const hasFeatures =
+    (boat.features?.length || 0) > 0 || (boat.safetyEquipment?.length || 0) > 0;
+  const hasDestinations = (boat.availableDestinations?.length || 0) > 0;
+  const hasSpecs = !!(
+    boat.make ||
+    boat.model ||
+    boat.yearBuilt ||
+    boat.lengthFt ||
+    boat.capacity ||
+    boat.sleeps ||
+    boat.bathrooms ||
+    boat.showers ||
+    boat.range
+  );
+  const hasGoodToKnow = !!(
+    boat.rules?.trim() ||
+    boat.specialInstructions?.trim() ||
+    boat.dockInfo?.trim() ||
+    boat.parkingInfo?.trim()
+  );
+
+  const sections = [
+    <Section key="about" title="About this charter" icon={<Info className="size-4" />}>
+      <Description boat={boat} />
+    </Section>,
+    hasFeatures && (
+      <Section key="offers" title="What this charter offers" icon={<Sparkles className="size-4" />}>
+        <FeaturesAmenities boat={boat} />
+      </Section>
+    ),
+    hasDestinations && (
+      <Section key="destinations" title="Where you can cruise" icon={<Navigation className="size-4" />}>
+        <Destinations boat={boat} />
+      </Section>
+    ),
+    hasSpecs && (
+      <Section key="specs" title="Vessel specifications" icon={<Ship className="size-4" />}>
+        <BoatSpecs boat={boat} />
+      </Section>
+    ),
+    <Section key="booking" title="Booking information" icon={<ClipboardCheck className="size-4" />}>
+      <BookingDetails boat={boat} />
+    </Section>,
+    hasGoodToKnow && (
+      <Section key="good-to-know" title="Good to know" icon={<BadgeInfo className="size-4" />}>
+        <GoodToKnow boat={boat} />
+      </Section>
+    ),
+  ].filter(Boolean);
 
   return (
     <article>
-      {/* Image Gallery */}
-
-      <header>
-        <BasicInfo boat={boat} />
-      </header>
-
-      {/* Description */}
-      <section className={sectionClass}>
-        <Description boat={boat} />
-      </section>
-
-      {/* Vessel Specifications */}
-      <section className={sectionClass}>
-        <BoatSpecs boat={boat} />
-      </section>
-
-      {/* Booking Requirements */}
-      <section className={sectionClass}>
-        <BookingDetails boat={boat} />
-      </section>
-
-      {/* Features & Amenities */}
-      <section className={sectionClass}>
-        <FeaturesAmenities boat={boat} />
-      </section>
-
-      {/* Reviews */}
-      <section className={sectionClass}>
-        <Reviews boat={boat} />
-      </section>
+      <BasicInfo boat={boat} />
+      <div className="mt-6 divide-y divide-border">
+        {sections.map((node, i) => (
+          <div key={i} className="py-6 first:pt-0">
+            {node}
+          </div>
+        ))}
+      </div>
     </article>
   );
 }

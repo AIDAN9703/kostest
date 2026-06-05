@@ -1,7 +1,9 @@
 "use client";
 
-import React from "react";
+import { Loader2 } from "lucide-react";
+
 import { Button } from "@/shared/components/ui/button";
+import { cn } from "@/shared/lib/utils/general-utils";
 
 interface BookingSubmitButtonProps {
   user?: {
@@ -13,8 +15,9 @@ interface BookingSubmitButtonProps {
   };
   isSubmitting: boolean;
   onSubmit: (paymentMethod: "request" | "instant") => void;
-  /** When not signed in, opens booking auth (modal) instead of submitting */
   onNeedAuth?: () => void;
+  layout?: "stack" | "bar";
+  className?: string;
 }
 
 export default function BookingSubmitButton({
@@ -23,6 +26,8 @@ export default function BookingSubmitButton({
   isSubmitting,
   onSubmit,
   onNeedAuth,
+  layout = "stack",
+  className,
 }: BookingSubmitButtonProps) {
   const needsAuth = !user;
   const isDisabled = isSubmitting;
@@ -35,89 +40,91 @@ export default function BookingSubmitButton({
     onSubmit(method);
   };
 
+  const primaryLabel = boat.instantBook ? "Continue to Payment" : "Send Booking Request";
+  const primaryMethod = boat.instantBook ? "instant" : "request";
+
+  if (layout === "bar") {
+    return (
+      <Button
+        type="button"
+        onClick={() => handleClick(primaryMethod)}
+        disabled={isDisabled}
+        className={cn(
+          "h-11 w-auto shrink-0 whitespace-nowrap rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-primary/90",
+          isDisabled && "opacity-60",
+          className,
+        )}
+      >
+        {isSubmitting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          primaryLabel
+        )}
+      </Button>
+    );
+  }
+
   return (
-    <div className="mt-6 sm:mt-8">
-      <div className="space-y-3 sm:space-y-4">
-        {needsAuth && (
-          <p className="text-center text-sm text-gray-600 px-1">
-            Sign in to submit. Your charter details stay on this page.
-          </p>
-        )}
+    <div className={cn("space-y-3", className)}>
+      {boat.instantBook && (
+        <Button
+          type="button"
+          onClick={() => handleClick("instant")}
+          disabled={isDisabled}
+          className={cn(
+            "h-12 w-full rounded-full bg-primary text-base font-semibold text-white hover:bg-primary/90",
+            isDisabled && "opacity-60",
+          )}
+        >
+          {isSubmitting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            "Continue to Payment"
+          )}
+        </Button>
+      )}
 
-        {/* Instant Book Button */}
-        {boat.instantBook && (
-          <Button
-            type="button"
-            onClick={() => handleClick("instant")}
-            disabled={isDisabled}
-            className={`w-full h-12 sm:h-14 font-semibold text-base sm:text-lg rounded-lg transition-all duration-200 ${
-              needsAuth
-                ? "bg-emerald-600/90 hover:bg-emerald-600 text-white"
-                : "bg-emerald-500 hover:bg-emerald-600 text-white"
-            } ${isDisabled ? "opacity-60 cursor-not-allowed" : ""}`}
-          >
-            {isSubmitting ? (
-              <div className="flex items-center justify-center">
-                <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-                <span className="text-sm sm:text-base">Processing...</span>
-              </div>
-            ) : needsAuth ? (
-              "Sign in to pay"
-            ) : (
-              "Continue to Payment"
-            )}
-          </Button>
-        )}
-
-        {/* "Or" divider - only show when both buttons are present */}
-        {boat.instantBook && (
-          <div className="flex items-center justify-center pt-1">
-            <span className="text-sm text-gray-400 font-medium">or</span>
-          </div>
-        )}
-
-        {/* Request Booking Button */}
+      {boat.instantBook ? (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => handleClick("request")}
+          disabled={isDisabled}
+          className={cn(
+            "h-11 w-full rounded-full text-sm font-medium text-muted-foreground hover:bg-gray-50 hover:text-foreground",
+            isDisabled && "opacity-60",
+          )}
+        >
+          {isSubmitting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            "Send request instead"
+          )}
+        </Button>
+      ) : (
         <Button
           type="button"
           onClick={() => handleClick("request")}
           disabled={isDisabled}
-          variant="outline"
-          className={`w-full h-12 sm:h-14 font-semibold text-base sm:text-lg rounded-lg transition-all duration-200 ${
-            boat.instantBook ? "mt-1 sm:mt-2" : ""
-          } ${
-            needsAuth
-              ? "text-primary border-primary hover:bg-primary hover:text-white"
-              : "text-primary border-primary hover:bg-primary hover:text-white"
-          } ${isDisabled ? "opacity-60 cursor-not-allowed" : ""}`}
+          className={cn(
+            "h-12 w-full rounded-full bg-primary text-base font-semibold text-white hover:bg-primary/90",
+            isDisabled && "opacity-60",
+          )}
         >
           {isSubmitting ? (
-            <div className="flex items-center justify-center">
-              <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
-              <span className="text-sm sm:text-base">Processing...</span>
-            </div>
-          ) : needsAuth ? (
-            "Sign in to send request"
+            <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             "Send Booking Request"
           )}
         </Button>
+      )}
 
-        {/* Terms and Privacy */}
-        {user && (
-          <p className="text-xs sm:text-sm text-gray-500 text-center mt-3 sm:mt-4 px-2">
-            By submitting your booking you agree to the{" "}
-            <span className="text-primary underline hover:no-underline cursor-pointer">
-              Terms of Service
-            </span>{" "}
-            and{" "}
-            <span className="text-primary underline hover:no-underline cursor-pointer">
-              Privacy Policy
-            </span>
-            . Message & data rates may apply. You can opt out of receiving text messages at any time
-            in your account settings or by replying STOP.
-          </p>
-        )}
-      </div>
+      {user && (
+        <p className="px-1 text-center text-[11px] leading-relaxed text-muted-foreground">
+          By continuing you agree to our Terms of Service and Privacy Policy.
+          Message & data rates may apply.
+        </p>
+      )}
     </div>
   );
 }

@@ -239,7 +239,7 @@ export const ADMIN_QUICK_ACTIONS: AdminNavItem[] = [
   },
   {
     label: "Create Booking",
-    href: "/admin/bookings/create",
+    href: "/admin/bookings?newBooking=1",
     iconClassName: "h-4 w-4 text-blue-400",
   },
   {

@@ -21,7 +21,7 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
 
   // Only use Zustand for temporary autocomplete state (selectedPlace)
   // URL params are the source of truth for the actual search value
-  const { setSelectedPlace, setPlaceDetails } = useSearchStore();
+  const { setSelectedPlace } = useSearchStore();
 
   const router = useRouter();
   const { toast } = useToast();
@@ -50,11 +50,8 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
   };
 
   const handlePlaceSelected = (locationData: LocationData) => {
-    // Store temporary state for autocomplete (only needed until navigation)
     if (locationData.raw) {
       setSelectedPlace(locationData.raw);
-      setPlaceDetails(locationData.raw);
-      // Immediately navigate - URL becomes source of truth
       navigateToSearch(locationData.raw);
     }
   };
@@ -99,18 +96,16 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
     >
       <form
         className={cn(
-          "relative bg-white rounded-full border shadow-md transition-shadow duration-200 flex items-center",
-          isCompact && "shadow-sm",
+          "relative flex items-center rounded-full border border-gray-200",
+          isCompact ? "bg-gray-50" : "bg-white shadow-md",
         )}
         onSubmit={handleSubmit}
       >
-        {/* MapPin Icon */}
-        <div className="flex-shrink-0 pl-4">
-          <MapPin size={isCompact ? 20 : 22} className="text-slate-400" />
+        <div className="flex-shrink-0 pl-3.5">
+          <MapPin size={isCompact ? 18 : 22} className="text-slate-400" />
         </div>
 
-        {/* Input Container */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <CustomPlacesAutocomplete
             onPlaceSelected={handlePlaceSelected}
             onError={handleLocationError}
@@ -118,9 +113,9 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
               isCompact ? "Search location..." : "Where can we take you?"
             }
             className={cn(
-              "w-full bg-transparent font-normal text-black outline-none ring-0 ring-offset-0 focus:border-0 focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 border-0 shadow-none px-2",
+              "w-full border-0 bg-transparent px-2 font-normal text-black shadow-none outline-none ring-0 ring-offset-0 focus:border-0 focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0",
               isCompact
-                ? "min-h-11 h-11 text-base leading-normal"
+                ? "h-10 min-h-10 text-sm leading-normal"
                 : "h-12 text-base sm:h-14 md:text-lg",
             )}
             containerClassName="w-full"
@@ -131,16 +126,15 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
           />
         </div>
 
-        {/* Search Button */}
         <button
           type="submit"
-            className={cn(
-            "m-2 flex flex-shrink-0 items-center justify-center rounded-full bg-primary text-white transition-colors hover:bg-primary/90",
-            isCompact ? "h-10 min-h-10 w-10" : "h-12 w-12 sm:h-14 sm:w-14",
+          className={cn(
+            "flex flex-shrink-0 items-center justify-center rounded-full bg-primary text-white transition-colors hover:bg-primary/90",
+            isCompact ? "m-1.5 h-8 w-8" : "m-2 h-12 w-12 sm:h-14 sm:w-14",
           )}
           aria-label="Search"
         >
-          <Search size={isCompact ? 20 : 22} />
+          <Search size={isCompact ? 18 : 22} />
         </button>
       </form>
     </div>

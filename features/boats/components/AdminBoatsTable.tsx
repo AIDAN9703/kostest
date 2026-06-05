@@ -189,7 +189,6 @@ export function AdminBoatsTable({ boats, loading }: AdminBoatsTableProps) {
     <AdminDataTable
       data={boats}
       columns={columns}
-      clipColumnId="boat"
       loading={loading}
       loadingLabel="Loading boats…"
       emptyIcon={Anchor}
