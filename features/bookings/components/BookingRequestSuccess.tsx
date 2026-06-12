@@ -25,6 +25,12 @@ export interface RequestSuccessBooking {
   serviceFeeCents: number | null;
   totalAmountCents: number | null;
   currency: string;
+  addOns?: {
+    name: string;
+    quantity: number;
+    total: number;
+    isComplimentary?: boolean;
+  }[];
 }
 
 function fireConfetti() {
@@ -57,6 +63,11 @@ export default function BookingRequestSuccess({ booking }: { booking: RequestSuc
   const fmt = (cents: number | null | undefined) =>
     formatCentsAsCurrency(cents ?? 0, { currency: booking.currency });
 
+  const addOnRows = (booking.addOns ?? []).map((a) => ({
+    label: a.quantity > 1 ? `${a.name} × ${a.quantity}` : a.name,
+    value: a.isComplimentary ? "Included" : fmt(Math.round(a.total * 100)),
+  }));
+
   const rows = [
     booking.basePriceCents
       ? { label: "Charter", value: fmt(booking.basePriceCents) }
@@ -64,6 +75,7 @@ export default function BookingRequestSuccess({ booking }: { booking: RequestSuc
     booking.cleaningFeeCents
       ? { label: "Cleaning fee", value: fmt(booking.cleaningFeeCents) }
       : null,
+    ...addOnRows,
     booking.serviceFeeCents
       ? { label: "Card processing fee", value: fmt(booking.serviceFeeCents) }
       : null,

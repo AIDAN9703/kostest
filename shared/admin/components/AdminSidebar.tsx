@@ -15,7 +15,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/shared/components/ui/sidebar";
-import { adminThemedSidebarFrame } from "@/shared/admin/admin-themed-frame";
+import { adminThemedSidebarFrame } from "@/shared/admin/admin-header-chrome";
 import { ADMIN_NAV_ITEMS } from "@/shared/lib/constants/navigation-data";
 import { cn } from "@/shared/lib/utils/general-utils";
 import { LogOut } from "lucide-react";

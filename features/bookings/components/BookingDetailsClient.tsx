@@ -12,6 +12,7 @@ import KnowBeforeYouGo from "./KnowBeforeYouGo";
 import BookingPricingSection from "./BookingPricingSection";
 import BookingSubmitButton from "./BookingSubmitButton";
 import CharterDetailsForm from "./CharterDetailsForm";
+import { AddOnsPicker } from "@/features/listing/components/booking-form/v2/fields";
 import { useBoat } from "./BoatProvider";
 import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
 import { formatCurrency } from "@/shared/lib/utils/general-utils";
@@ -20,7 +21,16 @@ import { createInstantBooking } from "@/features/bookings/actions/instant";
 import { createBookingRequest } from "@/features/bookings/actions/request";
 import type { Session } from "next-auth";
 
-export default function BookingDetailsClient({ user }: { user: Session["user"] | null }) {
+export default function BookingDetailsClient({
+  user,
+  serviceFeeRate,
+  holdMinutes,
+}: {
+  user: Session["user"] | null;
+  /** Decimal service fee rate (e.g. 0.035) from app settings, fetched by the server page. */
+  serviceFeeRate: number;
+  holdMinutes: number;
+}) {
   const router = useRouter();
   const boat = useBoat();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,15 +38,70 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
     "menu" | "sign-in" | "sign-up" | null
   >(null);
 
-  const [bookingState] = useQueryStates({
+  const [bookingState, setBookingState] = useQueryStates({
     startDateTime: parseAsString,
     pricingTierId: parseAsString,
     numberOfPassengers: parseAsInteger.withDefault(1),
     needsCaptain: parseAsBoolean.withDefault(false),
+    addOns: parseAsString,
   });
 
-  const { startDateTime, pricingTierId, numberOfPassengers, needsCaptain } = bookingState;
+  const { startDateTime, pricingTierId, numberOfPassengers, needsCaptain, addOns } = bookingState;
   const isFormComplete = !!(startDateTime && pricingTierId && numberOfPassengers);
+
+  // Paid add-on selection from the URL ([{addOnId, quantity}]). Prices are
+  // always re-resolved on the server; this is only for the preview + payload.
+  const selectedAddOns = useMemo<{ addOnId: string; quantity: number }[]>(() => {
+    if (!addOns) return [];
+    try {
+      const parsed = JSON.parse(addOns);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }, [addOns]);
+
+  // Resolve against the boat's offerings for the displayed breakdown:
+  // complimentary auto-included + selected paid.
+  const previewAddOns = useMemo(() => {
+    const offered = (boat.boatAddOns ?? []).filter((a) => a.isActive);
+    const qtyById = new Map(selectedAddOns.map((s) => [s.addOnId, s.quantity]));
+    return offered
+      .map((a) => {
+        if (a.isComplimentary) {
+          return { name: a.name, quantity: 1, total: 0, isComplimentary: true };
+        }
+        const qty = qtyById.get(a.addOnId) ?? 0;
+        if (qty <= 0) return null;
+        return {
+          name: a.name,
+          quantity: qty,
+          total: (a.priceCents * qty) / 100,
+          isComplimentary: false,
+        };
+      })
+      .filter((x): x is { name: string; quantity: number; total: number; isComplimentary: boolean } => x !== null);
+  }, [boat.boatAddOns, selectedAddOns]);
+
+  // Interactive add-on selection lives on THIS page. Quantities are written back
+  // to the `addOns` URL param so they survive refresh + the sign-in round-trip.
+  const offeredAddOns = useMemo(
+    () => (boat.boatAddOns ?? []).filter((a) => a.isActive),
+    [boat.boatAddOns],
+  );
+  const hasAddOns = offeredAddOns.length > 0;
+  const addOnQuantities = useMemo(
+    () => Object.fromEntries(selectedAddOns.map((s) => [s.addOnId, s.quantity])),
+    [selectedAddOns],
+  );
+  const handleAddOnChange = useCallback(
+    (addOnId: string, quantity: number) => {
+      const next = selectedAddOns.filter((s) => s.addOnId !== addOnId);
+      if (quantity > 0) next.push({ addOnId, quantity });
+      setBookingState({ addOns: next.length > 0 ? JSON.stringify(next) : null });
+    },
+    [selectedAddOns, setBookingState],
+  );
 
   useEffect(() => {
     if (!isFormComplete) {
@@ -53,8 +118,8 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
 
   const priceBreakdown = useMemo(() => {
     if (!selectedTier || !boat) return null;
-    return calculateBookingPrice(selectedTier.price, boat.cleaningFee || 0, 0);
-  }, [selectedTier, boat]);
+    return calculateBookingPrice(selectedTier.price, boat.cleaningFee || 0, 0, serviceFeeRate);
+  }, [selectedTier, boat, serviceFeeRate]);
 
   const safeBoat = useMemo(
     () => ({
@@ -94,6 +159,7 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
           numberOfPassengers: numberOfPassengers!,
           needsCaptain: !!needsCaptain,
           boatId: boat.id,
+          ...(selectedAddOns.length > 0 ? { addOns: selectedAddOns } : {}),
         };
 
         const result =
@@ -124,6 +190,7 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
       selectedTier,
       numberOfPassengers,
       needsCaptain,
+      selectedAddOns,
       router,
       priceBreakdown,
     ],
@@ -149,7 +216,7 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
               Complete your charter
             </h1>
           </div>
-          <BookingHoldTimer />
+          <BookingHoldTimer minutes={holdMinutes} />
         </header>
 
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-14 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -163,6 +230,17 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
               }}
             />
 
+            {hasAddOns && (
+              <div className="mt-5 border-t border-gray-100 pt-5 sm:mt-6 sm:pt-6">
+                <AddOnsPicker
+                  addOns={offeredAddOns}
+                  quantities={addOnQuantities}
+                  onChange={handleAddOnChange}
+                  currency={safeBoat.currency}
+                />
+              </div>
+            )}
+
             <div className="mt-5 border-t border-gray-100 pt-5 sm:mt-6 sm:pt-6">
               <CharterDetailsForm />
             </div>
@@ -172,10 +250,8 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
               <BookingPricingSection
                 boat={safeBoat}
                 selectedTier={selectedTier}
-                bookingData={{
-                  needsCaptain: !!needsCaptain,
-                  numberOfPassengers: numberOfPassengers!,
-                }}
+                serviceFeeRate={serviceFeeRate}
+                addOns={previewAddOns}
               />
             </div>
           </main>
@@ -186,10 +262,8 @@ export default function BookingDetailsClient({ user }: { user: Session["user"] |
               <BookingPricingSection
                 boat={safeBoat}
                 selectedTier={selectedTier}
-                bookingData={{
-                  needsCaptain: !!needsCaptain,
-                  numberOfPassengers: numberOfPassengers!,
-                }}
+                serviceFeeRate={serviceFeeRate}
+                addOns={previewAddOns}
               />
               <BookingSubmitButton
                 user={user}

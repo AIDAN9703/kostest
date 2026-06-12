@@ -8,10 +8,6 @@ import {
   BookingRequest,
 } from "@/features/_validation/validations";
 import { Boat, PricingTier } from "@/shared/lib/types/types";
-import {
-  calculateBookingPrice,
-  BookingPriceBreakdown,
-} from "@/shared/lib/utils/pricing-utils";
 import { createDateTimeISO } from "@/shared/lib/utils/date-helpers";
 import { getActivePricingTiers } from "../hooks/usePriceCalculation";
 
@@ -63,14 +59,6 @@ export function useBookingForm({ boat }: { boat: BookingBoat }) {
     [boat.pricingTiers, pricingTierId]
   );
 
-  const priceBreakdown = useMemo<BookingPriceBreakdown | null>(
-    () =>
-      selectedTier
-        ? calculateBookingPrice(selectedTier.price, boat.cleaningFee || 0, 0)
-        : null,
-    [selectedTier, boat.cleaningFee]
-  );
-
   const isComplete = !!(date && time && selectedTier);
   const isValid = form.formState.isValid && isComplete;
 
@@ -82,7 +70,6 @@ export function useBookingForm({ boat }: { boat: BookingBoat }) {
     time,
     setTime,
     selectedTier,
-    priceBreakdown,
     isComplete,
     isValid,
   };

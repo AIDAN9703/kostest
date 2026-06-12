@@ -199,7 +199,7 @@ export function InquiryActions({
             <DialogFooter>
               <Button
                 type="button"
-                variant="outline"
+                variant="destructive"
                 onClick={() => {
                   setShowContactDialog(false);
                   setContactContent("");
@@ -243,7 +243,7 @@ export function InquiryActions({
             <DialogFooter>
               <Button
                 type="button"
-                variant="outline"
+                variant="destructive"
                 onClick={() => {
                   setShowNoteDialog(false);
                   setNoteContent("");

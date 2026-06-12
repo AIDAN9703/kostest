@@ -89,15 +89,13 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
     <div
       className={cn(
         "w-full",
-        isCompact
-          ? "max-w-full"
-          : "max-w-[90%] md:max-w-[75%] lg:max-w-[50%] mx-auto",
+        isCompact ? "max-w-full" : "max-w-[90%] md:max-w-[75%] lg:max-w-[50%] mx-auto"
       )}
     >
       <form
         className={cn(
           "relative flex items-center rounded-full border border-gray-200",
-          isCompact ? "bg-gray-50" : "bg-white shadow-md",
+          isCompact ? "bg-gray-50" : "bg-white shadow-md"
         )}
         onSubmit={handleSubmit}
       >
@@ -109,14 +107,12 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
           <CustomPlacesAutocomplete
             onPlaceSelected={handlePlaceSelected}
             onError={handleLocationError}
-            placeholder={
-              isCompact ? "Search location..." : "Where can we take you?"
-            }
+            placeholder={isCompact ? "Search location..." : "Where can we take you?"}
             className={cn(
               "w-full border-0 bg-transparent px-2 font-normal text-black shadow-none outline-none ring-0 ring-offset-0 focus:border-0 focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0",
               isCompact
                 ? "h-10 min-h-10 text-sm leading-normal"
-                : "h-12 text-base sm:h-14 md:text-lg",
+                : "h-12 text-base sm:h-14 md:text-lg"
             )}
             containerClassName="w-full"
             defaultValue={currentLocation}
@@ -130,7 +126,7 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
           type="submit"
           className={cn(
             "flex flex-shrink-0 items-center justify-center rounded-full bg-primary text-white transition-colors hover:bg-primary/90",
-            isCompact ? "m-1.5 h-8 w-8" : "m-2 h-12 w-12 sm:h-14 sm:w-14",
+            isCompact ? "m-1.5 h-8 w-8" : "m-2 h-12 w-12 sm:h-14 sm:w-14"
           )}
           aria-label="Search"
         >

@@ -20,12 +20,12 @@ export async function GET(
       return apiError("Username is required", 400);
     }
 
-    // Find user by username
+    // Find user by username — public endpoint, so no email/PII beyond the
+    // profile fields a user chose to publish.
     const [user] = await db
       .select({
         id: users.id,
         username: users.username,
-        email: users.email,
         firstName: users.firstName,
         lastName: users.lastName,
         profileImage: users.profileImage,

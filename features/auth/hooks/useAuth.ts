@@ -9,6 +9,15 @@ type AuthAction<T> = (data: T) => Promise<{
   data?: { redirectUrl?: string; message?: string };
 }>;
 
+/** Only allow same-origin relative paths — blocks open redirects via ?callbackUrl=https://evil.com */
+function safeRedirectPath(url: string | undefined, fallback = "/"): string {
+  if (!url) return fallback;
+  if (url.startsWith("/") && !url.startsWith("//") && !url.startsWith("/\\")) {
+    return url;
+  }
+  return fallback;
+}
+
 export function useAuth<T>() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
@@ -34,8 +43,8 @@ export function useAuth<T>() {
         // Update session to reflect new auth state
         await update();
 
-        // Redirect logic
-        const redirectTo = result.data?.redirectUrl || callbackUrl;
+        // Redirect logic — never follow absolute/external URLs
+        const redirectTo = safeRedirectPath(result.data?.redirectUrl || callbackUrl);
         router.push(redirectTo);
         
         return { success: true };
@@ -46,7 +55,7 @@ export function useAuth<T>() {
             title: "Action Required",
             description: result.data.message || result.error || "Additional action required.",
           });
-          router.push(result.data.redirectUrl);
+          router.push(safeRedirectPath(result.data.redirectUrl));
         } else {
           toast({
             title: "Error",

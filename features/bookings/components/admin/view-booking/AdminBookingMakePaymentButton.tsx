@@ -171,7 +171,7 @@ export function AdminBookingMakePaymentButton({
             <DialogFooter className="gap-2 sm:gap-0">
               <Button
                 type="button"
-                variant="outline"
+                variant="destructive"
                 className="rounded-xl"
                 disabled={pending}
                 onClick={() => setOpen(false)}

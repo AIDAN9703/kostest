@@ -4,7 +4,9 @@
  * Business logic layer for booking pricing.
  * Uses direct database access (no repository layer).
  * 
- * All monetary values are in CENTS.
+ * All monetary values are in CENTS. The service fee rate comes from app
+ * settings (admin-configurable) and is snapshotted onto each booking's
+ * pricing row — settings changes never alter existing bookings.
  */
 
 import { db } from '@/database/db';
@@ -16,6 +18,7 @@ import {
   calculateBookingPriceCents, 
   type BookingPriceBreakdownCents 
 } from '@/shared/lib/utils/pricing-utils';
+import { getAppSettings } from '@/features/app-settings/app-settings.service';
 
 // ============================================================================
 // TYPES
@@ -108,12 +111,14 @@ export class BookingPricingService {
     bookingId: string,
     input: SimplePricingInput
   ): Promise<BookingPricing> {
-    // Calculate fees: subtotal = base + add-ons + cleaning + captain; 3.5% fee on subtotal
+    // Calculate fees: subtotal = base + add-ons + cleaning + captain; service fee on subtotal
+    const { serviceFeeRate } = await getAppSettings();
     const breakdown = calculateBookingPriceCents(
       input.basePriceCents,
       input.cleaningFeeCents ?? 0,
       input.captainFeeCents ?? 0,
-      input.addOnsCents ?? 0
+      input.addOnsCents ?? 0,
+      serviceFeeRate
     );
 
     // Apply tax and discount after service fee calculation
@@ -195,11 +200,13 @@ export class BookingPricingService {
     bookingId: string,
     input: SimplePricingInput
   ): Promise<BookingPricing> {
+    const { serviceFeeRate } = await getAppSettings();
     const breakdown = calculateBookingPriceCents(
       input.basePriceCents,
       input.cleaningFeeCents ?? 0,
       input.captainFeeCents ?? 0,
-      input.addOnsCents ?? 0
+      input.addOnsCents ?? 0,
+      serviceFeeRate
     );
 
     const taxCents = input.taxAmountCents ?? 0;

@@ -362,7 +362,7 @@ export function BookingExpensesModal({
         )}
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+          <Button type="button" variant="destructive" onClick={() => onOpenChange(false)} disabled={saving}>
             Cancel
           </Button>
           <Button type="button" onClick={() => void handleSave()} disabled={saving || loading}>

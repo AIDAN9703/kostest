@@ -4,6 +4,7 @@
  */
 
 import { type Boat, type BoatPricingTier } from '@/database/types';
+import { type ResolvedBoatAddOn } from '@/features/add-ons/add-on.types';
 
 /**
  * Boat list item - optimized for table display
@@ -55,6 +56,8 @@ export interface PaginatedBoatsResponse {
  */
 export interface BoatWithTiers extends Boat {
   pricingTiers: BoatPricingTier[];
+  /** Add-ons this boat offers (joined with the catalog). */
+  boatAddOns?: ResolvedBoatAddOn[];
   locationCoordinates?: {
     lat: number;
     lng: number;

@@ -1,6 +1,6 @@
 "use server";
 
-import { auth } from "@/auth";
+import { getAdminSession } from "@/shared/lib/utils/auth-utils";
 import { db } from "@/database/db";
 import {
   inquiry as inquiryTable,
@@ -104,9 +104,15 @@ export async function createGeneralInquiry(data: GeneralInquiryInput) {
  */
 export async function updateInquiryOutcome(id: string, newOutcome: string, reason?: string) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Unauthorized" };
+    const adminAuth = await getAdminSession();
+    if (adminAuth.error !== undefined) {
+      return { success: false, error: adminAuth.error };
+    }
+    const session = adminAuth.session;
+
+    const parsedOutcome = outcomeSchema.safeParse(newOutcome);
+    if (!parsedOutcome.success) {
+      return { success: false, error: "Invalid outcome" };
     }
 
     const [existing] = await db
@@ -181,10 +187,11 @@ export async function updateInquiryOutcome(id: string, newOutcome: string, reaso
  */
 export async function addInquiryNote(inquiryId: string, content: string) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Unauthorized" };
+    const adminAuth = await getAdminSession();
+    if (adminAuth.error !== undefined) {
+      return { success: false, error: adminAuth.error };
     }
+    const session = adminAuth.session;
 
     const trimmed = content?.trim();
     if (!trimmed) {
@@ -218,10 +225,11 @@ export async function logContactAttempt(
   content?: string
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Unauthorized" };
+    const adminAuth = await getAdminSession();
+    if (adminAuth.error !== undefined) {
+      return { success: false, error: adminAuth.error };
     }
+    const session = adminAuth.session;
 
     const [inquiryRow] = await db
       .select({ stage: inquiryTable.stage, outcome: inquiryTable.outcome })
@@ -280,10 +288,11 @@ export async function logContactAttempt(
  */
 export async function reopenInquiry(inquiryId: string) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Unauthorized" };
+    const adminAuth = await getAdminSession();
+    if (adminAuth.error !== undefined) {
+      return { success: false, error: adminAuth.error };
     }
+    const session = adminAuth.session;
 
     const [inquiryRow] = await db
       .select({

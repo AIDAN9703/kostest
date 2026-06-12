@@ -68,6 +68,16 @@ export const bookingRequestSchema = z.object({
   pricingTierId: z.string().min(1, "Please select a duration option"),
   numberOfPassengers: z.number().min(1, "At least one passenger is required"),
   needsCaptain: z.boolean(),
+
+  // Optional customer-selected add-ons (ids + qty only; prices resolved server-side).
+  addOns: z
+    .array(
+      z.object({
+        addOnId: z.string().min(1),
+        quantity: z.number().int().min(1),
+      })
+    )
+    .optional(),
 });
 
 // Export type for use in components

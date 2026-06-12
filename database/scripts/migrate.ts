@@ -29,8 +29,8 @@ if (!DEV_DATABASE_URL) {
 }
 
 if (!PROD_DATABASE_URL) {
-  console.error('❌ DATABASE_URL_PROD not found in .env.local');
-  console.log('💡 Add DATABASE_URL_PROD to your .env.local file');
+  console.error('❌ PROD_DATABASE_URL not found in .env.local');
+  console.log('💡 Add PROD_DATABASE_URL to your .env.local file');
   process.exit(1);
 }
 

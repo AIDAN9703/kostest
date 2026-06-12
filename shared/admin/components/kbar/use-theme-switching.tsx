@@ -4,10 +4,10 @@ import { useRegisterActions } from "kbar";
 import { useTheme } from "next-themes";
 
 const useThemeSwitching = () => {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
   const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };
 
   const themeAction = [
@@ -32,7 +32,7 @@ const useThemeSwitching = () => {
     },
   ];
 
-  useRegisterActions(themeAction, [theme]);
+  useRegisterActions(themeAction, [resolvedTheme]);
 };
 
 export default useThemeSwitching;

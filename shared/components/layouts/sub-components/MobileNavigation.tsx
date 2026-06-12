@@ -25,10 +25,7 @@ type MobileNavigationProps = {
   user: Session["user"] | undefined | null;
 };
 
-const MobileNavigation: React.FC<MobileNavigationProps> = ({
-  navigationData,
-  user,
-}) => {
+const MobileNavigation: React.FC<MobileNavigationProps> = ({ navigationData, user }) => {
   const [open, setOpen] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const { isActive } = useActiveRoute();
@@ -41,7 +38,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
 
   const toggleExpanded = useCallback((href: string) => {
     setExpandedItems((prev) =>
-      prev.includes(href) ? prev.filter((i) => i !== href) : [...prev, href],
+      prev.includes(href) ? prev.filter((i) => i !== href) : [...prev, href]
     );
   }, []);
 
@@ -77,15 +74,11 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                       {user.name || "User"}
                     </p>
                     {user.email && (
-                      <p className="text-base text-muted-foreground truncate">
-                        {user.email}
-                      </p>
+                      <p className="text-base text-muted-foreground truncate">{user.email}</p>
                     )}
                   </>
                 ) : (
-                  <p className="text-base font-semibold text-primary">
-                    Welcome to KOS
-                  </p>
+                  <p className="text-base font-semibold text-primary">Welcome to KOS</p>
                 )}
               </div>
             </div>
@@ -102,16 +95,14 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                         onClick={() => toggleExpanded(item.href)}
                         className={cn(
                           "flex items-center justify-between w-full px-4 py-3 text-base font-semibold text-primary rounded-lg transition-colors",
-                          expandedItems.includes(item.href)
-                            ? "bg-primary/5"
-                            : "hover:bg-gray-50",
+                          expandedItems.includes(item.href) ? "bg-primary/5" : "hover:bg-gray-50"
                         )}
                       >
                         <span>{item.label}</span>
                         <ChevronDown
                           className={cn(
                             "w-4 h-4 transition-transform",
-                            expandedItems.includes(item.href) && "rotate-180",
+                            expandedItems.includes(item.href) && "rotate-180"
                           )}
                         />
                       </button>
@@ -120,10 +111,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                         <div className="mt-2 ml-4 space-y-2 border-l-2 border-primary/10 pl-4">
                           {/* Sections */}
                           {item.sections?.map((section, sectionIndex) => (
-                            <div
-                              key={`section-${sectionIndex}`}
-                              className="mb-4"
-                            >
+                            <div key={`section-${sectionIndex}`} className="mb-4">
                               <h4 className="text-base font-semibold text-primary uppercase tracking-wider mb-2">
                                 {section.title}
                               </h4>
@@ -132,11 +120,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                                   <Link
                                     key={subItem.href}
                                     href={subItem.href}
-                                    target={
-                                      subItem.href.startsWith("http")
-                                        ? "_blank"
-                                        : undefined
-                                    }
+                                    target={subItem.href.startsWith("http") ? "_blank" : undefined}
                                     rel={
                                       subItem.href.startsWith("http")
                                         ? "noopener noreferrer"
@@ -146,7 +130,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                                       "block px-3 py-2.5 text-base font-normal rounded-lg transition-colors",
                                       isActive(subItem.href, false)
                                         ? "text-primary font-semibold bg-primary/5"
-                                        : "text-muted-foreground hover:text-primary hover:bg-gray-50",
+                                        : "text-muted-foreground hover:text-primary hover:bg-gray-50"
                                     )}
                                   >
                                     {subItem.label}
@@ -165,7 +149,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                                 "block px-3 py-2.5 text-base font-normal rounded-lg transition-colors",
                                 isActive(subItem.href, false)
                                   ? "text-primary font-semibold bg-primary/5"
-                                  : "text-muted-foreground hover:text-primary hover:bg-gray-50",
+                                  : "text-muted-foreground hover:text-primary hover:bg-gray-50"
                               )}
                             >
                               {subItem.label}
@@ -181,7 +165,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
                         "block px-4 py-3 text-base font-semibold rounded-lg transition-colors",
                         isActive(item.href, true)
                           ? "text-primary bg-primary/5"
-                          : "text-primary hover:bg-gray-50",
+                          : "text-primary hover:bg-gray-50"
                       )}
                     >
                       {item.label}

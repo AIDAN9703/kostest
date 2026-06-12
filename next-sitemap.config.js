@@ -27,10 +27,6 @@ module.exports = {
     '/boats/[id]',
     '/boats/[id]/*',
     
-    // Removed ticketed-events product (legacy routes)
-    '/events',
-    '/events/*',
-
     // Temporary or test routes
     '/test',
     '/test-*',
@@ -57,8 +53,6 @@ module.exports = {
           '/_next/',
           '/test',
           '/test-*',
-          '/events',
-          '/events/',
           '/private/',
           '*.json',
           '*.xml',

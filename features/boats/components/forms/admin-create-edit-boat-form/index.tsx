@@ -21,18 +21,23 @@ import { BasicInfoSection } from "./sections/BasicInfoSection";
 import { SpecsSection } from "./sections/SpecsSection";
 import { FeaturesSection } from "./sections/FeaturesSection";
 import { PricingSection } from "./sections/PricingSection";
+import { BoatAddOnsSection } from "./sections/BoatAddOnsSection";
 import { LocationSection } from "./sections/LocationSection";
 import { CharterOptionsSection } from "./sections/CharterOptionsSection";
 import { OwnerSection } from "./sections/OwnerSection";
+import type { AddOnListItem } from "@/features/add-ons/add-on.types";
 
 export interface AdminBoatFormProps {
   boat?: CreateBoatInput;
   boatId?: string;
+  /** Active catalog add-ons, for the per-boat "Add-ons offered" section. */
+  availableAddOns?: AddOnListItem[];
 }
 
 export default function AdminAddUpdateBoatForm({
   boat,
   boatId,
+  availableAddOns = [],
 }: AdminBoatFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -53,6 +58,7 @@ export default function AdminAddUpdateBoatForm({
       features: ["Standard features"],
       currency: "USD",
       pricingTiers: [],
+      boatAddOns: [],
 
       // Boolean fields
       active: false,
@@ -146,13 +152,14 @@ export default function AdminAddUpdateBoatForm({
           boatName={methods.getValues("name") || "boat"}
         />
         <PricingSection />
+        <BoatAddOnsSection availableAddOns={availableAddOns} />
         <LocationSection />
         <CharterOptionsSection />
 
         {/* Submit buttons */}
         <div className="flex justify-between">
           <Button
-            variant="outline"
+            variant="destructive"
             type="button"
             onClick={() =>
               boatId

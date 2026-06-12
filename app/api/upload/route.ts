@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { imagekit } from '@/shared/lib/services/imagekit.service';
+import { getImageKit } from '@/shared/lib/services/imagekit-server';
 
 type UploadType = 'profile' | 'boat' | 'misc' | 'blog';
 
@@ -53,6 +53,10 @@ export async function POST(request: Request) {
         tags.push(`user_${session.user.id}`);
         break;
       case 'boat':
+        // Boat and blog assets are managed through the admin UI only.
+        if (!session.user.isAdmin) {
+          return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+        }
         if (!entityId || !entityName) {
           return NextResponse.json({ error: 'Boat ID and name are required for boat images' }, { status: 400 });
         }
@@ -66,6 +70,9 @@ export async function POST(request: Request) {
         tags.push(`user_${session.user.id}`);
         break;
       case 'blog':
+        if (!session.user.isAdmin) {
+          return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+        }
         folder = `/blog/${new Date().getFullYear()}/${String(new Date().getMonth() + 1).padStart(2, '0')}`;
         tags.push('blog_content');
         tags.push(`user_${session.user.id}`);
@@ -75,7 +82,7 @@ export async function POST(request: Request) {
     }
     
     // Upload to ImageKit with sane defaults (auto format/quality on CDN side)
-    const result = await imagekit.upload({
+    const result = await getImageKit().upload({
       file: buffer,
       fileName: `${type}_${Date.now()}.${file.name.split('.').pop()}`,
       folder,

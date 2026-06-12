@@ -32,7 +32,11 @@ export async function getUserProfile(): Promise<{ user?: UserProfile; error?: st
       return { error: "User not found" };
     }
 
-    return { user: userData[0] as UserProfile };
+    // Never let the bcrypt hash cross the server boundary — the cast to
+    // UserProfile only hides it from TypeScript, not from the serializer.
+    const { password: _password, ...safeUser } = userData[0];
+
+    return { user: safeUser as UserProfile };
   } catch (error) {
     console.error("Error fetching user profile:", error);
     return { error: "Failed to fetch user profile" };

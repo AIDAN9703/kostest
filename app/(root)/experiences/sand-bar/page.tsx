@@ -37,7 +37,7 @@ const relatedExperiences = [
     description:
       "Host your special occasions on the water for unforgettable memories.",
     image: "/images/experiences/yachtparty.jpg",
-    href: "/experiences/celebrations",
+    href: "/experiences/special-events",
   },
 ];
 

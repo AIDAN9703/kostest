@@ -18,6 +18,17 @@ export const pricingTierSchema = z.object({
 
 export type PricingTierInput = z.infer<typeof pricingTierSchema>;
 
+// Per-boat add-on offering (which catalog add-on a boat offers, at what price)
+export const boatAddOnAssignmentSchema = z.object({
+  id: z.string().uuid("Invalid ID format").optional(), // boat_add_on row id (omit for new)
+  addOnId: z.string().uuid("Invalid add-on"),
+  priceCents: z.number().int().min(0).nullable().optional(), // null = use catalog default
+  isComplimentary: z.boolean().default(false),
+  isActive: z.boolean().default(true),
+});
+
+export type BoatAddOnAssignmentInput = z.infer<typeof boatAddOnAssignmentSchema>;
+
 // Common boat schema for shared fields between create and update
 export const boatBaseSchema = z.object({
   // Core Information
@@ -63,6 +74,7 @@ export const boatBaseSchema = z.object({
   // Pricing (tiers only)
   currency: z.enum(SUPPORTED_CURRENCIES).default("USD"),
   pricingTiers: z.array(pricingTierSchema).optional(),
+  boatAddOns: z.array(boatAddOnAssignmentSchema).optional(),
   weeklyRate: z.number().positive().optional().nullable(),
   monthlyRate: z.number().positive().optional().nullable(),
   depositAmount: z.number().nonnegative().optional().nullable(),

@@ -27,16 +27,9 @@ export default function UserMenu({ user, navigationData }: UserMenuProps) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            className="h-11 w-11 rounded-full p-0"
-            aria-label="User menu"
-          >
+          <Button variant="ghost" className="h-11 w-11 rounded-full p-0" aria-label="User menu">
             <Avatar className="h-11 w-11">
-              <AvatarImage
-                src={user?.profileImage || user?.image || ""}
-                alt="User profile image"
-              />
+              <AvatarImage src={user?.profileImage || user?.image || ""} alt="User profile image" />
               <DefaultUserAvatarFallback size="md" />
             </Avatar>
           </Button>
@@ -76,10 +69,7 @@ export default function UserMenu({ user, navigationData }: UserMenuProps) {
                 className="cursor-pointer py-2.5 text-base font-normal text-muted-foreground hover:bg-gray-50 rounded-lg focus:bg-gray-50"
                 asChild
               >
-                <Link
-                  href="/profile/settings"
-                  className="flex items-center gap-3"
-                >
+                <Link href="/profile/settings" className="flex items-center gap-3">
                   <Settings className="h-5 w-5 text-gray-600" />
                   <span>Account settings</span>
                 </Link>

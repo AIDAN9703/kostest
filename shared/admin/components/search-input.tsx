@@ -5,7 +5,7 @@ import { IconSearch } from "@tabler/icons-react";
 import {
   adminHeaderControlBase,
   adminHeaderNeutralChrome,
-} from "@/shared/admin/admin-themed-frame";
+} from "@/shared/admin/admin-header-chrome";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/lib/utils/general-utils";
 

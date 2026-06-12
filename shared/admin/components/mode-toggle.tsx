@@ -4,7 +4,7 @@ import { IconBrightness } from "@tabler/icons-react";
 import { useTheme } from "next-themes";
 import * as React from "react";
 
-import { adminHeaderNeutralChrome } from "@/shared/admin/admin-themed-frame";
+import { adminHeaderNeutralChrome } from "@/shared/admin/admin-header-chrome";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/lib/utils/general-utils";
 

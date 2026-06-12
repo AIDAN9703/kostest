@@ -1,26 +1,32 @@
 import { ReactNode } from "react";
-import { requireAuth } from "@/shared/lib/utils/auth-utils";
+import { requireAdmin } from "@/shared/lib/utils/auth-utils";
 import AdminSidebar from "@/shared/admin/components/AdminSidebar";
 import AdminHeader from "@/shared/admin/components/AdminHeader";
 import { QueryProvider } from "@/shared/lib/providers/QueryProvider";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import KBar from "@/shared/admin/components/kbar";
-import ThemeProvider from "@/shared/admin/components/theme-provider";
-import { ActiveThemeProvider } from "@/shared/admin/components/active-theme";
+import { ThemeProvider } from "next-themes";
+import { AdminAccentThemeProvider } from "@/shared/admin/admin-accent-theme";
+import {
+  ADMIN_ACCENT_THEME_COOKIE,
+  normalizeAdminAccentTheme,
+} from "@/shared/admin/admin-accent-theme.config";
 import { cn } from "@/shared/lib/utils/general-utils";
 import { cookies } from "next/headers";
 import "./admin-theme.css";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
-  // Require authentication - middleware already protects this route
-  await requireAuth();
+  // Defense-in-depth: middleware checks admin too, but never rely on it alone.
+  await requireAdmin();
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
-  const activeThemeValue = cookieStore.get("admin_active_theme")?.value ?? "default";
+  const activeThemeValue = normalizeAdminAccentTheme(
+    cookieStore.get(ADMIN_ACCENT_THEME_COOKIE)?.value
+  );
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <ActiveThemeProvider initialTheme={activeThemeValue}>
+      <AdminAccentThemeProvider initialTheme={activeThemeValue}>
         <KBar>
           <SidebarProvider
             defaultOpen={defaultOpen}
@@ -41,7 +47,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             </SidebarInset>
           </SidebarProvider>
         </KBar>
-      </ActiveThemeProvider>
+      </AdminAccentThemeProvider>
     </ThemeProvider>
   );
 }

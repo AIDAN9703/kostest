@@ -5,27 +5,41 @@ import { Zap } from "lucide-react";
 import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { SafeBoatData, PricingTier } from "@/features/bookings/booking.types";
 import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
-import { SERVICE_FEE_PERCENT_DISPLAY } from "@/shared/lib/constants/fees-constants";
+import { formatRateAsPercent } from "@/features/app-settings/app-settings.config";
+
+export interface PricingSectionAddOn {
+  name: string;
+  quantity: number;
+  /** Line total in dollars (0 when complimentary). */
+  total: number;
+  isComplimentary?: boolean;
+}
 
 interface BookingPricingSectionProps {
   boat: SafeBoatData;
   selectedTier: PricingTier;
-  bookingData: {
-    needsCaptain: boolean;
-    numberOfPassengers: number;
-  };
+  /** Decimal service fee rate (e.g. 0.035) from app settings, passed down from a server component. */
+  serviceFeeRate: number;
   showHeading?: boolean;
+  addOns?: PricingSectionAddOn[];
 }
 
 export default function BookingPricingSection({
   boat,
   selectedTier,
+  serviceFeeRate,
   showHeading = true,
+  addOns = [],
 }: BookingPricingSectionProps) {
+  const paidAddOnsTotal = addOns
+    .filter((a) => !a.isComplimentary)
+    .reduce((sum, a) => sum + a.total, 0);
+  // Fold paid add-ons into the fee base so the service fee + total match the server.
   const priceBreakdown = calculateBookingPrice(
     selectedTier.price,
-    boat.cleaningFee || 0,
+    (boat.cleaningFee || 0) + paidAddOnsTotal,
     0,
+    serviceFeeRate,
   );
   const currency = boat.currency ?? "USD";
   const fmt = (amount: number) => formatCurrency(amount, currency);
@@ -33,7 +47,7 @@ export default function BookingPricingSection({
   const lineItems = [
     {
       label: `${selectedTier.name || "Charter"} · ${selectedTier.hours}h`,
-      amount: priceBreakdown.basePrice,
+      amount: selectedTier.price,
       included: false,
     },
     {
@@ -41,17 +55,22 @@ export default function BookingPricingSection({
       amount: priceBreakdown.captainFee,
       included: true,
     },
-    ...(priceBreakdown.cleaningFee > 0
+    ...((boat.cleaningFee || 0) > 0
       ? [
           {
             label: "Cleaning fee",
-            amount: priceBreakdown.cleaningFee,
+            amount: boat.cleaningFee || 0,
             included: false,
           },
         ]
       : []),
+    ...addOns.map((a) => ({
+      label: a.quantity > 1 ? `${a.name} × ${a.quantity}` : a.name,
+      amount: a.total,
+      included: !!a.isComplimentary,
+    })),
     {
-      label: `Processing (${SERVICE_FEE_PERCENT_DISPLAY}%)`,
+      label: `Processing (${formatRateAsPercent(serviceFeeRate)}%)`,
       amount: priceBreakdown.serviceFee,
       included: false,
     },

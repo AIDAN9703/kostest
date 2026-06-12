@@ -1,15 +1,6 @@
-import ImageKit from 'imagekit';
-
-// Initialize ImageKit
-export const imagekit = new ImageKit({
-  publicKey: process.env.NEXT_PUBLIC_IMAGEKIT_PUBLIC_KEY || '',
-  privateKey: process.env.NEXT_PUBLIC_IMAGEKIT_PRIVATE_KEY || '',
-  urlEndpoint: process.env.NEXT_PUBLIC_IMAGEKIT_URL_ENDPOINT || ''
-});
-
-// Helper function for backward compatibility
-// This is simpler than before and only used for components that haven't been updated
-// Removed legacy getOptimizedImageUrl in favor of getImageKitProps
+// Client-safe ImageKit URL/props helpers. This module is imported by client
+// components, so it must never touch the private key or the server SDK —
+// the upload client lives in `imagekit-server.ts`.
 
 type ImageContext = 'hero' | 'secondary' | 'gallery' | 'card' | 'thumb';
 

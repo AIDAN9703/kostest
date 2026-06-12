@@ -194,7 +194,7 @@ export function AdminBookingClientCard({
                   </Button>
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="destructive"
                     size="sm"
                     disabled={isPending}
                     onClick={cancelEdit}

@@ -28,6 +28,8 @@ export type BookingVariant = "instant" | "request";
 
 interface BookingFormProps {
   boat: BookingBoat;
+  /** Decimal service fee rate (e.g. 0.035) from app settings, fetched by the server page. */
+  serviceFeeRate: number;
   /** `instant` → payment flow, `request` → inquiry flow. Defaults to the boat's `instantBook` flag. */
   variant?: BookingVariant;
   /** `inline` inside the mobile drawer, `popover` on desktop. */
@@ -38,6 +40,7 @@ interface BookingFormProps {
 
 export function BookingForm({
   boat,
+  serviceFeeRate,
   variant = boat.instantBook ? "instant" : "request",
   layout = "popover",
   bare = false,
@@ -71,6 +74,7 @@ export function BookingForm({
       numberOfPassengers: String(data.numberOfPassengers),
       needsCaptain: String(data.needsCaptain || false),
     });
+    // Add-ons are chosen on the next page ("Complete your charter"), not here.
     router.push(`/bookings/${boat.id}/details?${params.toString()}`);
   };
 
@@ -168,6 +172,7 @@ export function BookingForm({
               tier={selectedTier}
               cleaningFee={boat.cleaningFee || 0}
               currency={currency}
+              serviceFeeRate={serviceFeeRate}
             />
           )}
 

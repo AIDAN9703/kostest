@@ -41,6 +41,7 @@ import {
   type BookingListItem,
   type BookingDetails,
   type BookingWithRelations,
+  type BookingAddOn,
 } from "@/features/bookings/booking.types";
 import {
   type Booking,
@@ -61,6 +62,7 @@ import { bookingPricingService } from "@/features/bookings/services/booking-pric
 import { bookingStatusService } from "@/features/bookings/services/booking-status.service";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
 import { fetchBoatAndTier, fetchBoatsAndTiersBulk } from "@/features/bookings/booking-helpers";
+import { getAppSettings } from "@/features/app-settings/app-settings.service";
 
 // ============================================================================
 // BOOKING SERVICE CLASS
@@ -128,11 +130,13 @@ export class BookingService {
       const addOnsCents = dollarsToCents(addOnsTotalDollars);
       const basePriceCents = dollarsToCents(basePrice);
 
+      const { serviceFeeRate } = await getAppSettings();
       const priceBreakdown = calculateBookingPriceCents(
         basePriceCents,
         dollarsToCents(boat.cleaningFee ?? 0),
         0,
-        addOnsCents
+        addOnsCents,
+        serviceFeeRate
       );
       const depositDollars =
         b.depositAmount != null && b.depositAmount >= 0
@@ -377,13 +381,23 @@ export class BookingService {
     endDateTime: Date | null;
     numberOfPassengers: number;
     needsCaptain: boolean;
+    /** Priced add-on snapshot (from addOnService.resolveSelectionForBoat). */
+    addOns?: BookingAddOn[];
+    addOnsCents?: number;
   }): Promise<Booking> {
     const { boat, tier } = await fetchBoatAndTier(input.boatId, input.pricingTierId);
     if (!tier) throw new Error(`Pricing tier not found: ${input.pricingTierId}`);
 
     const resolvedEndDateTime =
       input.endDateTime ?? calculateEndDateTime(input.startDateTime, tier.hours);
-    const priceBreakdown = calculateBookingPriceFromDollars(tier.price, boat.cleaningFee ?? 0, 0);
+    const { serviceFeeRate } = await getAppSettings();
+    const priceBreakdown = calculateBookingPriceCents(
+      dollarsToCents(tier.price),
+      dollarsToCents(boat.cleaningFee ?? 0),
+      0,
+      input.addOnsCents ?? 0,
+      serviceFeeRate
+    );
     const depositAmountCents = dollarsToCents(boat.depositAmount ?? 0);
 
     const now = new Date();
@@ -406,6 +420,7 @@ export class BookingService {
         startDateTime: input.startDateTime,
         endDateTime: resolvedEndDateTime,
         numberOfPassengers: input.numberOfPassengers,
+        addOns: input.addOns && input.addOns.length > 0 ? input.addOns : null,
         createdAt: now,
         updatedAt: now,
       })
@@ -449,6 +464,8 @@ export class BookingService {
     stripePaymentIntentId?: string;
     stripeCustomerId?: string;
     stripeCheckoutSessionId?: string;
+    /** Priced add-on snapshot (already reflected in pricingOverrideCents total). */
+    addOns?: BookingAddOn[];
     /** When provided (e.g. from webhook metadata), use these instead of calculating from boat+tier */
     pricingOverrideCents?: {
       basePriceCents: number;
@@ -479,7 +496,13 @@ export class BookingService {
       if (!tier) throw new Error("pricingTierId or pricingOverrideCents required");
       resolvedEndDateTime =
         input.endDateTime ?? calculateEndDateTime(input.startDateTime, tier.hours);
-      const calc = calculateBookingPriceFromDollars(tier.price, boat.cleaningFee ?? 0, 0);
+      const { serviceFeeRate } = await getAppSettings();
+      const calc = calculateBookingPriceFromDollars(
+        tier.price,
+        boat.cleaningFee ?? 0,
+        0,
+        serviceFeeRate
+      );
       priceBreakdown = calc;
       depositAmountCents = dollarsToCents(boat.depositAmount ?? 0);
     }
@@ -504,6 +527,7 @@ export class BookingService {
         startDateTime: input.startDateTime,
         endDateTime: resolvedEndDateTime,
         numberOfPassengers: input.numberOfPassengers,
+        addOns: input.addOns && input.addOns.length > 0 ? input.addOns : null,
         createdAt: now,
         updatedAt: now,
       })
@@ -843,6 +867,7 @@ export class BookingService {
         startDateTime: bookings.startDateTime,
         endDateTime: bookings.endDateTime,
         numberOfPassengers: bookings.numberOfPassengers,
+        addOns: bookings.addOns,
         pickupLocation: bookings.pickupLocation,
         dropoffLocation: bookings.dropoffLocation,
         // stripePaymentLinkId removed - stored in payments table
@@ -925,6 +950,7 @@ export class BookingService {
 
     const details: BookingDetails = {
       ...booking,
+      addOns: (booking.addOns as BookingAddOn[] | null) ?? null,
       totalAmountCents,
       totalPaidCents,
       hasRefund,
@@ -1287,10 +1313,12 @@ export class BookingService {
     const captainFeeDollars = (before.captainFeeCents ?? 0) / 100;
     const cleaningFeeDollars = boat.cleaningFee ?? 0;
 
+    const { serviceFeeRate } = await getAppSettings();
     const breakdown = calculateBookingPriceFromDollars(
       basePriceDollars,
       cleaningFeeDollars,
-      captainFeeDollars
+      captainFeeDollars,
+      serviceFeeRate
     );
 
     await db

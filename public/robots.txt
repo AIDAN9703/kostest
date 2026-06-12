@@ -11,8 +11,6 @@ Disallow: /sign-up
 Disallow: /_next/
 Disallow: /test
 Disallow: /test-*
-Disallow: /events
-Disallow: /events/
 Disallow: /private/
 Disallow: *.json
 Disallow: *.xml

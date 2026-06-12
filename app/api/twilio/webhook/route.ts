@@ -1,8 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { db } from "@/database/db";
 import { verifications, verificationStatusEnum, users } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
 import { formatPhoneNumberE164 } from '@/shared/lib/utils/general-utils';
+import { getBaseUrl } from "@/shared/lib/utils/base-url";
+
+/**
+ * Validate Twilio's X-Twilio-Signature header: HMAC-SHA1 over the full webhook
+ * URL plus the alphabetically-sorted POST params, keyed by the auth token.
+ * https://www.twilio.com/docs/usage/security#validating-requests
+ */
+function isValidTwilioSignature(
+  req: NextRequest,
+  params: Record<string, string>
+): boolean {
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const signature = req.headers.get("x-twilio-signature");
+  if (!authToken || !signature) return false;
+
+  // Reconstruct the public URL Twilio signed (proxies rewrite host/proto).
+  const url = `${getBaseUrl()}${req.nextUrl.pathname}${req.nextUrl.search}`;
+
+  const data =
+    url +
+    Object.keys(params)
+      .sort()
+      .map((key) => key + params[key])
+      .join("");
+
+  const expected = crypto
+    .createHmac("sha1", authToken)
+    .update(Buffer.from(data, "utf-8"))
+    .digest("base64");
+
+  const expectedBuf = Buffer.from(expected);
+  const signatureBuf = Buffer.from(signature);
+  return (
+    expectedBuf.length === signatureBuf.length &&
+    crypto.timingSafeEqual(expectedBuf, signatureBuf)
+  );
+}
 
 /**
  * Twilio webhook handler for verification status updates
@@ -14,11 +52,22 @@ export async function POST(req: NextRequest) {
   try {
     // Parse the request body as form data (Twilio sends form data)
     const formData = await req.formData();
-    
+    const params: Record<string, string> = {};
+    formData.forEach((value, key) => {
+      if (typeof value === "string") params[key] = value;
+    });
+
+    if (!isValidTwilioSignature(req, params)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid signature" },
+        { status: 403 }
+      );
+    }
+
     // Extract the verification data
-    const verificationSid = formData.get('VerificationSid') as string;
-    const to = formData.get('To') as string;
-    const status = formData.get('Status') as string;
+    const verificationSid = params['VerificationSid'];
+    const to = params['To'];
+    const status = params['Status'];
     
     // Validate required fields
     if (!verificationSid || !to || !status) {

@@ -112,6 +112,10 @@ export interface BookingAddOn {
   unitPrice: number;
   quantity: number;
   total: number;
+  /** True when offered free/included — shown as "Included", total is 0. */
+  isComplimentary?: boolean;
+  /** Catalog add_on id this snapshot came from (null for free-text/custom). */
+  catalogAddOnId?: string | null;
 }
 
 /**
@@ -332,6 +336,9 @@ export interface BookingDetails extends BookingListItem {
   pricingTierId: string | null;
   paymentMethod: string | null;
   updatedAt: Date;
+
+  // Add-ons snapshot (from booking.add_ons JSON)
+  addOns?: BookingAddOn[] | null;
 
   // Pricing breakdown in cents (from booking_pricing)
   basePriceCents: number | null;

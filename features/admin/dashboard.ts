@@ -11,6 +11,15 @@ import { and, asc, count, eq, gte, lte, ne, sql } from "drizzle-orm";
 import { cache } from "react";
 import { startOfDay, endOfDay, addDays, endOfMonth, startOfMonth } from "date-fns";
 import { bookingService } from "@/features/bookings/services/booking.service";
+import { getAdminSession } from "@/shared/lib/utils/auth-utils";
+
+/** These loaders are server actions (public RPC) — every one must verify admin. */
+async function assertAdmin(): Promise<void> {
+  const { error } = await getAdminSession();
+  if (error) {
+    throw new Error(error);
+  }
+}
 
 /* Types */
 import { BookingListItem } from "@/features/bookings/booking.types";
@@ -57,6 +66,7 @@ function formatSourceLabel(sourceKey: string): string {
 // ============================================================================
 
 export const getOperationsMtdSummary = cache(async (): Promise<OperationsMtdSummary> => {
+  await assertAdmin();
   const now = new Date();
   const from = startOfMonth(now);
   const to = endOfMonth(now);
@@ -99,6 +109,7 @@ export const getOperationsMtdSummary = cache(async (): Promise<OperationsMtdSumm
 });
 
 export const getCharterSourceBreakdownMtd = cache(async (): Promise<CharterSourceBreakdownRow[]> => {
+  await assertAdmin();
   const now = new Date();
   const from = startOfMonth(now);
   const to = endOfMonth(now);
@@ -138,6 +149,7 @@ export const getCharterSourceBreakdownMtd = cache(async (): Promise<CharterSourc
 
 /** OPEN inquiries, longest since last update first — best “who needs a nudge” ordering. */
 export const getFollowUpInquiries = cache(async (limit = 6): Promise<InquiryListItem[]> => {
+  await assertAdmin();
   const rows = await db
     .select({
       id: inquiry.id,
@@ -166,6 +178,7 @@ export const getFollowUpInquiries = cache(async (limit = 6): Promise<InquiryList
 // ============================================================================
 
 export const getTodaysBookings = cache(async (): Promise<BookingListItem[]> => {
+  await assertAdmin();
   const now = new Date();
   const dateFrom = startOfDay(now).toISOString();
   const dateTo = endOfDay(now).toISOString();
@@ -179,6 +192,7 @@ export const getTodaysBookings = cache(async (): Promise<BookingListItem[]> => {
 
 /** Next 7 days from today (today + 6 days) - no past bookings */
 export const getWeeksBookings = cache(async (): Promise<BookingListItem[]> => {
+  await assertAdmin();
   const now = new Date();
   const dateFrom = startOfDay(now).toISOString();
   const dateTo = endOfDay(addDays(now, 6)).toISOString();

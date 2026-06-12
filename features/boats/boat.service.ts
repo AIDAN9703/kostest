@@ -1,11 +1,12 @@
 //drizzle
 import { db } from '@/database/db';
-import { boats, boatPricingTiers, users } from '@/database/schema';
-import { and, count, eq, desc, or, ilike, SQL, sql } from 'drizzle-orm';
+import { boats, boatPricingTiers, users, addOns, boatAddOns } from '@/database/schema';
+import { and, asc, count, eq, desc, or, ilike, SQL, sql } from 'drizzle-orm';
 import { getTableColumns } from 'drizzle-orm';
 
 //types
-import { type BoatFilterInput, type CreateBoatInput, type UpdateBoatInput, type PricingTierInput } from '@/features/boats/boat.validation';
+import { type BoatFilterInput, type CreateBoatInput, type UpdateBoatInput, type PricingTierInput, type BoatAddOnAssignmentInput } from '@/features/boats/boat.validation';
+import { type ResolvedBoatAddOn } from '@/features/add-ons/add-on.types';
 import { type BoatForAdminSelect, type PaginatedBoatsResponse } from '@/features/boats/boat.types';
 import { NewBoat } from '@/database/types';
 //utils
@@ -213,8 +214,9 @@ export class BoatService {
       return null;
     }
 
-    // Fetch pricing tiers
+    // Fetch pricing tiers + offered add-ons
     const pricingTiers = await this.getBoatPricingTiers(id);
+    const boatAddOnsResolved = await this.getBoatAddOns(id);
 
     // Extract coordinates from PostGIS point if available
     let locationCoordinates = null;
@@ -240,8 +242,39 @@ export class BoatService {
     return {
       ...boat,
       pricingTiers,
+      boatAddOns: boatAddOnsResolved,
       locationCoordinates
     };
+  }
+
+  /**
+   * Offered add-ons for a boat, joined with the catalog. Effective price =
+   * per-boat override ?? catalog default ?? 0 (0 also when complimentary).
+   */
+  async getBoatAddOns(boatId: string): Promise<ResolvedBoatAddOn[]> {
+    const rows = await db
+      .select({
+        id: boatAddOns.id,
+        addOnId: boatAddOns.addOnId,
+        name: addOns.name,
+        description: addOns.description,
+        category: addOns.category,
+        overridePriceCents: boatAddOns.priceCents,
+        defaultPriceCents: addOns.defaultPriceCents,
+        isComplimentary: boatAddOns.isComplimentary,
+        isActive: boatAddOns.isActive,
+        sortOrder: boatAddOns.sortOrder,
+        imageUrl: addOns.imageUrl,
+      })
+      .from(boatAddOns)
+      .innerJoin(addOns, eq(boatAddOns.addOnId, addOns.id))
+      .where(eq(boatAddOns.boatId, boatId))
+      .orderBy(asc(boatAddOns.sortOrder), asc(addOns.name));
+
+    return rows.map((r) => ({
+      ...r,
+      priceCents: r.isComplimentary ? 0 : r.overridePriceCents ?? r.defaultPriceCents ?? 0,
+    }));
   }
 
   /**
@@ -281,8 +314,8 @@ export class BoatService {
    * Note: neon-http driver doesn't support transactions, so operations are sequential
    */
   async createBoat(boatData: CreateBoatInput): Promise<import('./boat.types').BoatWithTiers> {
-    // Extract pricing tiers and location data
-    const { pricingTiers, locationCoordinates, ...boatValues } = boatData;
+    // Extract pricing tiers, add-on offerings, and location data
+    const { pricingTiers, boatAddOns: addOnAssignments, locationCoordinates, ...boatValues } = boatData;
 
     // Prepare insert data - convert ISO string dates to Date objects for database
     const insertData: Partial<BoatManipulationPayload> = {
@@ -312,6 +345,11 @@ export class BoatService {
       await db.insert(boatPricingTiers).values(tiersWithBoatId);
     }
 
+    // Insert add-on offerings if provided
+    if (addOnAssignments && addOnAssignments.length > 0) {
+      await this.updateBoatAddOns(boatRow.id, addOnAssignments);
+    }
+
     // Fetch complete boat with tiers
     const boat = await this.getBoatById(boatRow.id);
     if (!boat) throw new Error('Failed to retrieve created boat');
@@ -323,8 +361,8 @@ export class BoatService {
    */
   async updateBoat(id: string, data: UpdateBoatInput): Promise<import('./boat.types').BoatWithTiers> {
 
-    // Extract pricing tiers and location data
-    const { pricingTiers, locationCoordinates, ...boatValues } = data;
+    // Extract pricing tiers, add-on offerings, and location data
+    const { pricingTiers, boatAddOns: addOnAssignments, locationCoordinates, ...boatValues } = data;
 
     // Prepare update data - convert ISO string dates to Date objects for database
     const updateData: Partial<BoatManipulationPayload> = {
@@ -351,6 +389,11 @@ export class BoatService {
     // Update pricing tiers if provided
     if (pricingTiers !== undefined) {
       await this.updateBoatPricingTiers(id, pricingTiers);
+    }
+
+    // Update add-on offerings if provided
+    if (addOnAssignments !== undefined) {
+      await this.updateBoatAddOns(id, addOnAssignments);
     }
 
     // Return full boat with tiers and owner info (consistent with createBoat)
@@ -408,6 +451,54 @@ export class BoatService {
         }
         throw error;
       }
+    }
+  }
+
+  /**
+   * Upsert a boat's offered add-ons (mirror of updateBoatPricingTiers): update
+   * rows with ids, insert new ones, delete those no longer present.
+   */
+  private async updateBoatAddOns(
+    boatId: string,
+    assignments: BoatAddOnAssignmentInput[]
+  ): Promise<void> {
+    const existing = await db
+      .select({ id: boatAddOns.id })
+      .from(boatAddOns)
+      .where(eq(boatAddOns.boatId, boatId));
+    const incoming = assignments || [];
+    const incomingIds = new Set(incoming.map((a) => a.id).filter(Boolean));
+
+    for (const [index, a] of incoming.entries()) {
+      if (a.id) {
+        await db
+          .update(boatAddOns)
+          .set({
+            priceCents: a.priceCents ?? null,
+            isComplimentary: a.isComplimentary,
+            isActive: a.isActive,
+            sortOrder: index,
+            updatedAt: new Date(),
+          })
+          .where(eq(boatAddOns.id, a.id));
+      } else {
+        const now = new Date();
+        await db.insert(boatAddOns).values({
+          boatId,
+          addOnId: a.addOnId,
+          priceCents: a.priceCents ?? null,
+          isComplimentary: a.isComplimentary,
+          isActive: a.isActive,
+          sortOrder: index,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
+    }
+
+    const idsToDelete = existing.filter((e) => !incomingIds.has(e.id)).map((e) => e.id);
+    for (const id of idsToDelete) {
+      await db.delete(boatAddOns).where(eq(boatAddOns.id, id));
     }
   }
 

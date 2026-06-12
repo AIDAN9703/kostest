@@ -1,7 +1,7 @@
 "use server";
 
 import { ZodError } from "zod";
-import { auth } from "@/auth";
+import { getAdminSession } from "@/shared/lib/utils/auth-utils";
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { bookingExpenseLineService } from "@/features/bookings/services/booking-expense-line.service";
 import { bookingOpsService } from "@/features/bookings/services/booking-ops.service";
@@ -44,11 +44,11 @@ export async function createBookingFull(
   rawInput: CreateBookingFullInput
 ): Promise<ActionResponse<CreateBookingFullResult>> {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Authentication required" };
+    const adminAuth = await getAdminSession();
+    if (adminAuth.error !== undefined) {
+      return { success: false, error: adminAuth.error };
     }
-    const adminId = session.user.id;
+    const adminId = adminAuth.session.user.id;
 
     const input = createBookingFullSchema.parse(rawInput);
 

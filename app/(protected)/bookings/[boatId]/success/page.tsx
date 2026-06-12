@@ -56,6 +56,12 @@ export default async function BookingRequestSuccessPage({ searchParams }: Props)
         serviceFeeCents: booking.serviceFeeCents ?? null,
         totalAmountCents: booking.totalAmountCents ?? null,
         currency: booking.currency ?? "USD",
+        addOns: (booking.addOns ?? []).map((a) => ({
+          name: a.name,
+          quantity: a.quantity,
+          total: a.total,
+          isComplimentary: a.isComplimentary,
+        })),
       }}
     />
   );

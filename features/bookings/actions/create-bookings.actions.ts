@@ -1,7 +1,7 @@
 "use server";
 
 import { z, ZodError } from "zod";
-import { auth } from "@/auth";
+import { getAdminSession } from "@/shared/lib/utils/auth-utils";
 import { bookingService } from "@/features/bookings/services/booking.service";
 import {
   createBookingsSchema,
@@ -70,10 +70,11 @@ export async function createBookingsAction(
   }>
 > {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return { success: false, error: "Authentication required" };
+    const adminAuth = await getAdminSession();
+    if (adminAuth.error !== undefined) {
+      return { success: false, error: adminAuth.error };
     }
+    const session = adminAuth.session;
 
     const bookingsRaw = formData.get("bookings");
     const lineItemsRaw = formData.get("lineItems");

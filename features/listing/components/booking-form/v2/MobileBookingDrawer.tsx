@@ -22,7 +22,14 @@ import type { BookingBoat } from "./useBookingForm";
  * Mobile booking entry point: a sticky price/CTA bar that opens a Vaul drawer
  * with the inline booking form. Restyled successor to `MobileBookingBar`.
  */
-export function MobileBookingDrawer({ boat }: { boat: BookingBoat }) {
+export function MobileBookingDrawer({
+  boat,
+  serviceFeeRate,
+}: {
+  boat: BookingBoat;
+  /** Decimal service fee rate (e.g. 0.035) from app settings, fetched by the server page. */
+  serviceFeeRate: number;
+}) {
   const [open, setOpen] = useState(false);
   const startingHourly = getBoatStartingHourlyLabel(boat as BoatWithTiers);
 
@@ -65,8 +72,7 @@ export function MobileBookingDrawer({ boat }: { boat: BookingBoat }) {
       <Drawer open={open} onOpenChange={setOpen} shouldScaleBackground={false}>
         <DrawerContent
           id="boat-booking-drawer"
-          handleClassName="h-2.5 w-20 bg-[linear-gradient(90deg,#7c3aed,#a855f7,#c084fc)]"
-          className="flex max-h-[92dvh] flex-col gap-0 px-0 pb-[env(safe-area-inset-bottom)]"
+          className="flex max-h-[85dvh] flex-col gap-0 px-0 pb-[env(safe-area-inset-bottom)]"
         >
           <DrawerHeader className="shrink-0 gap-0 border-b border-border px-5 pb-4 pt-2 text-left">
             <DrawerTitle className="text-xl font-bold leading-tight tracking-tight text-foreground">
@@ -82,7 +88,7 @@ export function MobileBookingDrawer({ boat }: { boat: BookingBoat }) {
             role="region"
             aria-label="Booking form"
           >
-            <BookingForm boat={boat} layout="inline" bare />
+            <BookingForm boat={boat} serviceFeeRate={serviceFeeRate} layout="inline" bare />
           </div>
         </DrawerContent>
       </Drawer>

@@ -14,7 +14,6 @@ import { paymentService } from "@/features/payments/payment.service";
 import { getBaseUrl } from "@/shared/lib/utils/base-url";
 import { getStripe, getOrCreateStripeCustomer } from "@/shared/lib/services/stripe.service";
 import { dollarsToCents } from "@/shared/lib/utils/money-utils";
-import { SERVICE_FEE_PERCENT_DISPLAY } from "@/shared/lib/constants/fees-constants";
 import type { PaymentType } from "@/database/types";
 
 function toAbsoluteImageUrl(url: string | null, baseUrl: string): string | undefined {
@@ -173,11 +172,19 @@ export async function createCheckoutSessionForBooking(
       }
     }
     if (serviceFeeCents > 0) {
+      // Percent is derived from the booking's own pricing snapshot so the label
+      // always matches what was actually charged, even if settings changed since.
+      const feeBaseCents =
+        basePriceCents + cleaningFeeCents + addOns.reduce((sum, a) => sum + dollarsToCents(a.total), 0);
+      const feePercentLabel =
+        feeBaseCents > 0
+          ? ` (${String(Number(((serviceFeeCents / feeBaseCents) * 100).toFixed(2)))}%)`
+          : "";
       lineItems.push({
         price_data: {
           currency,
           product_data: {
-            name: `Card processing fee (${SERVICE_FEE_PERCENT_DISPLAY}%)`,
+            name: `Card processing fee${feePercentLabel}`,
             description: "Applied to subtotal",
           },
           unit_amount: serviceFeeCents,

@@ -524,7 +524,7 @@ export function AdminUserCreateEditForm({
         <div className="flex justify-end gap-4">
           <Button
             type="button"
-            variant="outline"
+            variant="destructive"
             onClick={() =>
               userId
                 ? router.push(`/admin/users/${userId}`)

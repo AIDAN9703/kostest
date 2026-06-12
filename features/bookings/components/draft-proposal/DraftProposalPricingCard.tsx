@@ -3,7 +3,6 @@
 import { Plus } from "lucide-react";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { dollarsToCents } from "@/shared/lib/utils/money-utils";
-import { SERVICE_FEE_PERCENT_DISPLAY } from "@/shared/lib/constants/fees-constants";
 import type { DraftProposalBooking } from "@/features/bookings/lib/draft-proposal.types";
 
 interface DraftProposalPricingCardProps {
@@ -14,6 +13,12 @@ export function DraftProposalPricingCard({ bookings }: DraftProposalPricingCardP
   const grandTotalCents = bookings.reduce((sum, b) => sum + b.totalCents, 0);
   const subtotalCents = bookings.reduce((sum, b) => sum + b.totalCents - b.serviceFeeCents, 0);
   const totalServiceFeeCents = bookings.reduce((sum, b) => sum + b.serviceFeeCents, 0);
+  // Derived from this proposal's own pricing snapshot — stays correct even if
+  // the global fee setting changes after the proposal was created.
+  const feePercentLabel =
+    subtotalCents > 0
+      ? ` (${String(Number(((totalServiceFeeCents / subtotalCents) * 100).toFixed(2)))}%)`
+      : "";
 
   return (
     <div className="space-y-3">
@@ -60,7 +65,7 @@ export function DraftProposalPricingCard({ bookings }: DraftProposalPricingCardP
           </div>
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">
-              Card processing fee ({SERVICE_FEE_PERCENT_DISPLAY}%)
+              Card processing fee{feePercentLabel}
             </span>
             <span className="font-medium text-gray-900">
               {formatCentsAsCurrency(totalServiceFeeCents)}

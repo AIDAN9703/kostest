@@ -2,16 +2,14 @@
 
 import { useEffect, useState } from "react";
 
-const HOLD_SECONDS = 10 * 60;
-
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export default function BookingHoldTimer() {
-  const [secondsLeft, setSecondsLeft] = useState(HOLD_SECONDS);
+export default function BookingHoldTimer({ minutes }: { minutes: number }) {
+  const [secondsLeft, setSecondsLeft] = useState(minutes * 60);
 
   useEffect(() => {
     if (secondsLeft <= 0) return;

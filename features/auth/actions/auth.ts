@@ -3,47 +3,31 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/database/db";
 import { users } from "@/database/schema";
-import { hash, compare } from "bcryptjs";
+import { hash } from "bcryptjs";
 import { signIn } from "@/auth";
 import { ActionResponse } from "@/shared/lib/types/types";
 import { formatPhoneNumberE164 } from '@/shared/lib/utils/general-utils';
 import { SignInData, SignUpData } from "@/features/_validation/validations";
-import { checkVerification } from "@/shared/lib/services/twilio.service";
-
-/**
- * Check if a user exists with the given email address
- * Used in booking flow to route to sign-in or sign-up
- */
-export const checkUserExistsByEmail = async (
-  email: string
-): Promise<ActionResponse<{ exists: boolean; user?: any }>> => {
-  try {
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-    
-    return {
-      success: true,
-      data: {
-        exists: existingUser.length > 0,
-        user: existingUser[0] || null
-      }
-    };
-  } catch (error) {
-    console.error("Error checking user existence:", error);
-    return {
-      success: false,
-      error: "Failed to check user existence"
-    };
-  }
-};
+import { checkRateLimit, getClientIp } from "@/shared/lib/utils/rate-limit";
 
 export const signInAction = async (
   params: SignInData
 ): Promise<ActionResponse<{ message: string; redirectUrl?: string }>> => {
   const { email, password } = params;
+
+  // Throttle credential stuffing: per-account and per-IP windows.
+  const ip = await getClientIp();
+  const perEmail = checkRateLimit(`sign-in:email:${email.toLowerCase()}`, {
+    limit: 10,
+    windowMs: 15 * 60 * 1000,
+  });
+  const perIp = checkRateLimit(`sign-in:ip:${ip}`, {
+    limit: 30,
+    windowMs: 15 * 60 * 1000,
+  });
+  if (!perEmail.allowed || !perIp.allowed) {
+    return { success: false, error: "Too many sign-in attempts. Please try again later." };
+  }
 
   try {
     // Simple sign in - no phone verification checks
@@ -63,6 +47,15 @@ export const signUpAction = async (
   params: SignUpData
 ): Promise<ActionResponse<{ message: string; redirectUrl?: string }>> => {
   const { firstName, lastName, email, password, phoneNumber } = params;
+
+  const ip = await getClientIp();
+  const perIp = checkRateLimit(`sign-up:ip:${ip}`, {
+    limit: 5,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (!perIp.allowed) {
+    return { success: false, error: "Too many accounts created. Please try again later." };
+  }
 
   const existingUser = await db
     .select()
@@ -109,197 +102,6 @@ export const signUpAction = async (
   } catch (error) {
     console.error("Error creating user:", error);
     return { success: false, error: "Failed to create user" };
-  }
-};
-
-/**
- * Creates a new user in the booking flow with all required fields
- * This is an internal function used by handlePhoneAndOtpForBooking
- */
-async function createUserFromBookingFlow(
-  phoneNumber: string,
-  userData: { firstName: string; lastName: string; email: string; password: string }
-): Promise<ActionResponse<{ user: any; message: string }>> {
-  try {
-    const formattedPhoneNumber = formatPhoneNumberE164(phoneNumber);
-    
-    // Check if email already exists
-    const existingEmail = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, userData.email))
-      .limit(1);
-      
-    if (existingEmail.length > 0) {
-      return {
-        success: false,
-        error: "An account with this email already exists"
-      };
-    }
-    
-    // Generate a username from email
-    const username = userData.email.split('@')[0] + '_' + Math.floor(Math.random() * 10000);
-    
-    // Hash the password
-    const hashedPassword = await hash(userData.password, 10);
-    
-    // Create the new user with full details
-    const [newUser] = await db.insert(users).values({
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      email: userData.email,
-      username,
-      password: hashedPassword,
-      phoneNumber: formattedPhoneNumber,
-      phoneVerified: true, // Already verified via OTP (only non-default we need)
-      // createdAt, updatedAt, status all have defaults in schema
-    }).returning();
-    
-    if (!newUser) {
-      return {
-        success: false,
-        error: "Failed to create user account"
-      };
-    }
-    
-    // Attempt to sign the user in
-    try {
-      await signIn("credentials", {
-        email: userData.email,
-        password: userData.password,
-        redirect: false,
-      });
-    } catch (signInError) {
-      // Log but continue if sign-in fails
-      console.error("Error signing in new user:", signInError);
-    }
-    
-    return {
-      success: true,
-      data: { 
-        user: newUser,
-        message: "User account created successfully"
-      }
-    };
-  } catch (error) {
-    console.error("Error creating user:", error);
-    return {
-      success: false,
-      error: "Failed to create user account"
-    };
-  }
-}
-
-/**
- * Process for verifying phone OTP in the booking flow
- * This version only verifies the phone number and returns the verification result
- * It does not create a temporary user - that happens after the account modal collects info
- */
-export const handlePhoneAndOtpForBooking = async (
-  phoneNumber: string,
-  otp: string,
-): Promise<ActionResponse<{ user?: any; message: string; existingUser?: boolean; }>> => {
-  try {
-    const formattedPhoneNumber = formatPhoneNumberE164(phoneNumber);
-    
-    // Step 1: Verify the OTP using the Twilio service
-    const checkResult = await checkVerification(formattedPhoneNumber, otp);
-    
-    if (!checkResult.success) {
-      return { 
-        success: false, 
-        error: "Invalid verification code" 
-      };
-    }
-    
-    // Step 2: Check if a user with this phone number already exists
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.phoneNumber, formattedPhoneNumber))
-      .limit(1);
-    
-    if (existingUser.length > 0) {
-      // Update phone verification status if not already verified
-      if (!existingUser[0].phoneVerified) {
-        await db
-          .update(users)
-          .set({ 
-            phoneVerified: true,
-            updatedAt: new Date()
-          })
-          .where(eq(users.id, existingUser[0].id));
-      }
-      
-      // Note: We don't automatically sign in existing users in the booking flow
-      // They should sign in through the normal auth process for security
-      
-      return {
-        success: true,
-        data: {
-          user: existingUser[0],
-          message: "Successfully verified and signed in",
-          existingUser: true
-        }
-      };
-    } 
-    
-    // For new users, just return success with the phone number
-    // The actual user creation will happen after the complete account modal
-    return {
-      success: true,
-      data: {
-        user: { phoneNumber: formattedPhoneNumber, phoneVerified: true },
-        message: "Phone verified. Please complete your account.",
-        existingUser: false
-      }
-    };
-  } catch (error) {
-    console.error("Error in handlePhoneAndOtpForBooking:", error);
-    return {
-      success: false,
-      error: "Failed to process phone verification"
-    };
-  }
-};
-
-/**
- * Completes the user account after phone verification in the booking flow
- * This replaces the minimal account logic with proper user creation
- */
-export const completeUserAccountAfterVerification = async (
-  phoneNumber: string,
-  userData: { firstName: string; lastName: string; email: string; password: string }
-): Promise<ActionResponse<{ user: any; message: string }>> => {
-  try {
-    const formattedPhoneNumber = formatPhoneNumberE164(phoneNumber);
-    
-    // Check if a user with this phone number already exists
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.phoneNumber, formattedPhoneNumber))
-      .limit(1);
-    
-    if (existingUser.length > 0) {
-      // Return the existing user
-      return { 
-        success: true, 
-        data: { 
-          user: existingUser[0],
-          message: "User already exists with this phone number"
-        } 
-      };
-    }
-    
-    // Create a new user with the provided information
-    return await createUserFromBookingFlow(phoneNumber, userData);
-  } catch (error) {
-    console.error("Error completing user account:", error);
-    return {
-      success: false,
-      error: "Failed to create user account"
-    };
   }
 };
 

@@ -302,6 +302,20 @@
       "when": 1780006335217,
       "tag": "0046_dizzy_strong_guy",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1780965531668,
+      "tag": "0047_clean_blizzard",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1781065220008,
+      "tag": "0048_medical_shen",
+      "breakpoints": true
     }
   ]
 }

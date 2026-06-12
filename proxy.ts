@@ -67,7 +67,7 @@ export default auth((req) => {
   }
 
   // Protect user-specific API routes
-  if (pathname.startsWith("/api/users/profile") || pathname.startsWith("/api/users/stats")) {
+  if (pathname.startsWith("/api/users/profile")) {
     if (!isLoggedIn)
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   }

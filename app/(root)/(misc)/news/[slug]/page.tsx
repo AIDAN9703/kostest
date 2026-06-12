@@ -160,18 +160,18 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </p>
         </div>
 
-        {/* Content */}
+        {/* Content — plain text from the admin textarea; render newlines via
+            CSS instead of injecting HTML (closes the stored-XSS surface). */}
         <div className="prose prose-lg max-w-none mb-12">
           <div
-            className="text-gray-800 leading-relaxed"
+            className="text-gray-800 leading-relaxed whitespace-pre-line"
             style={{
               lineHeight: "1.8",
               fontSize: "1.125rem",
             }}
-            dangerouslySetInnerHTML={{
-              __html: post.content.replace(/\n/g, "<br />"),
-            }}
-          />
+          >
+            {post.content}
+          </div>
         </div>
 
         {/* Social Sharing */}

@@ -7,7 +7,11 @@ import { bookingRequestSchema, BookingRequest } from "@/features/_validation/val
 import { z } from "zod";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { eq } from "drizzle-orm";
-import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
+import { calculateBookingPriceCents } from "@/shared/lib/utils/pricing-utils";
+import { getAppSettings } from "@/features/app-settings/app-settings.service";
+import { centsToDollars, dollarsToCents } from "@/shared/lib/utils/money-utils";
+import { addOnService } from "@/features/add-ons/add-on.service";
+import { AvailabilityService } from "@/features/availability/services/availability.service";
 import { getBaseUrl } from "@/shared/lib/utils/base-url";
 import { getStripe } from "@/shared/lib/services/stripe.service";
 
@@ -83,15 +87,56 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
     // Convert ISO string to Date object and calculate end datetime
     const startDateTime = new Date(validatedData.startDateTime);
     const endDateTime = calculateEndDateTime(startDateTime, pricingTier.hours);
-    
-    // Calculate all fees using universal pricing function
-    const priceBreakdown = calculateBookingPrice(
-      pricingTier.price,
-      boat.cleaningFee || 0,
-      0 // Captain service is included in base price
+
+    // Never let a customer pay for a slot that's already taken — check
+    // availability before creating the checkout session. (The webhook
+    // re-checks after payment to narrow the race window.)
+    const availability = await new AvailabilityService().checkTimeSlotAvailability(
+      data.boatId,
+      startDateTime,
+      endDateTime
     );
-    
+    if (!availability.isAvailable) {
+      return {
+        success: false,
+        error: "This time slot is no longer available. Please choose a different time.",
+      };
+    }
+
+    // Resolve add-on selection server-side (prices come from the boat, not the client).
+    const { snapshot: addOnSnapshot, addOnsCents } = await addOnService.resolveSelectionForBoat(
+      data.boatId,
+      validatedData.addOns ?? []
+    );
+
+    // Calculate all fees (cents) including add-ons
+    const { serviceFeeRate } = await getAppSettings();
+    const breakdown = calculateBookingPriceCents(
+      dollarsToCents(pricingTier.price),
+      dollarsToCents(boat.cleaningFee || 0),
+      0, // Captain service is included in base price
+      addOnsCents,
+      serviceFeeRate
+    );
+
     const boatCurrency = (boat.currency ?? "USD").toUpperCase();
+
+    // Base line carries everything except the raw add-on amounts (so add-ons can
+    // show as their own checkout line items). Sum still equals the grand total.
+    const baseLineCents = breakdown.totalPriceCents - addOnsCents;
+    const addOnLineItems = addOnSnapshot
+      .filter((a) => !a.isComplimentary && a.total > 0)
+      .map((a) => ({
+        price_data: {
+          currency: boatCurrency.toLowerCase(),
+          product_data: {
+            name: a.quantity > 1 ? `${a.name} × ${a.quantity}` : a.name,
+            description: a.description ?? boat.name,
+          },
+          unit_amount: dollarsToCents(a.total),
+        },
+        quantity: 1,
+      }));
 
     // Create a Stripe Checkout Session
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -105,10 +150,11 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
               images: [boat.mainImage || "https://via.placeholder.com/800x600.png?text=Boat+Image"],
               description: `${validatedData.needsCaptain || boat.crewRequired ? "With Captain" : "Self-Drive"} - ${startDateTime.toLocaleDateString()} at ${startDateTime.toLocaleTimeString()}`
             },
-            unit_amount: Math.round(priceBreakdown.totalPrice * 100), // Convert to cents
+            unit_amount: baseLineCents,
           },
           quantity: 1,
         },
+        ...addOnLineItems,
       ],
       metadata: {
         // Store all booking data needed to create a booking record after payment
@@ -124,12 +170,14 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
         endDateTime: endDateTime.toISOString(),
         pricingTierId: validatedData.pricingTierId,
         numberOfPassengers: validatedData.numberOfPassengers.toString(),
-        basePrice: priceBreakdown.basePrice.toString(),
-        captainFee: priceBreakdown.captainFee.toString(),
-        cleaningFee: priceBreakdown.cleaningFee.toString(),
-        serviceFee: priceBreakdown.serviceFee.toString(),
-        totalAmount: priceBreakdown.totalPrice.toString(),
+        basePrice: centsToDollars(breakdown.basePriceCents).toString(),
+        captainFee: centsToDollars(breakdown.captainFeeCents).toString(),
+        cleaningFee: centsToDollars(breakdown.cleaningFeeCents).toString(),
+        serviceFee: centsToDollars(breakdown.serviceFeeCents).toString(),
+        totalAmount: centsToDollars(breakdown.totalPriceCents).toString(),
         depositAmount: (boat.depositAmount || 0).toString(),
+        // Priced add-on snapshot so the webhook can persist it post-payment.
+        addOns: addOnSnapshot.length > 0 ? JSON.stringify(addOnSnapshot) : "",
         currency: boatCurrency,
         createdAt: new Date().toISOString(),
       },
@@ -163,19 +211,3 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
     };
   }
 }
-
-/**
- * Server action for form submissions
- */
-export async function createInstantBookingAction(formData: FormData) {
-  // Parse form data
-  const data = {
-    boatId: formData.get("boatId") as string,
-    startDateTime: formData.get("startDateTime") as string,
-    pricingTierId: formData.get("pricingTierId") as string,
-    numberOfPassengers: parseInt(formData.get("numberOfPassengers") as string),
-    needsCaptain: formData.get("needsCaptain") === "true",
-  };
-
-  return await createInstantBooking(data);
-}  

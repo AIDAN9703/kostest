@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { getBoatById } from "@/features/boats/actions/boat-actions";
+import { addOnService } from "@/features/add-ons/add-on.service";
 import {
   type CreateBoatInput,
   type PricingTierInput,
+  type BoatAddOnAssignmentInput,
 } from "@/features/boats/boat.validation";
 import AdminAddUpdateBoatForm from "@/features/boats/components/forms/admin-create-edit-boat-form";
 import { Suspense } from "react";
@@ -31,7 +33,10 @@ export default async function AdminBoatEditPage({
 
 // Separate component for data fetching to enable Suspense
 async function BoatFormWithData({ boatId }: { boatId: string }) {
-  const boatData = await getBoatById(boatId);
+  const [boatData, availableAddOns] = await Promise.all([
+    getBoatById(boatId),
+    addOnService.getActiveAddOns(),
+  ]);
 
   if (!boatData) {
     notFound();
@@ -47,6 +52,16 @@ async function BoatFormWithData({ boatId }: { boatId: string }) {
       description: tier.description || "",
       isActive: tier.isActive,
       isDefault: tier.isDefault || false,
+    })) || [];
+
+  // Format offered add-ons to match the per-boat assignment schema
+  const formattedBoatAddOns: BoatAddOnAssignmentInput[] =
+    boatData.boatAddOns?.map((a) => ({
+      id: a.id,
+      addOnId: a.addOnId,
+      priceCents: a.overridePriceCents,
+      isComplimentary: a.isComplimentary,
+      isActive: a.isActive,
     })) || [];
 
   // Transform database boat to form input format
@@ -88,6 +103,7 @@ async function BoatFormWithData({ boatId }: { boatId: string }) {
     // Pricing
     currency: normalizeCurrency(boatData.currency),
     pricingTiers: formattedPricingTiers,
+    boatAddOns: formattedBoatAddOns,
     weeklyRate: boatData.weeklyRate || null,
     monthlyRate: boatData.monthlyRate || null,
     depositAmount: boatData.depositAmount || null,
@@ -137,7 +153,9 @@ async function BoatFormWithData({ boatId }: { boatId: string }) {
     maintenanceNotes: boatData.maintenanceNotes || null,
   };
 
-  return <AdminAddUpdateBoatForm boat={boat} boatId={boatId} />;
+  return (
+    <AdminAddUpdateBoatForm boat={boat} boatId={boatId} availableAddOns={availableAddOns} />
+  );
 }
 
 // Skeleton UI for the form loading state

@@ -1,6 +1,5 @@
 import { Boat, PricingTier } from "../types/types";
 import { formatCurrency } from "./general-utils";
-import { SERVICE_FEE_RATE } from "@/shared/lib/constants/fees-constants";
 
 import { dollarsToCents, type Cents } from "./money-utils";
 import { BoatWithTiers } from "@/features/boats/boat.types";
@@ -121,31 +120,40 @@ export interface BookingPriceBreakdownCents {
 }
 
 /**
- * Calculate service fee in cents based on subtotal in cents
+ * Calculate service fee in cents based on subtotal in cents.
+ *
+ * @param serviceFeeRate - Decimal rate (e.g. 0.035 for 3.5%), from app settings
  */
-export const calculateServiceFeeCents = (subtotalCents: Cents): Cents => {
-  return Math.round(subtotalCents * SERVICE_FEE_RATE);
+export const calculateServiceFeeCents = (
+  subtotalCents: Cents,
+  serviceFeeRate: number
+): Cents => {
+  return Math.round(subtotalCents * serviceFeeRate);
 };
 
 /**
  * MAIN booking price calculator in CENTS - use for all database operations
  *
- * Order: base (charter) + add-ons + cleaning + captain = subtotal, then 3.5% fee on subtotal = total
+ * Order: base (charter) + add-ons + cleaning + captain = subtotal, then the
+ * service fee (rate from app settings) on subtotal = total.
  *
  * @param basePriceCents - Charter base price only (in cents)
- * @param cleaningFeeCents - One-time cleaning fee in cents (optional)
- * @param captainFeeCents - Captain service fee in cents (optional)
- * @param addOnsCents - Add-ons total in cents (optional)
+ * @param cleaningFeeCents - One-time cleaning fee in cents
+ * @param captainFeeCents - Captain service fee in cents
+ * @param addOnsCents - Add-ons total in cents
+ * @param serviceFeeRate - Decimal rate (e.g. 0.035), from getAppSettings() on
+ *   the server or passed down as a prop on the client
  * @returns Complete price breakdown with all fees in cents
  */
 export const calculateBookingPriceCents = (
   basePriceCents: Cents,
-  cleaningFeeCents: Cents = 0,
-  captainFeeCents: Cents = 0,
-  addOnsCents: Cents = 0
+  cleaningFeeCents: Cents,
+  captainFeeCents: Cents,
+  addOnsCents: Cents,
+  serviceFeeRate: number
 ): BookingPriceBreakdownCents => {
   const subtotalCents = basePriceCents + addOnsCents + captainFeeCents + cleaningFeeCents;
-  const serviceFeeCents = calculateServiceFeeCents(subtotalCents);
+  const serviceFeeCents = calculateServiceFeeCents(subtotalCents, serviceFeeRate);
   const totalPriceCents = subtotalCents + serviceFeeCents;
 
   return {
@@ -163,19 +171,23 @@ export const calculateBookingPriceCents = (
  * Convenience function for when inputs come from forms/UI in dollars
  *
  * @param basePriceDollars - Base price from pricing tier (in dollars)
- * @param cleaningFeeDollars - One-time cleaning fee in dollars (optional)
- * @param captainFeeDollars - Captain service fee in dollars (optional)
+ * @param cleaningFeeDollars - One-time cleaning fee in dollars
+ * @param captainFeeDollars - Captain service fee in dollars
+ * @param serviceFeeRate - Decimal rate (e.g. 0.035), from app settings
  * @returns Complete price breakdown with all fees in cents
  */
 export const calculateBookingPriceFromDollars = (
   basePriceDollars: number,
-  cleaningFeeDollars: number = 0,
-  captainFeeDollars: number = 0
+  cleaningFeeDollars: number,
+  captainFeeDollars: number,
+  serviceFeeRate: number
 ): BookingPriceBreakdownCents => {
   return calculateBookingPriceCents(
     dollarsToCents(basePriceDollars),
     dollarsToCents(cleaningFeeDollars),
-    dollarsToCents(captainFeeDollars)
+    dollarsToCents(captainFeeDollars),
+    0,
+    serviceFeeRate
   );
 };
 
@@ -199,8 +211,11 @@ export interface BookingPriceBreakdown {
  * Calculate service fee based on subtotal
  * @deprecated Use calculateServiceFeeCents instead
  */
-export const calculateServiceFee = (subtotal: number): number => {
-  return subtotal * SERVICE_FEE_RATE;
+export const calculateServiceFee = (
+  subtotal: number,
+  serviceFeeRate: number
+): number => {
+  return subtotal * serviceFeeRate;
 };
 
 /**
@@ -210,18 +225,20 @@ export const calculateServiceFee = (subtotal: number): number => {
  * @deprecated Use calculateBookingPriceCents instead
  *
  * @param pricingTierPrice - Base price from pricing tier
- * @param cleaningFee - One-time cleaning fee (optional)
- * @param captainFee - Captain service fee (optional, usually 0 as included in base)
+ * @param cleaningFee - One-time cleaning fee
+ * @param captainFee - Captain service fee (usually 0 as included in base)
+ * @param serviceFeeRate - Decimal rate (e.g. 0.035), from app settings
  * @returns Complete price breakdown with all fees
  */
 export const calculateBookingPrice = (
   pricingTierPrice: number,
-  cleaningFee: number = 0,
-  captainFee: number = 0
+  cleaningFee: number,
+  captainFee: number,
+  serviceFeeRate: number
 ): BookingPriceBreakdown => {
   const basePrice = pricingTierPrice;
   const subtotal = basePrice + captainFee + cleaningFee;
-  const serviceFee = calculateServiceFee(subtotal);
+  const serviceFee = calculateServiceFee(subtotal, serviceFeeRate);
   const totalPrice = subtotal + serviceFee;
 
   return {

@@ -349,9 +349,9 @@ export function PricingTiers({ tiers = [], onChange, currency = "USD" }: Pricing
           </div>
 
           <DialogFooter>
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="destructive"
               onClick={(e) => {
                 e.preventDefault();
                 setIsDialogOpen(false);

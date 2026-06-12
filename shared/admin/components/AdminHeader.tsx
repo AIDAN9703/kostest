@@ -6,7 +6,7 @@ import { Breadcrumbs } from "@/shared/admin/components/breadcrumbs";
 import SearchInput from "@/shared/admin/components/search-input";
 import { AdminQuickActionsDropdown } from "@/shared/admin/components/AdminQuickActionsDropdown";
 import { ModeToggle } from "@/shared/admin/components/mode-toggle";
-import { ThemeSelector } from "@/shared/admin/components/theme-selector";
+import { AdminAccentThemeSelector } from "@/shared/admin/admin-accent-theme";
 
 export default function AdminHeader() {
   return (
@@ -23,7 +23,7 @@ export default function AdminHeader() {
           <SearchInput />
         </div>
         <ModeToggle />
-        <ThemeSelector />
+        <AdminAccentThemeSelector />
       </div>
     </header>
   );

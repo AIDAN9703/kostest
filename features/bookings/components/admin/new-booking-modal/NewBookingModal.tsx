@@ -26,7 +26,7 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { cn, formatCurrency } from "@/shared/lib/utils/general-utils";
-import { useThemeConfig } from "@/shared/admin/components/active-theme";
+import { useAdminAccentTheme } from "@/shared/admin/admin-accent-theme";
 import { useToast } from "@/shared/lib/hooks/use-toast";
 import { useUser } from "@/features/users/hooks/useUsers";
 
@@ -119,7 +119,7 @@ function NewBookingDialog({
 }) {
   const router = useRouter();
   const { toast } = useToast();
-  const { activeTheme } = useThemeConfig();
+  const { activeTheme } = useAdminAccentTheme();
   const [pending, startTransition] = useTransition();
 
   const [step, setStep] = useState(0); // 0..2, then success
@@ -676,7 +676,7 @@ function NewBookingDialog({
 
         {!isSuccess && (
           <div className="flex items-center justify-between border-t border-border bg-muted/30 px-6 py-4">
-            <Button variant="ghost" onClick={onClose}>
+            <Button variant="destructive" onClick={onClose}>
               Cancel
             </Button>
             <div className="flex gap-2">

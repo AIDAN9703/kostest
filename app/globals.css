@@ -44,10 +44,6 @@
   --color-primary: #27445c;
   --color-primary-admin: #25388c;
 
-  --color-gold-100: #917153;
-  --color-gold-400: #4c7b62;
-  --color-gold-500: #2cc171;
-  --color-gold-800: #027a48;
   --color-gold: #b2a37a;
 
   --color-red-400: #f46f70;
@@ -138,11 +134,6 @@
   }
 }
 
-@utility animate-fadeIn {
-  /* Profile animations */
-  animation: fadeIn 0.5s ease-in-out;
-}
-
 @utility line-clamp-1 {
   overflow: hidden;
   display: -webkit-box;
@@ -192,20 +183,6 @@
 
   .hide-scrollbar::-webkit-scrollbar-thumb:hover {
     background: transparent;
-  }
-}
-
-@layer components {
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
   }
 }
 

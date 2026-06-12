@@ -100,13 +100,15 @@ export function SettingsField({
       <div className={cn("space-y-2", className)}>
         <div className="flex items-center justify-between">
           <label className="text-sm font-medium text-gray-900">{label}</label>
-          <button
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
             onClick={handleCancel}
-            className="text-sm text-gray-600 hover:text-gray-900"
             disabled={isSaving}
           >
             Cancel
-          </button>
+          </Button>
         </div>
         {type === "textarea" ? (
           <Textarea

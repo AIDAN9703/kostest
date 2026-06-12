@@ -19,7 +19,7 @@ import { AdminToolbar, FilterSearch } from "@/shared/admin/filters";
 import { bookingSearchParams } from "@/features/bookings/searchParams";
 import { bookingStatusEnum, bookingTypeEnum } from "@/database/schema";
 import { PAYMENT_DISPLAY_STATUSES } from "@/shared/lib/utils/payment-display";
-import { useThemeConfig } from "@/shared/admin/components/active-theme";
+import { useAdminAccentTheme } from "@/shared/admin/admin-accent-theme";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
@@ -75,7 +75,7 @@ export function AdminBookingFilter({
   admins: AdminOption[];
   pricingTiers: PricingTierOption[];
 }) {
-  const { activeTheme } = useThemeConfig();
+  const { activeTheme } = useAdminAccentTheme();
   const [filters, setFilters] = useQueryStates(bookingSearchParams, {
     clearOnDefault: true,
     shallow: false,

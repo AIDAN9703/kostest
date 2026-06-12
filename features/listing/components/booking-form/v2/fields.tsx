@@ -12,7 +12,9 @@ import {
 import { cn, formatCurrency } from "@/shared/lib/utils/general-utils";
 import { PricingTier } from "@/shared/lib/types/types";
 import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
-import { SERVICE_FEE_PERCENT_DISPLAY } from "@/shared/lib/constants/fees-constants";
+import { centsToDollars } from "@/shared/lib/utils/money-utils";
+import { formatRateAsPercent } from "@/features/app-settings/app-settings.config";
+import type { ResolvedBoatAddOn } from "@/features/add-ons/add-on.types";
 import type { BookingPickerLayout } from "../shared/booking-picker-layout";
 
 /* -------------------------------------------------------------------------- */
@@ -374,12 +376,15 @@ export function PriceBreakdown({
   tier,
   cleaningFee,
   currency,
+  serviceFeeRate,
 }: {
   tier: PricingTier;
   cleaningFee: number;
   currency: string;
+  /** Decimal rate (e.g. 0.035) from app settings, passed down from the server page. */
+  serviceFeeRate: number;
 }) {
-  const b = calculateBookingPrice(tier.price, cleaningFee || 0, 0);
+  const b = calculateBookingPrice(tier.price, cleaningFee || 0, 0, serviceFeeRate);
   const fmt = (n: number) => formatCurrency(n, currency, { showCents: true });
 
   const Line = ({ label, amount }: { label: string; amount: string }) => (
@@ -398,12 +403,74 @@ export function PriceBreakdown({
       </div>
       {b.cleaningFee > 0 && <Line label="Cleaning fee" amount={fmt(b.cleaningFee)} />}
       <Line
-        label={`Card processing (${SERVICE_FEE_PERCENT_DISPLAY}%)`}
+        label={`Card processing (${formatRateAsPercent(serviceFeeRate)}%)`}
         amount={fmt(b.serviceFee)}
       />
       <div className="mt-2 flex items-center justify-between border-t border-border pt-3">
         <span className="font-semibold text-foreground">Total</span>
         <span className="text-xl font-bold text-primary">{fmt(b.totalPrice)}</span>
+      </div>
+    </div>
+  );
+}
+
+/** Customer-facing add-on picker for the v2 booking form. */
+export function AddOnsPicker({
+  addOns,
+  quantities,
+  onChange,
+  currency,
+}: {
+  addOns: ResolvedBoatAddOn[];
+  quantities: Record<string, number>;
+  onChange: (addOnId: string, quantity: number) => void;
+  currency: string;
+}) {
+  const fmt = (cents: number) => formatCurrency(centsToDollars(cents), currency, { showCents: true });
+  const paid = addOns.filter((a) => !a.isComplimentary);
+  const complimentary = addOns.filter((a) => a.isComplimentary);
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-medium text-foreground">Add-ons</p>
+      <div className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+        {paid.map((a) => {
+          const qty = quantities[a.addOnId] ?? 0;
+          return (
+            <div key={a.id} className="flex items-center justify-between gap-3 p-3">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium text-foreground">{a.name}</p>
+                <p className="text-xs text-muted-foreground">{fmt(a.priceCents)} each</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-label={`Remove one ${a.name}`}
+                  disabled={qty === 0}
+                  onClick={() => onChange(a.addOnId, Math.max(0, qty - 1))}
+                  className="grid size-7 place-items-center rounded-full border border-border text-foreground disabled:opacity-40"
+                >
+                  −
+                </button>
+                <span className="w-5 text-center text-sm font-medium tabular-nums">{qty}</span>
+                <button
+                  type="button"
+                  aria-label={`Add one ${a.name}`}
+                  onClick={() => onChange(a.addOnId, qty + 1)}
+                  className="grid size-7 place-items-center rounded-full border border-border text-foreground"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        {complimentary.map((a) => (
+          <div key={a.id} className="flex items-center justify-between gap-3 p-3">
+            <p className="truncate text-sm font-medium text-foreground">{a.name}</p>
+            <span className="text-sm font-medium text-emerald-600">Included</span>
+          </div>
+        ))}
       </div>
     </div>
   );

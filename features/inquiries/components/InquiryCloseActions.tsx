@@ -160,7 +160,7 @@ export function InquiryCloseActions({
           </DialogHeader>
           <DialogFooter>
             <Button
-              variant="outline"
+              variant="destructive"
               onClick={() => setShowCloseDialog(null)}
               className="rounded-xl"
             >
@@ -221,7 +221,7 @@ export function InquiryCloseActions({
           </div>
           <DialogFooter>
             <Button
-              variant="outline"
+              variant="destructive"
               onClick={() => {
                 setShowCloseDialog(null);
                 setLostReason("");
@@ -258,7 +258,7 @@ export function InquiryCloseActions({
           </DialogHeader>
           <DialogFooter>
             <Button
-              variant="outline"
+              variant="destructive"
               onClick={() => setShowCloseDialog(null)}
               className="rounded-xl"
             >

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { db } from '@/database/db';
 import { bookings, boats, users } from '@/database/schema';
 import { ilike, or, desc, eq } from 'drizzle-orm';
@@ -14,6 +15,12 @@ type SearchResult = {
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+  // Defense-in-depth: middleware also guards /api/admin, but never rely on it alone.
+  const session = await auth();
+  if (!session?.user?.isAdmin) {
+    return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+  }
+
   const { searchParams } = new URL(request.url);
   const query = (searchParams.get('q') ?? '').trim();
 

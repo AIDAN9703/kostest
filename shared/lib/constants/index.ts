@@ -53,5 +53,4 @@ export const RESPONSE_MESSAGES = {
 
 // Re-export fee constants for backward compatibility
 export * from './navigation-data';
-export * from './fees-constants';
 export * from './map-constants';

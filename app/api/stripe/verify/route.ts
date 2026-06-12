@@ -27,8 +27,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const sessionId = searchParams.get("session_id");
 
-    if (!sessionId) {
-      return NextResponse.json({ success: false, error: "Missing session_id" }, { status: 400 });
+    // The unguessable Stripe session ID acts as the bearer credential here —
+    // reject anything that isn't a checkout session ID before hitting Stripe.
+    if (!sessionId || !/^cs_[a-zA-Z0-9_]+$/.test(sessionId)) {
+      return NextResponse.json({ success: false, error: "Invalid session_id" }, { status: 400 });
     }
 
     const stripe = getStripe();
@@ -36,7 +38,10 @@ export async function GET(request: NextRequest) {
       expand: ["payment_intent"],
     });
 
-    if (session.status !== "complete") {
+    // Require actual payment, not just a completed session — "complete" sessions
+    // can still be unpaid with delayed payment methods. Never confirm a booking
+    // until Stripe says the money moved.
+    if (session.status !== "complete" || session.payment_status === "unpaid") {
       return NextResponse.json({ success: false, error: "Payment not completed" }, { status: 400 });
     }
 

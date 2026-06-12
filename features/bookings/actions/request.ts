@@ -9,6 +9,7 @@ import { z } from "zod";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { eq } from "drizzle-orm";
 import { bookingService } from "@/features/bookings/services/booking.service";
+import { addOnService } from "@/features/add-ons/add-on.service";
 import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 
 /**
@@ -90,6 +91,12 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
 
     const boat = boatResults[0];
 
+    // Resolve add-on selection server-side (prices come from the boat, not the client).
+    const { snapshot: addOnSnapshot, addOnsCents } = await addOnService.resolveSelectionForBoat(
+      data.boatId,
+      validatedData.addOns ?? []
+    );
+
     // Use the booking service to create the booking
     // This handles creating the booking, pricing, and status history records
     const booking = await bookingService.createBookingRequest({
@@ -103,6 +110,8 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
       endDateTime,
       numberOfPassengers: validatedData.numberOfPassengers,
       needsCaptain: validatedData.needsCaptain || boat.crewRequired || false,
+      addOns: addOnSnapshot,
+      addOnsCents,
     });
 
     // Send GHL webhook for booking request (async, don't block the response)
@@ -146,22 +155,6 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
 }
 
 /**
- * Server action for form submissions
- */
-export async function createBookingRequestAction(formData: FormData) {
-  // Parse form data
-  const data = {
-    boatId: formData.get("boatId") as string,
-    startDateTime: formData.get("startDateTime") as string,
-    pricingTierId: formData.get("pricingTierId") as string,
-    numberOfPassengers: parseInt(formData.get("numberOfPassengers") as string),
-    needsCaptain: formData.get("needsCaptain") === "true",
-  };
-
-  return await createBookingRequest(data);
-}
-
-/**
  * Send GHL webhook for booking request
  * Calculates pricing from tier and boat data
  */
@@ -176,9 +169,11 @@ async function sendGHLWebhookForBookingRequest(
   try {
     // Calculate pricing from source data (use shared util for consistency)
     const { calculateBookingPriceFromDollars } = await import("@/shared/lib/utils/pricing-utils");
+    const { getAppSettings } = await import("@/features/app-settings/app-settings.service");
     const basePrice = pricingTier.price;
     const cleaningFee = boat.cleaningFee || 0;
-    const priceBreakdown = calculateBookingPriceFromDollars(basePrice, cleaningFee, 0);
+    const { serviceFeeRate } = await getAppSettings();
+    const priceBreakdown = calculateBookingPriceFromDollars(basePrice, cleaningFee, 0, serviceFeeRate);
     const serviceFee = priceBreakdown.serviceFeeCents / 100;
     const totalAmount = priceBreakdown.totalPriceCents / 100;
 

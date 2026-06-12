@@ -9,6 +9,8 @@ import {
   Ship,
   Newspaper,
   Heart,
+  PackagePlus,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 
@@ -303,9 +305,21 @@ export const ADMIN_NAV_ITEMS: AdminMainNavItem[] = [
     iconClassName: "h-5 w-5",
   },
   {
+    label: "Add-ons",
+    href: "/admin/add-ons",
+    icon: PackagePlus,
+    iconClassName: "h-5 w-5",
+  },
+  {
     label: "Blog Posts",
     href: "/admin/blog",
     icon: Newspaper,
+    iconClassName: "h-5 w-5",
+  },
+  {
+    label: "Settings",
+    href: "/admin/settings",
+    icon: Settings,
     iconClassName: "h-5 w-5",
   },
 ];

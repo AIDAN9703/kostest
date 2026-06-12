@@ -611,7 +611,7 @@ export default function BlogForm({ mode, initialData }: BlogFormProps) {
           <div className="flex items-center justify-between pt-6 border-t">
             <Button
               type="button"
-              variant="outline"
+              variant="destructive"
               onClick={() => router.push("/admin/blog")}
             >
               Cancel

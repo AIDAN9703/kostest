@@ -1,4 +1,5 @@
 import { getBoatById } from "@/features/boats/actions/boat-actions";
+import { getAppSettings } from "@/features/app-settings/app-settings.service";
 import { notFound } from "next/navigation";
 import BoatDetails from "@/features/listing/components/BoatDetails";
 import { BookingForm, MobileBookingDrawer } from "@/features/listing/components/booking-form/v2";
@@ -141,6 +142,10 @@ export default async function BoatPage({ params }: BoatPageProps) {
       notFound();
     }
 
+    // Display rate for the price breakdown (refreshes with ISR). The amount
+    // actually charged is always recalculated server-side at checkout.
+    const { serviceFeeRate } = await getAppSettings();
+
     return (
       <>
         {/* JSON-LD Structured Data for SEO */}
@@ -209,7 +214,7 @@ export default async function BoatPage({ params }: BoatPageProps) {
               {/* Desktop booking form - hidden on mobile, shown on md+ screens */}
               <aside className="hidden md:block lg:-mt-16 xl:-mt-24 relative z-20">
                 <div className="sticky top-24">
-                  <BookingForm boat={boat} />
+                  <BookingForm boat={boat} serviceFeeRate={serviceFeeRate} />
                 </div>
               </aside>
             </div>
@@ -217,7 +222,7 @@ export default async function BoatPage({ params }: BoatPageProps) {
 
           {/* Mobile booking bar - shown on mobile, hidden on md+ screens */}
           <div className="md:hidden">
-            <MobileBookingDrawer boat={boat} />
+            <MobileBookingDrawer boat={boat} serviceFeeRate={serviceFeeRate} />
           </div>
         </main>
       </>
