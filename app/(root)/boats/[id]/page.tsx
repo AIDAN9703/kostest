@@ -130,6 +130,7 @@ interface BoatPageProps {
   params: Promise<{ id: string }>;
 }
 
+// ================================
 export default async function BoatPage({ params }: BoatPageProps) {
   try {
     const { id } = await params;
