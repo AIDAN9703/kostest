@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { LocationData } from "@/shared/lib/types/types";
 import { useSearchStore } from "@/features/search/store/useSearchStore";
 import { debounce } from "@/shared/lib/utils/general-utils";
+import { SUPPORTED_LOCATION_COUNTRIES } from "@/shared/lib/constants/map-constants";
 
 interface CustomPlacesAutocompleteProps {
   onPlaceSelected: (locationData: LocationData) => void;
@@ -28,7 +29,7 @@ export function CustomPlacesAutocomplete({
   className = "",
   containerClassName = "",
   defaultValue = "",
-  countryRestriction = ["us", "bs", "pr", "do"],
+  countryRestriction = [...SUPPORTED_LOCATION_COUNTRIES],
   types = ["geocode", "establishment"],
   isOpen = false,
   onFocus,

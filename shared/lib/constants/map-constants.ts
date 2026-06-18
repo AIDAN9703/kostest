@@ -2,6 +2,18 @@
  * Map constants used throughout the application
  */
 
+/** ISO 3166-1 alpha-2 codes passed to Google Places componentRestrictions. */
+export const SUPPORTED_LOCATION_COUNTRIES = [
+  "us",
+  "bs",
+  "pr",
+  "do",
+  "gr",
+] as const;
+
+export type SupportedLocationCountry =
+  (typeof SUPPORTED_LOCATION_COUNTRIES)[number];
+
 // Default US bounds for map initialization
 export const DEFAULT_US_BOUNDS = {
   ne: { lat: 48.07631048724108, lng: -66.41625985304204 },
@@ -17,13 +29,13 @@ export const DEFAULT_US_CENTER = {
 // Default zoom level for US view
 export const DEFAULT_US_ZOOM = 5;
 
-// Restriction bounds for the map (prevents scrolling too far)
+// Restriction bounds for the map (prevents scrolling too far off valid land)
 export const MAP_RESTRICTIONS = {
   latLngBounds: {
-    north: 77.856647,
-    south: -18.912524,
-    east: -17.156251,
-    west: -178.171876
+    north: 85,
+    south: -85,
+    east: 180,
+    west: -180,
   },
-  strictBounds: true
+  strictBounds: true,
 }; 
