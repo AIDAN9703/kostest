@@ -8,21 +8,8 @@ import {
   useState,
 } from "react";
 
-import { adminShellClassName } from "@/shared/admin/admin-shell-classes";
-import { adminThemeSelectControl } from "@/shared/admin/admin-header-chrome";
-import { Label } from "@/shared/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
-import { cn } from "@/shared/lib/utils/general-utils";
-
 import {
   ADMIN_ACCENT_THEME_COOKIE,
-  ADMIN_ACCENT_THEME_OPTIONS,
   type AdminAccentTheme,
   normalizeAdminAccentTheme,
 } from "./admin-accent-theme.config";
@@ -91,40 +78,4 @@ export function useAdminAccentTheme() {
   }
 
   return context;
-}
-
-/** Header dropdown for accent color (not light/dark — see ModeToggle). */
-export function AdminAccentThemeSelector() {
-  const { activeTheme, setActiveTheme } = useAdminAccentTheme();
-
-  return (
-    <div className="flex shrink-0 items-center gap-2">
-      <Label htmlFor="admin-accent-theme" className="sr-only">
-        Accent theme
-      </Label>
-      <Select
-        value={activeTheme}
-        onValueChange={(value) => setActiveTheme(value as AdminAccentTheme)}
-      >
-        <SelectTrigger
-          id="admin-accent-theme"
-          className={cn(
-            adminThemeSelectControl(),
-            "justify-start gap-2",
-            "*:data-[slot=select-value]:w-12"
-          )}
-        >
-          <span className="hidden text-muted-foreground sm:block">Theme:</span>
-          <SelectValue placeholder="Select a theme" />
-        </SelectTrigger>
-        <SelectContent align="end" className={adminShellClassName(activeTheme)}>
-          {ADMIN_ACCENT_THEME_OPTIONS.map((theme) => (
-            <SelectItem key={theme.value} value={theme.value}>
-              {theme.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
 }

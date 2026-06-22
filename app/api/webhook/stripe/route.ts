@@ -8,10 +8,9 @@ import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 import { getStripe, getInvoicePaymentIntentId } from "@/shared/lib/services/stripe.service";
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
-import { AvailabilityService } from "@/features/availability/services/availability.service";
 import { paymentService } from "@/features/payments/payment.service";
 import { sendBookingConfirmationEmail } from "@/shared/lib/services/email.service";
-import { dollarsToCents } from "@/shared/lib/utils/money-utils";
+import { fulfillInstantCheckoutSession } from "@/features/bookings/services/instant-checkout-fulfillment.service";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -145,98 +144,18 @@ async function handleInstantBooking(
 ) {
   try {
     const metadata = session.metadata || {};
+    const result = await fulfillInstantCheckoutSession(session, existingPayment);
 
-    if (!metadata.boatId || !metadata.userId || !metadata.startDateTime) {
-      console.error("[Webhook] Missing essential instant booking data in metadata");
+    if (result.status === "skipped") {
+      console.error(`[Webhook] Instant booking skipped: ${result.reason}`);
       return;
     }
 
-    const paymentIntentId = session.payment_intent as string;
-
-    // Idempotency: if a payment record already exists for this checkout session,
-    // just ensure the booking + payment are confirmed/succeeded.
-    if (existingPayment) {
-      await ensureBookingConfirmed(existingPayment.payableId, "Payment received (instant book)");
-      if (existingPayment.status !== "SUCCEEDED") {
-        await paymentService.markPaymentSucceeded(existingPayment.id, paymentIntentId);
-      }
-      console.log(`[Webhook] Idempotent update for instant booking, payment ${existingPayment.id}`);
+    if (result.status === "created" || result.status === "already_processed") {
       await sendGHLWebhookForInstantBooking(metadata, session.id);
-      return;
     }
-
-    // Create booking + payment record via service
-    const startDateTime = new Date(metadata.startDateTime);
-    const endDateTime = metadata.endDateTime ? new Date(metadata.endDateTime) : null;
-
-    // Re-check availability post-payment. If another booking landed during
-    // checkout we still persist this one (the customer paid — losing the
-    // record is worse), but flag the overlap loudly for ops to resolve.
-    if (endDateTime) {
-      const availability = await new AvailabilityService().checkTimeSlotAvailability(
-        metadata.boatId,
-        startDateTime,
-        endDateTime
-      );
-      if (!availability.isAvailable) {
-        console.error(
-          `[Webhook] OVERLAP: instant booking for boat ${metadata.boatId} ` +
-            `(${metadata.startDateTime} – ${metadata.endDateTime}) conflicts with an existing ` +
-            `booking/block. Created anyway because payment succeeded — needs manual resolution.`
-        );
-      }
-    }
-
-    // Add-on snapshot was serialized into metadata pre-payment.
-    let addOnSnapshot: import("@/features/bookings/booking.types").BookingAddOn[] | undefined;
-    if (metadata.addOns) {
-      try {
-        addOnSnapshot = JSON.parse(metadata.addOns);
-      } catch {
-        addOnSnapshot = undefined;
-      }
-    }
-
-    const newBooking = await bookingService.createInstantBooking({
-      boatId: metadata.boatId,
-      pricingTierId: metadata.pricingTierId || null,
-      userId: metadata.userId,
-      customerName: metadata.customerName || "",
-      customerEmail: metadata.customerEmail || "",
-      customerPhone: metadata.customerPhone || "",
-      startDateTime,
-      endDateTime,
-      numberOfPassengers: parseInt(metadata.numberOfPassengers || "1"),
-      needsCaptain: metadata.needsCaptain === "true",
-      stripePaymentIntentId: paymentIntentId,
-      stripeCheckoutSessionId: session.id,
-      stripeCustomerId: (session.customer as string) || undefined,
-      addOns: addOnSnapshot,
-      pricingOverrideCents: {
-        basePriceCents: dollarsToCents(parseFloat(metadata.basePrice || "0")),
-        cleaningFeeCents: dollarsToCents(parseFloat(metadata.cleaningFee || "0")),
-        captainFeeCents: dollarsToCents(parseFloat(metadata.captainFee || "0")),
-        serviceFeeCents: dollarsToCents(parseFloat(metadata.serviceFee || "0")),
-        totalPriceCents: dollarsToCents(parseFloat(metadata.totalAmount || "0")),
-        depositAmountCents: dollarsToCents(parseFloat(metadata.depositAmount || "0")),
-      },
-    });
-
-    console.log(`[Webhook] Created instant booking ${newBooking.id}`);
-
-    const fullBooking = await bookingService.getBookingById(newBooking.id);
-    if (fullBooking) {
-      await sendBookingConfirmationEmail(fullBooking).catch((e) =>
-        console.warn("[Webhook] Confirmation email failed:", e)
-      );
-    }
-
-    await sendGHLWebhookForInstantBooking(metadata, session.id);
   } catch (error) {
     console.error("[Webhook] handleInstantBooking error:", error);
-    // Rethrow so the route returns 500 and Stripe retries — the customer has
-    // already been charged; silently dropping the booking is the worst outcome.
-    // The idempotency check at the top makes retries safe.
     throw error;
   }
 }

@@ -29,5 +29,6 @@ export * from "./inquiry.relations";
 export * from "./inquiryEvents.relations";
 export * from "./boatPricingTiers.relations";
 export * from "./boatBlocking.relations";
+export * from "./boatExternalCalendar.relations";
 export * from "./addOns.relations";
 export * from "./boatAddOns.relations";

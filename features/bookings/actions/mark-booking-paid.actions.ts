@@ -10,10 +10,7 @@ import { paymentService } from "@/features/payments/payment.service";
  * Records a manual (offline) payment for a booking, updates the payment ledger,
  * and syncs ops PAID + client paid when the cumulative total reaches ops GMV (or quote total).
  */
-export async function recordBookingManualPaymentAction(
-  bookingId: string,
-  amountCents: number
-) {
+export async function recordBookingManualPaymentAction(bookingId: string, amountCents: number) {
   try {
     const session = await auth();
     if (!session?.user?.isAdmin) {

@@ -1,0 +1,23 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import type { Session } from "next-auth";
+
+const BookingDetailsClient = dynamic(() => import("./BookingDetailsClient"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-coral-500" />
+    </div>
+  ),
+});
+
+export default function BookingDetailsClientLoader({
+  user,
+  serviceFeeRate,
+}: {
+  user: Session["user"] | null;
+  serviceFeeRate: number;
+}) {
+  return <BookingDetailsClient user={user} serviceFeeRate={serviceFeeRate} />;
+}

@@ -11,8 +11,14 @@ import {
 } from "@/database/schema";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { emailSchema, phoneRequiredSchema } from "@/shared/lib/validation/common";
+import { boatInquirySchema } from "@/shared/lib/validation/inquiry";
+import { boats, boatPricingTiers } from "@/database/schema";
+import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
+import { calculateBookingPriceFromDollars } from "@/shared/lib/utils/pricing-utils";
+import { getAppSettings } from "@/features/app-settings/app-settings.service";
+import { format } from "date-fns";
 
 const outcomeSchema = z.enum(["OPEN", "WON", "LOST", "ABANDONED"]);
 
@@ -57,6 +63,8 @@ export async function createGeneralInquiry(data: GeneralInquiryInput) {
         termsAccepted: validatedData.termsAccepted,
         stage: "NEEDS_CONTACT",
         outcome: "OPEN",
+        leadType: "GENERAL_QUOTE",
+        source: "HOME_PAGE",
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -94,6 +102,121 @@ export async function createGeneralInquiry(data: GeneralInquiryInput) {
     return {
       success: false,
       error: "Failed to submit your inquiry. Please try again.",
+    };
+  }
+}
+
+export type BoatLeadInput = z.input<typeof boatInquirySchema> & { boatId: string };
+
+/**
+ * Creates a boat-specific lead from the public boat page (non-instant boats).
+ * No auth required — captures trip preferences + contact info as a lead, not a booking.
+ */
+export async function createBoatLead(data: BoatLeadInput) {
+  try {
+    const validated = boatInquirySchema.parse(data);
+    const { boatId } = data;
+
+    const [boat] = await db
+      .select({
+        id: boats.id,
+        name: boats.name,
+        cleaningFee: boats.cleaningFee,
+        crewRequired: boats.crewRequired,
+        currency: boats.currency,
+        instantBook: boats.instantBook,
+      })
+      .from(boats)
+      .where(eq(boats.id, boatId));
+
+    if (!boat) {
+      return { success: false, error: "Boat not found" };
+    }
+
+    const [pricingTier] = await db
+      .select()
+      .from(boatPricingTiers)
+      .where(
+        and(eq(boatPricingTiers.id, validated.pricingTierId), eq(boatPricingTiers.boatId, boatId))
+      );
+
+    if (!pricingTier) {
+      return { success: false, error: "Invalid pricing tier selected" };
+    }
+
+    const startDateTime = new Date(validated.startDateTime);
+    const endDateTime = calculateEndDateTime(startDateTime, pricingTier.hours);
+    const needsCaptain = validated.needsCaptain || boat.crewRequired || false;
+
+    const { serviceFeeRate } = await getAppSettings();
+    const priceBreakdown = calculateBookingPriceFromDollars(
+      pricingTier.price,
+      boat.cleaningFee || 0,
+      0,
+      serviceFeeRate
+    );
+
+    const legacyTime = format(startDateTime, "HH:mm");
+
+    const [inquiry] = await db
+      .insert(inquiryTable)
+      .values({
+        name: validated.name,
+        email: validated.email,
+        phone: validated.phone,
+        message: validated.message || null,
+        guests: validated.numberOfPassengers,
+        date: startDateTime,
+        time: legacyTime,
+        stage: "NEW",
+        outcome: "OPEN",
+        leadType: "BOAT_REQUEST",
+        source: "BOAT_PAGE",
+        boatId,
+        pricingTierId: validated.pricingTierId,
+        requestedStartDateTime: startDateTime,
+        requestedEndDateTime: endDateTime,
+        needsCaptain,
+        estimatedTotalCents: priceBreakdown.totalPriceCents,
+        currency: boat.currency ?? "USD",
+        termsAccepted: validated.termsAgreed,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    if (inquiry) {
+      await db.insert(inquiryEvents).values({
+        inquiryId: inquiry.id,
+        eventType: "CREATED",
+        createdBy: null,
+      });
+    }
+
+    revalidatePath("/admin/inquiries");
+    revalidatePath("/admin");
+    revalidatePath(`/boats/${boatId}`);
+
+    return {
+      success: true,
+      inquiry,
+      message:
+        "Your request has been submitted. Our team will review availability and contact you shortly.",
+    };
+  } catch (error) {
+    console.error("Error creating boat lead:", error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        error: "Invalid request data",
+        fieldErrors: error.flatten().fieldErrors,
+      };
+    }
+
+    return {
+      success: false,
+      error: "Failed to submit your request. Please try again.",
     };
   }
 }

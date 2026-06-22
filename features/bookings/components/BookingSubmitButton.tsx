@@ -52,14 +52,10 @@ export default function BookingSubmitButton({
         className={cn(
           "h-11 w-auto shrink-0 whitespace-nowrap rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-primary/90",
           isDisabled && "opacity-60",
-          className,
+          className
         )}
       >
-        {isSubmitting ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          primaryLabel
-        )}
+        {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : primaryLabel}
       </Button>
     );
   }
@@ -73,14 +69,10 @@ export default function BookingSubmitButton({
           disabled={isDisabled}
           className={cn(
             "h-12 w-full rounded-full bg-primary text-base font-semibold text-white hover:bg-primary/90",
-            isDisabled && "opacity-60",
+            isDisabled && "opacity-60"
           )}
         >
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            "Continue to Payment"
-          )}
+          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Continue to Payment"}
         </Button>
       )}
 
@@ -92,14 +84,10 @@ export default function BookingSubmitButton({
           disabled={isDisabled}
           className={cn(
             "h-11 w-full rounded-full text-sm font-medium text-muted-foreground hover:bg-gray-50 hover:text-foreground",
-            isDisabled && "opacity-60",
+            isDisabled && "opacity-60"
           )}
         >
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            "Send request instead"
-          )}
+          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send request instead"}
         </Button>
       ) : (
         <Button
@@ -108,21 +96,17 @@ export default function BookingSubmitButton({
           disabled={isDisabled}
           className={cn(
             "h-12 w-full rounded-full bg-primary text-base font-semibold text-white hover:bg-primary/90",
-            isDisabled && "opacity-60",
+            isDisabled && "opacity-60"
           )}
         >
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            "Send Booking Request"
-          )}
+          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send Booking Request"}
         </Button>
       )}
 
       {user && (
         <p className="px-1 text-center text-[11px] leading-relaxed text-muted-foreground">
-          By continuing you agree to our Terms of Service and Privacy Policy.
-          Message & data rates may apply.
+          By continuing you agree to our Terms of Service and Privacy Policy. Message & data rates
+          may apply.
         </p>
       )}
     </div>

@@ -5,8 +5,6 @@ import { Separator } from "@/shared/components/ui/separator";
 import { Breadcrumbs } from "@/shared/admin/components/breadcrumbs";
 import SearchInput from "@/shared/admin/components/search-input";
 import { AdminQuickActionsDropdown } from "@/shared/admin/components/AdminQuickActionsDropdown";
-import { ModeToggle } from "@/shared/admin/components/mode-toggle";
-import { AdminAccentThemeSelector } from "@/shared/admin/admin-accent-theme";
 
 export default function AdminHeader() {
   return (
@@ -22,8 +20,6 @@ export default function AdminHeader() {
         <div className="hidden md:flex">
           <SearchInput />
         </div>
-        <ModeToggle />
-        <AdminAccentThemeSelector />
       </div>
     </header>
   );

@@ -3,6 +3,5 @@ export interface AppSettings {
   serviceFeeBps: number;
   /** Decimal rate derived from bps (0.035) — what pricing math consumes. */
   serviceFeeRate: number;
-  bookingHoldMinutes: number;
   updatedAt: Date | null;
 }

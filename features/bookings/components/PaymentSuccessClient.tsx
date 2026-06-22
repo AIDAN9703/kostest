@@ -9,9 +9,6 @@ import {
   CheckCircle,
   Calendar,
   Home,
-  Printer,
-  Download,
-  Share2,
   Ship,
 } from "lucide-react";
 import Link from "next/link";

@@ -39,7 +39,7 @@ export default function BookingPricingSection({
     selectedTier.price,
     (boat.cleaningFee || 0) + paidAddOnsTotal,
     0,
-    serviceFeeRate,
+    serviceFeeRate
   );
   const currency = boat.currency ?? "USD";
   const fmt = (amount: number) => formatCurrency(amount, currency);
@@ -78,9 +78,7 @@ export default function BookingPricingSection({
 
   return (
     <div className="space-y-5">
-      {showHeading && (
-        <h3 className="text-sm font-medium text-foreground">Price details</h3>
-      )}
+      {showHeading && <h3 className="text-sm font-medium text-foreground">Price details</h3>}
 
       <ul className="space-y-3">
         {lineItems.map((item) => (
@@ -113,4 +111,3 @@ export default function BookingPricingSection({
     </div>
   );
 }
-

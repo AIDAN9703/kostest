@@ -1,16 +1,28 @@
 import type { Inquiry } from "@/database/types";
 
-export type InquiryListItem = Pick<Inquiry,
+export type InquiryListItem = Pick<
+  Inquiry,
   | "id"
   | "name"
   | "email"
   | "phone"
   | "stage"
-  | "date"
   | "outcome"
+  | "leadType"
+  | "source"
+  | "date"
   | "budget"
   | "guests"
   | "message"
+  | "boatId"
+  | "pricingTierId"
+  | "requestedStartDateTime"
+  | "requestedEndDateTime"
+  | "needsCaptain"
+  | "estimatedTotalCents"
+  | "currency"
+  | "assignedTo"
+  | "convertedBookingId"
   | "createdAt"
   | "updatedAt"
 >;

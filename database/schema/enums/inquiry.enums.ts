@@ -1,12 +1,40 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
+/** What kind of lead this is (channel-specific intent). */
+export const inquiryLeadTypeEnum = pgEnum("InquiryLeadType", [
+  "GENERAL_QUOTE",
+  "BOAT_REQUEST",
+  "TERM_CHARTER",
+  "MANUAL",
+]);
+
+/** Where the lead originated. */
+export const inquirySourceEnum = pgEnum("InquirySource", [
+  "HOME_PAGE",
+  "BOAT_PAGE",
+  "CONTACT_PAGE",
+  "TERM_CHARTER_PAGE",
+  "PHONE",
+  "INSTAGRAM",
+  "WHATSAPP",
+  "ADMIN",
+  "BROKER",
+  "OTHER",
+]);
+
 /**
  * Inquiry stage - where in the pipeline (milestone)
+ * NEEDS_CONTACT is legacy; treat as NEW in application code.
  */
 export const inquiryStageEnum = pgEnum("InquiryStage", [
-  "NEEDS_CONTACT",  // New, awaiting first outreach
-  "CONTACTED",      // First contact made
+  "NEEDS_CONTACT", // legacy — same as NEW
+  "NEW",
+  "CLAIMED",
+  "CONTACTED",
+  "QUALIFIED",
+  "OFFER_SENT",
   "CONVERTED",
+  "COLD",
 ]);
 
 /**
@@ -28,6 +56,7 @@ export const inquiryEventTypeEnum = pgEnum("InquiryEventType", [
   "OUTCOME_CHANGE",  // Admin changed outcome (open/won/lost/abandoned)
   "NOTE",           // Internal admin note
   "CONTACT_ATTEMPT", // Logged contact (call, email, conversation, etc.)
+  "ASSIGNED",        // Lead assigned or claimed by an admin
 ]);
 
 /**
@@ -42,7 +71,7 @@ export const contactMethodEnum = pgEnum("ContactMethod", [
 ]);
 
 /** Inferred types for type-safe usage across the app */
-export type InquiryStage =
-  (typeof inquiryStageEnum.enumValues)[number];
-export type InquiryOutcome =
-  (typeof inquiryOutcomeEnum.enumValues)[number];
+export type InquiryLeadType = (typeof inquiryLeadTypeEnum.enumValues)[number];
+export type InquirySource = (typeof inquirySourceEnum.enumValues)[number];
+export type InquiryStage = (typeof inquiryStageEnum.enumValues)[number];
+export type InquiryOutcome = (typeof inquiryOutcomeEnum.enumValues)[number];

@@ -67,7 +67,7 @@ interface SelectedEvent {
 }
 
 const calendarBodyClassName = cn(
-  "min-h-0 flex-1 overflow-hidden px-3 pb-3",
+  "admin-fc min-h-0 flex-1 overflow-hidden px-3 pb-3",
   "[&_.fc]:flex [&_.fc]:h-full [&_.fc]:min-h-0 [&_.fc]:flex-col [&_.fc]:text-sm",
   "[&_.fc-view-harness]:min-h-0 [&_.fc-view-harness]:flex-1 [&_.fc-view-harness]:overflow-auto",
   // Let day-top (+ button) receive hover; events stay clickable.

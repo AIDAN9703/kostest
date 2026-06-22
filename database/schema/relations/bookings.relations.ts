@@ -47,6 +47,7 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   inquiry: one(inquiry, {
     fields: [bookings.inquiryId],
     references: [inquiry.id],
+    relationName: "inquirySourceBooking",
   }),
 
   // New related tables (1:1 and 1:many)

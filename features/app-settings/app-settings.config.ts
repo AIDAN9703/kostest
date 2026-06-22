@@ -8,7 +8,6 @@
 export const DEFAULT_APP_SETTINGS = {
   /** 350 bps = 3.5% card processing fee. */
   serviceFeeBps: 350,
-  bookingHoldMinutes: 10,
 } as const;
 
 /** Basis points → decimal rate (350 → 0.035). */

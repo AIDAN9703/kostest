@@ -30,7 +30,10 @@ import {
 } from "@/database/schema";
 import { and, count, eq, desc, or, ilike, sql, gte, lte, aliasedTable, inArray } from "drizzle-orm";
 
-import { type BookingFilterInput, type CreateBookingsInput } from "@/features/bookings/booking.validation";
+import {
+  type BookingFilterInput,
+  type CreateBookingsInput,
+} from "@/features/bookings/booking.validation";
 import {
   type BookingSingleFieldUpdate,
   auditSnapshotForBookingField,
@@ -1261,7 +1264,11 @@ export class BookingService {
   /**
    * Reprice booking after switching boats (tier affinity + default tier fallback).
    */
-  async applyBoatIdChange(bookingId: string, newBoatId: string, before: BookingDetails): Promise<void> {
+  async applyBoatIdChange(
+    bookingId: string,
+    newBoatId: string,
+    before: BookingDetails
+  ): Promise<void> {
     const [boat] = await db
       .select({
         id: boats.id,
@@ -1278,7 +1285,7 @@ export class BookingService {
     let nextTierId: string | null = before.pricingTierId ?? null;
     let basePriceDollars: number;
 
-    let matchedTier: (typeof boatPricingTiers.$inferSelect) | undefined;
+    let matchedTier: typeof boatPricingTiers.$inferSelect | undefined;
     if (nextTierId) {
       const [t] = await db
         .select()

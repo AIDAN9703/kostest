@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { bookingRequestSchema } from "@/features/_validation/validations";
 import { emailSchema, phoneRequiredSchema } from "./common";
 
 /**
@@ -43,5 +44,18 @@ export const termCharterInquirySchema = baseContactSchema.extend({
   }),
 });
 
+/** Contact fields collected on the inquiry details page (step 2). */
+export const boatInquiryContactSchema = baseContactSchema.extend({
+  message: z.string().max(2000).optional(),
+  termsAgreed: z.boolean().refine((val) => val === true, {
+    message: "You must agree to the terms and conditions",
+  }),
+});
+
+/** Boat page inquiry — trip picker fields + contact (server action). */
+export const boatInquirySchema = bookingRequestSchema.merge(boatInquiryContactSchema);
+
 export type RequestToBookFormData = z.infer<typeof requestToBookSchema>;
 export type TermCharterFormData = z.infer<typeof termCharterInquirySchema>;
+export type BoatInquiryContactFormData = z.infer<typeof boatInquiryContactSchema>;
+export type BoatInquiryFormData = z.infer<typeof boatInquirySchema>;

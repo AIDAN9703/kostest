@@ -7,6 +7,7 @@ export * from "./notification.enums";
 export * from "./payment.enums";
 export * from "./user.enums";
 export * from "./availability.enums";
+export * from "./externalCalendar.enums";
 export * from "./inquiry.enums";
 export * from "./addOn.enums";
 

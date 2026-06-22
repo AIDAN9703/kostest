@@ -28,6 +28,8 @@ export * from "./inquiryEvents.table";
 export * from "./blogPosts.table";
 export * from "./boatPricingTiers.table";
 export * from "./boatBlocking.table";
+export * from "./boatExternalCalendar.table";
+export * from "./boatExternalCalendarEvent.table";
 export * from "./addOns.table";
 export * from "./boatAddOns.table";
 export * from "./appSettings.table";

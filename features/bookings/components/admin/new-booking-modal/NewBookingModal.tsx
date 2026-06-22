@@ -70,12 +70,14 @@ export function NewBookingModal({
   pricingTiers,
   triggerLabel = "Add booking",
   triggerClassName,
+  triggerSize = "sm",
   defaultOpen = false,
   onCloseComplete,
 }: {
   pricingTiers: PricingTierOption[];
   triggerLabel?: string;
   triggerClassName?: string;
+  triggerSize?: "sm" | "default" | "lg";
   defaultOpen?: boolean;
   onCloseComplete?: () => void;
 }) {
@@ -93,11 +95,11 @@ export function NewBookingModal({
   return (
     <>
       <Button
-        size="sm"
-        className={cn("h-9 gap-1.5", triggerClassName)}
+        size={triggerSize}
+        className={cn(triggerSize === "sm" && "h-9 gap-1.5", triggerClassName)}
         onClick={() => setOpen(true)}
       >
-        <Plus className="h-3.5 w-3.5" />
+        <Plus className={cn(triggerSize === "lg" ? "h-4 w-4" : "h-3.5 w-3.5")} />
         {triggerLabel}
       </Button>
       {open && (

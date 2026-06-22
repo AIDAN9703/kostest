@@ -10,30 +10,31 @@ html.dark:has([data-admin-theme]) body {
 .admin-theme {
     --radius: 0.625rem;
     --font-sans: var(--font-montserrat), ui-sans-serif, sans-serif;
-    --color-background: oklch(1 0 0);
+    /* Page: soft white; cards/panels: light gray so sections read clearly in light mode */
+    --color-background: oklch(0.988 0.003 264);
     --color-foreground: oklch(0.145 0 0);
-    --color-card: oklch(1 0 0);
+    --color-card: oklch(0.968 0.005 264);
     --color-card-foreground: oklch(0.145 0 0);
-    --color-popover: oklch(1 0 0);
+    --color-popover: oklch(0.968 0.005 264);
     --color-popover-foreground: oklch(0.145 0 0);
     --color-primary: oklch(0.205 0 0);
     --color-primary-foreground: oklch(0.985 0 0);
-    --color-secondary: oklch(0.97 0 0);
+    --color-secondary: oklch(0.94 0.006 264);
     --color-secondary-foreground: oklch(0.205 0 0);
-    --color-muted: oklch(0.97 0 0);
-    --color-muted-foreground: oklch(0.556 0 0);
-    --color-accent: oklch(0.97 0 0);
+    --color-muted: oklch(0.94 0.006 264);
+    --color-muted-foreground: oklch(0.5 0.01 264);
+    --color-accent: oklch(0.935 0.008 264);
     --color-accent-foreground: oklch(0.205 0 0);
     --color-destructive: oklch(0.577 0.245 27.325);
-    --color-border: oklch(0.922 0 0);
-    --color-input: oklch(0.922 0 0);
+    --color-border: oklch(0.9 0.008 264);
+    --color-input: oklch(0.9 0.008 264);
     --color-ring: oklch(0.708 0 0);
     --color-chart-1: oklch(0.646 0.222 41.116);
     --color-chart-2: oklch(0.6 0.118 184.704);
     --color-chart-3: oklch(0.398 0.07 227.392);
     --color-chart-4: oklch(0.828 0.189 84.429);
     --color-chart-5: oklch(0.769 0.188 70.08);
-    --color-sidebar: oklch(0.985 0 0);
+    --color-sidebar: oklch(0.975 0.004 264);
     --color-sidebar-foreground: oklch(0.145 0 0);
     --color-sidebar-primary: oklch(0.205 0 0);
     --color-sidebar-primary-foreground: oklch(0.985 0 0);
@@ -92,30 +93,10 @@ html.dark:has([data-admin-theme]) body {
     display: none;
 }
 
-/* Underline hover animation for admin links */
-.admin-hover-underline {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-}
-
-.admin-hover-underline::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    bottom: -0.2rem;
-    height: 2px;
-    width: 100%;
-    transform: scaleX(0);
-    transform-origin: left;
-    background-color: var(--admin-underline-color, var(--color-primary));
-    transition: transform 180ms ease;
-}
-
-.admin-hover-underline:hover::after {
-    transform: scaleX(1);
-}
-
+/* ============================================
+   THEME COLOR OVERRIDES
+   Accent presets override --color-primary on the admin shell.
+   ============================================ */
 
 .admin-theme.theme-default {
     --color-primary: var(--color-primary-site);
@@ -157,41 +138,9 @@ html.dark:has([data-admin-theme]) body {
     --color-primary-foreground: var(--color-dark-100);
 }
 
-/* View Transition Wave Effect */
-::view-transition-old(root),
-::view-transition-new(root) {
-    animation: none;
-    mix-blend-mode: normal;
-}
-
-::view-transition-old(root) {
-    z-index: 0;
-}
-
-::view-transition-new(root) {
-    z-index: 1;
-}
-
-@keyframes reveal {
-    from {
-        clip-path: circle(0% at var(--x, 50%) var(--y, 50%));
-        opacity: 0.7;
-    }
-
-    to {
-        clip-path: circle(150% at var(--x, 50%) var(--y, 50%));
-        opacity: 1;
-    }
-}
-
-::view-transition-new(root) {
-    animation: reveal 0.4s ease-in-out forwards;
-}
-
 /* ============================================
-   THEME COLOR OVERRIDES
-   Map hardcoded Tailwind colors to semantic CSS variables
-   This ensures all admin pages respect theme switching
+   LEGACY GRAY/SLATE OVERRIDES
+   Map hardcoded Tailwind colors to semantic CSS variables.
    ============================================ */
 
 /* Background colors */

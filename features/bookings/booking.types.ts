@@ -437,7 +437,7 @@ export interface BookingCalendarEvent {
   borderColor: string;
   textColor: string;
   extendedProps: {
-    type?: "booking";
+    type?: "booking" | "external";
     bookingId?: string;
     customerName: string;
     customerEmail: string;

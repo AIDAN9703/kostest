@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // node-ical relies on Node built-ins and doesn't survive the server bundler
+  // (manifests as "BigInt is not a function"). Load it at runtime instead.
+  serverExternalPackages: ["node-ical"],
   images: {
     remotePatterns: [
       {

@@ -39,7 +39,7 @@ export function BookingDetails({ boat }: BookingDetailsProps) {
           {boat.cancellationPolicy || DEFAULT_CANCELLATION}
         </p>
         <Link
-          href={`/boats/${boat.id}/inquiry`}
+          href={`/bookings/${boat.id}/inquiry`}
           className="mt-2.5 inline-flex items-center gap-1.5 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
         >
           <MessageCircle className="size-4" />

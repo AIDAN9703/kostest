@@ -26,8 +26,6 @@ export const appSettings = pgTable(
     id: integer("id").primaryKey().default(1),
     /** Card processing / service fee applied to booking subtotals, in basis points (350 = 3.5%). */
     serviceFeeBps: integer("service_fee_bps").default(350).notNull(),
-    /** How long the checkout hold timer runs on the booking details page. */
-    bookingHoldMinutes: integer("booking_hold_minutes").default(10).notNull(),
     updatedBy: uuid("updated_by").references(() => users.id, {
       onDelete: "set null",
     }),

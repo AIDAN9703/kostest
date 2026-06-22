@@ -14,6 +14,7 @@ import {
 import { cn } from "@/shared/lib/utils/general-utils";
 import { cookies } from "next/headers";
 import "./admin-theme.css";
+import "@/shared/admin/admin-fullcalendar.css";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   // Defense-in-depth: middleware checks admin too, but never rely on it alone.
@@ -39,7 +40,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             <AdminSidebar />
             <SidebarInset className="flex min-h-0 flex-1 flex-col overflow-hidden">
               <AdminHeader />
-              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-8">
+              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-4 md:px-6 md:py-6">
                 <QueryProvider>
                   <div className="flex h-full min-h-0 w-full flex-col">{children}</div>
                 </QueryProvider>

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db } from '@/database/db';
-import { bookings, boats, bookingPricing } from '@/database/schema';
+import { bookings, boats, bookingPricing, boatExternalCalendarEvents } from '@/database/schema';
 import { eq, and, gte, lte, inArray } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
@@ -52,7 +52,28 @@ export async function GET(request: NextRequest) {
       .leftJoin(boats, eq(bookings.boatId, boats.id))
       .where(and(...bookingWhere));
 
-    const events = bookingEvents.map(booking => ({
+    // Imported external (iCal) calendar busy blocks — shown as muted, read-only.
+    const externalWhere = [
+      gte(boatExternalCalendarEvents.startTime, startDate),
+      lte(boatExternalCalendarEvents.startTime, endDate),
+    ];
+    if (boatId) {
+      externalWhere.push(eq(boatExternalCalendarEvents.boatId, boatId));
+    }
+
+    const externalEvents = await db
+      .select({
+        id: boatExternalCalendarEvents.id,
+        summary: boatExternalCalendarEvents.summary,
+        start: boatExternalCalendarEvents.startTime,
+        end: boatExternalCalendarEvents.endTime,
+        boatId: boatExternalCalendarEvents.boatId,
+      })
+      .from(boatExternalCalendarEvents)
+      .where(and(...externalWhere));
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const events: any[] = bookingEvents.map(booking => ({
       id: `booking-${booking.id}`,
       title: `${booking.title} (${booking.boatName})`,
       start: booking.start?.toISOString(),
@@ -72,6 +93,22 @@ export async function GET(request: NextRequest) {
         bookingStatus: booking.status
       }
     }));
+
+    for (const ext of externalEvents) {
+      events.push({
+        id: `external-${ext.id}`,
+        title: ext.summary || 'External event',
+        start: ext.start?.toISOString(),
+        end: ext.end?.toISOString(),
+        backgroundColor: '#6b7280', // Gray — external/imported
+        borderColor: '#6b7280',
+        textColor: '#ffffff',
+        extendedProps: {
+          type: 'external',
+          boatId: ext.boatId,
+        },
+      });
+    }
 
     return NextResponse.json(events);
 

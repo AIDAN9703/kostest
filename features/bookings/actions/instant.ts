@@ -15,8 +15,6 @@ import { AvailabilityService } from "@/features/availability/services/availabili
 import { getBaseUrl } from "@/shared/lib/utils/base-url";
 import { getStripe } from "@/shared/lib/services/stripe.service";
 
-const stripe = getStripe();
-
 /**
  * Creates a Stripe Checkout session for instant booking using pricing tiers
  * The actual booking will be created after payment success via webhook
@@ -139,6 +137,7 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
       }));
 
     // Create a Stripe Checkout Session
+    const stripe = getStripe();
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [

@@ -7,7 +7,7 @@ import {
   bookingPricing,
   inquiry,
 } from "@/database/schema";
-import { and, asc, count, eq, gte, lte, ne, sql } from "drizzle-orm";
+import { and, asc, eq, gte, lte, ne, sql } from "drizzle-orm";
 import { cache } from "react";
 import { startOfDay, endOfDay, addDays, endOfMonth, startOfMonth } from "date-fns";
 import { bookingService } from "@/features/bookings/services/booking.service";
@@ -36,29 +36,15 @@ export interface OperationsMtdSummary {
   outstandingClientBalanceCents: number;
 }
 
-export interface CharterSourceBreakdownRow {
-  /** Raw key from ops override or booking.source */
-  sourceKey: string;
-  /** Display label for UI */
-  label: string;
-  gmvCents: number;
-  bookingCount: number;
-}
-
-function formatSourceLabel(sourceKey: string): string {
-  const k = sourceKey.trim();
-  if (!k) return "Unknown";
-  const upper = k.toUpperCase();
-  const map: Record<string, string> = {
-    WEBSITE: "Website",
-    ADMIN: "Phone / admin",
-    BROKER: "Broker",
-  };
-  if (map[upper]) return map[upper];
-  if (k.length <= 48 && !k.includes(" ")) {
-    return k.charAt(0).toUpperCase() + k.slice(1).toLowerCase();
-  }
-  return k;
+/** Counts for the dashboard “needs attention” strip — only surfaced when non-zero. */
+export interface DashboardActionCounts {
+  openInquiryCount: number;
+  unassignedInquiryCount: number;
+  pendingBookingCount: number;
+  ownerPayoutsDueCents: number;
+  ownerPayoutsDueCount: number;
+  captainNeededTodayCount: number;
+  missingExpensesCount: number;
 }
 
 // ============================================================================
@@ -108,45 +94,6 @@ export const getOperationsMtdSummary = cache(async (): Promise<OperationsMtdSumm
   };
 });
 
-export const getCharterSourceBreakdownMtd = cache(async (): Promise<CharterSourceBreakdownRow[]> => {
-  await assertAdmin();
-  const now = new Date();
-  const from = startOfMonth(now);
-  const to = endOfMonth(now);
-
-  const groupExpr = sql`COALESCE(NULLIF(TRIM(${bookingOps.sourceOverride}), ''), CAST(${bookings.source} AS text))`;
-
-  const rows = await db
-    .select({
-      sourceKey: groupExpr.as("source_key"),
-      gmvCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.gmvCents}, ${bookingPricing.totalAmountCents})), 0)`,
-      bookingCount: sql<number>`COUNT(${bookings.id})::int`,
-    })
-    .from(bookings)
-    .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
-    .leftJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
-    .where(
-      and(
-        gte(bookings.startDateTime, from),
-        lte(bookings.startDateTime, to),
-        ne(bookings.bookingStatus, "CANCELLED")
-      )
-    )
-    .groupBy(groupExpr);
-
-  return rows
-    .map((r) => {
-      const sourceKey = String((r as { sourceKey?: string }).sourceKey ?? (r as { source_key?: string }).source_key ?? "");
-      return {
-        sourceKey,
-        label: formatSourceLabel(sourceKey),
-        gmvCents: Number(r.gmvCents ?? 0),
-        bookingCount: Number(r.bookingCount ?? 0),
-      };
-    })
-    .sort((a, b) => b.gmvCents - a.gmvCents);
-});
-
 /** OPEN inquiries, longest since last update first — best “who needs a nudge” ordering. */
 export const getFollowUpInquiries = cache(async (limit = 6): Promise<InquiryListItem[]> => {
   await assertAdmin();
@@ -186,6 +133,87 @@ export const getTodaysBookings = cache(async (): Promise<BookingListItem[]> => {
     dateFrom,
     dateTo,
     limit: 20,
+  });
+  return result.bookings;
+});
+
+// ============================================================================
+// DASHBOARD ACTION COUNTS
+// ============================================================================
+
+export const getDashboardActionCounts = cache(
+  async (): Promise<DashboardActionCounts> => {
+    await assertAdmin();
+    const now = new Date();
+    const todayStart = startOfDay(now);
+    const todayEnd = endOfDay(now);
+
+    const [inquiryRow] = await db
+      .select({
+        open: sql<number>`COUNT(*)::int`,
+        unassigned: sql<number>`COUNT(*) FILTER (WHERE ${inquiry.assignedTo} IS NULL)::int`,
+      })
+      .from(inquiry)
+      .where(eq(inquiry.outcome, "OPEN"));
+
+    const [pendingRow] = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(bookings)
+      .where(eq(bookings.bookingStatus, "PENDING"));
+
+    const [ownerRow] = await db
+      .select({
+        count: sql<number>`COUNT(*)::int`,
+        totalCents: sql<number>`COALESCE(SUM(GREATEST(${bookingOps.balanceOwnerCents}, 0)), 0)`,
+      })
+      .from(bookings)
+      .innerJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
+      .where(
+        and(ne(bookings.bookingStatus, "CANCELLED"), sql`${bookingOps.balanceOwnerCents} > 0`)
+      );
+
+    const [todayRow] = await db
+      .select({
+        captainNeeded: sql<number>`COUNT(*) FILTER (WHERE ${bookings.needsCaptain} = true AND ${bookings.captainUserId} IS NULL)::int`,
+      })
+      .from(bookings)
+      .where(
+        and(
+          gte(bookings.startDateTime, todayStart),
+          lte(bookings.startDateTime, todayEnd),
+          ne(bookings.bookingStatus, "CANCELLED")
+        )
+      );
+
+    const [missingExpenseRow] = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(bookings)
+      .leftJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
+      .where(
+        and(
+          eq(bookings.bookingStatus, "CONFIRMED"),
+          gte(bookings.startDateTime, todayStart),
+          sql`(${bookingOps.expenseCents} IS NULL OR ${bookingOps.bookingId} IS NULL)`
+        )
+      );
+
+    return {
+      openInquiryCount: Number(inquiryRow?.open ?? 0),
+      unassignedInquiryCount: Number(inquiryRow?.unassigned ?? 0),
+      pendingBookingCount: Number(pendingRow?.count ?? 0),
+      ownerPayoutsDueCents: Number(ownerRow?.totalCents ?? 0),
+      ownerPayoutsDueCount: Number(ownerRow?.count ?? 0),
+      captainNeededTodayCount: Number(todayRow?.captainNeeded ?? 0),
+      missingExpensesCount: Number(missingExpenseRow?.count ?? 0),
+    };
+  }
+);
+
+export const getPendingBookingRequests = cache(async (): Promise<BookingListItem[]> => {
+  await assertAdmin();
+  const result = await bookingService.getAllBookings({
+    bookingStatus: "PENDING",
+    limit: 6,
   });
   return result.bookings;
 });

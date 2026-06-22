@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useCallback, useMemo, useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useQueryStates, parseAsString, parseAsInteger, parseAsBoolean } from "nuqs";
 import { Loader2 } from "lucide-react";
 
 import BookingSummary from "./BookingSummary";
-import BookingAuthSection from "./BookingAuthSection";
-import BookingHoldTimer from "./BookingHoldTimer";
 import KnowBeforeYouGo from "./KnowBeforeYouGo";
 import BookingPricingSection from "./BookingPricingSection";
 import BookingSubmitButton from "./BookingSubmitButton";
@@ -17,19 +16,20 @@ import { useBoat } from "./BoatProvider";
 import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
 import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { BookingRequest } from "@/features/_validation/validations";
-import { createInstantBooking } from "@/features/bookings/actions/instant";
-import { createBookingRequest } from "@/features/bookings/actions/request";
+import { toast } from "@/shared/lib/hooks/use-toast";
 import type { Session } from "next-auth";
+
+const BookingAuthSection = dynamic(() => import("./BookingAuthSection"), {
+  ssr: false,
+});
 
 export default function BookingDetailsClient({
   user,
   serviceFeeRate,
-  holdMinutes,
 }: {
   user: Session["user"] | null;
   /** Decimal service fee rate (e.g. 0.035) from app settings, fetched by the server page. */
   serviceFeeRate: number;
-  holdMinutes: number;
 }) {
   const router = useRouter();
   const boat = useBoat();
@@ -109,8 +109,29 @@ export default function BookingDetailsClient({
         console.log("❌ No booking data found, redirecting to boat page");
       }
       router.push(`/boats/${boat.id}`);
+      return;
     }
-  }, [isFormComplete, boat.id, router]);
+
+    if (!boat.instantBook) {
+      const params = new URLSearchParams();
+      if (startDateTime) params.set("startDateTime", startDateTime);
+      if (pricingTierId) params.set("pricingTierId", pricingTierId);
+      if (numberOfPassengers) params.set("numberOfPassengers", String(numberOfPassengers));
+      if (needsCaptain) params.set("needsCaptain", "true");
+      if (addOns) params.set("addOns", addOns);
+      router.replace(`/bookings/${boat.id}/inquiry?${params.toString()}`);
+    }
+  }, [
+    isFormComplete,
+    boat.id,
+    boat.instantBook,
+    router,
+    startDateTime,
+    pricingTierId,
+    numberOfPassengers,
+    needsCaptain,
+    addOns,
+  ]);
 
   const selectedTier = useMemo(() => {
     return boat.pricingTiers?.find((t) => t.id === pricingTierId) || null;
@@ -162,22 +183,43 @@ export default function BookingDetailsClient({
           ...(selectedAddOns.length > 0 ? { addOns: selectedAddOns } : {}),
         };
 
-        const result =
-          paymentMethod === "instant"
-            ? await createInstantBooking(payload)
-            : await createBookingRequest(payload);
+        if (paymentMethod === "instant") {
+          const { createInstantBooking } = await import("@/features/bookings/actions/instant");
+          const result = await createInstantBooking(payload);
 
-        if (result?.success) {
-          if (paymentMethod === "instant" && "paymentUrl" in result && result.paymentUrl) {
+          if (result?.success && "paymentUrl" in result && result.paymentUrl) {
             window.location.href = result.paymentUrl;
-          } else if (paymentMethod === "request" && "booking" in result && result.booking) {
-            router.push(
-              `/bookings/${boat.id}/success?bookingId=${result.booking.id}&type=request`,
-            );
+            return;
           }
+
+          toast({
+            title: "Could not start checkout",
+            description: result?.error ?? "Please try again.",
+            variant: "destructive",
+          });
+          return;
         }
+
+        const { createBookingRequest } = await import("@/features/bookings/actions/request");
+        const result = await createBookingRequest(payload);
+
+        if (result?.success && "booking" in result && result.booking) {
+          router.push(`/bookings/${boat.id}/success?bookingId=${result.booking.id}&type=request`);
+          return;
+        }
+
+        toast({
+          title: "Could not send request",
+          description: result?.error ?? "Please try again.",
+          variant: "destructive",
+        });
       } catch (error) {
         console.error("Booking submission error:", error);
+        toast({
+          title: "Something went wrong",
+          description: "Please try again in a moment.",
+          variant: "destructive",
+        });
       } finally {
         setIsSubmitting(false);
       }
@@ -207,16 +249,13 @@ export default function BookingDetailsClient({
   return (
     <div className="min-h-screen bg-white pb-28 lg:pb-16">
       <div className="mx-auto max-w-5xl px-4 pt-10 pb-8 sm:px-6 sm:pt-12 sm:pb-10 lg:px-8 lg:pt-14 lg:pb-12">
-        <header className="mb-8 flex items-start justify-between gap-4 sm:mb-10">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              You&apos;re almost there
-            </p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              Complete your charter
-            </h1>
-          </div>
-          <BookingHoldTimer minutes={holdMinutes} />
+        <header className="mb-8 sm:mb-10">
+          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            You&apos;re almost there
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            Complete your charter
+          </h1>
         </header>
 
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-14 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -302,18 +341,6 @@ export default function BookingDetailsClient({
             />
           </div>
         </div>
-        {boat.instantBook && user && (
-          <p className="mx-auto mt-2 max-w-5xl text-center text-xs text-muted-foreground">
-            <button
-              type="button"
-              onClick={() => handleBookingSubmit("request")}
-              disabled={isSubmitting}
-              className="font-medium text-foreground underline-offset-2 hover:underline disabled:opacity-50"
-            >
-              Send request instead
-            </button>
-          </p>
-        )}
       </div>
     </div>
   );

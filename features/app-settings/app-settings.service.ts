@@ -24,13 +24,11 @@ function isMissingAppSettingsTable(error: unknown): boolean {
 
 function toAppSettings(row: {
   serviceFeeBps: number;
-  bookingHoldMinutes: number;
   updatedAt: Date | null;
 }): AppSettings {
   return {
     serviceFeeBps: row.serviceFeeBps,
     serviceFeeRate: bpsToRate(row.serviceFeeBps),
-    bookingHoldMinutes: row.bookingHoldMinutes,
     updatedAt: row.updatedAt,
   };
 }
@@ -70,7 +68,6 @@ export async function saveAppSettings(
     .values({
       id: SETTINGS_ROW_ID,
       serviceFeeBps: input.serviceFeeBps,
-      bookingHoldMinutes: input.bookingHoldMinutes,
       updatedBy: updatedByUserId,
       updatedAt: new Date(),
     })
@@ -78,7 +75,6 @@ export async function saveAppSettings(
       target: appSettings.id,
       set: {
         serviceFeeBps: input.serviceFeeBps,
-        bookingHoldMinutes: input.bookingHoldMinutes,
         updatedBy: updatedByUserId,
         updatedAt: new Date(),
       },
