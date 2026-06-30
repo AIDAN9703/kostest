@@ -1,30 +1,51 @@
 "use client";
 
-import React, { useMemo } from "react";
+import { useMemo } from "react";
+import Link from "next/link";
 import { useQueryStates } from "nuqs";
-import { AdminToolbar, FilterSearch, FilterSelect } from "@/shared/admin/filters";
-import { boatSearchParams } from "../searchParams";
-import { boatCategoryEnum } from "@/database/schema";
 import {
-  SlidersHorizontal,
-  DollarSign,
-  Ruler,
-  Users,
-  Calendar,
-  MapPin,
   Anchor,
+  Calendar,
+  DollarSign,
   Home,
+  MapPin,
+  Plus,
+  Ruler,
+  Ship,
+  Star,
+  ToggleLeft,
+  Users,
   Waves,
 } from "lucide-react";
-import { Input } from "@/shared/components/ui/input";
-import { Button } from "@/shared/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
+  AdminToolbar,
+  FilterChips,
+  FilterField,
+  FilterPopover,
+  FilterSearch,
+  FilterSelect,
+  type FilterChipItem,
+} from "@/shared/admin/filters";
+import { boatSearchParams } from "../searchParams";
+import { boatCategoryEnum } from "@/database/schema";
+import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
+
+const categoryLabel = (v: string) =>
+  v
+    .toLowerCase()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
+const triState = (v: boolean | null, yes: string, no: string) =>
+  v === true ? yes : v === false ? no : null;
+
+const rangeLabel = (
+  min: number | null | undefined,
+  max: number | null | undefined,
+  prefix = ""
+) =>
+  `${prefix}${min ?? 0}${max != null ? ` – ${prefix}${max}` : "+"}`;
 
 export function AdminBoatFilter() {
   const [filters, setFilters] = useQueryStates(boatSearchParams, {
@@ -36,43 +57,28 @@ export function AdminBoatFilter() {
     setFilters({ ...updates, page: 1 });
   };
 
-  const activeAdvancedFilters = useMemo(() => {
-    return [
-      filters.minPrice,
-      filters.maxPrice,
-      filters.minLength,
-      filters.maxLength,
-      filters.minCapacity,
-      filters.maxCapacity,
-      filters.minYear,
-      filters.maxYear,
-      filters.minSleeps,
-      filters.minBathrooms,
-      filters.locationLabel,
-      filters.crewRequired,
-      filters.instantBook,
-      filters.dayCharter,
-      filters.termCharter,
-    ].filter((v) => v !== undefined && v !== null).length;
-  }, [filters]);
+  const activeCount = useMemo(
+    () =>
+      [
+        filters.category,
+        filters.active,
+        filters.featured,
+        filters.minPrice ?? filters.maxPrice,
+        filters.minLength ?? filters.maxLength,
+        filters.minCapacity ?? filters.maxCapacity,
+        filters.minYear ?? filters.maxYear,
+        filters.minSleeps,
+        filters.minBathrooms,
+        filters.locationLabel,
+        filters.crewRequired,
+        filters.instantBook,
+        filters.dayCharter,
+        filters.termCharter,
+      ].filter((v) => v !== undefined && v !== null).length,
+    [filters]
+  );
 
-  const hasFilters = useMemo(() => {
-    return (
-      Boolean(filters.search) ||
-      Boolean(filters.category) ||
-      filters.featured !== null ||
-      filters.active !== null ||
-      activeAdvancedFilters > 0
-    );
-  }, [
-    filters.search,
-    filters.category,
-    filters.featured,
-    filters.active,
-    activeAdvancedFilters,
-  ]);
-
-  const clearFilters = () => {
+  const clearAll = () => {
     setFilters({
       search: "",
       category: null,
@@ -97,391 +103,321 @@ export function AdminBoatFilter() {
     });
   };
 
-  return (
-    <AdminToolbar onClear={clearFilters} hasFilters={hasFilters}>
-      <FilterSearch
-        value={filters.search}
-        onChange={(v) => updateFilter({ search: v })}
-        placeholder="Search by name, make, model, location, owner..."
-      />
-      <FilterSelect
-        value={filters.category ?? null}
-        onChange={(v) => updateFilter({ category: v })}
-        options={boatCategoryEnum.enumValues}
-        placeholder="Category"
-        width="w-[140px]"
-        renderLabel={(v) =>
-          v
-            .toLowerCase()
-            .replace(/_/g, " ")
-            .replace(/\b\w/g, (c) => c.toUpperCase())
-        }
-      />
-      <FilterSelect
-        value={
-          filters.active === true
-            ? "active"
-            : filters.active === false
-              ? "inactive"
-              : null
-        }
-        onChange={(v) =>
-          updateFilter({
-            active: v === "active" ? true : v === "inactive" ? false : null,
-          })
-        }
-        options={["active", "inactive"]}
-        placeholder="Status"
-        width="w-[110px]"
-      />
-      <FilterSelect
-        value={
-          filters.featured === true
-            ? "yes"
-            : filters.featured === false
-              ? "no"
-              : null
-        }
-        onChange={(v) =>
-          updateFilter({
-            featured: v === "yes" ? true : v === "no" ? false : null,
-          })
-        }
-        options={["yes", "no"]}
-        placeholder="Featured"
-        width="w-[110px]"
-      />
-      <AdvancedFiltersToggle
-        filters={filters}
-        updateFilter={updateFilter}
-        activeCount={activeAdvancedFilters}
-      />
-    </AdminToolbar>
-  );
-}
+  const chips: FilterChipItem[] = [];
+  if (filters.category)
+    chips.push({
+      key: "category",
+      label: `Category: ${categoryLabel(filters.category)}`,
+      onRemove: () => updateFilter({ category: null }),
+    });
+  if (filters.active !== null)
+    chips.push({
+      key: "active",
+      label: `Status: ${filters.active ? "Active" : "Inactive"}`,
+      onRemove: () => updateFilter({ active: null }),
+    });
+  if (filters.featured !== null)
+    chips.push({
+      key: "featured",
+      label: filters.featured ? "Featured" : "Not featured",
+      onRemove: () => updateFilter({ featured: null }),
+    });
+  if (filters.minPrice != null || filters.maxPrice != null)
+    chips.push({
+      key: "price",
+      label: `Price: ${rangeLabel(filters.minPrice, filters.maxPrice, "$")}`,
+      onRemove: () => updateFilter({ minPrice: null, maxPrice: null }),
+    });
+  if (filters.minLength != null || filters.maxLength != null)
+    chips.push({
+      key: "length",
+      label: `Length: ${rangeLabel(filters.minLength, filters.maxLength)} ft`,
+      onRemove: () => updateFilter({ minLength: null, maxLength: null }),
+    });
+  if (filters.minCapacity != null || filters.maxCapacity != null)
+    chips.push({
+      key: "capacity",
+      label: `Capacity: ${rangeLabel(filters.minCapacity, filters.maxCapacity)}`,
+      onRemove: () => updateFilter({ minCapacity: null, maxCapacity: null }),
+    });
+  if (filters.minYear != null || filters.maxYear != null)
+    chips.push({
+      key: "year",
+      label: `Year: ${rangeLabel(filters.minYear, filters.maxYear)}`,
+      onRemove: () => updateFilter({ minYear: null, maxYear: null }),
+    });
+  if (filters.minSleeps != null)
+    chips.push({
+      key: "sleeps",
+      label: `Sleeps ${filters.minSleeps}+`,
+      onRemove: () => updateFilter({ minSleeps: null }),
+    });
+  if (filters.minBathrooms != null)
+    chips.push({
+      key: "bathrooms",
+      label: `Bathrooms ${filters.minBathrooms}+`,
+      onRemove: () => updateFilter({ minBathrooms: null }),
+    });
+  if (filters.locationLabel)
+    chips.push({
+      key: "location",
+      label: `Location: ${filters.locationLabel}`,
+      onRemove: () => updateFilter({ locationLabel: null }),
+    });
+  if (filters.crewRequired !== null)
+    chips.push({
+      key: "crew",
+      label: `Crew: ${filters.crewRequired ? "Required" : "Not required"}`,
+      onRemove: () => updateFilter({ crewRequired: null }),
+    });
+  if (filters.instantBook !== null)
+    chips.push({
+      key: "instantBook",
+      label: `Instant book: ${filters.instantBook ? "Yes" : "No"}`,
+      onRemove: () => updateFilter({ instantBook: null }),
+    });
+  if (filters.dayCharter !== null)
+    chips.push({
+      key: "dayCharter",
+      label: `Day charter: ${filters.dayCharter ? "Yes" : "No"}`,
+      onRemove: () => updateFilter({ dayCharter: null }),
+    });
+  if (filters.termCharter !== null)
+    chips.push({
+      key: "termCharter",
+      label: `Term charter: ${filters.termCharter ? "Yes" : "No"}`,
+      onRemove: () => updateFilter({ termCharter: null }),
+    });
 
-function AdvancedFiltersToggle({
-  filters,
-  updateFilter,
-  activeCount,
-}: {
-  filters: ReturnType<typeof useQueryStates<typeof boatSearchParams>>[0];
-  updateFilter: (updates: Partial<typeof filters>) => void;
-  activeCount: number;
-}) {
-  const [isOpen, setIsOpen] = React.useState(false);
-
   return (
-    <div className="relative">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setIsOpen(!isOpen)}
-        className="h-9 gap-1.5 border-border"
+    <div className="space-y-2 pb-3">
+      <AdminToolbar
+        trailing={
+          <Button asChild size="sm" className="h-9 gap-1.5">
+            <Link href="/admin/boats/create">
+              <Plus className="h-3.5 w-3.5" />
+              New boat
+            </Link>
+          </Button>
+        }
       >
-        <SlidersHorizontal className="h-3.5 w-3.5" />
-        <span className="text-sm">Filters</span>
-        {activeCount > 0 && (
-          <span className="ml-1 px-1.5 py-0.5 text-[10px] font-semibold bg-primary text-primary-foreground rounded-full">
-            {activeCount}
-          </span>
-        )}
-      </Button>
-
-      {isOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="absolute right-0 top-full mt-1 w-[600px] bg-card rounded-lg border border-border shadow-lg z-50">
-            <div className="p-4">
-              <div className="grid grid-cols-2 gap-4">
-                <FilterGroup icon={DollarSign} label="Price Range">
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Min"
-                      value={filters.minPrice ?? ""}
-                      onChange={(e) =>
-                        updateFilter({
-                          minPrice: e.target.value ? parseInt(e.target.value) : null,
-                        })
-                      }
-                      className="h-8 text-sm"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Max"
-                      value={filters.maxPrice ?? ""}
-                      onChange={(e) =>
-                        updateFilter({
-                          maxPrice: e.target.value ? parseInt(e.target.value) : null,
-                        })
-                      }
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                </FilterGroup>
-                <FilterGroup icon={Ruler} label="Length (ft)">
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Min"
-                      value={filters.minLength ?? ""}
-                      onChange={(e) =>
-                        updateFilter({
-                          minLength: e.target.value ? parseInt(e.target.value) : null,
-                        })
-                      }
-                      className="h-8 text-sm"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Max"
-                      value={filters.maxLength ?? ""}
-                      onChange={(e) =>
-                        updateFilter({
-                          maxLength: e.target.value ? parseInt(e.target.value) : null,
-                        })
-                      }
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                </FilterGroup>
-                <FilterGroup icon={Users} label="Capacity">
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Min"
-                      value={filters.minCapacity ?? ""}
-                      onChange={(e) =>
-                        updateFilter({
-                          minCapacity: e.target.value ? parseInt(e.target.value) : null,
-                        })
-                      }
-                      className="h-8 text-sm"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Max"
-                      value={filters.maxCapacity ?? ""}
-                      onChange={(e) =>
-                        updateFilter({
-                          maxCapacity: e.target.value ? parseInt(e.target.value) : null,
-                        })
-                      }
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                </FilterGroup>
-                <FilterGroup icon={Calendar} label="Year Built">
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      placeholder="From"
-                      value={filters.minYear ?? ""}
-                      onChange={(e) =>
-                        updateFilter({
-                          minYear: e.target.value ? parseInt(e.target.value) : null,
-                        })
-                      }
-                      className="h-8 text-sm"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="To"
-                      value={filters.maxYear ?? ""}
-                      onChange={(e) =>
-                        updateFilter({
-                          maxYear: e.target.value ? parseInt(e.target.value) : null,
-                        })
-                      }
-                      className="h-8 text-sm"
-                    />
-                  </div>
-                </FilterGroup>
-                <FilterGroup icon={Home} label="Sleeps (Min)">
-                  <Input
-                    type="number"
-                    placeholder="Minimum"
-                    value={filters.minSleeps ?? ""}
-                    onChange={(e) =>
-                      updateFilter({
-                        minSleeps: e.target.value ? parseInt(e.target.value) : null,
-                      })
-                    }
-                    className="h-8 text-sm"
-                  />
-                </FilterGroup>
-                <FilterGroup icon={Waves} label="Bathrooms (Min)">
-                  <Input
-                    type="number"
-                    placeholder="Minimum"
-                    value={filters.minBathrooms ?? ""}
-                    onChange={(e) =>
-                      updateFilter({
-                        minBathrooms: e.target.value ? parseInt(e.target.value) : null,
-                      })
-                    }
-                    className="h-8 text-sm"
-                  />
-                </FilterGroup>
-                <FilterGroup icon={MapPin} label="Location">
-                  <Input
-                    placeholder="City or region..."
-                    value={filters.locationLabel ?? ""}
-                    onChange={(e) =>
-                      updateFilter({ locationLabel: e.target.value || null })
-                    }
-                    className="h-8 text-sm"
-                  />
-                </FilterGroup>
-                <FilterGroup icon={Anchor} label="Charter Options">
-                  <div className="space-y-2">
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">
-                        Crew
-                      </label>
-                      <Select
-                        value={
-                          filters.crewRequired === true
-                            ? "yes"
-                            : filters.crewRequired === false
-                              ? "no"
-                              : "all"
-                        }
-                        onValueChange={(v) =>
-                          updateFilter({
-                            crewRequired:
-                              v === "yes" ? true : v === "no" ? false : null,
-                          })
-                        }
-                      >
-                        <SelectTrigger className="h-8 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Any</SelectItem>
-                          <SelectItem value="yes">Required</SelectItem>
-                          <SelectItem value="no">Not Required</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">
-                        Instant Book
-                      </label>
-                      <Select
-                        value={
-                          filters.instantBook === true
-                            ? "yes"
-                            : filters.instantBook === false
-                              ? "no"
-                              : "all"
-                        }
-                        onValueChange={(v) =>
-                          updateFilter({
-                            instantBook:
-                              v === "yes" ? true : v === "no" ? false : null,
-                          })
-                        }
-                      >
-                        <SelectTrigger className="h-8 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Any</SelectItem>
-                          <SelectItem value="yes">Yes</SelectItem>
-                          <SelectItem value="no">No</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">
-                        Day Charter
-                      </label>
-                      <Select
-                        value={
-                          filters.dayCharter === true
-                            ? "yes"
-                            : filters.dayCharter === false
-                              ? "no"
-                              : "all"
-                        }
-                        onValueChange={(v) =>
-                          updateFilter({
-                            dayCharter:
-                              v === "yes" ? true : v === "no" ? false : null,
-                          })
-                        }
-                      >
-                        <SelectTrigger className="h-8 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Any</SelectItem>
-                          <SelectItem value="yes">Available</SelectItem>
-                          <SelectItem value="no">Not Available</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">
-                        Term Charter
-                      </label>
-                      <Select
-                        value={
-                          filters.termCharter === true
-                            ? "yes"
-                            : filters.termCharter === false
-                              ? "no"
-                              : "all"
-                        }
-                        onValueChange={(v) =>
-                          updateFilter({
-                            termCharter:
-                              v === "yes" ? true : v === "no" ? false : null,
-                          })
-                        }
-                      >
-                        <SelectTrigger className="h-8 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Any</SelectItem>
-                          <SelectItem value="yes">Available</SelectItem>
-                          <SelectItem value="no">Not Available</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </FilterGroup>
-              </div>
+        <FilterSearch
+          value={filters.search}
+          onChange={(v) => updateFilter({ search: v })}
+          placeholder="Search by name, make, model, location, owner..."
+        />
+        <FilterPopover activeCount={activeCount} onClearAll={clearAll}>
+          <FilterField icon={Ship} label="Category">
+            <FilterSelect
+              value={filters.category ?? null}
+              onChange={(v) => updateFilter({ category: v })}
+              options={boatCategoryEnum.enumValues}
+              placeholder="Category"
+              allLabel="Any category"
+              width="w-full"
+              renderLabel={categoryLabel}
+            />
+          </FilterField>
+          <FilterField icon={ToggleLeft} label="Status">
+            <FilterSelect
+              value={triState(filters.active, "active", "inactive")}
+              onChange={(v) =>
+                updateFilter({
+                  active: v === "active" ? true : v === "inactive" ? false : null,
+                })
+              }
+              options={["active", "inactive"]}
+              placeholder="Status"
+              allLabel="Any status"
+              width="w-full"
+              renderLabel={(v) => (v === "active" ? "Active" : "Inactive")}
+            />
+          </FilterField>
+          <FilterField icon={Star} label="Featured">
+            <FilterSelect
+              value={triState(filters.featured, "yes", "no")}
+              onChange={(v) =>
+                updateFilter({
+                  featured: v === "yes" ? true : v === "no" ? false : null,
+                })
+              }
+              options={["yes", "no"]}
+              placeholder="Featured"
+              allLabel="Any"
+              width="w-full"
+              renderLabel={(v) => (v === "yes" ? "Featured" : "Not featured")}
+            />
+          </FilterField>
+          <FilterField icon={MapPin} label="Location">
+            <Input
+              placeholder="City or region..."
+              value={filters.locationLabel ?? ""}
+              onChange={(e) => updateFilter({ locationLabel: e.target.value || null })}
+              className="h-9 text-sm"
+            />
+          </FilterField>
+          <FilterField icon={DollarSign} label="Price range">
+            <RangeInputs
+              min={filters.minPrice}
+              max={filters.maxPrice}
+              onMin={(v) => updateFilter({ minPrice: v })}
+              onMax={(v) => updateFilter({ maxPrice: v })}
+            />
+          </FilterField>
+          <FilterField icon={Ruler} label="Length (ft)">
+            <RangeInputs
+              min={filters.minLength}
+              max={filters.maxLength}
+              onMin={(v) => updateFilter({ minLength: v })}
+              onMax={(v) => updateFilter({ maxLength: v })}
+            />
+          </FilterField>
+          <FilterField icon={Users} label="Capacity">
+            <RangeInputs
+              min={filters.minCapacity}
+              max={filters.maxCapacity}
+              onMin={(v) => updateFilter({ minCapacity: v })}
+              onMax={(v) => updateFilter({ maxCapacity: v })}
+            />
+          </FilterField>
+          <FilterField icon={Calendar} label="Year built">
+            <RangeInputs
+              min={filters.minYear}
+              max={filters.maxYear}
+              minPlaceholder="From"
+              maxPlaceholder="To"
+              onMin={(v) => updateFilter({ minYear: v })}
+              onMax={(v) => updateFilter({ maxYear: v })}
+            />
+          </FilterField>
+          <FilterField icon={Home} label="Sleeps (min)">
+            <Input
+              type="number"
+              min={0}
+              placeholder="Minimum"
+              value={filters.minSleeps ?? ""}
+              onChange={(e) =>
+                updateFilter({
+                  minSleeps: e.target.value ? parseInt(e.target.value, 10) : null,
+                })
+              }
+              className="h-9 text-sm"
+            />
+          </FilterField>
+          <FilterField icon={Waves} label="Bathrooms (min)">
+            <Input
+              type="number"
+              min={0}
+              placeholder="Minimum"
+              value={filters.minBathrooms ?? ""}
+              onChange={(e) =>
+                updateFilter({
+                  minBathrooms: e.target.value ? parseInt(e.target.value, 10) : null,
+                })
+              }
+              className="h-9 text-sm"
+            />
+          </FilterField>
+          <FilterField icon={Anchor} label="Charter options" className="sm:col-span-2">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <BoolSelect
+                label="Crew"
+                value={filters.crewRequired}
+                yesLabel="Required"
+                noLabel="Not required"
+                onChange={(v) => updateFilter({ crewRequired: v })}
+              />
+              <BoolSelect
+                label="Instant book"
+                value={filters.instantBook}
+                onChange={(v) => updateFilter({ instantBook: v })}
+              />
+              <BoolSelect
+                label="Day charter"
+                value={filters.dayCharter}
+                yesLabel="Available"
+                noLabel="Not available"
+                onChange={(v) => updateFilter({ dayCharter: v })}
+              />
+              <BoolSelect
+                label="Term charter"
+                value={filters.termCharter}
+                yesLabel="Available"
+                noLabel="Not available"
+                onChange={(v) => updateFilter({ termCharter: v })}
+              />
             </div>
-          </div>
-        </>
-      )}
+          </FilterField>
+        </FilterPopover>
+      </AdminToolbar>
+
+      <FilterChips chips={chips} onClearAll={clearAll} />
     </div>
   );
 }
 
-function FilterGroup({
-  icon: Icon,
-  label,
-  children,
+function RangeInputs({
+  min,
+  max,
+  onMin,
+  onMax,
+  minPlaceholder = "Min",
+  maxPlaceholder = "Max",
 }: {
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  children: React.ReactNode;
+  min: number | null | undefined;
+  max: number | null | undefined;
+  onMin: (v: number | null) => void;
+  onMax: (v: number | null) => void;
+  minPlaceholder?: string;
+  maxPlaceholder?: string;
 }) {
   return (
-    <div>
-      <div className="flex items-center gap-1.5 mb-2">
-        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-xs font-medium text-foreground">{label}</span>
-      </div>
-      {children}
+    <div className="grid grid-cols-2 gap-2">
+      <Input
+        type="number"
+        min={0}
+        placeholder={minPlaceholder}
+        value={min ?? ""}
+        onChange={(e) => onMin(e.target.value ? parseInt(e.target.value, 10) : null)}
+        className="h-9 text-sm"
+      />
+      <Input
+        type="number"
+        min={0}
+        placeholder={maxPlaceholder}
+        value={max ?? ""}
+        onChange={(e) => onMax(e.target.value ? parseInt(e.target.value, 10) : null)}
+        className="h-9 text-sm"
+      />
+    </div>
+  );
+}
+
+function BoolSelect({
+  label,
+  value,
+  onChange,
+  yesLabel = "Yes",
+  noLabel = "No",
+}: {
+  label: string;
+  value: boolean | null;
+  onChange: (v: boolean | null) => void;
+  yesLabel?: string;
+  noLabel?: string;
+}) {
+  return (
+    <div className="space-y-1">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <FilterSelect
+        value={value === true ? "yes" : value === false ? "no" : null}
+        onChange={(v) => onChange(v === "yes" ? true : v === "no" ? false : null)}
+        options={["yes", "no"]}
+        placeholder={label}
+        allLabel="Any"
+        width="w-full"
+        renderLabel={(v) => (v === "yes" ? yesLabel : noLabel)}
+      />
     </div>
   );
 }

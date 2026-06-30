@@ -88,8 +88,7 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
   return (
     <div
       className={cn(
-        "w-full",
-        isCompact ? "max-w-full" : "max-w-[90%] md:max-w-[75%] lg:max-w-[50%] mx-auto"
+        "w-full max-w-full"
       )}
     >
       <form

@@ -23,6 +23,11 @@ import { LogOut } from "lucide-react";
 const navItemButton =
   "h-11 gap-3 rounded-lg px-3 text-base leading-snug text-sidebar-foreground/90 transition-[background-color,box-shadow,color] hover:bg-sidebar-accent/80 data-[active=true]:bg-primary/10 data-[active=true]:font-semibold data-[active=true]:text-sidebar-foreground data-[active=true]:ring-1 data-[active=true]:ring-primary/35 dark:data-[active=true]:bg-primary/25 dark:data-[active=true]:ring-2 dark:data-[active=true]:ring-primary/50 group-data-[collapsible=icon]:h-11 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:[&_.sidebar-label]:hidden";
 
+function isNavActive(pathname: string, href: string) {
+  if (href === "/admin") return pathname === "/admin";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 /**
  * Header height matches SidebarInset (`AdminHeader`): h-16 expanded, h-12 when icon-collapsed,
  * box-border so the divider lines up with the main bar.
@@ -69,7 +74,7 @@ export default function AdminSidebar() {
             <SidebarMenu className="gap-0.5">
               {ADMIN_NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href;
+                const isActive = isNavActive(pathname, item.href);
                 return (
                   <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton

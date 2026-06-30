@@ -2,18 +2,33 @@
 
 import { db } from "@/database/db";
 import {
-  bookings,
+  boats,
+  bookingEvents,
   bookingOps,
   bookingPricing,
+  bookings,
   inquiry,
+  inquiryEvents,
 } from "@/database/schema";
-import { and, asc, eq, gte, lte, ne, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, lte, ne, sql } from "drizzle-orm";
 import { cache } from "react";
-import { startOfDay, endOfDay, addDays, endOfMonth, startOfMonth } from "date-fns";
+import {
+  startOfDay,
+  endOfDay,
+  startOfMonth,
+  endOfMonth,
+  addDays,
+  format,
+} from "date-fns";
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { getAdminSession } from "@/shared/lib/utils/auth-utils";
+import type { BookingListItem } from "@/features/bookings/booking.types";
+import type { InquiryListItem } from "@/features/inquiries/inquiry.types";
+import {
+  formatBookingActivityMessage,
+  formatInquiryActivityMessage,
+} from "@/features/admin/dashboard/dashboard-utils";
 
-/** These loaders are server actions (public RPC) — every one must verify admin. */
 async function assertAdmin(): Promise<void> {
   const { error } = await getAdminSession();
   if (error) {
@@ -21,78 +36,28 @@ async function assertAdmin(): Promise<void> {
   }
 }
 
-/* Types */
-import { BookingListItem } from "@/features/bookings/booking.types";
-import { InquiryListItem } from "@/features/inquiries/inquiry.types";
-
-/** Ops-focused aggregates for trips whose start falls in the current calendar month. */
-export interface OperationsMtdSummary {
+export interface DashboardHeadlineMetrics {
+  /** e.g. "June" */
+  monthLabel: string;
+  /** Gross merchandise value for trips starting this month (cents). */
   gmvMtdCents: number;
-  netRevenueMtdCents: number;
-  commissionsMtdCents: number;
-  tripsStartingThisMonth: number;
-  /** Bookings with ops.client balance still owed (see `booking_ops.balance_client_cents`). */
-  outstandingClientBalanceCount: number;
-  outstandingClientBalanceCents: number;
+  /** KOS commission earned on trips starting this month (cents). */
+  kosCommissionMtdCents: number;
+  /** Non-cancelled trips starting this month. */
+  tripsThisMonth: number;
+  /** Active boats in the fleet. */
+  activeBoats: number;
 }
 
-/** Counts for the dashboard “needs attention” strip — only surfaced when non-zero. */
-export interface DashboardActionCounts {
-  openInquiryCount: number;
-  unassignedInquiryCount: number;
-  pendingBookingCount: number;
-  ownerPayoutsDueCents: number;
-  ownerPayoutsDueCount: number;
-  captainNeededTodayCount: number;
-  missingExpensesCount: number;
+export interface DashboardActivityItem {
+  id: string;
+  kind: "booking" | "inquiry";
+  subjectId: string;
+  subjectLabel: string;
+  message: string;
+  createdAt: Date;
+  href: string;
 }
-
-// ============================================================================
-// OPERATIONS (MTD — trips starting this calendar month)
-// ============================================================================
-
-export const getOperationsMtdSummary = cache(async (): Promise<OperationsMtdSummary> => {
-  await assertAdmin();
-  const now = new Date();
-  const from = startOfMonth(now);
-  const to = endOfMonth(now);
-
-  const [mtdRow] = await db
-    .select({
-      gmvMtdCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.gmvCents}, ${bookingPricing.totalAmountCents})), 0)`,
-      netRevenueMtdCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.revenueCents}, 0)), 0)`,
-      commissionsMtdCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.commissionCents}, COALESCE(${bookingOps.commissionAgentCents}, 0) + COALESCE(${bookingOps.commissionKosCents}, 0))), 0)`,
-      tripsStartingThisMonth: sql<number>`COUNT(${bookings.id})::int`,
-    })
-    .from(bookings)
-    .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
-    .leftJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
-    .where(
-      and(
-        gte(bookings.startDateTime, from),
-        lte(bookings.startDateTime, to),
-        ne(bookings.bookingStatus, "CANCELLED")
-      )
-    );
-
-  const [balRow] = await db
-    .select({
-      outstandingClientBalanceCount: sql<number>`COUNT(*)::int`,
-      outstandingClientBalanceCents: sql<number>`COALESCE(SUM(GREATEST(${bookingOps.balanceClientCents}, 0)), 0)`,
-    })
-    .from(bookings)
-    .innerJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
-    .where(and(ne(bookings.bookingStatus, "CANCELLED"), sql`${bookingOps.balanceClientCents} > 0`));
-
-  return {
-    gmvMtdCents: Number(mtdRow?.gmvMtdCents ?? 0),
-    netRevenueMtdCents: Number(mtdRow?.netRevenueMtdCents ?? 0),
-    commissionsMtdCents: Number(mtdRow?.commissionsMtdCents ?? 0),
-    tripsStartingThisMonth: Number(mtdRow?.tripsStartingThisMonth ?? 0),
-    outstandingClientBalanceCount: Number(balRow?.outstandingClientBalanceCount ?? 0),
-    outstandingClientBalanceCents: Number(balRow?.outstandingClientBalanceCents ?? 0),
-  };
-});
 
 /** OPEN inquiries, longest since last update first — best “who needs a nudge” ordering. */
 export const getFollowUpInquiries = cache(async (limit = 6): Promise<InquiryListItem[]> => {
@@ -120,95 +85,6 @@ export const getFollowUpInquiries = cache(async (limit = 6): Promise<InquiryList
   return rows as InquiryListItem[];
 });
 
-// ============================================================================
-// BOOKINGS (Today / This Week)
-// ============================================================================
-
-export const getTodaysBookings = cache(async (): Promise<BookingListItem[]> => {
-  await assertAdmin();
-  const now = new Date();
-  const dateFrom = startOfDay(now).toISOString();
-  const dateTo = endOfDay(now).toISOString();
-  const result = await bookingService.getAllBookings({
-    dateFrom,
-    dateTo,
-    limit: 20,
-  });
-  return result.bookings;
-});
-
-// ============================================================================
-// DASHBOARD ACTION COUNTS
-// ============================================================================
-
-export const getDashboardActionCounts = cache(
-  async (): Promise<DashboardActionCounts> => {
-    await assertAdmin();
-    const now = new Date();
-    const todayStart = startOfDay(now);
-    const todayEnd = endOfDay(now);
-
-    const [inquiryRow] = await db
-      .select({
-        open: sql<number>`COUNT(*)::int`,
-        unassigned: sql<number>`COUNT(*) FILTER (WHERE ${inquiry.assignedTo} IS NULL)::int`,
-      })
-      .from(inquiry)
-      .where(eq(inquiry.outcome, "OPEN"));
-
-    const [pendingRow] = await db
-      .select({ count: sql<number>`COUNT(*)::int` })
-      .from(bookings)
-      .where(eq(bookings.bookingStatus, "PENDING"));
-
-    const [ownerRow] = await db
-      .select({
-        count: sql<number>`COUNT(*)::int`,
-        totalCents: sql<number>`COALESCE(SUM(GREATEST(${bookingOps.balanceOwnerCents}, 0)), 0)`,
-      })
-      .from(bookings)
-      .innerJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
-      .where(
-        and(ne(bookings.bookingStatus, "CANCELLED"), sql`${bookingOps.balanceOwnerCents} > 0`)
-      );
-
-    const [todayRow] = await db
-      .select({
-        captainNeeded: sql<number>`COUNT(*) FILTER (WHERE ${bookings.needsCaptain} = true AND ${bookings.captainUserId} IS NULL)::int`,
-      })
-      .from(bookings)
-      .where(
-        and(
-          gte(bookings.startDateTime, todayStart),
-          lte(bookings.startDateTime, todayEnd),
-          ne(bookings.bookingStatus, "CANCELLED")
-        )
-      );
-
-    const [missingExpenseRow] = await db
-      .select({ count: sql<number>`COUNT(*)::int` })
-      .from(bookings)
-      .leftJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
-      .where(
-        and(
-          eq(bookings.bookingStatus, "CONFIRMED"),
-          gte(bookings.startDateTime, todayStart),
-          sql`(${bookingOps.expenseCents} IS NULL OR ${bookingOps.bookingId} IS NULL)`
-        )
-      );
-
-    return {
-      openInquiryCount: Number(inquiryRow?.open ?? 0),
-      unassignedInquiryCount: Number(inquiryRow?.unassigned ?? 0),
-      pendingBookingCount: Number(pendingRow?.count ?? 0),
-      ownerPayoutsDueCents: Number(ownerRow?.totalCents ?? 0),
-      ownerPayoutsDueCount: Number(ownerRow?.count ?? 0),
-      captainNeededTodayCount: Number(todayRow?.captainNeeded ?? 0),
-      missingExpensesCount: Number(missingExpenseRow?.count ?? 0),
-    };
-  }
-);
-
 export const getPendingBookingRequests = cache(async (): Promise<BookingListItem[]> => {
   await assertAdmin();
   const result = await bookingService.getAllBookings({
@@ -218,16 +94,126 @@ export const getPendingBookingRequests = cache(async (): Promise<BookingListItem
   return result.bookings;
 });
 
-/** Next 7 days from today (today + 6 days) - no past bookings */
+/** Today through the next 6 days. */
 export const getWeeksBookings = cache(async (): Promise<BookingListItem[]> => {
   await assertAdmin();
   const now = new Date();
-  const dateFrom = startOfDay(now).toISOString();
-  const dateTo = endOfDay(addDays(now, 6)).toISOString();
   const result = await bookingService.getAllBookings({
-    dateFrom,
-    dateTo,
+    dateFrom: startOfDay(now).toISOString(),
+    dateTo: endOfDay(addDays(now, 6)).toISOString(),
     limit: 20,
   });
   return result.bookings;
 });
+
+/**
+ * Headline finance + fleet metrics for the dashboard cards.
+ * GMV/commission cover non-cancelled trips that *start* in the current calendar month,
+ * mirroring the ops sheet (ops override falls back to the booking quote total).
+ */
+export const getDashboardHeadlineMetrics = cache(
+  async (): Promise<DashboardHeadlineMetrics> => {
+    await assertAdmin();
+
+    const now = new Date();
+    const from = startOfMonth(now);
+    const to = endOfMonth(now);
+
+    const [[mtdRow], boatCount] = await Promise.all([
+      db
+        .select({
+          gmvMtdCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.gmvCents}, ${bookingPricing.totalAmountCents})), 0)`,
+          kosCommissionMtdCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.commissionKosCents}, 0)), 0)`,
+          tripsThisMonth: sql<number>`COUNT(${bookings.id})::int`,
+        })
+        .from(bookings)
+        .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
+        .leftJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
+        .where(
+          and(
+            gte(bookings.startDateTime, from),
+            lte(bookings.startDateTime, to),
+            ne(bookings.bookingStatus, "CANCELLED")
+          )
+        ),
+      db.select({ value: count() }).from(boats).where(eq(boats.active, true)),
+    ]);
+
+    return {
+      monthLabel: format(now, "MMMM"),
+      gmvMtdCents: Number(mtdRow?.gmvMtdCents ?? 0),
+      kosCommissionMtdCents: Number(mtdRow?.kosCommissionMtdCents ?? 0),
+      tripsThisMonth: Number(mtdRow?.tripsThisMonth ?? 0),
+      activeBoats: Number(boatCount[0]?.value ?? 0),
+    };
+  }
+);
+
+/** Recent cross-module activity from booking + inquiry timelines. */
+export const getRecentDashboardActivity = cache(
+  async (limit = 12): Promise<DashboardActivityItem[]> => {
+    await assertAdmin();
+
+    const perSource = Math.ceil(limit / 2);
+
+    const [bookingRows, inquiryRows] = await Promise.all([
+      db
+        .select({
+          id: bookingEvents.id,
+          bookingId: bookingEvents.bookingId,
+          customerName: bookings.customerName,
+          eventType: bookingEvents.eventType,
+          displayMessage: bookingEvents.displayMessage,
+          content: bookingEvents.content,
+          createdAt: bookingEvents.createdAt,
+        })
+        .from(bookingEvents)
+        .innerJoin(bookings, eq(bookingEvents.bookingId, bookings.id))
+        .orderBy(desc(bookingEvents.createdAt))
+        .limit(perSource),
+      db
+        .select({
+          id: inquiryEvents.id,
+          inquiryId: inquiryEvents.inquiryId,
+          inquiryName: inquiry.name,
+          eventType: inquiryEvents.eventType,
+          content: inquiryEvents.content,
+          previousStage: inquiryEvents.previousStage,
+          newStage: inquiryEvents.newStage,
+          previousOutcome: inquiryEvents.previousOutcome,
+          newOutcome: inquiryEvents.newOutcome,
+          contactMethod: inquiryEvents.contactMethod,
+          createdAt: inquiryEvents.createdAt,
+        })
+        .from(inquiryEvents)
+        .innerJoin(inquiry, eq(inquiryEvents.inquiryId, inquiry.id))
+        .orderBy(desc(inquiryEvents.createdAt))
+        .limit(perSource),
+    ]);
+
+    const merged: DashboardActivityItem[] = [
+      ...bookingRows.map((row) => ({
+        id: `b-${row.id}`,
+        kind: "booking" as const,
+        subjectId: row.bookingId,
+        subjectLabel: row.customerName,
+        message: formatBookingActivityMessage(row),
+        createdAt: row.createdAt,
+        href: `/admin/bookings/${row.bookingId}`,
+      })),
+      ...inquiryRows.map((row) => ({
+        id: `i-${row.id}`,
+        kind: "inquiry" as const,
+        subjectId: row.inquiryId,
+        subjectLabel: row.inquiryName,
+        message: formatInquiryActivityMessage(row),
+        createdAt: row.createdAt,
+        href: `/admin/inquiries/${row.inquiryId}`,
+      })),
+    ];
+
+    return merged
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, limit);
+  }
+);

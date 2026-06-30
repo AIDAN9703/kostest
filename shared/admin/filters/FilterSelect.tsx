@@ -15,11 +15,14 @@ interface FilterSelectProps<T extends string> {
   placeholder: string;
   renderLabel?: (value: T) => string;
   width?: string;
+  /** Label for the "no filter" option. Defaults to `All {placeholder}`. */
+  allLabel?: string;
 }
 
 /**
- * Shared select filter with consistent "All" option
- * Generic type-safe implementation for enum filters
+ * Shared select filter with a consistent "all" option.
+ * Generic, type-safe implementation for enum filters. Use `width="w-full"` and
+ * `allLabel="Any"` inside a <FilterField> within <FilterPopover>.
  */
 export function FilterSelect<T extends string>({
   value,
@@ -28,6 +31,7 @@ export function FilterSelect<T extends string>({
   placeholder,
   renderLabel,
   width = "w-[140px]",
+  allLabel,
 }: FilterSelectProps<T>) {
   const formatLabel =
     renderLabel ||
@@ -42,7 +46,7 @@ export function FilterSelect<T extends string>({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">All {placeholder}</SelectItem>
+        <SelectItem value="all">{allLabel ?? `All ${placeholder}`}</SelectItem>
         {options.map((option) => (
           <SelectItem key={option} value={option}>
             {formatLabel(option)}

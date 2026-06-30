@@ -33,7 +33,7 @@ export async function promoteUserToCaptainAction(
     await captainProfileService.promoteFromAdmin(userId, parsed.data);
     revalidatePath("/admin/users");
     revalidatePath(`/admin/users/${userId}`);
-    revalidatePath("/admin/captains");
+    revalidatePath("/admin/crew");
     return { success: true, data: { message: "Captain profile saved." } };
   } catch (e) {
     return { success: false, error: toErrorString(e) };

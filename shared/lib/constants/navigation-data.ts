@@ -1,10 +1,10 @@
 import {
   Calendar,
   User,
+  LayoutDashboard,
   MessageSquare,
   Users,
   UsersRound,
-  Anchor,
   Ship,
   Newspaper,
   Heart,
@@ -262,6 +262,12 @@ export const ADMIN_QUICK_ACTIONS: AdminNavItem[] = [
 
 export const ADMIN_NAV_ITEMS: AdminMainNavItem[] = [
   {
+    label: "Dashboard",
+    href: "/admin",
+    icon: LayoutDashboard,
+    iconClassName: "h-5 w-5",
+  },
+  {
     label: "Bookings",
     href: "/admin/bookings",
     icon: Calendar,
@@ -277,12 +283,6 @@ export const ADMIN_NAV_ITEMS: AdminMainNavItem[] = [
     label: "Users",
     href: "/admin/users",
     icon: Users,
-    iconClassName: "h-5 w-5",
-  },
-  {
-    label: "Captains",
-    href: "/admin/captains",
-    icon: Anchor,
     iconClassName: "h-5 w-5",
   },
   {

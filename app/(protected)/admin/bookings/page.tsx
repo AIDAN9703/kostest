@@ -26,7 +26,7 @@ export default async function BookingsPage({
   ]);
 
   const filter = (
-    <Suspense fallback={<div className="h-14 shrink-0 animate-pulse rounded-2xl bg-muted" />}>
+    <Suspense fallback={<div className="h-9 shrink-0 animate-pulse rounded-md bg-muted pb-3" />}>
       <AdminBookingFilter admins={admins} pricingTiers={pricingTiers} />
     </Suspense>
   );
