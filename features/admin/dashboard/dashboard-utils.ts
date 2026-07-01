@@ -43,6 +43,8 @@ export function formatInquiryActivityMessage(event: {
       return event.contactMethod
         ? `Contact via ${formatStatusLabel(event.contactMethod)}`
         : "Contact logged";
+    case "ASSIGNED":
+      return event.content || "Lead assigned";
     default:
       return formatStatusLabel(event.eventType);
   }

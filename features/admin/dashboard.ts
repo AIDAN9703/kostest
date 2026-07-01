@@ -9,8 +9,9 @@ import {
   bookings,
   inquiry,
   inquiryEvents,
+  users,
 } from "@/database/schema";
-import { and, asc, count, desc, eq, gte, lte, ne, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, isNull, lte, ne, sql } from "drizzle-orm";
 import { cache } from "react";
 import {
   startOfDay,
@@ -47,6 +48,14 @@ export interface DashboardHeadlineMetrics {
   tripsThisMonth: number;
   /** Active boats in the fleet. */
   activeBoats: number;
+  /** Boats added to the fleet this month. */
+  boatsAddedThisMonth: number;
+  /** New user accounts created this month. */
+  newUsersThisMonth: number;
+  /** Open (in-progress) inquiries across the pipeline. */
+  openInquiries: number;
+  /** Open inquiries with no admin assigned yet. */
+  unassignedLeads: number;
 }
 
 export interface DashboardActivityItem {
@@ -80,6 +89,36 @@ export const getFollowUpInquiries = cache(async (limit = 6): Promise<InquiryList
     .from(inquiry)
     .where(eq(inquiry.outcome, "OPEN"))
     .orderBy(asc(inquiry.updatedAt))
+    .limit(limit);
+
+  return rows as InquiryListItem[];
+});
+
+/** OPEN inquiries with no admin assigned yet — oldest first so nothing is missed. */
+export const getUnassignedLeads = cache(async (limit = 8): Promise<InquiryListItem[]> => {
+  await assertAdmin();
+  const rows = await db
+    .select({
+      id: inquiry.id,
+      name: inquiry.name,
+      email: inquiry.email,
+      phone: inquiry.phone,
+      stage: inquiry.stage,
+      outcome: inquiry.outcome,
+      leadType: inquiry.leadType,
+      source: inquiry.source,
+      date: inquiry.date,
+      budget: inquiry.budget,
+      guests: inquiry.guests,
+      message: inquiry.message,
+      estimatedTotalCents: inquiry.estimatedTotalCents,
+      assignedTo: inquiry.assignedTo,
+      createdAt: inquiry.createdAt,
+      updatedAt: inquiry.updatedAt,
+    })
+    .from(inquiry)
+    .where(and(eq(inquiry.outcome, "OPEN"), isNull(inquiry.assignedTo)))
+    .orderBy(asc(inquiry.createdAt))
     .limit(limit);
 
   return rows as InquiryListItem[];
@@ -119,7 +158,8 @@ export const getDashboardHeadlineMetrics = cache(
     const from = startOfMonth(now);
     const to = endOfMonth(now);
 
-    const [[mtdRow], boatCount] = await Promise.all([
+    const [[mtdRow], boatCount, [leadCounts], boatsAddedRes, newUsersRes] =
+      await Promise.all([
       db
         .select({
           gmvMtdCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.gmvCents}, ${bookingPricing.totalAmountCents})), 0)`,
@@ -137,6 +177,20 @@ export const getDashboardHeadlineMetrics = cache(
           )
         ),
       db.select({ value: count() }).from(boats).where(eq(boats.active, true)),
+      db
+        .select({
+          open: sql<number>`COUNT(*) FILTER (WHERE ${inquiry.outcome} = 'OPEN')::int`,
+          unassigned: sql<number>`COUNT(*) FILTER (WHERE ${inquiry.outcome} = 'OPEN' AND ${inquiry.assignedTo} IS NULL)::int`,
+        })
+        .from(inquiry),
+      db
+        .select({ value: count() })
+        .from(boats)
+        .where(and(gte(boats.createdAt, from), lte(boats.createdAt, to))),
+      db
+        .select({ value: count() })
+        .from(users)
+        .where(and(gte(users.createdAt, from), lte(users.createdAt, to))),
     ]);
 
     return {
@@ -145,6 +199,10 @@ export const getDashboardHeadlineMetrics = cache(
       kosCommissionMtdCents: Number(mtdRow?.kosCommissionMtdCents ?? 0),
       tripsThisMonth: Number(mtdRow?.tripsThisMonth ?? 0),
       activeBoats: Number(boatCount[0]?.value ?? 0),
+      boatsAddedThisMonth: Number(boatsAddedRes[0]?.value ?? 0),
+      newUsersThisMonth: Number(newUsersRes[0]?.value ?? 0),
+      openInquiries: Number(leadCounts?.open ?? 0),
+      unassignedLeads: Number(leadCounts?.unassigned ?? 0),
     };
   }
 );

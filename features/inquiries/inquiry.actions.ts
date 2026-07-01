@@ -6,6 +6,7 @@ import {
   inquiry as inquiryTable,
   inquiryEvents,
   inquiryOutcomeEnum,
+  users,
   type InquiryOutcome,
   type InquiryStage,
 } from "@/database/schema";
@@ -477,5 +478,68 @@ export async function reopenInquiry(inquiryId: string) {
   } catch (error) {
     console.error("Error reopening inquiry:", error);
     return { success: false, error: "Failed to reopen inquiry" };
+  }
+}
+
+/**
+ * Assign (or unassign) an inquiry to an admin. Pass `adminId = null` to unassign.
+ * Logs an ASSIGNED event to the timeline so nothing slips through unnoticed.
+ */
+export async function assignInquiry(inquiryId: string, adminId: string | null) {
+  try {
+    const adminAuth = await getAdminSession();
+    if (adminAuth.error !== undefined) {
+      return { success: false, error: adminAuth.error };
+    }
+    const session = adminAuth.session;
+
+    const [inquiryRow] = await db
+      .select({ assignedTo: inquiryTable.assignedTo })
+      .from(inquiryTable)
+      .where(eq(inquiryTable.id, inquiryId));
+
+    if (!inquiryRow) {
+      return { success: false, error: "Inquiry not found" };
+    }
+
+    let assigneeName: string | null = null;
+    if (adminId) {
+      const [admin] = await db
+        .select({
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+        })
+        .from(users)
+        .where(eq(users.id, adminId));
+
+      if (!admin) {
+        return { success: false, error: "Admin not found" };
+      }
+      assigneeName =
+        [admin.firstName, admin.lastName].filter(Boolean).join(" ") || admin.email;
+    }
+
+    await db
+      .update(inquiryTable)
+      .set({ assignedTo: adminId, updatedAt: new Date() })
+      .where(eq(inquiryTable.id, inquiryId));
+
+    await db.insert(inquiryEvents).values({
+      inquiryId,
+      eventType: "ASSIGNED",
+      content: assigneeName ? `Assigned to ${assigneeName}` : "Unassigned",
+      createdBy: session.user.id,
+      metadata: { assignedTo: adminId },
+    });
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/inquiries");
+    revalidatePath(`/admin/inquiries/${inquiryId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error assigning inquiry:", error);
+    return { success: false, error: "Failed to assign inquiry" };
   }
 }

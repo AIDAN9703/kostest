@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   addDays,
   eachDayOfInterval,
@@ -15,11 +16,10 @@ import {
   CalendarCheck2,
   CheckCircle2,
   Clock,
-  Coins,
   Inbox,
   MessageSquare,
-  Sailboat,
-  TrendingUp,
+  UserPlus,
+  Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -31,31 +31,77 @@ import type {
 } from "@/features/admin/dashboard";
 import type { BookingListItem } from "@/features/bookings/booking.types";
 import type { InquiryListItem } from "@/features/inquiries/inquiry.types";
+import { assignInquiry } from "@/features/inquiries/inquiry.actions";
 import { cn } from "@/shared/lib/utils/general-utils";
 import {
   formatCentsAsCurrency,
   formatCentsAsWholeDollars,
 } from "@/shared/lib/utils/money-utils";
 import { Badge } from "@/shared/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/shared/components/ui/dropdown-menu";
+import { useToast } from "@/shared/lib/hooks/use-toast";
+
+export type AdminOption = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  username: string | null;
+  profileImage: string | null;
+};
 
 interface AdminDashboardViewProps {
   firstName: string | null;
   pricingTiers: PricingTierOption[];
   followUps: InquiryListItem[];
+  unassignedLeads: InquiryListItem[];
   weeksBookings: BookingListItem[];
   pendingBookings: BookingListItem[];
   metrics: DashboardHeadlineMetrics;
   recentActivity: DashboardActivityItem[];
+  admins: AdminOption[];
+}
+
+/** Reused crisp card surface — white in light mode so it reads clearly. */
+const CARD = "rounded-2xl border border-border bg-white shadow-sm dark:bg-card";
+
+function humanize(value: string) {
+  return value
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function adminName(a: AdminOption) {
+  return [a.firstName, a.lastName].filter(Boolean).join(" ") || a.email;
+}
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
 }
 
 export function AdminDashboardView({
   firstName,
   pricingTiers,
   followUps,
+  unassignedLeads,
   weeksBookings,
   pendingBookings,
   metrics,
   recentActivity,
+  admins,
 }: AdminDashboardViewProps) {
   // Calendar lane: today → +6 days (the full week glance).
   const weekDays = useMemo(() => {
@@ -81,7 +127,7 @@ export function AdminDashboardView({
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6">
+    <div className="flex w-full flex-1 flex-col gap-6">
       {/* ── Greeting ───────────────────────────────────────────────── */}
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
@@ -89,87 +135,85 @@ export function AdminDashboardView({
             {format(new Date(), "EEEE, MMMM d")}
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-            {greeting}{firstName ? `, ${firstName}` : ""}{" "}
-            <span aria-hidden="true">👋</span>
+            {greeting}
+            {firstName ? `, ${firstName}` : ""} <span aria-hidden="true">👋</span>
           </h1>
         </div>
         <NewBookingModal
           pricingTiers={pricingTiers}
           triggerLabel="New booking"
           triggerSize="default"
-          triggerClassName="shrink-0 gap-1.5 rounded-2xl shadow-sm"
+          triggerClassName="shrink-0 gap-1.5 rounded-xl shadow-sm"
         />
       </header>
 
-      <MetricCards metrics={metrics} />
+      {/* ── Week ahead (majority) + monthly snapshot (skinny) ──────── */}
+      {/* items-start so neither card stretches to match the other's height. */}
+      <div className="grid items-start gap-5 xl:grid-cols-4">
+        <WeekAhead
+          className="xl:col-span-3"
+          days={weekDays}
+          revenueCents={weekRevenue}
+        />
+        <MonthlySnapshot className="xl:col-span-1" metrics={metrics} />
+      </div>
 
-      <WeekAhead days={weekDays} revenueCents={weekRevenue} />
+      {/* ── Leads to assign + booking requests ─────────────────────── */}
+      <div className="grid gap-5 xl:grid-cols-3">
+        <UnassignedLeads
+          className="xl:col-span-2"
+          leads={unassignedLeads}
+          count={metrics.unassignedLeads}
+          admins={admins}
+        />
+        <BookingRequests pending={pendingBookings} />
+      </div>
 
-      {/* ── Inbox + Activity (compact, equal columns) ──────────────── */}
-      <div className="grid gap-5 lg:grid-cols-2">
-        <InboxFeed pending={pendingBookings} leads={followUps} />
-        <RecentActivity items={recentActivity} />
+      {/* ── Activity + follow-ups ──────────────────────────────────── */}
+      <div className="grid gap-5 xl:grid-cols-3">
+        <RecentActivity className="xl:col-span-2" items={recentActivity} />
+        <FollowUps items={followUps} />
       </div>
     </div>
   );
 }
 
-/* ───────────────────────── metric cards ───────────────────────── */
+/* ───────────────────────── the month ───────────────────────── */
 
-function MetricCards({ metrics }: { metrics: DashboardHeadlineMetrics }) {
-  const cards = [
-    {
-      label: `${metrics.monthLabel} GMV`,
-      value: formatCentsAsWholeDollars(metrics.gmvMtdCents),
-      sub: `${metrics.tripsThisMonth} charter${
-        metrics.tripsThisMonth === 1 ? "" : "s"
-      } this month`,
-      href: "/admin/bookings",
-      art: TrendingUp,
-    },
+/** Compact, ledger-style financials + growth for the current month. */
+function MonthlySnapshot({
+  metrics,
+  className,
+}: {
+  metrics: DashboardHeadlineMetrics;
+  className?: string;
+}) {
+  const rows = [
+    { label: "GMV", value: formatCentsAsWholeDollars(metrics.gmvMtdCents) },
     {
       label: "KOS commission",
       value: formatCentsAsWholeDollars(metrics.kosCommissionMtdCents),
-      sub: `Earned in ${metrics.monthLabel}`,
-      href: "/admin/bookings",
-      art: Coins,
     },
-    {
-      label: "Fleet",
-      value: metrics.activeBoats.toLocaleString(),
-      sub: "Active boats",
-      href: "/admin/boats",
-      art: Sailboat,
-    },
-  ] as const;
+    { label: "Vessels added", value: metrics.boatsAddedThisMonth.toLocaleString() },
+    { label: "New users", value: metrics.newUsersThisMonth.toLocaleString() },
+  ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
-      {cards.map(({ label, value, sub, href, art: Art }) => (
-        <Link
-          key={label}
-          href={href}
-          className="group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-card via-card to-primary/[0.05] p-5 shadow-sm transition-all hover:border-primary/30 hover:shadow-md"
-        >
-          {/* Decorative artwork underlay, bottom-right corner */}
-          <Art
-            aria-hidden="true"
-            strokeWidth={1.1}
-            className="pointer-events-none absolute -bottom-5 -right-4 h-32 w-32 text-primary/[0.07] transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-105 group-hover:text-primary/[0.1]"
-          />
-          <div className="relative flex items-center justify-between gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {label}
-            </p>
-            <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition group-hover:text-primary" />
+    <SectionShell className={className} title="The Month" sub={metrics.monthLabel}>
+      <div className="flex flex-col divide-y divide-border/40">
+        {rows.map(({ label, value }) => (
+          <div
+            key={label}
+            className="flex items-center justify-between gap-3 px-4 py-2.5"
+          >
+            <span className="text-sm text-muted-foreground">{label}</span>
+            <span className="text-sm font-semibold tabular-nums tracking-tight">
+              {value}
+            </span>
           </div>
-          <p className="relative mt-4 text-3xl font-semibold tabular-nums tracking-tight">
-            {value}
-          </p>
-          <p className="relative mt-1 text-xs text-muted-foreground">{sub}</p>
-        </Link>
-      ))}
-    </div>
+        ))}
+      </div>
+    </SectionShell>
   );
 }
 
@@ -178,14 +222,17 @@ function MetricCards({ metrics }: { metrics: DashboardHeadlineMetrics }) {
 function WeekAhead({
   days,
   revenueCents,
+  className,
 }: {
   days: { day: Date; isToday: boolean; trips: BookingListItem[] }[];
   revenueCents: number;
+  className?: string;
 }) {
   const total = days.reduce((sum, d) => sum + d.trips.length, 0);
 
   return (
     <SectionShell
+      className={className}
       title="The week ahead"
       sub={`${total} charter${total === 1 ? "" : "s"} · ${formatCentsAsCurrency(
         revenueCents
@@ -193,7 +240,7 @@ function WeekAhead({
       action={
         <Link
           href="/admin/bookings?view=calendar"
-          className="shrink-0 text-xs font-medium text-muted-foreground hover:text-foreground"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent"
         >
           Open calendar
         </Link>
@@ -204,7 +251,7 @@ function WeekAhead({
           <div
             key={day.toISOString()}
             className={cn(
-              "flex min-h-[8rem] flex-col border-b border-r border-border/50 p-2.5",
+              "flex min-h-[8.5rem] flex-col border-b border-r border-border/50 p-2.5",
               isToday && "bg-primary/[0.04]"
             )}
           >
@@ -262,36 +309,183 @@ function WeekAhead({
   );
 }
 
-/* ───────────────────────── inbox feed ───────────────────────── */
+/* ───────────────────────── unassigned leads ───────────────────────── */
 
-function InboxFeed({
-  pending,
+function UnassignedLeads({
   leads,
+  admins,
+  count,
+  className,
 }: {
-  pending: BookingListItem[];
   leads: InquiryListItem[];
+  admins: AdminOption[];
+  count: number;
+  className?: string;
 }) {
-  const isEmpty = pending.length === 0 && leads.length === 0;
-
   return (
     <SectionShell
-      title="Needs a reply"
-      sub={isEmpty ? "Nothing waiting" : "Booking requests & new leads"}
+      className={className}
+      title="Unassigned leads"
+      sub={leads.length === 0 ? "Every lead has an owner" : "Assign so nothing gets missed"}
       action={
-        !isEmpty ? <Badge variant="secondary">{pending.length + leads.length}</Badge> : null
+        count > 0 ? (
+          <Badge variant="warning" className="shrink-0">
+            {count}
+          </Badge>
+        ) : null
       }
     >
-      {isEmpty ? (
+      {leads.length === 0 ? (
+        <EmptyBlock
+          icon={CheckCircle2}
+          title="All leads assigned"
+          body="New leads without an owner will appear here for quick routing."
+          tone="positive"
+        />
+      ) : (
+        <ul className="divide-y divide-border/60">
+          {leads.map((lead) => (
+            <li
+              key={lead.id}
+              className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300">
+                <UserPlus className="h-4 w-4" />
+              </span>
+              <Link
+                href={`/admin/inquiries/${lead.id}`}
+                className="group min-w-0 flex-1"
+              >
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-sm font-medium group-hover:underline">
+                    {lead.name}
+                  </p>
+                  {lead.leadType ? (
+                    <Badge
+                      variant="secondary"
+                      className="h-4 shrink-0 px-1.5 text-[10px] font-medium"
+                    >
+                      {humanize(lead.leadType)}
+                    </Badge>
+                  ) : null}
+                </div>
+                <p className="truncate text-xs text-muted-foreground">
+                  <span className="tabular-nums">
+                    {formatDistanceToNowStrict(new Date(lead.createdAt))} old
+                  </span>{" "}
+                  · {lead.message?.slice(0, 48) || lead.email}
+                </p>
+              </Link>
+              <AssignMenu inquiryId={lead.id} admins={admins} />
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {leads.length > 0 ? (
+        <div className="mt-auto flex items-center justify-end border-t border-border/60 px-4 py-2.5 text-xs">
+          <Link href="/admin/inquiries" className="text-muted-foreground hover:text-foreground">
+            All inquiries →
+          </Link>
+        </div>
+      ) : null}
+    </SectionShell>
+  );
+}
+
+function AssignMenu({
+  inquiryId,
+  admins,
+}: {
+  inquiryId: string;
+  admins: AdminOption[];
+}) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [pending, setPending] = useState(false);
+
+  async function assign(admin: AdminOption) {
+    setPending(true);
+    const res = await assignInquiry(inquiryId, admin.id);
+    setPending(false);
+    if (res.success) {
+      toast({ title: `Assigned to ${adminName(admin)} ✓` });
+      router.refresh();
+    } else {
+      toast({
+        title: "Couldn't assign",
+        description: res.error,
+        variant: "destructive",
+      });
+    }
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          disabled={pending || admins.length === 0}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-muted disabled:opacity-50"
+        >
+          <UserPlus className="h-3.5 w-3.5" />
+          Assign
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Users className="h-3.5 w-3.5" /> Assign to
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {admins.map((admin) => {
+          const name = adminName(admin);
+          return (
+            <DropdownMenuItem
+              key={admin.id}
+              onSelect={() => assign(admin)}
+              className="gap-2"
+            >
+              <Avatar className="h-6 w-6">
+                {admin.profileImage ? (
+                  <AvatarImage src={admin.profileImage} alt={name} />
+                ) : null}
+                <AvatarFallback className="text-[10px]">{initials(name)}</AvatarFallback>
+              </Avatar>
+              <span className="truncate">{name}</span>
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+/* ───────────────────────── booking requests ───────────────────────── */
+
+function BookingRequests({ pending }: { pending: BookingListItem[] }) {
+  return (
+    <SectionShell
+      title="Booking requests"
+      sub={pending.length === 0 ? "Nothing waiting" : "Awaiting your approval"}
+      action={
+        pending.length > 0 ? (
+          <Badge variant="warning" className="shrink-0">
+            {pending.length}
+          </Badge>
+        ) : null
+      }
+    >
+      {pending.length === 0 ? (
         <EmptyBlock
           icon={CheckCircle2}
           title="All caught up"
-          body="No booking requests or leads need you right now."
+          body="No booking requests need your approval right now."
           tone="positive"
         />
       ) : (
         <ul className="divide-y divide-border/60">
           {pending.map((b) => (
-            <li key={`p-${b.id}`}>
+            <li key={b.id}>
               <Link
                 href={`/admin/bookings/${b.id}`}
                 className="group flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
@@ -299,21 +493,47 @@ function InboxFeed({
                 <FeedIcon tone="warn" icon={CalendarCheck2} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-medium">{b.customerName ?? "Guest"}</p>
+                    <p className="truncate text-sm font-medium">
+                      {b.customerName ?? "Guest"}
+                    </p>
                     <Badge variant="warning" className="h-4 shrink-0 px-1.5 text-[10px]">
                       Approve
                     </Badge>
                   </div>
                   <p className="truncate text-xs text-muted-foreground">
-                    {b.boatName ?? "—"} · {format(new Date(b.startDateTime), "MMM d, h:mm a")}
+                    {b.boatName ?? "—"} ·{" "}
+                    {format(new Date(b.startDateTime), "MMM d, h:mm a")}
                   </p>
                 </div>
                 <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition group-hover:text-foreground" />
               </Link>
             </li>
           ))}
-          {leads.map((lead) => (
-            <li key={`l-${lead.id}`}>
+        </ul>
+      )}
+    </SectionShell>
+  );
+}
+
+/* ───────────────────────── follow ups ───────────────────────── */
+
+function FollowUps({ items }: { items: InquiryListItem[] }) {
+  return (
+    <SectionShell
+      title="Needs follow-up"
+      sub={items.length === 0 ? "Nothing waiting" : "Oldest open inquiries"}
+    >
+      {items.length === 0 ? (
+        <EmptyBlock
+          icon={CheckCircle2}
+          title="All caught up"
+          body="Open inquiries that have gone quiet will surface here."
+          tone="positive"
+        />
+      ) : (
+        <ul className="divide-y divide-border/60">
+          {items.map((lead) => (
+            <li key={lead.id}>
               <Link
                 href={`/admin/inquiries/${lead.id}`}
                 className="group flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
@@ -328,35 +548,30 @@ function InboxFeed({
                     </span>
                   </div>
                   <p className="truncate text-xs text-muted-foreground">
-                    {lead.message?.slice(0, 64) || lead.email}
+                    {lead.message?.slice(0, 56) || lead.email}
                   </p>
                 </div>
-                <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition group-hover:text-foreground" />
               </Link>
             </li>
           ))}
         </ul>
       )}
-
-      {!isEmpty ? (
-        <div className="mt-auto flex items-center justify-end gap-4 border-t border-border/60 px-4 py-2.5 text-xs">
-          <Link href="/admin/inquiries" className="text-muted-foreground hover:text-foreground">
-            All inquiries →
-          </Link>
-          <Link href="/admin/bookings" className="text-muted-foreground hover:text-foreground">
-            All requests →
-          </Link>
-        </div>
-      ) : null}
     </SectionShell>
   );
 }
 
 /* ───────────────────────── recent activity ───────────────────────── */
 
-function RecentActivity({ items }: { items: DashboardActivityItem[] }) {
+function RecentActivity({
+  items,
+  className,
+}: {
+  items: DashboardActivityItem[];
+  className?: string;
+}) {
   return (
     <SectionShell
+      className={className}
       title="Recent activity"
       sub="Latest booking & inquiry updates"
       action={items.length > 0 ? <LiveIndicator /> : null}
@@ -448,12 +663,7 @@ function SectionShell({
   className?: string;
 }) {
   return (
-    <section
-      className={cn(
-        "flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-xs",
-        className
-      )}
-    >
+    <section className={cn(CARD, "flex min-w-0 flex-col overflow-hidden", className)}>
       <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3 sm:px-5">
         <div className="min-w-0">
           <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
