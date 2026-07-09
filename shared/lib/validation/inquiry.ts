@@ -15,10 +15,18 @@ const baseContactSchema = z.object({
   phone: phoneRequiredSchema,
 });
 
-/** Day charter / Request to Book - date, time, budget, guests + SMS consent */
+/** Fuzzy time-of-day preference — mirrors the PreferredTimeOfDay pg enum. */
+export const preferredTimeOfDaySchema = z.enum([
+  "MORNING",
+  "AFTERNOON",
+  "EVENING",
+  "FLEXIBLE",
+]);
+
+/** Day charter / Request to Book - date, time-of-day, budget, guests + SMS consent */
 export const requestToBookSchema = baseContactSchema.extend({
   date: z.string().optional(),
-  time: z.string().optional(),
+  timeOfDay: preferredTimeOfDaySchema.optional(),
   budget: z.string().optional(),
   guests: z.string().optional(),
   message: z.string().optional(),
@@ -30,7 +38,7 @@ export const requestToBookSchema = baseContactSchema.extend({
   }),
 });
 
-/** Term charter - extended fields, formatted into message for DB */
+/** Term charter - structured fields, stored in real inquiry columns */
 export const termCharterInquirySchema = baseContactSchema.extend({
   startDate: z.string().optional(),
   duration: z.string().optional(),

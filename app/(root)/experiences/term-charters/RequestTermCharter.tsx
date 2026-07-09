@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, Users, DollarSign, Globe, Anchor } from "lucide-react";
-import { createGeneralInquiry } from "@/features/inquiries/inquiry.actions";
+import { createTermCharterInquiry } from "@/features/inquiries/inquiry.actions";
 import { toast } from "@/shared/lib/hooks/use-toast";
 import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 import { termCharterInquirySchema, type TermCharterFormData } from "@/shared/lib/validation/inquiry";
@@ -45,17 +45,6 @@ const DESTINATION_OPTIONS = [
 
 const inputClass = "h-11 rounded-xl border-border bg-muted/10 focus-visible:ring-2 focus-visible:ring-ring";
 
-function formatTermCharterMessage(values: TermCharterFormData): string {
-  return [
-    "Term Charter Inquiry:",
-    `- Preferred Start Date: ${values.startDate || "Not specified"}`,
-    `- Duration: ${values.duration || "Not specified"}`,
-    `- Destination: ${values.destination || "Not specified"}`,
-    `- Accommodations: ${values.accommodations || "Not specified"}`,
-    `- Additional Details: ${values.message || "None"}`,
-  ].join("\n");
-}
-
 export default function RequestTermCharter() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<TermCharterFormData>({
@@ -79,18 +68,7 @@ export default function RequestTermCharter() {
     async (values: TermCharterFormData) => {
       try {
         setIsSubmitting(true);
-        const formattedMessage = formatTermCharterMessage(values);
-        const result = await createGeneralInquiry({
-          name: values.name,
-          email: values.email,
-          phone: values.phone,
-          date: values.startDate || undefined,
-          time: values.duration || undefined,
-          budget: values.budget || undefined,
-          guests: values.guests || undefined,
-          message: formattedMessage,
-          termsAccepted: values.termsAgreed,
-        });
+        const result = await createTermCharterInquiry(values);
 
         if (result.success) {
           await ghlWebhookService.sendInquiry({

@@ -193,6 +193,22 @@ export function formatDate(date: Date | string | null | undefined): string {
 }
 
 /**
+ * Formats a plain calendar-date string ("yyyy-MM-dd", e.g. a pg DATE column)
+ * without constructing a timestamp — avoids the UTC-midnight timezone shift
+ * that can render the previous day.
+ */
+export function formatPlainDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "Not available";
+  const [y, m, d] = dateStr.split("-").map(Number);
+  if (!y || !m || !d) return dateStr;
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+/**
  * Formats a date with time in a human-readable format
  * @param date The date to format
  * @returns A formatted date-time string (e.g. "Jan 15, 2025, 2:30 PM")

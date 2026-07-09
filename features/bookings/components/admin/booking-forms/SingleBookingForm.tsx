@@ -179,6 +179,7 @@ export function SingleBookingForm({
       ];
 
       const formData = new FormData();
+      formData.set("inquiryId", inquiryPrefill?.inquiryId ?? "");
       formData.set("bookings", JSON.stringify(payload));
       formData.set("lineItems", JSON.stringify(lineItems));
       formData.set("numberOfPassengers", String(numberOfPassengers));
@@ -239,6 +240,7 @@ export function SingleBookingForm({
       paymentType,
       sendProposalEmail,
       sendProposalSms,
+      inquiryPrefill,
     ]
   );
 

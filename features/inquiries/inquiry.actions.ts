@@ -14,7 +14,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import { emailSchema, phoneRequiredSchema } from "@/shared/lib/validation/common";
-import { boatInquirySchema } from "@/shared/lib/validation/inquiry";
+import {
+  boatInquirySchema,
+  preferredTimeOfDaySchema,
+  termCharterInquirySchema,
+} from "@/shared/lib/validation/inquiry";
 import { boats, boatPricingTiers } from "@/database/schema";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { calculateBookingPriceFromDollars } from "@/shared/lib/utils/pricing-utils";
@@ -28,44 +32,68 @@ const generalInquirySchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: emailSchema,
   phone: phoneRequiredSchema,
+  /** Plain calendar date "yyyy-MM-dd" — stored as DATE, never a timestamp. */
   date: z.string().optional(),
-  time: z.string().optional(),
+  timeOfDay: preferredTimeOfDaySchema.optional(),
   budget: z.string().optional(),
   guests: z.string().optional(),
   message: z.string().optional(),
-  termsAccepted: z.boolean().refine(async (val) => val === true, {
+  termsAgreed: z.boolean().refine((val) => val === true, {
     message: "You must agree to the terms and conditions",
   }),
+  smsConsent: z.boolean().default(false),
+  source: z.enum(["HOME_PAGE", "CONTACT_PAGE"]).default("HOME_PAGE"),
 });
 
 // Type for the client to use
 export type GeneralInquiryInput = z.input<typeof generalInquirySchema>;
 
 /**
- * Creates a general booking inquiry
+ * Parse a single-number budget string ("5000", "$5,000") to cents.
+ * Range labels ("$10,000-$25,000", "Flexible") return null — the raw label
+ * stays in the `budget` text column.
+ */
+function parseBudgetCents(budget?: string): number | null {
+  if (!budget) return null;
+  const match = budget.trim().match(/^\$?\s*([\d,]+(?:\.\d+)?)$/);
+  if (!match) return null;
+  const dollars = Number(match[1].replace(/,/g, ""));
+  return Number.isFinite(dollars) && dollars > 0 ? Math.round(dollars * 100) : null;
+}
+
+function parseGuests(guests?: string): number | null {
+  if (!guests) return null;
+  const n = parseInt(guests, 10);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/**
+ * Creates a general lead (home page "Request a Quote" / contact page).
+ * Fuzzy trip intent goes in preferredDate/preferredTimeOfDay — no fake precision.
  */
 export async function createGeneralInquiry(data: GeneralInquiryInput) {
   try {
-    // Validate data first
-    const validatedData = await generalInquirySchema.parseAsync(data);
+    const validatedData = generalInquirySchema.parse(data);
 
-    // Create the inquiry in the database
     const result = await db
       .insert(inquiryTable)
       .values({
         name: validatedData.name,
         email: validatedData.email,
         phone: validatedData.phone,
-        date: validatedData.date ? new Date(validatedData.date) : null,
-        time: validatedData.time || null,
+        preferredDate: validatedData.date || null,
+        preferredTimeOfDay:
+          validatedData.timeOfDay ?? (validatedData.date ? "FLEXIBLE" : null),
         budget: validatedData.budget || null,
-        guests: validatedData.guests ? parseInt(validatedData.guests) : null,
+        budgetCents: parseBudgetCents(validatedData.budget),
+        guests: parseGuests(validatedData.guests),
         message: validatedData.message || null,
-        termsAccepted: validatedData.termsAccepted,
-        stage: "NEEDS_CONTACT",
+        termsAccepted: validatedData.termsAgreed,
+        smsConsent: validatedData.smsConsent,
+        stage: "NEW",
         outcome: "OPEN",
         leadType: "GENERAL_QUOTE",
-        source: "HOME_PAGE",
+        source: validatedData.source,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
@@ -91,6 +119,95 @@ export async function createGeneralInquiry(data: GeneralInquiryInput) {
     };
   } catch (error) {
     console.error("Error creating general inquiry:", error);
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        error: "Invalid inquiry data",
+        fieldErrors: error.flatten().fieldErrors,
+      };
+    }
+
+    return {
+      success: false,
+      error: "Failed to submit your inquiry. Please try again.",
+    };
+  }
+}
+
+export type TermCharterInquiryInput = z.input<typeof termCharterInquirySchema>;
+
+/** Form duration buckets → minimum days (Flexible → null). */
+const TERM_DURATION_TO_DAYS: Record<string, number | null> = {
+  "3-6 days": 3,
+  "1 week": 7,
+  "2 weeks": 14,
+  "3+ weeks": 21,
+  Flexible: null,
+};
+
+/**
+ * Creates a term charter lead with real structured columns —
+ * no more stuffing duration into `time` or destination into `message`.
+ */
+export async function createTermCharterInquiry(data: TermCharterInquiryInput) {
+  try {
+    const validated = termCharterInquirySchema.parse(data);
+
+    const message =
+      [
+        validated.message?.trim() || null,
+        validated.accommodations?.trim()
+          ? `Accommodations: ${validated.accommodations.trim()}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join("\n\n") || null;
+
+    const result = await db
+      .insert(inquiryTable)
+      .values({
+        name: validated.name,
+        email: validated.email,
+        phone: validated.phone,
+        preferredDate: validated.startDate || null,
+        requestedDurationDays: validated.duration
+          ? (TERM_DURATION_TO_DAYS[validated.duration] ?? null)
+          : null,
+        destination: validated.destination || null,
+        budget: validated.budget || null,
+        budgetCents: parseBudgetCents(validated.budget),
+        guests: parseGuests(validated.guests),
+        message,
+        termsAccepted: validated.termsAgreed,
+        stage: "NEW",
+        outcome: "OPEN",
+        leadType: "TERM_CHARTER",
+        source: "TERM_CHARTER_PAGE",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    if (result[0]) {
+      await db.insert(inquiryEvents).values({
+        inquiryId: result[0].id,
+        eventType: "CREATED",
+        createdBy: null,
+      });
+    }
+
+    revalidatePath("/admin/inquiries");
+    revalidatePath("/admin");
+
+    return {
+      success: true,
+      inquiry: result[0],
+      message:
+        "Your term charter request has been submitted. Our specialists will contact you shortly.",
+    };
+  } catch (error) {
+    console.error("Error creating term charter inquiry:", error);
 
     if (error instanceof z.ZodError) {
       return {

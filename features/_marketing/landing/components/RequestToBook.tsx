@@ -30,11 +30,30 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select";
 
 const inputClass =
   "h-11 rounded-xl border-border bg-muted/10 focus-visible:ring-2 focus-visible:ring-ring";
 
-export default function RequestToBook() {
+const TIME_OF_DAY_OPTIONS = [
+  { value: "MORNING", label: "Morning" },
+  { value: "AFTERNOON", label: "Afternoon" },
+  { value: "EVENING", label: "Evening" },
+  { value: "FLEXIBLE", label: "Flexible" },
+] as const;
+
+interface RequestToBookProps {
+  /** Which page hosts this form — recorded on the lead for source attribution. */
+  source?: "HOME_PAGE" | "CONTACT_PAGE";
+}
+
+export default function RequestToBook({ source = "HOME_PAGE" }: RequestToBookProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<RequestToBookFormData>({
     resolver: zodResolver(requestToBookSchema),
@@ -43,7 +62,7 @@ export default function RequestToBook() {
       email: "",
       phone: "",
       date: "",
-      time: "",
+      timeOfDay: undefined,
       budget: "",
       guests: "",
       message: "",
@@ -62,11 +81,13 @@ export default function RequestToBook() {
           email: values.email,
           phone: values.phone,
           date: values.date || undefined,
-          time: values.time || undefined,
+          timeOfDay: values.timeOfDay || undefined,
           budget: values.budget || undefined,
           guests: values.guests || undefined,
           message: values.message || undefined,
-          termsAccepted: values.termsAgreed && values.smsConsent,
+          termsAgreed: values.termsAgreed,
+          smsConsent: values.smsConsent,
+          source,
         });
 
         if (result.success) {
@@ -75,12 +96,15 @@ export default function RequestToBook() {
             email: values.email,
             phone: values.phone,
             date: values.date || "",
-            time: values.time || "",
+            time: values.timeOfDay || "",
             budget: values.budget || "",
             guests: values.guests || "",
             message: values.message || "",
             sms_consent: values.smsConsent,
-            source: "KOS Yacht Club - Request to Book Form",
+            source:
+              source === "CONTACT_PAGE"
+                ? "KOS Yacht Club - Contact Page Form"
+                : "KOS Yacht Club - Request to Book Form",
             lead_type: "Charter Inquiry",
             submitted_at: new Date().toISOString(),
           });
@@ -204,12 +228,23 @@ export default function RequestToBook() {
                       />
                       <FormField
                         control={form.control}
-                        name="time"
+                        name="timeOfDay"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Preferred Time</FormLabel>
                             <FormControl>
-                              <Input type="time" className={inputClass} {...field} />
+                              <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                                <SelectTrigger className={`${inputClass} [&>span]:line-clamp-1`}>
+                                  <SelectValue placeholder="Morning, afternoon..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {TIME_OF_DAY_OPTIONS.map((opt) => (
+                                    <SelectItem key={opt.value} value={opt.value}>
+                                      {opt.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </FormControl>
                             <FormMessage />
                           </FormItem>

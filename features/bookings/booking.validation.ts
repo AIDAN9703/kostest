@@ -105,6 +105,8 @@ export const bookingAddOnSchema = z.object({
  * Unified create bookings schema - one or more bookings in a group
  */
 export const createBookingsSchema = z.object({
+  /** Originating lead — links booking back to the inquiry pipeline. */
+  inquiryId: z.string().uuid().nullable().optional(),
   numberOfPassengers: z.number().int().min(1, "Must have at least 1 passenger"),
   pickupLocation: z.string().nullable().optional(),
   dropoffLocation: z.string().nullable().optional(),

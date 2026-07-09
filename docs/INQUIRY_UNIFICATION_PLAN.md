@@ -1,6 +1,24 @@
 # Inquiry Unification Plan
 
-**Created:** 2026-07-08 · **Status:** Ready to execute · **Estimated effort:** one evening (3–4h)
+**Created:** 2026-07-08 · **Status:** Code complete on `unify-inquiries` (Steps 0–6 done 2026-07-09).
+**Remaining:** run `npx drizzle-kit generate` + migrate (owner does this), then Step 7 verification.
+
+Execution deltas from the original plan (all improvements, none regressions):
+- CHECK constraints are defined in the Drizzle schema via `check()` (drizzle-orm 0.39
+  supports it) so `drizzle-kit generate` emits them — no manual SQL appending.
+- The TERM_CHARTER duration CHECK was dropped: the form legitimately allows "Flexible"
+  duration. Only the BOAT_REQUEST→boat_id check ships.
+- `preferredDate` uses drizzle `mode: "string"` — form date strings ("2026-07-15") are
+  stored verbatim, zero timezone handling anywhere.
+- Home-page form's exact `type="time"` input replaced with a Morning/Afternoon/Evening/
+  Flexible select (honest fuzzy data, matches the enum).
+- Term duration buckets map to minimum days: 3-6 days→3, 1 week→7, 2 weeks→14,
+  3+ weeks→21, Flexible→null.
+- "Create a Booking" on an inquiry no longer pre-marks it WON before the form —
+  conversion (WON + CONVERTED + convertedBookingId + timeline event) happens in
+  `bookingService.createBookings` when the booking actually exists.
+- Admin list table got a lead-type badge and its "Requested" column reads
+  requestedStartDateTime → preferredDate → legacy date.
 
 This is the current, single source of truth for the leads/inquiries/bookings cleanup.
 It supersedes `LEADS_BOOKINGS_OVERHAUL_PLAN.md`, `DATABASE_SCHEMA_AUDIT.md`, and the

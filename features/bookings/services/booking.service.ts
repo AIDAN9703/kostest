@@ -27,6 +27,8 @@ import {
   payments,
   bookingOps,
   boatPricingTiers,
+  inquiry,
+  inquiryEvents,
 } from "@/database/schema";
 import { and, count, eq, desc, or, ilike, sql, gte, lte, aliasedTable, inArray } from "drizzle-orm";
 
@@ -181,7 +183,7 @@ export class BookingService {
           dropoffLocation: input.dropoffLocation ?? null,
           adminNotes: input.adminNotes ?? null,
           addOns: addOnsPayload.length > 0 ? addOnsPayload : null,
-          inquiryId: null,
+          inquiryId: input.inquiryId ?? null,
           assignedAdminId: assignedAdminId ?? null,
           publicToken: tokenForThisBooking,
           allowPayment: input.allowPayment ?? false,
@@ -218,11 +220,60 @@ export class BookingService {
       });
     }
 
+    // Close the loop on the originating lead: mark it converted and link both ways.
+    if (input.inquiryId && bookingIds.length > 0) {
+      await this.markInquiryConverted(input.inquiryId, bookingIds[0], assignedAdminId ?? null);
+    }
+
     return {
       bookingIds,
       publicToken,
       groupId,
     };
+  }
+
+  /**
+   * Marks a lead as converted once a booking has been created from it:
+   * sets convertedBookingId + stage CONVERTED + outcome WON and logs the
+   * stage change on the inquiry timeline. Never throws — conversion linkage
+   * must not roll back an already-created booking.
+   */
+  private async markInquiryConverted(
+    inquiryId: string,
+    bookingId: string,
+    actorId: string | null
+  ) {
+    try {
+      const [lead] = await db
+        .select({ stage: inquiry.stage, outcome: inquiry.outcome })
+        .from(inquiry)
+        .where(eq(inquiry.id, inquiryId));
+      if (!lead) return;
+
+      await db
+        .update(inquiry)
+        .set({
+          convertedBookingId: bookingId,
+          stage: "CONVERTED",
+          outcome: "WON",
+          updatedAt: new Date(),
+        })
+        .where(eq(inquiry.id, inquiryId));
+
+      await db.insert(inquiryEvents).values({
+        inquiryId,
+        eventType: "STAGE_CHANGE",
+        createdBy: actorId,
+        previousStage: lead.stage,
+        newStage: "CONVERTED",
+        previousOutcome: lead.outcome,
+        newOutcome: "WON",
+        content: "Converted to booking",
+        metadata: { bookingId },
+      });
+    } catch (error) {
+      console.error("Failed to mark inquiry as converted:", error);
+    }
   }
 
   /**

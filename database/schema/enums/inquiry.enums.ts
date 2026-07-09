@@ -23,6 +23,17 @@ export const inquirySourceEnum = pgEnum("InquirySource", [
 ]);
 
 /**
+ * Fuzzy time-of-day preference for leads that don't have exact times
+ * (home page / contact / term charter). Exact times use requestedStartDateTime.
+ */
+export const preferredTimeOfDayEnum = pgEnum("PreferredTimeOfDay", [
+  "MORNING",
+  "AFTERNOON",
+  "EVENING",
+  "FLEXIBLE",
+]);
+
+/**
  * Inquiry stage - where in the pipeline (milestone)
  * NEEDS_CONTACT is legacy; treat as NEW in application code.
  */
@@ -71,6 +82,7 @@ export const contactMethodEnum = pgEnum("ContactMethod", [
 ]);
 
 /** Inferred types for type-safe usage across the app */
+export type PreferredTimeOfDay = (typeof preferredTimeOfDayEnum.enumValues)[number];
 export type InquiryLeadType = (typeof inquiryLeadTypeEnum.enumValues)[number];
 export type InquirySource = (typeof inquirySourceEnum.enumValues)[number];
 export type InquiryStage = (typeof inquiryStageEnum.enumValues)[number];

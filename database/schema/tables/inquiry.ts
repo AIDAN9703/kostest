@@ -1,6 +1,9 @@
+import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  check,
+  date,
   index,
   integer,
   pgTable,
@@ -16,6 +19,7 @@ import {
   inquiryOutcomeEnum,
   inquirySourceEnum,
   inquiryStageEnum,
+  preferredTimeOfDayEnum,
 } from "@/database/schema/enums";
 
 export const inquiry = pgTable(
@@ -60,6 +64,18 @@ export const inquiry = pgTable(
     currency: text("currency").default("USD"),
     budgetCents: bigint("budget_cents", { mode: "number" }),
 
+    // Fuzzy trip preferences (home page / contact / term charter).
+    // Plain DATE + enum, not fake-precision timestamps. A row uses the exact
+    // requested* columns OR these — never both.
+    preferredDate: date("preferred_date", { mode: "string" }),
+    preferredTimeOfDay: preferredTimeOfDayEnum("preferred_time_of_day"),
+    /** Term charters: requested length of the charter in days. */
+    requestedDurationDays: integer("requested_duration_days"),
+    /** Term charters: where they want to go (e.g. "Bahamas"). */
+    destination: text("destination"),
+    /** Explicit SMS/text-message consent (TCPA) — separate from terms. */
+    smsConsent: boolean("sms_consent").default(false).notNull(),
+
     // Admin
     assignedTo: uuid("assigned_to").references(() => users.id, { onDelete: "set null" }),
     termsAccepted: boolean("terms_accepted").default(true).notNull(),
@@ -84,5 +100,11 @@ export const inquiry = pgTable(
     index("inquiry_boat_idx").on(table.boatId),
     index("inquiry_assigned_to_idx").on(table.assignedTo),
     index("inquiry_converted_booking_idx").on(table.convertedBookingId),
+    // Per-type integrity: single-table inheritance enforced at the DB level.
+    // (No duration check for TERM_CHARTER — "Flexible" duration is legitimate.)
+    check(
+      "inquiry_boat_request_requires_boat",
+      sql`${table.leadType} <> 'BOAT_REQUEST' OR ${table.boatId} IS NOT NULL`
+    ),
   ]
 );

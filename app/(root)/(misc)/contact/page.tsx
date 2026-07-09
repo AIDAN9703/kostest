@@ -77,7 +77,7 @@ export default function ContactPage() {
         </section>
 
         {/* Request to Book Form Section */}
-        <RequestToBook />
+        <RequestToBook source="CONTACT_PAGE" />
 
         {/* Location & Hours */}
         <section className="py-12 md:py-16">

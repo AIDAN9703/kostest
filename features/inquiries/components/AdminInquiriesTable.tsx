@@ -13,8 +13,15 @@ import { MessageSquare, Eye, MoreVertical } from "lucide-react";
 import Link from "next/link";
 import type { Inquiry } from "@/database/types";
 import { StatusBadge } from "@/shared/lib/utils/badge-utils";
-import { formatDate } from "@/shared/lib/utils/general-utils";
+import { formatDate, formatPlainDate } from "@/shared/lib/utils/general-utils";
 import { AdminDataTable } from "@/shared/admin/components/AdminDataTable";
+
+const LEAD_TYPE_LABELS: Record<string, string> = {
+  GENERAL_QUOTE: "General",
+  BOAT_REQUEST: "Boat",
+  TERM_CHARTER: "Term",
+  MANUAL: "Manual",
+};
 
 interface AdminInquiriesTableProps {
   inquiries: Inquiry[];
@@ -49,6 +56,15 @@ export function AdminInquiriesTable({ inquiries, loading }: AdminInquiriesTableP
         },
       }),
 
+      columnHelper.accessor("leadType", {
+        header: "Type",
+        cell: (info) => (
+          <span className="inline-block rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+            {LEAD_TYPE_LABELS[info.getValue()] ?? info.getValue()}
+          </span>
+        ),
+      }),
+
       columnHelper.accessor("stage", {
         header: "Stage",
         cell: (info) => <StatusBadge status={info.getValue()} />,
@@ -58,15 +74,19 @@ export function AdminInquiriesTable({ inquiries, loading }: AdminInquiriesTableP
         cell: (info) => <StatusBadge status={info.getValue()} />,
       }),
 
-      columnHelper.accessor("date", {
+      columnHelper.accessor((row) => row.requestedStartDateTime ?? row.preferredDate ?? row.date, {
+        id: "requested",
         header: "Requested",
-        cell: (info) => {
-          const date = info.getValue();
-          return (
-            <div className="text-sm text-muted-foreground">
-              {date ? formatDate(date) : "—"}
-            </div>
-          );
+        cell: ({ row }) => {
+          const i = row.original;
+          const label = i.requestedStartDateTime
+            ? formatDate(i.requestedStartDateTime)
+            : i.preferredDate
+              ? formatPlainDate(i.preferredDate)
+              : i.date
+                ? formatDate(i.date)
+                : "—";
+          return <div className="text-sm text-muted-foreground">{label}</div>;
         },
       }),
 

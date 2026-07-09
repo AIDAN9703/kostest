@@ -89,22 +89,14 @@ export function InquiryCloseActions({
     }
   }
 
-  /** Won + redirect to admin booking form with inquiry prefill */
-  async function handleWonAndCreateBooking() {
-    setLoading("won");
-    const res = await updateInquiryOutcome(inquiryId, "WON", undefined);
-    setLoading(null);
-    if (res.success) {
-      setShowCloseDialog(null);
-      toast({
-        title: "Opening booking form",
-        description: "Inquiry marked as won. Prefilled details from the inquiry when available.",
-      });
-      router.push(`/admin/bookings/create?inquiryId=${inquiryId}`);
-      router.refresh();
-    } else {
-      toast({ title: "Error", description: res.error, variant: "destructive" });
-    }
+  /**
+   * Redirect to the admin booking form with inquiry prefill. The inquiry is
+   * marked WON/CONVERTED by the booking service when the booking is actually
+   * created — never before, so abandoning the form leaves the lead open.
+   */
+  function handleCreateBooking() {
+    setShowCloseDialog(null);
+    router.push(`/admin/bookings/create?inquiryId=${inquiryId}`);
   }
 
   return (
@@ -153,9 +145,10 @@ export function InquiryCloseActions({
           <DialogHeader>
             <DialogTitle>Create a booking</DialogTitle>
             <DialogDescription>
-              This marks the inquiry as won and opens the booking form with contact
-              info, guest count, and charter notes prefilled from the inquiry when
-              available. You choose the boat and finish pricing there.
+              Opens the booking form with contact info, guest count, and charter
+              notes prefilled from the inquiry when available. You choose the boat
+              and finish pricing there — the inquiry is marked as won once the
+              booking is created.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -167,11 +160,10 @@ export function InquiryCloseActions({
               Cancel
             </Button>
             <Button
-              onClick={() => void handleWonAndCreateBooking()}
-              disabled={loading === "won"}
+              onClick={handleCreateBooking}
               className="rounded-xl gap-2 bg-green-600 text-white hover:bg-green-700"
             >
-              {loading === "won" ? "Working…" : "Continue"}
+              Continue
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -159,7 +159,7 @@ export default function InquiryContactForm({
                   <FormLabel className="text-sm font-normal text-muted-foreground">
                     I agree to the{" "}
                     <Link
-                      href="/terms"
+                      href="/terms-of-service"
                       className="text-primary underline-offset-4 hover:underline"
                     >
                       terms and conditions
