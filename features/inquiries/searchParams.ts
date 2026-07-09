@@ -1,6 +1,7 @@
 import {
   createSearchParamsCache,
   parseAsInteger,
+  parseAsString,
   parseAsStringEnum,
 } from "nuqs/server";
 import { inquiryStageEnum, inquiryOutcomeEnum } from "@/database/schema";
@@ -11,6 +12,7 @@ import { ADMIN_LIST_DEFAULT_PAGE_SIZE } from "@/shared/admin/list-pagination";
  * Used by both Server Component (createSearchParamsCache) and Client (useQueryStates).
  */
 export const inquirySearchParams = {
+  search: parseAsString.withDefault(""),
   stage: parseAsStringEnum(inquiryStageEnum.enumValues),
   outcome: parseAsStringEnum(inquiryOutcomeEnum.enumValues),
   page: parseAsInteger.withDefault(1),

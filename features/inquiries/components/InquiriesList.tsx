@@ -21,25 +21,29 @@ interface InquiriesListProps {
   inquiries: InquiryWithAssignee[];
 }
 
+/**
+ * Contained list card — the template list treatment for admin pages:
+ * one rounded container, hairline-divided rows, full-row click.
+ */
 export function InquiriesList({ inquiries }: InquiriesListProps) {
-  if (inquiries.length === 0) {
-    return (
-      <div className="flex flex-col items-center py-20 text-center">
-        <Inbox className="mb-3 h-7 w-7 text-muted-foreground/40" />
-        <p className="text-sm font-medium">No inquiries match these filters</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Try a different outcome tab or clear the stage filter.
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <ul className="flex flex-col divide-y divide-border/40">
-      {inquiries.map((inquiry) => (
-        <InquiryRow key={inquiry.id} inquiry={inquiry} />
-      ))}
-    </ul>
+    <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-xs">
+      {inquiries.length === 0 ? (
+        <div className="flex flex-col items-center py-20 text-center">
+          <Inbox className="mb-3 h-7 w-7 text-muted-foreground/40" />
+          <p className="text-sm font-medium">No inquiries found</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Try a different tab or clear the search.
+          </p>
+        </div>
+      ) : (
+        <ul className="divide-y divide-border/50">
+          {inquiries.map((inquiry) => (
+            <InquiryRow key={inquiry.id} inquiry={inquiry} />
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -51,7 +55,7 @@ function InquiryRow({ inquiry }: { inquiry: InquiryWithAssignee }) {
   const isStale = isOpen && !inquiry.assignedTo && ageHours >= 24;
 
   return (
-    <li className="relative -mx-3 flex flex-col gap-x-5 gap-y-2 rounded-lg px-3 py-3.5 transition-colors hover:bg-muted/50 lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)_minmax(0,2.5fr)_minmax(0,2.5fr)_minmax(0,3fr)] lg:items-center">
+    <li className="relative flex flex-col gap-x-5 gap-y-1.5 px-4 py-3 transition-colors hover:bg-muted/40 sm:px-5 lg:grid lg:grid-cols-[minmax(0,4.5fr)_minmax(0,5.5fr)_minmax(0,2.2fr)_minmax(0,2.2fr)] lg:items-center">
       {/* Who */}
       <div className="min-w-0">
         <div className="flex items-center gap-2">
@@ -89,19 +93,17 @@ function InquiryRow({ inquiry }: { inquiry: InquiryWithAssignee }) {
         ) : null}
       </div>
 
-      {/* Value */}
-      <div className="text-sm font-medium tabular-nums lg:text-right">
-        {inquiry.estimatedTotalCents != null ? (
-          formatCentsAsCurrency(inquiry.estimatedTotalCents)
-        ) : inquiry.budget ? (
-          <span className="text-muted-foreground">{inquiry.budget}</span>
-        ) : (
-          <span className="text-muted-foreground/40">—</span>
-        )}
-      </div>
-
-      {/* Stage / outcome */}
-      <div className="lg:justify-self-center">
+      {/* Value + stage */}
+      <div className="flex items-center gap-2 lg:flex-col lg:items-end lg:gap-1">
+        <span className="text-sm font-medium tabular-nums">
+          {inquiry.estimatedTotalCents != null ? (
+            formatCentsAsCurrency(inquiry.estimatedTotalCents)
+          ) : inquiry.budget ? (
+            <span className="text-muted-foreground">{inquiry.budget}</span>
+          ) : (
+            <span className="text-muted-foreground/40">—</span>
+          )}
+        </span>
         <span
           className={cn(
             "inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold",
@@ -146,7 +148,7 @@ function InquiryRow({ inquiry }: { inquiry: InquiryWithAssignee }) {
       <Link
         href={`/admin/inquiries/${inquiry.id}`}
         aria-label={`View inquiry from ${inquiry.name}`}
-        className="absolute inset-0 rounded-lg"
+        className="absolute inset-0"
       />
     </li>
   );

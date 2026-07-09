@@ -6,11 +6,12 @@ import {
   type InquiryStage,
   type InquiryOutcome,
 } from "@/database/schema";
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, ilike, or } from "drizzle-orm";
 import { resolveAdminListPagination } from "@/shared/admin/list-pagination";
 import type { Inquiry } from "@/database/types";
 
 export interface InquiryFilterInput {
+  search?: string;
   stage?: InquiryStage;
   outcome?: InquiryOutcome;
   page?: number;
@@ -41,6 +42,17 @@ export class InquiryService {
     const { page, limit, offset } = resolveAdminListPagination(filters);
 
     const conditions = [];
+    const search = filters?.search?.trim();
+    if (search) {
+      const pattern = `%${search}%`;
+      conditions.push(
+        or(
+          ilike(inquiryTable.name, pattern),
+          ilike(inquiryTable.email, pattern),
+          ilike(inquiryTable.phone, pattern)
+        )
+      );
+    }
     if (filters?.stage) {
       conditions.push(eq(inquiryTable.stage, filters.stage));
     }
