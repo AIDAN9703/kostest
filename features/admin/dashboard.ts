@@ -94,7 +94,7 @@ export const getFollowUpInquiries = cache(async (limit = 6): Promise<InquiryList
   return rows as InquiryListItem[];
 });
 
-/** OPEN inquiries with no admin assigned yet — oldest first so nothing is missed. */
+/** OPEN inquiries with no admin assigned yet — newest first. */
 export const getUnassignedLeads = cache(async (limit = 8): Promise<InquiryListItem[]> => {
   await assertAdmin();
   const rows = await db
@@ -123,7 +123,7 @@ export const getUnassignedLeads = cache(async (limit = 8): Promise<InquiryListIt
     })
     .from(inquiry)
     .where(and(eq(inquiry.outcome, "OPEN"), isNull(inquiry.assignedTo)))
-    .orderBy(asc(inquiry.createdAt))
+    .orderBy(desc(inquiry.createdAt))
     .limit(limit);
 
   return rows as InquiryListItem[];

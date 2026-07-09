@@ -12,14 +12,14 @@ import {
   isSameDay,
   startOfDay,
 } from "date-fns";
-import { ArrowUpRight, CheckCircle2, UserPlus, Users } from "lucide-react";
+import { Archive, CheckCircle2, UserPlus, Users } from "lucide-react";
 
 import { NewBookingModal } from "@/features/bookings/components/admin/new-booking-modal";
 import type { PricingTierOption } from "@/features/bookings/components/admin/booking-forms/types";
 import type { DashboardHeadlineMetrics } from "@/features/admin/dashboard";
 import type { BookingListItem } from "@/features/bookings/booking.types";
 import type { InquiryListItem } from "@/features/inquiries/inquiry.types";
-import { assignInquiry } from "@/features/inquiries/inquiry.actions";
+import { assignInquiry, updateInquiryOutcome } from "@/features/inquiries/inquiry.actions";
 import { cn } from "@/shared/lib/utils/general-utils";
 import { formatPlainDate } from "@/shared/lib/utils/general-utils";
 import {
@@ -265,22 +265,22 @@ export function AdminDashboardView({
         </div>
       </section>
 
-      {/* ═══ Leads to assign ════════════════════════════════════ */}
-      <section className="pt-6">
+      {/* ═══ Unassigned leads ═══════════════════════════════════ */}
+      <section className="w-full pt-6 lg:max-w-3xl">
         <div className="flex items-center gap-2.5 border-b border-border/60 pb-2.5">
           <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em]">
-            Leads to assign
+            Unassigned leads
           </h2>
           {metrics.unassignedLeads > 0 ? (
-            <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-foreground px-1.5 text-[10px] font-semibold tabular-nums text-background">
+            <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-semibold tabular-nums text-white">
               {metrics.unassignedLeads}
             </span>
           ) : null}
           <Link
             href="/admin/inquiries"
-            className="ml-auto text-xs text-muted-foreground transition-colors hover:text-foreground"
+            className="ml-auto rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/70"
           >
-            All inquiries →
+            All inquiries
           </Link>
         </div>
 
@@ -324,7 +324,7 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
   const isStale = ageHours >= 24;
 
   return (
-    <li className="group/row flex flex-col gap-x-6 gap-y-2 py-3.5 sm:grid sm:grid-cols-[minmax(0,5fr)_minmax(0,5fr)_minmax(0,2fr)_auto] sm:items-center">
+    <li className="relative -mx-3 flex flex-col gap-x-5 gap-y-2 rounded-lg px-3 py-3.5 transition-colors hover:bg-muted/50 sm:grid sm:grid-cols-[minmax(0,5fr)_minmax(0,6fr)_minmax(0,2.5fr)_auto] sm:items-center">
       {/* Who */}
       <div className="min-w-0">
         <div className="flex items-center gap-2">
@@ -336,12 +336,7 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
           >
             {badge.label}
           </span>
-          <Link
-            href={`/admin/inquiries/${lead.id}`}
-            className="truncate text-sm font-medium hover:underline"
-          >
-            {lead.name}
-          </Link>
+          <span className="truncate text-sm font-medium">{lead.name}</span>
         </div>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {SOURCE_LABELS[lead.source] ?? lead.source}
@@ -373,18 +368,51 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
         )}
       </div>
 
+      {/* Whole row navigates to the lead; painted above static content,
+          below the z-10 action buttons. */}
+      <Link
+        href={`/admin/inquiries/${lead.id}`}
+        aria-label={`View lead from ${lead.name}`}
+        className="absolute inset-0 rounded-lg"
+      />
+
       {/* Actions */}
-      <div className="flex items-center gap-1.5 sm:justify-end">
+      <div className="relative z-10 flex items-center gap-1.5 sm:justify-end">
         <AssignMenu inquiryId={lead.id} admins={admins} />
-        <Link
-          href={`/admin/inquiries/${lead.id}`}
-          aria-label="View lead"
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <ArrowUpRight className="h-3.5 w-3.5" />
-        </Link>
+        <ArchiveButton inquiryId={lead.id} />
       </div>
     </li>
+  );
+}
+
+function ArchiveButton({ inquiryId }: { inquiryId: string }) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [pending, setPending] = useState(false);
+
+  async function archive() {
+    setPending(true);
+    const res = await updateInquiryOutcome(inquiryId, "ABANDONED", "Archived from dashboard");
+    setPending(false);
+    if (res.success) {
+      toast({ title: "Lead archived" });
+      router.refresh();
+    } else {
+      toast({ title: "Couldn't archive", description: res.error, variant: "destructive" });
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={archive}
+      disabled={pending}
+      aria-label="Archive lead"
+      title="Archive lead"
+      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+    >
+      <Archive className="h-3.5 w-3.5" />
+    </button>
   );
 }
 
