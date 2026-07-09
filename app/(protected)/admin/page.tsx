@@ -3,7 +3,6 @@ import { boatService } from "@/features/boats/boat.service";
 import { userService } from "@/features/users/user.service";
 import {
   getDashboardHeadlineMetrics,
-  getPendingBookingRequests,
   getUnassignedLeads,
   getWeeksBookings,
 } from "@/features/admin/dashboard";
@@ -13,21 +12,14 @@ export default async function AdminDashboardPage() {
   const session = await auth();
   const firstName = session?.user?.name?.split(/\s+/)[0] ?? null;
 
-  const [
-    unassignedLeads,
-    weeksBookings,
-    pendingBookings,
-    pricingTiers,
-    metrics,
-    admins,
-  ] = await Promise.all([
-    getUnassignedLeads(8),
-    getWeeksBookings(),
-    getPendingBookingRequests(),
-    boatService.getAllActivePricingTiers(),
-    getDashboardHeadlineMetrics(),
-    userService.getAdmins(),
-  ]);
+  const [unassignedLeads, weeksBookings, pricingTiers, metrics, admins] =
+    await Promise.all([
+      getUnassignedLeads(10),
+      getWeeksBookings(),
+      boatService.getAllActivePricingTiers(),
+      getDashboardHeadlineMetrics(),
+      userService.getAdmins(),
+    ]);
 
   return (
     <AdminDashboardView
@@ -35,7 +27,6 @@ export default async function AdminDashboardPage() {
       pricingTiers={pricingTiers}
       unassignedLeads={unassignedLeads}
       weeksBookings={weeksBookings}
-      pendingBookings={pendingBookings}
       metrics={metrics}
       admins={admins}
     />

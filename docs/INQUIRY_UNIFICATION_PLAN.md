@@ -1,7 +1,10 @@
 # Inquiry Unification Plan
 
-**Created:** 2026-07-08 · **Status:** Code complete on `unify-inquiries` (Steps 0–6 done 2026-07-09).
-**Remaining:** run `npx drizzle-kit generate` + migrate (owner does this), then Step 7 verification.
+**Created:** 2026-07-08 · **Status:** ✅ COMPLETE (2026-07-09). Migration generated & applied by owner.
+**Verified against live DB:** all 5 new columns + PreferredTimeOfDay enum + CHECK constraint present;
+term-charter insert with structured columns round-trips; CHECK correctly rejects BOAT_REQUEST
+without boat_id; typecheck clean. Manual form click-throughs remain a good smoke test whenever
+convenient, but the structural layer is proven.
 
 Execution deltas from the original plan (all improvements, none regressions):
 - CHECK constraints are defined in the Drizzle schema via `check()` (drizzle-orm 0.39

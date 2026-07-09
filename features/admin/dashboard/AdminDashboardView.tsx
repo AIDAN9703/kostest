@@ -5,25 +5,23 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   addDays,
+  differenceInHours,
   eachDayOfInterval,
   format,
   formatDistanceToNowStrict,
   isSameDay,
   startOfDay,
 } from "date-fns";
-import { CheckCircle2, UserPlus, Users } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, UserPlus, Users } from "lucide-react";
 
 import { NewBookingModal } from "@/features/bookings/components/admin/new-booking-modal";
 import type { PricingTierOption } from "@/features/bookings/components/admin/booking-forms/types";
 import type { DashboardHeadlineMetrics } from "@/features/admin/dashboard";
-import {
-  MOCK_OPS_ALERTS,
-  type DashboardOpsAlert,
-} from "@/features/admin/dashboard/dashboard-mock-data";
 import type { BookingListItem } from "@/features/bookings/booking.types";
 import type { InquiryListItem } from "@/features/inquiries/inquiry.types";
 import { assignInquiry } from "@/features/inquiries/inquiry.actions";
 import { cn } from "@/shared/lib/utils/general-utils";
+import { formatPlainDate } from "@/shared/lib/utils/general-utils";
 import {
   formatCentsAsCurrency,
   formatCentsAsWholeDollars,
@@ -53,7 +51,6 @@ interface AdminDashboardViewProps {
   pricingTiers: PricingTierOption[];
   unassignedLeads: InquiryListItem[];
   weeksBookings: BookingListItem[];
-  pendingBookings: BookingListItem[];
   metrics: DashboardHeadlineMetrics;
   admins: AdminOption[];
 }
@@ -80,12 +77,60 @@ function formatCentsCompact(cents: number) {
   return formatCentsAsWholeDollars(cents);
 }
 
+const LEAD_TYPE_BADGES: Record<string, { label: string; className: string }> = {
+  GENERAL_QUOTE: { label: "General", className: "bg-muted text-muted-foreground" },
+  BOAT_REQUEST: { label: "Boat", className: "bg-primary/10 text-primary" },
+  TERM_CHARTER: {
+    label: "Term",
+    className: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+  },
+  MANUAL: { label: "Manual", className: "bg-muted text-muted-foreground" },
+};
+
+const SOURCE_LABELS: Record<string, string> = {
+  HOME_PAGE: "Home page",
+  BOAT_PAGE: "Boat page",
+  CONTACT_PAGE: "Contact page",
+  TERM_CHARTER_PAGE: "Term charter page",
+  PHONE: "Phone",
+  INSTAGRAM: "Instagram",
+  WHATSAPP: "WhatsApp",
+  ADMIN: "Admin",
+  BROKER: "Broker",
+  OTHER: "Other",
+};
+
+const TIME_OF_DAY_LABELS: Record<string, string> = {
+  MORNING: "Morning",
+  AFTERNOON: "Afternoon",
+  EVENING: "Evening",
+  FLEXIBLE: "Flexible",
+};
+
+/** "Aug 15 · Afternoon" / "Aug 15, 2:00 PM · 7+ days · Bahamas" — trip intent, best fidelity available. */
+function leadTripSummary(lead: InquiryListItem): string | null {
+  const parts: string[] = [];
+  if (lead.requestedStartDateTime) {
+    parts.push(format(new Date(lead.requestedStartDateTime), "MMM d, h:mm a"));
+  } else if (lead.preferredDate) {
+    parts.push(formatPlainDate(lead.preferredDate));
+    if (lead.preferredTimeOfDay) {
+      parts.push(TIME_OF_DAY_LABELS[lead.preferredTimeOfDay] ?? lead.preferredTimeOfDay);
+    }
+  } else if (lead.date) {
+    parts.push(format(new Date(lead.date), "MMM d"));
+  }
+  if (lead.requestedDurationDays) parts.push(`${lead.requestedDurationDays}+ days`);
+  if (lead.destination) parts.push(lead.destination);
+  if (lead.guests) parts.push(`${lead.guests} guests`);
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
 export function AdminDashboardView({
   firstName,
   pricingTiers,
   unassignedLeads,
   weeksBookings,
-  pendingBookings,
   metrics,
   admins,
 }: AdminDashboardViewProps) {
@@ -118,7 +163,7 @@ export function AdminDashboardView({
           </p>
           <h1 className="mt-0.5 truncate text-xl font-semibold tracking-tight">
             {greeting}
-            {firstName ? `, ${firstName}` : ""}
+            {firstName ? `, ${firstName}` : ""} <span aria-hidden>👋</span>
           </h1>
         </div>
 
@@ -127,7 +172,6 @@ export function AdminDashboardView({
           <Tick value={formatCentsAsWholeDollars(metrics.gmvMtdCents)} label={`${metrics.monthLabel} GMV`} href="/admin/bookings" />
           <Tick value={formatCentsAsWholeDollars(metrics.kosCommissionMtdCents)} label="Commission" href="/admin/bookings" />
           <Tick value={metrics.tripsThisMonth.toLocaleString()} label="Charters" href="/admin/bookings" />
-          <Tick value={metrics.openInquiries.toLocaleString()} label="Open leads" href="/admin/inquiries" />
         </div>
 
         <div className="ml-auto shrink-0 lg:ml-0">
@@ -221,69 +265,40 @@ export function AdminDashboardView({
         </div>
       </section>
 
-      {/* ═══ Triage lanes ═══════════════════════════════════════ */}
-      <section className="grid gap-x-10 gap-y-8 pt-6 md:grid-cols-2 xl:grid-cols-3">
-        <Lane
-          title="Approvals"
-          count={pendingBookings.length}
-          href="/admin/bookings"
-          emptyText="No booking requests waiting."
-        >
-          {pendingBookings.map((b) => (
-            <li key={b.id}>
-              <Link
-                href={`/admin/bookings/${b.id}`}
-                className="group -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/50"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{b.customerName ?? "Guest"}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {b.boatName ?? "—"} · {format(new Date(b.startDateTime), "MMM d, h:mm a")}
-                  </p>
-                </div>
-                <span className="shrink-0 text-xs font-medium text-amber-700 opacity-0 transition-opacity group-hover:opacity-100 dark:text-amber-400">
-                  Review →
-                </span>
-              </Link>
-            </li>
-          ))}
-        </Lane>
+      {/* ═══ Leads to assign ════════════════════════════════════ */}
+      <section className="pt-6">
+        <div className="flex items-center gap-2.5 border-b border-border/60 pb-2.5">
+          <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+            Leads to assign
+          </h2>
+          {metrics.unassignedLeads > 0 ? (
+            <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-foreground px-1.5 text-[10px] font-semibold tabular-nums text-background">
+              {metrics.unassignedLeads}
+            </span>
+          ) : null}
+          <Link
+            href="/admin/inquiries"
+            className="ml-auto text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            All inquiries →
+          </Link>
+        </div>
 
-        <Lane
-          title="Leads to assign"
-          count={metrics.unassignedLeads}
-          href="/admin/inquiries"
-          emptyText="Every lead has an owner."
-        >
-          {unassignedLeads.map((lead) => (
-            <li key={lead.id} className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-2">
-              <Link href={`/admin/inquiries/${lead.id}`} className="group min-w-0 flex-1">
-                <p className="truncate text-sm font-medium group-hover:underline">{lead.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  <span className="tabular-nums">
-                    {formatDistanceToNowStrict(new Date(lead.createdAt))} old
-                  </span>
-                  {" · "}
-                  {lead.message?.slice(0, 36) || lead.email}
-                </p>
-              </Link>
-              <AssignMenu inquiryId={lead.id} admins={admins} />
-            </li>
-          ))}
-        </Lane>
-
-        <Lane
-          title="Ops flags"
-          count={MOCK_OPS_ALERTS.length}
-          href="/admin/bookings"
-          sample
-          emptyText="Nothing flagged."
-          className="md:col-span-2 xl:col-span-1"
-        >
-          {MOCK_OPS_ALERTS.map((alert) => (
-            <OpsRow key={alert.id} alert={alert} />
-          ))}
-        </Lane>
+        {unassignedLeads.length === 0 ? (
+          <div className="flex flex-col items-center py-12 text-center">
+            <CheckCircle2 className="mb-2.5 h-6 w-6 text-emerald-500/60" />
+            <p className="text-sm font-medium">Every lead has an owner</p>
+            <p className="mt-1 max-w-[18rem] text-xs text-muted-foreground">
+              New inquiries from the website, phone, and socials will land here.
+            </p>
+          </div>
+        ) : (
+          <ul className="flex flex-col divide-y divide-border/40">
+            {unassignedLeads.map((lead) => (
+              <LeadRow key={lead.id} lead={lead} admins={admins} />
+            ))}
+          </ul>
+        )}
       </section>
     </div>
   );
@@ -302,81 +317,73 @@ function Tick({ value, label, href }: { value: string; label: string; href: stri
   );
 }
 
-function Lane({
-  title,
-  count,
-  href,
-  sample,
-  emptyText,
-  className,
-  children,
-}: {
-  title: string;
-  count: number;
-  href: string;
-  sample?: boolean;
-  emptyText: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
+function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[] }) {
+  const badge = LEAD_TYPE_BADGES[lead.leadType] ?? LEAD_TYPE_BADGES.GENERAL_QUOTE;
+  const trip = leadTripSummary(lead);
+  const ageHours = differenceInHours(new Date(), new Date(lead.createdAt));
+  const isStale = ageHours >= 24;
+
   return (
-    <div className={cn("flex min-w-0 flex-col", className)}>
-      <div className="flex items-center gap-2.5 pb-1">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em]">{title}</h2>
-        {count > 0 ? (
-          <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-foreground px-1.5 text-[10px] font-semibold tabular-nums text-background">
-            {count}
+    <li className="group/row flex flex-col gap-x-6 gap-y-2 py-3.5 sm:grid sm:grid-cols-[minmax(0,5fr)_minmax(0,5fr)_minmax(0,2fr)_auto] sm:items-center">
+      {/* Who */}
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "inline-block shrink-0 rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
+              badge.className
+            )}
+          >
+            {badge.label}
           </span>
-        ) : null}
-        {sample ? (
-          <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
-            Sample
+          <Link
+            href={`/admin/inquiries/${lead.id}`}
+            className="truncate text-sm font-medium hover:underline"
+          >
+            {lead.name}
+          </Link>
+        </div>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">
+          {SOURCE_LABELS[lead.source] ?? lead.source}
+          {" · "}
+          <span className={cn("tabular-nums", isStale && "font-medium text-amber-700 dark:text-amber-400")}>
+            {formatDistanceToNowStrict(new Date(lead.createdAt))} old
           </span>
+        </p>
+      </div>
+
+      {/* Trip intent */}
+      <div className="min-w-0">
+        <p className="truncate text-sm">
+          {trip ?? <span className="text-muted-foreground/50">No trip details yet</span>}
+        </p>
+        {lead.message ? (
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">{lead.message}</p>
         ) : null}
+      </div>
+
+      {/* Value */}
+      <div className="text-sm font-medium tabular-nums sm:text-right">
+        {lead.estimatedTotalCents != null ? (
+          formatCentsAsCurrency(lead.estimatedTotalCents)
+        ) : lead.budget ? (
+          <span className="text-muted-foreground">{lead.budget}</span>
+        ) : (
+          <span className="text-muted-foreground/40">—</span>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1.5 sm:justify-end">
+        <AssignMenu inquiryId={lead.id} admins={admins} />
         <Link
-          href={href}
-          className="ml-auto text-xs text-muted-foreground transition-colors hover:text-foreground"
+          href={`/admin/inquiries/${lead.id}`}
+          aria-label="View lead"
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground"
         >
-          All →
+          <ArrowUpRight className="h-3.5 w-3.5" />
         </Link>
       </div>
-      {count === 0 ? (
-        <p className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
-          <CheckCircle2 className="h-4 w-4 text-emerald-500/60" />
-          {emptyText}
-        </p>
-      ) : (
-        <ul className="flex flex-col divide-y divide-border/40">{children}</ul>
-      )}
-    </div>
-  );
-}
-
-function OpsRow({ alert }: { alert: DashboardOpsAlert }) {
-  return (
-    <li>
-      <Link
-        href={alert.href}
-        className="group -mx-2 flex items-start gap-2.5 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/50"
-      >
-        <span
-          className={cn(
-            "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
-            alert.severity === "urgent" ? "bg-amber-500" : "bg-muted-foreground/30"
-          )}
-        />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <p className="truncate text-sm font-medium">{alert.title}</p>
-            {alert.dueLabel ? (
-              <span className="shrink-0 text-[10px] font-medium tabular-nums text-amber-700 dark:text-amber-400">
-                {alert.dueLabel}
-              </span>
-            ) : null}
-          </div>
-          <p className="truncate text-xs text-muted-foreground">{alert.detail}</p>
-        </div>
-      </Link>
     </li>
   );
 }
@@ -408,10 +415,10 @@ function AssignMenu({ inquiryId, admins }: { inquiryId: string; admins: AdminOpt
         <button
           type="button"
           disabled={pending || admins.length === 0}
-          aria-label="Assign lead"
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-background transition-colors hover:bg-muted disabled:opacity-50"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-muted disabled:opacity-50"
         >
           <UserPlus className="h-3.5 w-3.5" />
+          {pending ? "Assigning…" : "Assign"}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
