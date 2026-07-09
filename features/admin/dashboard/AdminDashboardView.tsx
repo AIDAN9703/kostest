@@ -11,24 +11,15 @@ import {
   isSameDay,
   startOfDay,
 } from "date-fns";
-import {
-  ArrowUpRight,
-  CalendarCheck2,
-  CheckCircle2,
-  Clock,
-  Inbox,
-  MessageSquare,
-  UserPlus,
-  Users,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { CheckCircle2, UserPlus, Users } from "lucide-react";
 
 import { NewBookingModal } from "@/features/bookings/components/admin/new-booking-modal";
 import type { PricingTierOption } from "@/features/bookings/components/admin/booking-forms/types";
-import type {
-  DashboardActivityItem,
-  DashboardHeadlineMetrics,
-} from "@/features/admin/dashboard";
+import type { DashboardHeadlineMetrics } from "@/features/admin/dashboard";
+import {
+  MOCK_OPS_ALERTS,
+  type DashboardOpsAlert,
+} from "@/features/admin/dashboard/dashboard-mock-data";
 import type { BookingListItem } from "@/features/bookings/booking.types";
 import type { InquiryListItem } from "@/features/inquiries/inquiry.types";
 import { assignInquiry } from "@/features/inquiries/inquiry.actions";
@@ -37,7 +28,6 @@ import {
   formatCentsAsCurrency,
   formatCentsAsWholeDollars,
 } from "@/shared/lib/utils/money-utils";
-import { Badge } from "@/shared/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import {
   DropdownMenu,
@@ -61,23 +51,11 @@ export type AdminOption = {
 interface AdminDashboardViewProps {
   firstName: string | null;
   pricingTiers: PricingTierOption[];
-  followUps: InquiryListItem[];
   unassignedLeads: InquiryListItem[];
   weeksBookings: BookingListItem[];
   pendingBookings: BookingListItem[];
   metrics: DashboardHeadlineMetrics;
-  recentActivity: DashboardActivityItem[];
   admins: AdminOption[];
-}
-
-/** Reused crisp card surface — white in light mode so it reads clearly. */
-const CARD = "rounded-2xl border border-border bg-white shadow-sm dark:bg-card";
-
-function humanize(value: string) {
-  return value
-    .replace(/_/g, " ")
-    .toLowerCase()
-    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function adminName(a: AdminOption) {
@@ -92,23 +70,29 @@ function initials(name: string) {
     .join("");
 }
 
+/** $12.4K / $1.65M — compact money for dense rows. */
+function formatCentsCompact(cents: number) {
+  const dollars = cents / 100;
+  if (dollars >= 1_000_000) {
+    return `$${(dollars / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
+  }
+  if (dollars >= 10_000) return `$${(dollars / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
+  return formatCentsAsWholeDollars(cents);
+}
+
 export function AdminDashboardView({
   firstName,
   pricingTiers,
-  followUps,
   unassignedLeads,
   weeksBookings,
   pendingBookings,
   metrics,
-  recentActivity,
   admins,
 }: AdminDashboardViewProps) {
-  // Calendar lane: today → +6 days (the full week glance).
-  const weekDays = useMemo(() => {
+  const days = useMemo(() => {
     const start = startOfDay(new Date());
     return eachDayOfInterval({ start, end: addDays(start, 6) }).map((day) => ({
       day,
-      isToday: isSameDay(day, new Date()),
       trips: weeksBookings
         .filter((b) => isSameDay(new Date(b.startDateTime), day))
         .sort(
@@ -117,289 +101,287 @@ export function AdminDashboardView({
     }));
   }, [weeksBookings]);
 
-  const weekRevenue = useMemo(
-    () => weeksBookings.reduce((sum, b) => sum + (b.totalAmountCents ?? 0), 0),
-    [weeksBookings]
-  );
+  const today = days[0];
+  const upcoming = days.slice(1);
 
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="flex w-full flex-1 flex-col gap-6">
-      {/* ── Greeting ───────────────────────────────────────────────── */}
-      <header className="flex flex-wrap items-center justify-between gap-4">
+    <div className="flex w-full flex-1 flex-col pb-10">
+      {/* ═══ Command bar ═══════════════════════════════════════ */}
+      <header className="flex flex-wrap items-center gap-x-8 gap-y-3 border-b border-border/60 pb-5 pt-1">
         <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
-            {format(new Date(), "EEEE, MMMM d")}
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            {format(new Date(), "EEE, MMM d")}
           </p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="mt-0.5 truncate text-xl font-semibold tracking-tight">
             {greeting}
-            {firstName ? `, ${firstName}` : ""} <span aria-hidden="true">👋</span>
+            {firstName ? `, ${firstName}` : ""}
           </h1>
         </div>
-        <NewBookingModal
-          pricingTiers={pricingTiers}
-          triggerLabel="New booking"
-          triggerSize="default"
-          triggerClassName="shrink-0 gap-1.5 rounded-xl shadow-sm"
-        />
+
+        {/* inline stats ticker */}
+        <div className="order-last flex w-full flex-wrap items-center gap-x-7 gap-y-2 lg:order-none lg:ml-auto lg:w-auto">
+          <Tick value={formatCentsAsWholeDollars(metrics.gmvMtdCents)} label={`${metrics.monthLabel} GMV`} href="/admin/bookings" />
+          <Tick value={formatCentsAsWholeDollars(metrics.kosCommissionMtdCents)} label="Commission" href="/admin/bookings" />
+          <Tick value={metrics.tripsThisMonth.toLocaleString()} label="Charters" href="/admin/bookings" />
+          <Tick value={metrics.openInquiries.toLocaleString()} label="Open leads" href="/admin/inquiries" />
+        </div>
+
+        <div className="ml-auto shrink-0 lg:ml-0">
+          <NewBookingModal
+            pricingTiers={pricingTiers}
+            triggerLabel="Booking"
+            triggerSize="sm"
+            triggerClassName="gap-1 rounded-lg"
+          />
+        </div>
       </header>
 
-      {/* ── Week ahead (majority) + monthly snapshot (skinny) ──────── */}
-      {/* items-start so neither card stretches to match the other's height. */}
-      <div className="grid items-start gap-5 xl:grid-cols-4">
-        <WeekAhead
-          className="xl:col-span-3"
-          days={weekDays}
-          revenueCents={weekRevenue}
-        />
-        <MonthlySnapshot className="xl:col-span-1" metrics={metrics} />
-      </div>
-
-      {/* ── Leads to assign + booking requests ─────────────────────── */}
-      <div className="grid gap-5 xl:grid-cols-3">
-        <UnassignedLeads
-          className="xl:col-span-2"
-          leads={unassignedLeads}
-          count={metrics.unassignedLeads}
-          admins={admins}
-        />
-        <BookingRequests pending={pendingBookings} />
-      </div>
-
-      {/* ── Activity + follow-ups ──────────────────────────────────── */}
-      <div className="grid gap-5 xl:grid-cols-3">
-        <RecentActivity className="xl:col-span-2" items={recentActivity} />
-        <FollowUps items={followUps} />
-      </div>
-    </div>
-  );
-}
-
-/* ───────────────────────── the month ───────────────────────── */
-
-/** Compact, ledger-style financials + growth for the current month. */
-function MonthlySnapshot({
-  metrics,
-  className,
-}: {
-  metrics: DashboardHeadlineMetrics;
-  className?: string;
-}) {
-  const rows = [
-    { label: "GMV", value: formatCentsAsWholeDollars(metrics.gmvMtdCents) },
-    {
-      label: "KOS commission",
-      value: formatCentsAsWholeDollars(metrics.kosCommissionMtdCents),
-    },
-    { label: "Vessels added", value: metrics.boatsAddedThisMonth.toLocaleString() },
-    { label: "New users", value: metrics.newUsersThisMonth.toLocaleString() },
-  ];
-
-  return (
-    <SectionShell className={className} title="The Month" sub={metrics.monthLabel}>
-      <div className="flex flex-col divide-y divide-border/40">
-        {rows.map(({ label, value }) => (
-          <div
-            key={label}
-            className="flex items-center justify-between gap-3 px-4 py-2.5"
-          >
-            <span className="text-sm text-muted-foreground">{label}</span>
-            <span className="text-sm font-semibold tabular-nums tracking-tight">
-              {value}
+      {/* ═══ Horizon strip — today wide, week beside it ════════ */}
+      <section className="flex flex-col border-b border-border/60 lg:flex-row">
+        {/* Today panel */}
+        <div className="flex min-w-0 flex-col py-5 lg:w-[38%] lg:pr-8">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+              Today
+            </h2>
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {today.trips.length === 0
+                ? "no charters"
+                : `${today.trips.length} charter${today.trips.length === 1 ? "" : "s"} · ${formatCentsCompact(
+                    today.trips.reduce((s, t) => s + (t.totalAmountCents ?? 0), 0)
+                  )}`}
             </span>
           </div>
-        ))}
-      </div>
-    </SectionShell>
-  );
-}
-
-/* ───────────────────────── week ahead ───────────────────────── */
-
-function WeekAhead({
-  days,
-  revenueCents,
-  className,
-}: {
-  days: { day: Date; isToday: boolean; trips: BookingListItem[] }[];
-  revenueCents: number;
-  className?: string;
-}) {
-  const total = days.reduce((sum, d) => sum + d.trips.length, 0);
-
-  return (
-    <SectionShell
-      className={className}
-      title="The week ahead"
-      sub={`${total} charter${total === 1 ? "" : "s"} · ${formatCentsAsCurrency(
-        revenueCents
-      )} expected`}
-      action={
-        <Link
-          href="/admin/bookings?view=calendar"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-accent"
-        >
-          Open calendar
-        </Link>
-      }
-    >
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7">
-        {days.map(({ day, isToday, trips }) => (
-          <div
-            key={day.toISOString()}
-            className={cn(
-              "flex min-h-[8.5rem] flex-col border-b border-r border-border/50 p-2.5",
-              isToday && "bg-primary/[0.04]"
-            )}
-          >
-            <div className="mb-2 flex items-baseline justify-between">
-              <span
-                className={cn(
-                  "text-[11px] font-semibold uppercase tracking-wide",
-                  isToday ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                {format(day, "EEE")}
-              </span>
-              <span
-                className={cn(
-                  "flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-xs font-semibold tabular-nums",
-                  isToday ? "bg-primary text-primary-foreground" : "text-foreground"
-                )}
-              >
-                {format(day, "d")}
-              </span>
-            </div>
-            {trips.length === 0 ? (
-              <span className="mt-1 text-[11px] text-muted-foreground/40">—</span>
-            ) : (
-              <ul className="flex flex-col gap-1">
-                {trips.slice(0, 3).map((t) => (
-                  <li key={t.id}>
-                    <Link
-                      href={`/admin/bookings/${t.id}`}
-                      className="block rounded-md bg-primary/10 px-1.5 py-1 text-[11px] leading-tight transition-colors hover:bg-primary/20"
-                    >
-                      <span className="font-medium tabular-nums">
-                        {format(new Date(t.startDateTime), "h:mma").toLowerCase()}
-                      </span>
-                      <span className="block truncate text-muted-foreground">
-                        {t.customerName ?? t.boatName ?? "Trip"}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-                {trips.length > 3 ? (
+          {today.trips.length === 0 ? (
+            <p className="flex flex-1 items-center py-8 text-sm text-muted-foreground">
+              The dock is quiet — nothing on the water today.
+            </p>
+          ) : (
+            <ul className="mt-3 flex flex-col gap-1">
+              {today.trips.map((t) => (
+                <li key={t.id}>
                   <Link
-                    href="/admin/bookings?view=calendar"
-                    className="px-1 text-[10px] font-medium text-muted-foreground hover:text-foreground"
+                    href={`/admin/bookings/${t.id}`}
+                    className="group flex items-center gap-3 rounded-lg border-l-2 border-primary bg-muted/40 px-3 py-2.5 transition-colors hover:bg-muted"
                   >
-                    +{trips.length - 3} more
+                    <span className="shrink-0 text-sm font-semibold tabular-nums">
+                      {format(new Date(t.startDateTime), "h:mm a")}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm">
+                      {t.customerName ?? "Guest"}
+                      <span className="text-muted-foreground"> · {t.boatName ?? "—"}</span>
+                    </span>
+                    {typeof t.totalAmountCents === "number" ? (
+                      <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
+                        {formatCentsCompact(t.totalAmountCents)}
+                      </span>
+                    ) : null}
                   </Link>
-                ) : null}
-              </ul>
-            )}
-          </div>
-        ))}
-      </div>
-    </SectionShell>
-  );
-}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
-/* ───────────────────────── unassigned leads ───────────────────────── */
-
-function UnassignedLeads({
-  leads,
-  admins,
-  count,
-  className,
-}: {
-  leads: InquiryListItem[];
-  admins: AdminOption[];
-  count: number;
-  className?: string;
-}) {
-  return (
-    <SectionShell
-      className={className}
-      title="Unassigned leads"
-      sub={leads.length === 0 ? "Every lead has an owner" : "Assign so nothing gets missed"}
-      action={
-        count > 0 ? (
-          <Badge variant="warning" className="shrink-0">
-            {count}
-          </Badge>
-        ) : null
-      }
-    >
-      {leads.length === 0 ? (
-        <EmptyBlock
-          icon={CheckCircle2}
-          title="All leads assigned"
-          body="New leads without an owner will appear here for quick routing."
-          tone="positive"
-        />
-      ) : (
-        <ul className="divide-y divide-border/60">
-          {leads.map((lead) => (
-            <li
-              key={lead.id}
-              className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-300">
-                <UserPlus className="h-4 w-4" />
-              </span>
+        {/* Six day columns */}
+        <div className="grid flex-1 grid-cols-3 border-t border-border/60 sm:grid-cols-6 lg:border-l lg:border-t-0">
+          {upcoming.map(({ day, trips }, i) => {
+            const dayRevenue = trips.reduce((s, t) => s + (t.totalAmountCents ?? 0), 0);
+            return (
               <Link
-                href={`/admin/inquiries/${lead.id}`}
-                className="group min-w-0 flex-1"
+                key={day.toISOString()}
+                href="/admin/bookings?view=calendar"
+                className={cn(
+                  "group flex flex-col gap-1 px-3 py-5 transition-colors hover:bg-muted/40 sm:px-4",
+                  i > 0 && "border-l border-border/40 max-sm:[&:nth-child(3n+1)]:border-l-0",
+                  i >= 3 && "border-t border-border/40 sm:border-t-0"
+                )}
               >
-                <div className="flex items-center gap-2">
-                  <p className="truncate text-sm font-medium group-hover:underline">
-                    {lead.name}
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                  {format(day, "EEE")} <span className="tabular-nums">{format(day, "d")}</span>
+                </span>
+                <span
+                  className={cn(
+                    "mt-1 text-2xl font-semibold leading-none tabular-nums tracking-tight",
+                    trips.length === 0 && "text-muted-foreground/30"
+                  )}
+                >
+                  {trips.length}
+                </span>
+                <span className="text-[11px] text-muted-foreground">
+                  {trips.length === 0 ? "open" : dayRevenue > 0 ? formatCentsCompact(dayRevenue) : "booked"}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ═══ Triage lanes ═══════════════════════════════════════ */}
+      <section className="grid gap-x-10 gap-y-8 pt-6 md:grid-cols-2 xl:grid-cols-3">
+        <Lane
+          title="Approvals"
+          count={pendingBookings.length}
+          href="/admin/bookings"
+          emptyText="No booking requests waiting."
+        >
+          {pendingBookings.map((b) => (
+            <li key={b.id}>
+              <Link
+                href={`/admin/bookings/${b.id}`}
+                className="group -mx-2 flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/50"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{b.customerName ?? "Guest"}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {b.boatName ?? "—"} · {format(new Date(b.startDateTime), "MMM d, h:mm a")}
                   </p>
-                  {lead.leadType ? (
-                    <Badge
-                      variant="secondary"
-                      className="h-4 shrink-0 px-1.5 text-[10px] font-medium"
-                    >
-                      {humanize(lead.leadType)}
-                    </Badge>
-                  ) : null}
                 </div>
+                <span className="shrink-0 text-xs font-medium text-amber-700 opacity-0 transition-opacity group-hover:opacity-100 dark:text-amber-400">
+                  Review →
+                </span>
+              </Link>
+            </li>
+          ))}
+        </Lane>
+
+        <Lane
+          title="Leads to assign"
+          count={metrics.unassignedLeads}
+          href="/admin/inquiries"
+          emptyText="Every lead has an owner."
+        >
+          {unassignedLeads.map((lead) => (
+            <li key={lead.id} className="-mx-2 flex items-center gap-3 rounded-lg px-2 py-2">
+              <Link href={`/admin/inquiries/${lead.id}`} className="group min-w-0 flex-1">
+                <p className="truncate text-sm font-medium group-hover:underline">{lead.name}</p>
                 <p className="truncate text-xs text-muted-foreground">
                   <span className="tabular-nums">
                     {formatDistanceToNowStrict(new Date(lead.createdAt))} old
-                  </span>{" "}
-                  · {lead.message?.slice(0, 48) || lead.email}
+                  </span>
+                  {" · "}
+                  {lead.message?.slice(0, 36) || lead.email}
                 </p>
               </Link>
               <AssignMenu inquiryId={lead.id} admins={admins} />
             </li>
           ))}
-        </ul>
-      )}
+        </Lane>
 
-      {leads.length > 0 ? (
-        <div className="mt-auto flex items-center justify-end border-t border-border/60 px-4 py-2.5 text-xs">
-          <Link href="/admin/inquiries" className="text-muted-foreground hover:text-foreground">
-            All inquiries →
-          </Link>
-        </div>
-      ) : null}
-    </SectionShell>
+        <Lane
+          title="Ops flags"
+          count={MOCK_OPS_ALERTS.length}
+          href="/admin/bookings"
+          sample
+          emptyText="Nothing flagged."
+          className="md:col-span-2 xl:col-span-1"
+        >
+          {MOCK_OPS_ALERTS.map((alert) => (
+            <OpsRow key={alert.id} alert={alert} />
+          ))}
+        </Lane>
+      </section>
+    </div>
   );
 }
 
-function AssignMenu({
-  inquiryId,
-  admins,
+/* ───────────────────────── pieces ───────────────────────── */
+
+function Tick({ value, label, href }: { value: string; label: string; href: string }) {
+  return (
+    <Link href={href} className="group flex items-baseline gap-2">
+      <span className="text-base font-semibold tabular-nums tracking-tight">{value}</span>
+      <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground transition-colors group-hover:text-foreground">
+        {label}
+      </span>
+    </Link>
+  );
+}
+
+function Lane({
+  title,
+  count,
+  href,
+  sample,
+  emptyText,
+  className,
+  children,
 }: {
-  inquiryId: string;
-  admins: AdminOption[];
+  title: string;
+  count: number;
+  href: string;
+  sample?: boolean;
+  emptyText: string;
+  className?: string;
+  children: React.ReactNode;
 }) {
+  return (
+    <div className={cn("flex min-w-0 flex-col", className)}>
+      <div className="flex items-center gap-2.5 pb-1">
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em]">{title}</h2>
+        {count > 0 ? (
+          <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-foreground px-1.5 text-[10px] font-semibold tabular-nums text-background">
+            {count}
+          </span>
+        ) : null}
+        {sample ? (
+          <span className="rounded bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+            Sample
+          </span>
+        ) : null}
+        <Link
+          href={href}
+          className="ml-auto text-xs text-muted-foreground transition-colors hover:text-foreground"
+        >
+          All →
+        </Link>
+      </div>
+      {count === 0 ? (
+        <p className="flex items-center gap-2 py-4 text-sm text-muted-foreground">
+          <CheckCircle2 className="h-4 w-4 text-emerald-500/60" />
+          {emptyText}
+        </p>
+      ) : (
+        <ul className="flex flex-col divide-y divide-border/40">{children}</ul>
+      )}
+    </div>
+  );
+}
+
+function OpsRow({ alert }: { alert: DashboardOpsAlert }) {
+  return (
+    <li>
+      <Link
+        href={alert.href}
+        className="group -mx-2 flex items-start gap-2.5 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/50"
+      >
+        <span
+          className={cn(
+            "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
+            alert.severity === "urgent" ? "bg-amber-500" : "bg-muted-foreground/30"
+          )}
+        />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <p className="truncate text-sm font-medium">{alert.title}</p>
+            {alert.dueLabel ? (
+              <span className="shrink-0 text-[10px] font-medium tabular-nums text-amber-700 dark:text-amber-400">
+                {alert.dueLabel}
+              </span>
+            ) : null}
+          </div>
+          <p className="truncate text-xs text-muted-foreground">{alert.detail}</p>
+        </div>
+      </Link>
+    </li>
+  );
+}
+
+function AssignMenu({ inquiryId, admins }: { inquiryId: string; admins: AdminOption[] }) {
   const router = useRouter();
   const { toast } = useToast();
   const [pending, setPending] = useState(false);
@@ -426,10 +408,10 @@ function AssignMenu({
         <button
           type="button"
           disabled={pending || admins.length === 0}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-muted disabled:opacity-50"
+          aria-label="Assign lead"
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-background transition-colors hover:bg-muted disabled:opacity-50"
         >
           <UserPlus className="h-3.5 w-3.5" />
-          Assign
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -440,15 +422,9 @@ function AssignMenu({
         {admins.map((admin) => {
           const name = adminName(admin);
           return (
-            <DropdownMenuItem
-              key={admin.id}
-              onSelect={() => assign(admin)}
-              className="gap-2"
-            >
+            <DropdownMenuItem key={admin.id} onSelect={() => assign(admin)} className="gap-2">
               <Avatar className="h-6 w-6">
-                {admin.profileImage ? (
-                  <AvatarImage src={admin.profileImage} alt={name} />
-                ) : null}
+                {admin.profileImage ? <AvatarImage src={admin.profileImage} alt={name} /> : null}
                 <AvatarFallback className="text-[10px]">{initials(name)}</AvatarFallback>
               </Avatar>
               <span className="truncate">{name}</span>
@@ -457,246 +433,5 @@ function AssignMenu({
         })}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-/* ───────────────────────── booking requests ───────────────────────── */
-
-function BookingRequests({ pending }: { pending: BookingListItem[] }) {
-  return (
-    <SectionShell
-      title="Booking requests"
-      sub={pending.length === 0 ? "Nothing waiting" : "Awaiting your approval"}
-      action={
-        pending.length > 0 ? (
-          <Badge variant="warning" className="shrink-0">
-            {pending.length}
-          </Badge>
-        ) : null
-      }
-    >
-      {pending.length === 0 ? (
-        <EmptyBlock
-          icon={CheckCircle2}
-          title="All caught up"
-          body="No booking requests need your approval right now."
-          tone="positive"
-        />
-      ) : (
-        <ul className="divide-y divide-border/60">
-          {pending.map((b) => (
-            <li key={b.id}>
-              <Link
-                href={`/admin/bookings/${b.id}`}
-                className="group flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
-              >
-                <FeedIcon tone="warn" icon={CalendarCheck2} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-medium">
-                      {b.customerName ?? "Guest"}
-                    </p>
-                    <Badge variant="warning" className="h-4 shrink-0 px-1.5 text-[10px]">
-                      Approve
-                    </Badge>
-                  </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {b.boatName ?? "—"} ·{" "}
-                    {format(new Date(b.startDateTime), "MMM d, h:mm a")}
-                  </p>
-                </div>
-                <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition group-hover:text-foreground" />
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </SectionShell>
-  );
-}
-
-/* ───────────────────────── follow ups ───────────────────────── */
-
-function FollowUps({ items }: { items: InquiryListItem[] }) {
-  return (
-    <SectionShell
-      title="Needs follow-up"
-      sub={items.length === 0 ? "Nothing waiting" : "Oldest open inquiries"}
-    >
-      {items.length === 0 ? (
-        <EmptyBlock
-          icon={CheckCircle2}
-          title="All caught up"
-          body="Open inquiries that have gone quiet will surface here."
-          tone="positive"
-        />
-      ) : (
-        <ul className="divide-y divide-border/60">
-          {items.map((lead) => (
-            <li key={lead.id}>
-              <Link
-                href={`/admin/inquiries/${lead.id}`}
-                className="group flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/40"
-              >
-                <FeedIcon tone="muted" icon={Inbox} />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-medium">{lead.name}</p>
-                    <span className="flex shrink-0 items-center gap-1 text-[10px] text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {formatDistanceToNowStrict(new Date(lead.updatedAt))}
-                    </span>
-                  </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {lead.message?.slice(0, 56) || lead.email}
-                  </p>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </SectionShell>
-  );
-}
-
-/* ───────────────────────── recent activity ───────────────────────── */
-
-function RecentActivity({
-  items,
-  className,
-}: {
-  items: DashboardActivityItem[];
-  className?: string;
-}) {
-  return (
-    <SectionShell
-      className={className}
-      title="Recent activity"
-      sub="Latest booking & inquiry updates"
-      action={items.length > 0 ? <LiveIndicator /> : null}
-    >
-      {items.length === 0 ? (
-        <EmptyBlock
-          icon={Clock}
-          title="No recent activity"
-          body="Status changes, notes, and contacts will show up here."
-        />
-      ) : (
-        <ul className="divide-y divide-border/50">
-          {items.map((item) => (
-            <li key={item.id}>
-              <Link
-                href={item.href}
-                className="group flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40"
-              >
-                <FeedIcon
-                  tone={item.kind === "booking" ? "primary" : "muted"}
-                  icon={item.kind === "booking" ? CalendarCheck2 : MessageSquare}
-                />
-                <div className="min-w-0 flex-1 leading-tight">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-medium">{item.subjectLabel}</p>
-                    <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
-                      {formatDistanceToNowStrict(item.createdAt, { addSuffix: false })}
-                    </span>
-                  </div>
-                  <p className="truncate text-xs text-muted-foreground">{item.message}</p>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </SectionShell>
-  );
-}
-
-function LiveIndicator() {
-  return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-      <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-      </span>
-      Live
-    </span>
-  );
-}
-
-function FeedIcon({
-  icon: Icon,
-  tone,
-}: {
-  icon: LucideIcon;
-  tone: "warn" | "muted" | "primary";
-}) {
-  return (
-    <span
-      className={cn(
-        "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
-        tone === "warn"
-          ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
-          : tone === "primary"
-            ? "bg-primary/10 text-primary"
-            : "bg-muted text-muted-foreground"
-      )}
-    >
-      <Icon className="h-3.5 w-3.5" />
-    </span>
-  );
-}
-
-/* ───────────────────────── shared ───────────────────────── */
-
-function SectionShell({
-  title,
-  sub,
-  action,
-  children,
-  className,
-}: {
-  title: string;
-  sub?: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <section className={cn(CARD, "flex min-w-0 flex-col overflow-hidden", className)}>
-      <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3 sm:px-5">
-        <div className="min-w-0">
-          <h2 className="text-sm font-semibold tracking-tight">{title}</h2>
-          {sub ? <p className="text-xs text-muted-foreground">{sub}</p> : null}
-        </div>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function EmptyBlock({
-  icon: Icon,
-  title,
-  body,
-  tone = "default",
-}: {
-  icon: LucideIcon;
-  title: string;
-  body: string;
-  tone?: "default" | "positive";
-}) {
-  return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6 py-10 text-center">
-      <Icon
-        className={cn(
-          "mb-2.5 h-7 w-7",
-          tone === "positive" ? "text-emerald-500/60" : "text-muted-foreground/40"
-        )}
-      />
-      <p className="text-sm font-medium text-foreground">{title}</p>
-      <p className="mt-1 max-w-xs text-xs text-muted-foreground">{body}</p>
-    </div>
   );
 }

@@ -74,7 +74,7 @@ export default function HeroSection() {
 
       {/* Layer 2 (z-10) — Eyebrow + Headline, centered & lifted. Behind the boat. */}
       <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-6">
-        <div className="-translate-y-[18vh] text-center">
+        <div className="-translate-y-[23vh] text-center sm:-translate-y-[18vh]">
           {/* Gold eyebrow */}
           <div className="animate-fade-in-up mb-5 flex items-center justify-center gap-3">
             <span className="h-px w-8 bg-linear-to-r from-transparent to-gold sm:w-12" />
