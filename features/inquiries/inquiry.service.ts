@@ -2,6 +2,7 @@ import { db } from "@/database/db";
 import {
   inquiry as inquiryTable,
   inquiryEvents,
+  users,
   type InquiryStage,
   type InquiryOutcome,
 } from "@/database/schema";
@@ -16,8 +17,19 @@ export interface InquiryFilterInput {
   limit?: number;
 }
 
+/** Minimal admin identity attached to an inquiry (assignee). */
+export type InquiryAssignee = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  profileImage: string | null;
+};
+
+export type InquiryWithAssignee = Inquiry & { assignee: InquiryAssignee | null };
+
 export interface PaginatedInquiriesResponse {
-  inquiries: Inquiry[];
+  inquiries: InquiryWithAssignee[];
   totalCount: number;
   page: number;
   limit: number;
@@ -39,8 +51,18 @@ export class InquiryService {
 
     const [inquiryRows, countResult] = await Promise.all([
       db
-        .select()
+        .select({
+          inquiry: inquiryTable,
+          assignee: {
+            id: users.id,
+            firstName: users.firstName,
+            lastName: users.lastName,
+            email: users.email,
+            profileImage: users.profileImage,
+          },
+        })
         .from(inquiryTable)
+        .leftJoin(users, eq(inquiryTable.assignedTo, users.id))
         .where(whereClause)
         .orderBy(desc(inquiryTable.createdAt))
         .limit(limit)
@@ -51,7 +73,7 @@ export class InquiryService {
     const totalCount = Number(countResult[0]?.value ?? 0);
 
     return {
-      inquiries: inquiryRows,
+      inquiries: inquiryRows.map((r) => ({ ...r.inquiry, assignee: r.assignee ?? null })),
       totalCount,
       page,
       limit,
@@ -59,10 +81,23 @@ export class InquiryService {
     };
   }
 
-  async getInquiryById(id: string): Promise<(Inquiry & { events: unknown[] }) | null> {
+  async getInquiryById(
+    id: string
+  ): Promise<(InquiryWithAssignee & { events: unknown[] }) | null> {
     const [inquiry, events] = await Promise.all([
       db.query.inquiry.findFirst({
         where: eq(inquiryTable.id, id),
+        with: {
+          assignedToUser: {
+            columns: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              profileImage: true,
+            },
+          },
+        },
       }),
       db.query.inquiryEvents.findMany({
         where: eq(inquiryEvents.inquiryId, id),
@@ -77,7 +112,15 @@ export class InquiryService {
 
     if (!inquiry) return null;
 
-    return { ...inquiry, events } as Inquiry & { events: unknown[] };
+    const { assignedToUser, ...rest } = inquiry as typeof inquiry & {
+      assignedToUser: InquiryAssignee | null;
+    };
+
+    return {
+      ...rest,
+      assignee: assignedToUser ?? null,
+      events,
+    } as InquiryWithAssignee & { events: unknown[] };
   }
 }
 

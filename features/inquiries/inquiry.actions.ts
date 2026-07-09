@@ -423,6 +423,65 @@ export async function updateInquiryOutcome(id: string, newOutcome: string, reaso
   }
 }
 
+const stageSchema = z.enum(["NEW", "CLAIMED", "CONTACTED", "QUALIFIED", "OFFER_SENT", "COLD"]);
+
+/**
+ * Manually move an inquiry to a pipeline stage (creates STAGE_CHANGE event).
+ * CONVERTED is not settable here — it's applied by the booking service when a
+ * booking is actually created from the lead.
+ */
+export async function updateInquiryStage(id: string, newStage: string) {
+  try {
+    const adminAuth = await getAdminSession();
+    if (adminAuth.error !== undefined) {
+      return { success: false, error: adminAuth.error };
+    }
+    const session = adminAuth.session;
+
+    const parsedStage = stageSchema.safeParse(newStage);
+    if (!parsedStage.success) {
+      return { success: false, error: "Invalid stage" };
+    }
+
+    const [existing] = await db
+      .select({ stage: inquiryTable.stage, outcome: inquiryTable.outcome })
+      .from(inquiryTable)
+      .where(eq(inquiryTable.id, id));
+
+    if (!existing) {
+      return { success: false, error: "Inquiry not found" };
+    }
+    if (existing.outcome !== "OPEN") {
+      return { success: false, error: "Reopen the inquiry before changing its stage" };
+    }
+    if (existing.stage === parsedStage.data) {
+      return { success: true, inquiry: null };
+    }
+
+    const [result] = await db
+      .update(inquiryTable)
+      .set({ stage: parsedStage.data, updatedAt: new Date() })
+      .where(eq(inquiryTable.id, id))
+      .returning();
+
+    await db.insert(inquiryEvents).values({
+      inquiryId: id,
+      eventType: "STAGE_CHANGE",
+      previousStage: existing.stage as InquiryStage,
+      newStage: parsedStage.data as InquiryStage,
+      createdBy: session.user.id,
+    });
+
+    revalidatePath("/admin/inquiries");
+    revalidatePath(`/admin/inquiries/${id}`);
+
+    return { success: true, inquiry: result };
+  } catch (error) {
+    console.error("Error updating inquiry stage:", error);
+    return { success: false, error: "Failed to update inquiry stage" };
+  }
+}
+
 /**
  * Add a note to an inquiry (creates NOTE event)
  */

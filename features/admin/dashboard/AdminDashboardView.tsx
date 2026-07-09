@@ -12,39 +12,31 @@ import {
   isSameDay,
   startOfDay,
 } from "date-fns";
-import { Archive, CheckCircle2, UserPlus, Users } from "lucide-react";
+import { Archive, CheckCircle2 } from "lucide-react";
 
 import { NewBookingModal } from "@/features/bookings/components/admin/new-booking-modal";
 import type { PricingTierOption } from "@/features/bookings/components/admin/booking-forms/types";
 import type { DashboardHeadlineMetrics } from "@/features/admin/dashboard";
 import type { BookingListItem } from "@/features/bookings/booking.types";
 import type { InquiryListItem } from "@/features/inquiries/inquiry.types";
-import { assignInquiry, updateInquiryOutcome } from "@/features/inquiries/inquiry.actions";
+import { updateInquiryOutcome } from "@/features/inquiries/inquiry.actions";
+import {
+  AssignInquiryMenu,
+  type AdminOption,
+} from "@/features/inquiries/components/AssignInquiryMenu";
+import {
+  LEAD_TYPE_BADGES,
+  SOURCE_LABELS,
+  leadTripSummary,
+} from "@/features/inquiries/inquiry-ui";
 import { cn } from "@/shared/lib/utils/general-utils";
-import { formatPlainDate } from "@/shared/lib/utils/general-utils";
 import {
   formatCentsAsCurrency,
   formatCentsAsWholeDollars,
 } from "@/shared/lib/utils/money-utils";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
 import { useToast } from "@/shared/lib/hooks/use-toast";
 
-export type AdminOption = {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string;
-  username: string | null;
-  profileImage: string | null;
-};
+export type { AdminOption };
 
 interface AdminDashboardViewProps {
   firstName: string | null;
@@ -55,18 +47,6 @@ interface AdminDashboardViewProps {
   admins: AdminOption[];
 }
 
-function adminName(a: AdminOption) {
-  return [a.firstName, a.lastName].filter(Boolean).join(" ") || a.email;
-}
-
-function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("");
-}
-
 /** $12.4K / $1.65M — compact money for dense rows. */
 function formatCentsCompact(cents: number) {
   const dollars = cents / 100;
@@ -75,55 +55,6 @@ function formatCentsCompact(cents: number) {
   }
   if (dollars >= 10_000) return `$${(dollars / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
   return formatCentsAsWholeDollars(cents);
-}
-
-const LEAD_TYPE_BADGES: Record<string, { label: string; className: string }> = {
-  GENERAL_QUOTE: { label: "General", className: "bg-muted text-muted-foreground" },
-  BOAT_REQUEST: { label: "Boat", className: "bg-primary/10 text-primary" },
-  TERM_CHARTER: {
-    label: "Term",
-    className: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  },
-  MANUAL: { label: "Manual", className: "bg-muted text-muted-foreground" },
-};
-
-const SOURCE_LABELS: Record<string, string> = {
-  HOME_PAGE: "Home page",
-  BOAT_PAGE: "Boat page",
-  CONTACT_PAGE: "Contact page",
-  TERM_CHARTER_PAGE: "Term charter page",
-  PHONE: "Phone",
-  INSTAGRAM: "Instagram",
-  WHATSAPP: "WhatsApp",
-  ADMIN: "Admin",
-  BROKER: "Broker",
-  OTHER: "Other",
-};
-
-const TIME_OF_DAY_LABELS: Record<string, string> = {
-  MORNING: "Morning",
-  AFTERNOON: "Afternoon",
-  EVENING: "Evening",
-  FLEXIBLE: "Flexible",
-};
-
-/** "Aug 15 · Afternoon" / "Aug 15, 2:00 PM · 7+ days · Bahamas" — trip intent, best fidelity available. */
-function leadTripSummary(lead: InquiryListItem): string | null {
-  const parts: string[] = [];
-  if (lead.requestedStartDateTime) {
-    parts.push(format(new Date(lead.requestedStartDateTime), "MMM d, h:mm a"));
-  } else if (lead.preferredDate) {
-    parts.push(formatPlainDate(lead.preferredDate));
-    if (lead.preferredTimeOfDay) {
-      parts.push(TIME_OF_DAY_LABELS[lead.preferredTimeOfDay] ?? lead.preferredTimeOfDay);
-    }
-  } else if (lead.date) {
-    parts.push(format(new Date(lead.date), "MMM d"));
-  }
-  if (lead.requestedDurationDays) parts.push(`${lead.requestedDurationDays}+ days`);
-  if (lead.destination) parts.push(lead.destination);
-  if (lead.guests) parts.push(`${lead.guests} guests`);
-  return parts.length > 0 ? parts.join(" · ") : null;
 }
 
 export function AdminDashboardView({
@@ -378,7 +309,7 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
 
       {/* Actions */}
       <div className="relative z-10 flex items-center gap-1.5 sm:justify-end">
-        <AssignMenu inquiryId={lead.id} admins={admins} />
+        <AssignInquiryMenu inquiryId={lead.id} admins={admins} />
         <ArchiveButton inquiryId={lead.id} />
       </div>
     </li>
@@ -416,57 +347,3 @@ function ArchiveButton({ inquiryId }: { inquiryId: string }) {
   );
 }
 
-function AssignMenu({ inquiryId, admins }: { inquiryId: string; admins: AdminOption[] }) {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [pending, setPending] = useState(false);
-
-  async function assign(admin: AdminOption) {
-    setPending(true);
-    const res = await assignInquiry(inquiryId, admin.id);
-    setPending(false);
-    if (res.success) {
-      toast({ title: `Assigned to ${adminName(admin)} ✓` });
-      router.refresh();
-    } else {
-      toast({
-        title: "Couldn't assign",
-        description: res.error,
-        variant: "destructive",
-      });
-    }
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          disabled={pending || admins.length === 0}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium transition-colors hover:bg-muted disabled:opacity-50"
-        >
-          <UserPlus className="h-3.5 w-3.5" />
-          {pending ? "Assigning…" : "Assign"}
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Users className="h-3.5 w-3.5" /> Assign to
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {admins.map((admin) => {
-          const name = adminName(admin);
-          return (
-            <DropdownMenuItem key={admin.id} onSelect={() => assign(admin)} className="gap-2">
-              <Avatar className="h-6 w-6">
-                {admin.profileImage ? <AvatarImage src={admin.profileImage} alt={name} /> : null}
-                <AvatarFallback className="text-[10px]">{initials(name)}</AvatarFallback>
-              </Avatar>
-              <span className="truncate">{name}</span>
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}

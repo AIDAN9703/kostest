@@ -3,16 +3,9 @@ import {
   ArrowRightLeft,
   FileText,
   Phone,
-  Circle,
+  UserPlus,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/components/ui/card";
-import { formatDate } from "@/shared/lib/utils/general-utils";
+import { formatDateTime } from "@/shared/lib/utils/general-utils";
 import type { InquiryEvent } from "@/database/types";
 
 interface InquiryTimelineProps {
@@ -26,43 +19,21 @@ interface InquiryTimelineProps {
   actions?: React.ReactNode;
 }
 
-const EVENT_CONFIG: Record<
-  string,
-  { icon: React.ElementType; label: string; color: string }
-> = {
-  CREATED: {
-    icon: MessageSquare,
-    label: "Inquiry created",
-    color: "text-primary",
-  },
-  STAGE_CHANGE: {
-    icon: ArrowRightLeft,
-    label: "Stage changed",
-    color: "text-purple-600",
-  },
-  OUTCOME_CHANGE: {
-    icon: ArrowRightLeft,
-    label: "Outcome changed",
-    color: "text-purple-600",
-  },
-  NOTE: {
-    icon: FileText,
-    label: "Note added",
-    color: "text-amber-600",
-  },
-  CONTACT_ATTEMPT: {
-    icon: Phone,
-    label: "Contact",
-    color: "text-emerald-600",
-  },
+const EVENT_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string }> = {
+  CREATED: { icon: MessageSquare, label: "Inquiry received", color: "text-primary" },
+  STAGE_CHANGE: { icon: ArrowRightLeft, label: "Stage changed", color: "text-violet-600 dark:text-violet-400" },
+  OUTCOME_CHANGE: { icon: ArrowRightLeft, label: "Outcome changed", color: "text-violet-600 dark:text-violet-400" },
+  NOTE: { icon: FileText, label: "Note", color: "text-amber-600 dark:text-amber-400" },
+  CONTACT_ATTEMPT: { icon: Phone, label: "Contact", color: "text-emerald-600 dark:text-emerald-400" },
+  ASSIGNED: { icon: UserPlus, label: "Assigned", color: "text-sky-600 dark:text-sky-400" },
 };
 
 const CONTACT_METHOD_LABELS: Record<string, string> = {
-  EMAIL: "Email",
-  PHONE: "Phone",
+  EMAIL: "email",
+  PHONE: "phone",
   SMS: "SMS",
-  IN_PERSON: "In person",
-  OTHER: "Other",
+  IN_PERSON: "in person",
+  OTHER: "other",
 };
 
 function formatStatus(s: string) {
@@ -74,118 +45,85 @@ function formatStatus(s: string) {
 
 export function InquiryTimeline({ events, actions }: InquiryTimelineProps) {
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Circle className="h-4 w-4" />
-              Activity Timeline
-            </CardTitle>
-            <CardDescription>
-              {events.length === 0
-                ? "No activity yet"
-                : `${events.length} event${events.length !== 1 ? "s" : ""}`}
-            </CardDescription>
-          </div>
-          {actions && (
-            <div className="flex flex-wrap gap-2 shrink-0">{actions}</div>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        {events.length === 0 ? (
-          <div className="py-12 text-center">
-            <p className="text-sm text-muted-foreground">
-              Activity will appear here when status changes, notes, or contacts
-              are logged.
-            </p>
-          </div>
-        ) : (
-          <div className="relative">
-            {/* Vertical line */}
-            <div className="absolute left-4 top-2 bottom-2 w-px bg-border" />
+    <section>
+      <div className="flex items-baseline justify-between gap-3 border-b border-border/60 pb-2.5">
+        <h2 className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+          Activity
+          {events.length > 0 ? (
+            <span className="ml-2 font-medium normal-case tracking-normal text-muted-foreground tabular-nums">
+              {events.length}
+            </span>
+          ) : null}
+        </h2>
+        {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
+      </div>
 
-            <div className="space-y-6">
-              {events.map((event) => {
-                const config = EVENT_CONFIG[event.eventType] || {
-                  ...EVENT_CONFIG.NOTE,
-                  label: event.eventType
-                    .replace(/_/g, " ")
-                    .toLowerCase()
-                    .replace(/\b\w/g, (c) => c.toUpperCase()),
-                };
-                const Icon = config.icon;
-                const createdBy =
-                  event.createdByUser?.firstName ||
-                  event.createdByUser?.lastName
-                    ? `${event.createdByUser.firstName || ""} ${event.createdByUser.lastName || ""}`.trim()
-                    : event.createdByUser?.email || "System";
+      {events.length === 0 ? (
+        <p className="py-8 text-sm text-muted-foreground">
+          Notes, contact attempts, and status changes will appear here.
+        </p>
+      ) : (
+        <div className="relative pt-4">
+          <div className="absolute bottom-3 left-[13px] top-6 w-px bg-border/60" />
+          <div className="flex flex-col gap-5">
+            {events.map((event) => {
+              const config = EVENT_CONFIG[event.eventType] || {
+                ...EVENT_CONFIG.NOTE,
+                label: formatStatus(event.eventType),
+              };
+              const Icon = config.icon;
+              const createdBy =
+                event.createdByUser?.firstName || event.createdByUser?.lastName
+                  ? `${event.createdByUser.firstName || ""} ${event.createdByUser.lastName || ""}`.trim()
+                  : event.createdByUser?.email || "System";
 
-                return (
-                  <div key={event.id} className="relative flex gap-4 pl-2">
-                    <div
-                      className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted ${config.color}`}
-                    >
-                      <Icon className="h-4 w-4" />
-                    </div>
+              return (
+                <div key={event.id} className="relative flex gap-3.5">
+                  <div
+                    className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border/60 bg-background ${config.color}`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                  </div>
 
-                    <div className="flex-1 min-w-0 pb-6">
-                      <div className="flex flex-wrap items-center gap-2 text-sm">
-                        <span className="font-medium text-foreground">
-                          {config.label}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {formatDate(event.createdAt)}
-                        </span>
-                        <span className="text-muted-foreground">•</span>
-                        <span className="text-xs text-muted-foreground">
-                          {createdBy}
-                        </span>
-                      </div>
-
+                  <div className="min-w-0 flex-1 pb-1">
+                    <div className="flex flex-wrap items-baseline gap-x-2 text-sm">
+                      <span className="font-medium">{config.label}</span>
                       {event.eventType === "STAGE_CHANGE" &&
                         event.previousStage &&
                         event.newStage && (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {formatStatus(event.previousStage)} →{" "}
-                            {formatStatus(event.newStage)}
-                          </p>
+                          <span className="text-muted-foreground">
+                            {formatStatus(event.previousStage)} → {formatStatus(event.newStage)}
+                          </span>
                         )}
-
                       {event.eventType === "OUTCOME_CHANGE" &&
                         event.previousOutcome &&
                         event.newOutcome && (
-                          <p className="mt-1 text-sm text-muted-foreground">
+                          <span className="text-muted-foreground">
                             {formatStatus(event.previousOutcome)} →{" "}
                             {formatStatus(event.newOutcome)}
-                          </p>
+                          </span>
                         )}
-
-                      {event.eventType === "CONTACT_ATTEMPT" &&
-                        event.contactMethod && (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            Via{" "}
-                            {CONTACT_METHOD_LABELS[event.contactMethod] ||
-                              event.contactMethod}
-                          </p>
-                        )}
-
-                      {event.content && (
-                        <div className="mt-2 rounded-lg bg-muted/50 px-3 py-2">
-                          <p className="text-sm text-foreground whitespace-pre-wrap">
-                            {event.content}
-                          </p>
-                        </div>
+                      {event.eventType === "CONTACT_ATTEMPT" && event.contactMethod && (
+                        <span className="text-muted-foreground">
+                          via {CONTACT_METHOD_LABELS[event.contactMethod] || event.contactMethod}
+                        </span>
                       )}
                     </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {formatDateTime(event.createdAt)} · {createdBy}
+                    </p>
+                    {event.content && (
+                      <p className="mt-1.5 whitespace-pre-wrap rounded-lg bg-muted/50 px-3 py-2 text-sm">
+                        {event.content}
+                      </p>
+                    )}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              );
+            })}
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </section>
   );
 }

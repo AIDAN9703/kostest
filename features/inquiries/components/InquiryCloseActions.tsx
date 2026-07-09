@@ -102,39 +102,44 @@ export function InquiryCloseActions({
   return (
     <>
       {/* Close Inquiry Section */}
-      <div className="rounded-xl border border-border/60 bg-muted/20 p-4">
-        <p className="text-sm font-medium mb-3">Close Inquiry</p>
-        <div className="flex flex-wrap gap-2">
+      <section>
+        <h2 className="border-b border-border/60 pb-2.5 text-[11px] font-semibold uppercase tracking-[0.16em]">
+          Close out
+        </h2>
+        <div className="flex flex-col gap-2 pt-3">
           <Button
             size="sm"
             onClick={() => setShowCloseDialog("won")}
             disabled={loading !== null}
-            className="gap-2 bg-green-600 text-white shadow-sm hover:bg-green-700"
+            className="justify-start gap-2 rounded-lg bg-green-600 text-white shadow-sm hover:bg-green-700"
           >
             <CheckCircle2 className="h-4 w-4" />
             Create a Booking
           </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowCloseDialog("lost")}
-            disabled={loading !== null}
-            className="gap-2"
-          >
-            <XCircle className="h-4 w-4" />
-            Mark as Lost
-          </Button>
-          <Button
-            size="sm"
-            onClick={() => setShowCloseDialog("abandoned")}
-            disabled={loading !== null}
-            className="gap-2 bg-slate-600 text-white shadow-sm hover:bg-slate-700"
-          >
-            <PauseCircle className="h-4 w-4" />
-            Mark as Abandoned
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCloseDialog("lost")}
+              disabled={loading !== null}
+              className="flex-1 justify-start gap-2 rounded-lg text-red-600 hover:bg-red-500/10 hover:text-red-700 dark:text-red-400"
+            >
+              <XCircle className="h-4 w-4" />
+              Lost
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCloseDialog("abandoned")}
+              disabled={loading !== null}
+              className="flex-1 justify-start gap-2 rounded-lg text-muted-foreground hover:text-foreground"
+            >
+              <PauseCircle className="h-4 w-4" />
+              Archive
+            </Button>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* Create booking (marks inquiry as won, then pre-filled booking form) */}
       <Dialog
