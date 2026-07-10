@@ -37,13 +37,41 @@ export function InquiriesList({ inquiries }: InquiriesListProps) {
           </p>
         </div>
       ) : (
-        <ul className="divide-y divide-border/50">
-          {inquiries.map((inquiry) => (
-            <InquiryRow key={inquiry.id} inquiry={inquiry} />
-          ))}
-        </ul>
+        <>
+          {/* Column labels — same grid template as the rows below. */}
+          <div className="hidden gap-x-5 border-b border-border/60 bg-muted/30 px-4 py-2 sm:px-5 lg:grid lg:grid-cols-[minmax(0,4.5fr)_minmax(0,5.5fr)_minmax(0,2.2fr)_minmax(0,2.2fr)]">
+            <ColumnLabel>Lead</ColumnLabel>
+            <ColumnLabel>Trip request</ColumnLabel>
+            <ColumnLabel className="text-right">Value / Stage</ColumnLabel>
+            <ColumnLabel className="text-right">Assigned to</ColumnLabel>
+          </div>
+          <ul className="divide-y divide-border/50">
+            {inquiries.map((inquiry) => (
+              <InquiryRow key={inquiry.id} inquiry={inquiry} />
+            ))}
+          </ul>
+        </>
       )}
     </div>
+  );
+}
+
+function ColumnLabel({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground",
+        className
+      )}
+    >
+      {children}
+    </span>
   );
 }
 
