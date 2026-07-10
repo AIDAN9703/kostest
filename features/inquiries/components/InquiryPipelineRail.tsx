@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import { Check, Snowflake } from "lucide-react";
 
 import { updateInquiryStage } from "@/features/inquiries/inquiry.actions";
+import { AssignInquiryMenu } from "./AssignInquiryMenu";
 import {
-  AssignInquiryMenu,
   adminDisplayName,
   adminInitials,
   type AdminOption,
-} from "./AssignInquiryMenu";
+} from "@/features/inquiries/inquiry-ui";
 import type { InquiryAssignee } from "@/features/inquiries/inquiry.service";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { useToast } from "@/shared/lib/hooks/use-toast";

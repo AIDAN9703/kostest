@@ -10,9 +10,10 @@ import {
   SOURCE_LABELS,
   STAGE_CHIP_CLASSES,
   STAGE_LABELS,
+  adminDisplayName,
+  adminInitials,
   leadTripSummary,
 } from "@/features/inquiries/inquiry-ui";
-import { adminDisplayName, adminInitials } from "./AssignInquiryMenu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { cn } from "@/shared/lib/utils/general-utils";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";

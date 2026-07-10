@@ -5,7 +5,32 @@ import { formatPlainDate } from "@/shared/lib/utils/general-utils";
  * Shared display vocabulary for inquiries — one source of truth for badges,
  * labels, and the trip-intent summary used on the dashboard, the inquiries
  * list, and the inquiry detail page.
+ *
+ * This module is server-safe: no "use client". Pure helpers live here so both
+ * Server Components and client components can call them.
  */
+
+/** Minimal admin identity used for assignment UI. */
+export type AdminOption = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  username?: string | null;
+  profileImage: string | null;
+};
+
+export function adminDisplayName(a: Pick<AdminOption, "firstName" | "lastName" | "email">) {
+  return [a.firstName, a.lastName].filter(Boolean).join(" ") || a.email;
+}
+
+export function adminInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
+}
 
 export const LEAD_TYPE_BADGES: Record<string, { label: string; className: string }> = {
   GENERAL_QUOTE: { label: "General", className: "bg-muted text-muted-foreground" },

@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { UserPlus, Users, X } from "lucide-react";
 
 import { assignInquiry } from "@/features/inquiries/inquiry.actions";
+import {
+  adminDisplayName,
+  adminInitials,
+  type AdminOption,
+} from "@/features/inquiries/inquiry-ui";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import {
   DropdownMenu,
@@ -16,27 +21,6 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { useToast } from "@/shared/lib/hooks/use-toast";
 import { cn } from "@/shared/lib/utils/general-utils";
-
-export type AdminOption = {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string;
-  username?: string | null;
-  profileImage: string | null;
-};
-
-export function adminDisplayName(a: AdminOption) {
-  return [a.firstName, a.lastName].filter(Boolean).join(" ") || a.email;
-}
-
-export function adminInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase() ?? "")
-    .join("");
-}
 
 interface AssignInquiryMenuProps {
   inquiryId: string;

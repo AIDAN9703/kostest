@@ -20,14 +20,12 @@ import type { DashboardHeadlineMetrics } from "@/features/admin/dashboard";
 import type { BookingListItem } from "@/features/bookings/booking.types";
 import type { InquiryListItem } from "@/features/inquiries/inquiry.types";
 import { updateInquiryOutcome } from "@/features/inquiries/inquiry.actions";
-import {
-  AssignInquiryMenu,
-  type AdminOption,
-} from "@/features/inquiries/components/AssignInquiryMenu";
+import { AssignInquiryMenu } from "@/features/inquiries/components/AssignInquiryMenu";
 import {
   LEAD_TYPE_BADGES,
   SOURCE_LABELS,
   leadTripSummary,
+  type AdminOption,
 } from "@/features/inquiries/inquiry-ui";
 import { cn } from "@/shared/lib/utils/general-utils";
 import {
