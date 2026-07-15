@@ -1,6 +1,12 @@
 # Marketplace Lead Ingestion Plan
 
-**Created:** 2026-07-10 · **Status:** Designed, not started · **Depends on:** unified inquiry table (done)
+**Created:** 2026-07-10 · **Status:** Code complete (2026-07-12) — Phases 1–3 built.
+**Remaining:** owner runs `drizzle-kit generate` + migrate; set `RESEND_INBOUND_WEBHOOK_SECRET`
+(+ optional `ANTHROPIC_API_KEY` for the LLM fallback) in env; deploy; Phase 5 verification.
+Built: enums + `inbound_email` table (`database/schema/tables/inboundEmails.table.ts`),
+webhook route (`app/api/inbound-email/route.ts`, svix signature verify + dedupe),
+parser (`features/inquiries/services/inbound-lead.service.ts`, template-first with
+Claude Haiku structured-output fallback), UI badges/labels.
 
 Pull Boatsetter / GetMyBoat (and any future marketplace) inquiry notifications into the
 unified `inquiry` pipeline automatically, via inbound email — the "unified inbox" made real.

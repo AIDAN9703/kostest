@@ -33,4 +33,5 @@ export * from "./boatExternalCalendarEvent.table";
 export * from "./addOns.table";
 export * from "./boatAddOns.table";
 export * from "./appSettings.table";
+export * from "./inboundEmails.table";
 

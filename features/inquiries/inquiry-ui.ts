@@ -40,6 +40,10 @@ export const LEAD_TYPE_BADGES: Record<string, { label: string; className: string
     className: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
   },
   MANUAL: { label: "Manual", className: "bg-muted text-muted-foreground" },
+  MARKETPLACE: {
+    label: "Marketplace",
+    className: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
+  },
 };
 
 export const SOURCE_LABELS: Record<string, string> = {
@@ -52,6 +56,8 @@ export const SOURCE_LABELS: Record<string, string> = {
   WHATSAPP: "WhatsApp",
   ADMIN: "Admin",
   BROKER: "Broker",
+  BOATSETTER: "Boatsetter",
+  GETMYBOAT: "GetMyBoat",
   OTHER: "Other",
 };
 

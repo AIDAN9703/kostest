@@ -6,6 +6,7 @@ export const inquiryLeadTypeEnum = pgEnum("InquiryLeadType", [
   "BOAT_REQUEST",
   "TERM_CHARTER",
   "MANUAL",
+  "MARKETPLACE", // ingested from a marketplace notification email (no internal boatId)
 ]);
 
 /** Where the lead originated. */
@@ -19,7 +20,18 @@ export const inquirySourceEnum = pgEnum("InquirySource", [
   "WHATSAPP",
   "ADMIN",
   "BROKER",
+  "BOATSETTER",
+  "GETMYBOAT",
   "OTHER",
+]);
+
+/** Lifecycle of an ingested marketplace notification email. */
+export const inboundEmailParseStatusEnum = pgEnum("InboundEmailParseStatus", [
+  "PENDING", // stored raw, not yet parsed
+  "PARSED", // template parser succeeded
+  "FALLBACK_LLM", // LLM extraction produced the lead
+  "FAILED", // could not parse — minimal needs-review lead created
+  "IGNORED", // sender not a known marketplace
 ]);
 
 /**
