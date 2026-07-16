@@ -12,10 +12,7 @@ import { cn, formatCurrency } from "@/shared/lib/utils/general-utils";
 import { updateAppSettings } from "@/features/app-settings/app-settings.mutations";
 import { formatBpsAsPercent } from "@/features/app-settings/app-settings.config";
 import type { AppSettings } from "@/features/app-settings/app-settings.types";
-import {
-  AdminAccentThemeSelect,
-  AdminAppearanceSelect,
-} from "@/features/app-settings/components/AdminThemeSettings";
+import { AdminAppearanceSelect } from "@/features/app-settings/components/AdminThemeSettings";
 
 type SectionId = "payments" | "theme";
 
@@ -155,12 +152,6 @@ export function AdminSettingsClient({ settings }: { settings: AppSettings }) {
                     description="Light or dark mode for the admin panel. System follows your device setting."
                   >
                     <AdminAppearanceSelect />
-                  </SettingRow>
-                  <SettingRow
-                    label="Accent color"
-                    description="Primary accent used on buttons, links, and highlights across the admin UI."
-                  >
-                    <AdminAccentThemeSelect />
                   </SettingRow>
                 </>
               )}

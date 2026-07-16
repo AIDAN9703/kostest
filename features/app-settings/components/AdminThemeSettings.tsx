@@ -4,12 +4,6 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 
 import {
-  useAdminAccentTheme,
-  type AdminAccentTheme,
-} from "@/shared/admin/admin-accent-theme";
-import { ADMIN_ACCENT_THEME_OPTIONS } from "@/shared/admin/admin-accent-theme.config";
-import { adminShellClassName } from "@/shared/admin/admin-shell-classes";
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -43,24 +37,3 @@ export function AdminAppearanceSelect() {
   );
 }
 
-export function AdminAccentThemeSelect() {
-  const { activeTheme, setActiveTheme } = useAdminAccentTheme();
-
-  return (
-    <Select
-      value={activeTheme}
-      onValueChange={(value) => setActiveTheme(value as AdminAccentTheme)}
-    >
-      <SelectTrigger className="w-40 rounded-xl">
-        <SelectValue placeholder="Select accent" />
-      </SelectTrigger>
-      <SelectContent align="end" className={adminShellClassName(activeTheme)}>
-        {ADMIN_ACCENT_THEME_OPTIONS.map((theme) => (
-          <SelectItem key={theme.value} value={theme.value}>
-            {theme.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}

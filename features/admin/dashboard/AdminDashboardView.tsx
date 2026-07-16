@@ -97,9 +97,8 @@ export function AdminDashboardView({
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    /* Inverted canvas, scoped to this page: cancel the admin shell's padding
-       with negative margins and repaint it gray so white cards sit on top. */
-    <div className="-m-4 flex min-h-[calc(100%+2rem)] w-auto flex-col gap-8 bg-muted/50 p-4 pb-14 md:-m-6 md:min-h-[calc(100%+3rem)] md:p-6 md:pb-16">
+    /* The gray canvas comes from the theme's --color-background now. */
+    <div className="flex w-full flex-1 flex-col gap-8 pb-14">
       {/* ── Header ─────────────────────────────────────────────── */}
       <header className="flex flex-wrap items-center justify-between gap-4 pt-1">
         <div className="min-w-0">

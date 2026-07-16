@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 
 import {
   adminShellClassName,
-  readAdminAccentFromDom,
+  isAdminShellActive,
 } from "@/shared/admin/admin-shell-classes";
 import { cn } from "@/shared/lib/utils/general-utils";
 
@@ -41,22 +41,7 @@ const DialogContent = React.forwardRef<
   const [adminShellClasses, setAdminShellClasses] = React.useState("");
 
   React.useEffect(() => {
-    const root = document.querySelector("[data-admin-theme]");
-    if (!root) {
-      setAdminShellClasses("");
-      return;
-    }
-
-    const syncShellClasses = () => {
-      const accent = readAdminAccentFromDom();
-      setAdminShellClasses(accent ? adminShellClassName(accent) : "");
-    };
-
-    syncShellClasses();
-
-    const observer = new MutationObserver(syncShellClasses);
-    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
-    return () => observer.disconnect();
+    setAdminShellClasses(isAdminShellActive() ? adminShellClassName() : "");
   }, []);
 
   return (

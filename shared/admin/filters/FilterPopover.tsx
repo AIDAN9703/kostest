@@ -8,7 +8,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/shared/components/ui/popover";
-import { useAdminAccentTheme } from "@/shared/admin/admin-accent-theme";
 import { cn } from "@/shared/lib/utils/general-utils";
 
 interface FilterPopoverProps {
@@ -34,7 +33,6 @@ export function FilterPopover({
   contentClassName,
 }: FilterPopoverProps) {
   const [open, setOpen] = useState(false);
-  const { activeTheme } = useAdminAccentTheme();
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -56,10 +54,7 @@ export function FilterPopover({
       <PopoverContent
         align="end"
         sideOffset={6}
-        className={cn(
-          "admin-theme w-[min(95vw,560px)] bg-popover p-0 text-popover-foreground",
-          activeTheme && `theme-${activeTheme}`
-        )}
+        className={cn("admin-theme w-[min(95vw,560px)] bg-popover p-0 text-popover-foreground")}
       >
         <div
           className={cn(

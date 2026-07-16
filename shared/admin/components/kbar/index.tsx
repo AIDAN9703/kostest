@@ -14,7 +14,6 @@ import { useKBar, useRegisterActions } from 'kbar';
 import RenderResults from './render-result';
 import useThemeSwitching from './use-theme-switching';
 import { adminShellClassName } from '@/shared/admin/admin-shell-classes';
-import { useAdminAccentTheme } from '@/shared/admin/admin-accent-theme';
 
 export default function KBar({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -44,13 +43,12 @@ export default function KBar({ children }: { children: React.ReactNode }) {
 const KBarComponent = ({ children }: { children: React.ReactNode }) => {
   useThemeSwitching();
   useGlobalSearchActions();
-  const { activeTheme } = useAdminAccentTheme();
 
   return (
     <>
       <KBarPortal>
         <KBarPositioner
-          className={`${adminShellClassName(activeTheme)} bg-background/80 fixed inset-0 z-50 p-0 backdrop-blur-sm`}
+          className={`${adminShellClassName()} bg-background/80 fixed inset-0 z-50 p-0 backdrop-blur-sm`}
         >
           <KBarAnimator className='bg-background text-foreground relative mt-64 w-full max-w-[600px] -translate-y-12 overflow-hidden rounded-lg border border-border shadow-lg'>
             <div className='bg-background border-border sticky top-0 z-10 border-b'>

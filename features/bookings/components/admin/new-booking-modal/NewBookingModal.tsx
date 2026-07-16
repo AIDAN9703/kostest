@@ -26,7 +26,6 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 import { cn, formatCurrency } from "@/shared/lib/utils/general-utils";
-import { useAdminAccentTheme } from "@/shared/admin/admin-accent-theme";
 import { useToast } from "@/shared/lib/hooks/use-toast";
 import { useUser } from "@/features/users/hooks/useUsers";
 
@@ -121,7 +120,6 @@ function NewBookingDialog({
 }) {
   const router = useRouter();
   const { toast } = useToast();
-  const { activeTheme } = useAdminAccentTheme();
   const [pending, startTransition] = useTransition();
 
   const [step, setStep] = useState(0); // 0..2, then success
@@ -291,7 +289,6 @@ function NewBookingDialog({
       <DialogContent
         className={cn(
           "admin-theme",
-          `theme-${activeTheme}`,
           "flex max-h-[90vh] w-full max-w-3xl flex-col gap-0 overflow-hidden p-0"
         )}
       >
