@@ -658,6 +658,160 @@ export async function reopenInquiry(inquiryId: string) {
 }
 
 /**
+ * Claim an inquiry: assign it to the calling admin in one tap and move a
+ * fresh lead to CLAIMED. Logs an ASSIGNED event (content "Claimed by …").
+ */
+export async function claimInquiry(inquiryId: string) {
+  try {
+    const adminAuth = await getAdminSession();
+    if (adminAuth.error !== undefined) {
+      return { success: false, error: adminAuth.error };
+    }
+    const session = adminAuth.session;
+
+    const [inquiryRow] = await db
+      .select({
+        assignedTo: inquiryTable.assignedTo,
+        stage: inquiryTable.stage,
+        outcome: inquiryTable.outcome,
+      })
+      .from(inquiryTable)
+      .where(eq(inquiryTable.id, inquiryId));
+
+    if (!inquiryRow) {
+      return { success: false, error: "Inquiry not found" };
+    }
+    if (inquiryRow.outcome !== "OPEN") {
+      return { success: false, error: "This inquiry is closed" };
+    }
+    if (inquiryRow.assignedTo && inquiryRow.assignedTo !== session.user.id) {
+      return { success: false, error: "Already claimed by someone else — use Reassign" };
+    }
+
+    const isFresh = inquiryRow.stage === "NEW" || inquiryRow.stage === "NEEDS_CONTACT";
+
+    await db
+      .update(inquiryTable)
+      .set({
+        assignedTo: session.user.id,
+        ...(isFresh ? { stage: "CLAIMED" as const } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(inquiryTable.id, inquiryId));
+
+    const claimerName = session.user.name || session.user.email || "admin";
+
+    await db.insert(inquiryEvents).values({
+      inquiryId,
+      eventType: "ASSIGNED",
+      content: `Claimed by ${claimerName}`,
+      createdBy: session.user.id,
+      metadata: { assignedTo: session.user.id, claimed: true },
+    });
+
+    if (isFresh) {
+      await db.insert(inquiryEvents).values({
+        inquiryId,
+        eventType: "STAGE_CHANGE",
+        previousStage: inquiryRow.stage as InquiryStage,
+        newStage: "CLAIMED",
+        createdBy: session.user.id,
+      });
+    }
+
+    revalidatePath("/admin");
+    revalidatePath("/admin/inquiries");
+    revalidatePath(`/admin/inquiries/${inquiryId}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error claiming inquiry:", error);
+    return { success: false, error: "Failed to claim inquiry" };
+  }
+}
+
+const manualLeadSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: emailSchema.optional().or(z.literal("")),
+  phone: z.string().optional(),
+  source: z.enum(["PHONE", "INSTAGRAM", "WHATSAPP", "BROKER", "OTHER"]),
+  date: z.string().optional(),
+  timeOfDay: preferredTimeOfDaySchema.optional(),
+  guests: z.string().optional(),
+  budget: z.string().optional(),
+  message: z.string().optional(),
+});
+
+export type ManualLeadInput = z.input<typeof manualLeadSchema>;
+
+/**
+ * Admin logs a lead that arrived outside the website — phone call, Instagram
+ * DM, WhatsApp, broker referral. Auto-claimed by the creator (they took the
+ * call), so it lands in the pipeline already owned.
+ */
+export async function createManualLead(data: ManualLeadInput) {
+  try {
+    const adminAuth = await getAdminSession();
+    if (adminAuth.error !== undefined) {
+      return { success: false, error: adminAuth.error };
+    }
+    const session = adminAuth.session;
+
+    const validated = manualLeadSchema.parse(data);
+    if (!validated.email && !validated.phone?.trim()) {
+      return { success: false, error: "Provide at least an email or a phone number" };
+    }
+
+    const [created] = await db
+      .insert(inquiryTable)
+      .values({
+        name: validated.name,
+        email: validated.email || "",
+        phone: validated.phone?.trim() || "",
+        preferredDate: validated.date || null,
+        preferredTimeOfDay:
+          validated.timeOfDay ?? (validated.date ? "FLEXIBLE" : null),
+        guests: parseGuests(validated.guests),
+        budget: validated.budget || null,
+        budgetCents: parseBudgetCents(validated.budget),
+        message: validated.message || null,
+        stage: "CLAIMED",
+        outcome: "OPEN",
+        leadType: "MANUAL",
+        source: validated.source,
+        assignedTo: session.user.id,
+        termsAccepted: false,
+        smsConsent: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+
+    await db.insert(inquiryEvents).values({
+      inquiryId: created.id,
+      eventType: "CREATED",
+      createdBy: session.user.id,
+      metadata: { manual: true, source: validated.source },
+    });
+
+    revalidatePath("/admin/inquiries");
+    revalidatePath("/admin");
+
+    return { success: true, inquiry: created };
+  } catch (error) {
+    console.error("Error creating manual lead:", error);
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        error: "Invalid lead data",
+        fieldErrors: error.flatten().fieldErrors,
+      };
+    }
+    return { success: false, error: "Failed to create lead" };
+  }
+}
+
+/**
  * Assign (or unassign) an inquiry to an admin. Pass `adminId = null` to unassign.
  * Logs an ASSIGNED event to the timeline so nothing slips through unnoticed.
  */

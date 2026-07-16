@@ -3,6 +3,7 @@ import { inquiryService } from "@/features/inquiries/inquiry.service";
 import { inquirySearchParamsCache } from "@/features/inquiries/searchParams";
 import { InquiriesToolbar } from "@/features/inquiries/components/InquiriesToolbar";
 import { InquiriesList } from "@/features/inquiries/components/InquiriesList";
+import { NewLeadDialog } from "@/features/inquiries/components/NewLeadDialog";
 import { AdminInquiryTablePagination } from "@/features/inquiries/components/AdminInquiryTablePagination";
 import { SearchParams } from "next/dist/server/request/search-params";
 
@@ -44,6 +45,7 @@ export default async function InquiriesPage({
             {result.totalCount === 1 ? "inquiry" : "inquiries"}
           </p>
         </div>
+        <NewLeadDialog />
       </header>
 
       {/* Toolbar */}

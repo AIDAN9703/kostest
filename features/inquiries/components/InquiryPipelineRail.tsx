@@ -6,6 +6,7 @@ import { Check, Snowflake } from "lucide-react";
 
 import { updateInquiryStage } from "@/features/inquiries/inquiry.actions";
 import { AssignInquiryMenu } from "./AssignInquiryMenu";
+import { ClaimInquiryButton } from "./ClaimInquiryButton";
 import {
   adminDisplayName,
   adminInitials,
@@ -93,6 +94,7 @@ export function InquiryPipelineRail({
               Unassigned
             </span>
           )}
+          {!assignee && isOpen ? <ClaimInquiryButton inquiryId={inquiryId} /> : null}
           <AssignInquiryMenu
             inquiryId={inquiryId}
             admins={admins}

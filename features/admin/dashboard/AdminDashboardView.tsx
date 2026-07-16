@@ -21,6 +21,7 @@ import type { BookingListItem } from "@/features/bookings/booking.types";
 import type { InquiryListItem } from "@/features/inquiries/inquiry.types";
 import { updateInquiryOutcome } from "@/features/inquiries/inquiry.actions";
 import { AssignInquiryMenu } from "@/features/inquiries/components/AssignInquiryMenu";
+import { ClaimInquiryButton } from "@/features/inquiries/components/ClaimInquiryButton";
 import {
   LEAD_TYPE_BADGES,
   SOURCE_LABELS,
@@ -307,6 +308,7 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
 
       {/* Actions */}
       <div className="relative z-10 flex items-center gap-1.5 sm:justify-end">
+        <ClaimInquiryButton inquiryId={lead.id} />
         <AssignInquiryMenu inquiryId={lead.id} admins={admins} />
         <ArchiveButton inquiryId={lead.id} />
       </div>
