@@ -12,7 +12,7 @@ import {
   isSameDay,
   startOfDay,
 } from "date-fns";
-import { Anchor, Archive, HandCoins, Inbox, Landmark, Ship } from "lucide-react";
+import { Archive, CheckCircle2, Clock, Inbox, Ship } from "lucide-react";
 
 import { NewBookingModal } from "@/features/bookings/components/admin/new-booking-modal";
 import type { PricingTierOption } from "@/features/bookings/components/admin/booking-forms/types";
@@ -26,6 +26,8 @@ import {
   LEAD_TYPE_AVATAR_TINTS,
   LEAD_TYPE_BADGES,
   SOURCE_LABELS,
+  STAGE_CHIP_CLASSES,
+  STAGE_LABELS,
   adminInitials,
   leadTripSummary,
   type AdminOption,
@@ -44,6 +46,8 @@ interface AdminDashboardViewProps {
   pricingTiers: PricingTierOption[];
   unassignedLeads: InquiryListItem[];
   weeksBookings: BookingListItem[];
+  pendingBookings: BookingListItem[];
+  followUps: InquiryListItem[];
   metrics: DashboardHeadlineMetrics;
   admins: AdminOption[];
 }
@@ -58,11 +62,19 @@ function formatCentsCompact(cents: number) {
   return formatCentsAsWholeDollars(cents);
 }
 
+const CARD_CLASS = "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm";
+const CARD_HEADER_CLASS =
+  "flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-5 py-4";
+const PILL_LINK_CLASS =
+  "rounded-full bg-muted px-3.5 py-1.5 text-xs font-medium transition-colors hover:bg-muted/70";
+
 export function AdminDashboardView({
   firstName,
   pricingTiers,
   unassignedLeads,
   weeksBookings,
+  pendingBookings,
+  followUps,
   metrics,
   admins,
 }: AdminDashboardViewProps) {
@@ -70,6 +82,7 @@ export function AdminDashboardView({
     const start = startOfDay(new Date());
     return eachDayOfInterval({ start, end: addDays(start, 6) }).map((day) => ({
       day,
+      isToday: isSameDay(day, new Date()),
       trips: weeksBookings
         .filter((b) => isSameDay(new Date(b.startDateTime), day))
         .sort(
@@ -78,9 +91,9 @@ export function AdminDashboardView({
     }));
   }, [weeksBookings]);
 
-  const today = days[0];
-  const upcoming = days.slice(1);
-  const todayRevenue = today.trips.reduce((s, t) => s + (t.totalAmountCents ?? 0), 0);
+  const weekRevenue = weeksBookings.reduce((s, b) => s + (b.totalAmountCents ?? 0), 0);
+  const avgCharterCents =
+    metrics.tripsThisMonth > 0 ? Math.round(metrics.gmvMtdCents / metrics.tripsThisMonth) : 0;
 
   const hour = new Date().getHours();
   const greeting =
@@ -107,134 +120,130 @@ export function AdminDashboardView({
         />
       </header>
 
-      {/* ── Stat cards ─────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard
-          href="/admin/bookings"
-          icon={<Landmark className="h-4 w-4" />}
-          tint="bg-primary/12 text-primary"
-          value={formatCentsAsWholeDollars(metrics.gmvMtdCents)}
-          label={`${metrics.monthLabel} GMV`}
-        />
-        <StatCard
-          href="/admin/bookings"
-          icon={<HandCoins className="h-4 w-4" />}
-          tint="bg-emerald-500/12 text-emerald-700 dark:text-emerald-400"
-          value={formatCentsAsWholeDollars(metrics.kosCommissionMtdCents)}
-          label="KOS commission"
-        />
-        <StatCard
-          href="/admin/bookings"
-          icon={<Anchor className="h-4 w-4" />}
-          tint="bg-sky-500/12 text-sky-700 dark:text-sky-400"
-          value={metrics.tripsThisMonth.toLocaleString()}
-          label="Charters this month"
-        />
-        <StatCard
-          href="/admin/inquiries?scope=unassigned"
-          icon={<Inbox className="h-4 w-4" />}
-          tint="bg-red-500/12 text-red-600 dark:text-red-400"
-          value={metrics.unassignedLeads.toLocaleString()}
-          label="Unassigned leads"
-          urgent={metrics.unassignedLeads > 0}
-        />
-      </div>
-
-      {/* ── On the water ───────────────────────────────────────── */}
-      <section className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-5 py-4">
-          <h2 className="flex items-center gap-2 text-sm font-semibold">
-            <Ship className="h-4 w-4 text-muted-foreground" />
-            On the water
-          </h2>
-          <Link
-            href="/admin/bookings?view=calendar"
-            className="rounded-full bg-muted px-3.5 py-1.5 text-xs font-medium transition-colors hover:bg-muted/70"
-          >
-            Calendar
-          </Link>
-        </div>
-
-        <div className="flex flex-col lg:flex-row">
-          {/* Today */}
-          <div className="flex min-w-0 flex-col p-5 lg:w-[38%]">
-            <div className="flex items-baseline justify-between gap-3 pb-3">
-              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-primary">
-                Today
+      {/* ── Top row: week on the water + monthly financials ────── */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Week calendar */}
+        <section className={cn(CARD_CLASS, "lg:col-span-2")}>
+          <div className={CARD_HEADER_CLASS}>
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <Ship className="h-4 w-4 text-muted-foreground" />
+              On the water
+              <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                {weeksBookings.length} charter{weeksBookings.length === 1 ? "" : "s"} this week
+                {weekRevenue > 0 ? ` · ${formatCentsCompact(weekRevenue)}` : ""}
               </span>
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {today.trips.length === 0
-                  ? "No charters"
-                  : `${today.trips.length} charter${today.trips.length === 1 ? "" : "s"} · ${formatCentsCompact(todayRevenue)}`}
-              </span>
-            </div>
-            {today.trips.length === 0 ? (
-              <p className="flex flex-1 items-center py-6 text-sm text-muted-foreground">
-                The dock is quiet — nothing on the water today.
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-1.5">
-                {today.trips.map((t) => (
-                  <li key={t.id}>
-                    <Link
-                      href={`/admin/bookings/${t.id}`}
-                      className="flex items-center gap-3 rounded-xl bg-muted/50 px-3.5 py-2.5 transition-colors hover:bg-muted"
-                    >
-                      <span className="shrink-0 text-sm font-semibold tabular-nums">
-                        {format(new Date(t.startDateTime), "h:mm a")}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate text-sm">
-                        {t.customerName ?? "Guest"}
-                        <span className="text-muted-foreground"> · {t.boatName ?? "—"}</span>
-                      </span>
-                      {typeof t.totalAmountCents === "number" ? (
-                        <span className="shrink-0 text-xs font-medium tabular-nums text-muted-foreground">
-                          {formatCentsCompact(t.totalAmountCents)}
-                        </span>
-                      ) : null}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
+            </h2>
+            <Link href="/admin/bookings?view=calendar" className={PILL_LINK_CLASS}>
+              Calendar
+            </Link>
           </div>
 
-          {/* Next six days */}
-          <div className="grid flex-1 grid-cols-3 gap-2 border-t border-border/50 p-5 sm:grid-cols-6 lg:border-l lg:border-t-0">
-            {upcoming.map(({ day, trips }) => {
+          <div className="grid grid-cols-2 gap-2 p-4 sm:grid-cols-4 lg:grid-cols-7">
+            {days.map(({ day, isToday, trips }) => {
               const dayRevenue = trips.reduce((s, t) => s + (t.totalAmountCents ?? 0), 0);
+              const shown = trips.slice(0, 3);
+              const extra = trips.length - shown.length;
               return (
-                <Link
+                <div
                   key={day.toISOString()}
-                  href="/admin/bookings?view=calendar"
-                  className="flex flex-col items-center gap-1 rounded-xl px-2 py-3 text-center transition-colors hover:bg-muted/60"
+                  className={cn(
+                    "flex min-h-[9.5rem] flex-col gap-1.5 rounded-xl p-2",
+                    isToday && "bg-primary/5 ring-1 ring-primary/15"
+                  )}
                 >
-                  <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                    {format(day, "EEE")} <span className="tabular-nums">{format(day, "d")}</span>
-                  </span>
-                  <span
+                  <p
                     className={cn(
-                      "flex h-9 w-9 items-center justify-center rounded-full text-lg font-semibold tabular-nums",
-                      trips.length > 0
-                        ? "bg-primary/12 text-primary"
-                        : "bg-muted/60 text-muted-foreground/40"
+                      "px-1 text-[11px] font-semibold",
+                      isToday ? "text-primary" : "text-muted-foreground"
                     )}
                   >
-                    {trips.length}
-                  </span>
-                  <span className="text-[11px] tabular-nums text-muted-foreground">
-                    {trips.length === 0 ? "open" : dayRevenue > 0 ? formatCentsCompact(dayRevenue) : "booked"}
-                  </span>
-                </Link>
+                    {isToday ? "Today" : format(day, "EEE d")}
+                  </p>
+
+                  {trips.length === 0 ? (
+                    <p className="flex flex-1 items-center justify-center text-xs text-muted-foreground/40">
+                      —
+                    </p>
+                  ) : (
+                    <div className="flex flex-1 flex-col gap-1">
+                      {shown.map((t) => (
+                        <Link
+                          key={t.id}
+                          href={`/admin/bookings/${t.id}`}
+                          className={cn(
+                            "rounded-lg px-2 py-1.5 transition-colors",
+                            isToday
+                              ? "bg-primary/10 hover:bg-primary/20"
+                              : "bg-muted hover:bg-muted/70"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "block text-[11px] font-semibold tabular-nums",
+                              isToday && "text-primary"
+                            )}
+                          >
+                            {format(new Date(t.startDateTime), "h:mm a")}
+                          </span>
+                          <span className="block truncate text-[11px] text-muted-foreground">
+                            {t.boatName ?? t.customerName ?? "Charter"}
+                          </span>
+                        </Link>
+                      ))}
+                      {extra > 0 ? (
+                        <Link
+                          href="/admin/bookings?view=calendar"
+                          className="px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
+                        >
+                          +{extra} more
+                        </Link>
+                      ) : null}
+                    </div>
+                  )}
+
+                  <p className="px-1 text-[11px] font-medium tabular-nums text-muted-foreground">
+                    {dayRevenue > 0 ? formatCentsCompact(dayRevenue) : ""}
+                  </p>
+                </div>
               );
             })}
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* Monthly financials */}
+        <section className={CARD_CLASS}>
+          <div className={CARD_HEADER_CLASS}>
+            <h2 className="text-sm font-semibold">{metrics.monthLabel} financials</h2>
+            <Link href="/admin/bookings" className={PILL_LINK_CLASS}>
+              Bookings
+            </Link>
+          </div>
+          <div className="p-5">
+            <p className="text-3xl font-semibold tabular-nums tracking-tight">
+              {formatCentsAsWholeDollars(metrics.gmvMtdCents)}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Gross charter volume</p>
+
+            <dl className="mt-5 flex flex-col">
+              <FinRow
+                label="KOS commission"
+                value={formatCentsAsWholeDollars(metrics.kosCommissionMtdCents)}
+                accent="text-emerald-700 dark:text-emerald-400"
+              />
+              <FinRow label="Charters" value={metrics.tripsThisMonth.toLocaleString()} />
+              <FinRow
+                label="Avg per charter"
+                value={avgCharterCents > 0 ? formatCentsAsWholeDollars(avgCharterCents) : "—"}
+              />
+              <FinRow label="Open pipeline" value={`${metrics.openInquiries} leads`} last />
+            </dl>
+          </div>
+        </section>
+      </div>
 
       {/* ── Unassigned leads ───────────────────────────────────── */}
-      <section className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-5 py-4">
+      <section className={CARD_CLASS}>
+        <div className={CARD_HEADER_CLASS}>
           <h2 className="flex items-center gap-2.5 text-sm font-semibold">
             Unassigned leads
             {metrics.unassignedLeads > 0 ? (
@@ -243,24 +252,17 @@ export function AdminDashboardView({
               </span>
             ) : null}
           </h2>
-          <Link
-            href="/admin/inquiries"
-            className="rounded-full bg-muted px-3.5 py-1.5 text-xs font-medium transition-colors hover:bg-muted/70"
-          >
+          <Link href="/admin/inquiries?scope=unassigned" className={PILL_LINK_CLASS}>
             All inquiries
           </Link>
         </div>
 
         {unassignedLeads.length === 0 ? (
-          <div className="flex flex-col items-center py-14 text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
-              <Inbox className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <p className="text-sm font-semibold">Every lead has an owner</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              New inquiries from the website, marketplaces, and socials land here.
-            </p>
-          </div>
+          <EmptyState
+            icon={<Inbox className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+            title="Every lead has an owner"
+            subtitle="New inquiries from the website, marketplaces, and socials land here."
+          />
         ) : (
           <ul className="divide-y divide-border/40">
             {unassignedLeads.map((lead) => (
@@ -269,49 +271,176 @@ export function AdminDashboardView({
           </ul>
         )}
       </section>
+
+      {/* ── Approvals + follow-ups ─────────────────────────────── */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Pending approvals */}
+        <section className={CARD_CLASS}>
+          <div className={CARD_HEADER_CLASS}>
+            <h2 className="flex items-center gap-2.5 text-sm font-semibold">
+              Pending approvals
+              {pendingBookings.length > 0 ? (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[11px] font-semibold tabular-nums text-white">
+                  {pendingBookings.length}
+                </span>
+              ) : null}
+            </h2>
+            <Link href="/admin/bookings" className={PILL_LINK_CLASS}>
+              Bookings
+            </Link>
+          </div>
+
+          {pendingBookings.length === 0 ? (
+            <EmptyState
+              icon={<CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+              title="No requests waiting"
+              subtitle="Booking requests that need approval will show up here."
+            />
+          ) : (
+            <ul className="divide-y divide-border/40">
+              {pendingBookings.map((b) => (
+                <li key={b.id} className="relative px-5 py-3.5 transition-colors hover:bg-muted/40">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold">{b.customerName ?? "Guest"}</p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {b.boatName ?? "—"} · {format(new Date(b.startDateTime), "MMM d, h:mm a")}
+                      </p>
+                    </div>
+                    {typeof b.totalAmountCents === "number" ? (
+                      <span className="shrink-0 text-sm font-semibold tabular-nums">
+                        {formatCentsCompact(b.totalAmountCents)}
+                      </span>
+                    ) : null}
+                  </div>
+                  <Link
+                    href={`/admin/bookings/${b.id}`}
+                    aria-label={`Review booking for ${b.customerName ?? "guest"}`}
+                    className="absolute inset-0"
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* Needs follow-up */}
+        <section className={CARD_CLASS}>
+          <div className={CARD_HEADER_CLASS}>
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <Clock className="h-4 w-4 text-muted-foreground" />
+              Needs follow-up
+            </h2>
+            <Link href="/admin/inquiries" className={PILL_LINK_CLASS}>
+              All inquiries
+            </Link>
+          </div>
+
+          {followUps.length === 0 ? (
+            <EmptyState
+              icon={<CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+              title="Nothing needs a nudge"
+              subtitle="Open leads that go quiet the longest will surface here."
+            />
+          ) : (
+            <ul className="divide-y divide-border/40">
+              {followUps.map((lead) => {
+                const idleHours = differenceInHours(new Date(), new Date(lead.updatedAt));
+                const stale = idleHours >= 48;
+                return (
+                  <li
+                    key={lead.id}
+                    className="relative px-5 py-3.5 transition-colors hover:bg-muted/40"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <p className="truncate text-sm font-semibold">{lead.name}</p>
+                          <span
+                            className={cn(
+                              "inline-block shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                              STAGE_CHIP_CLASSES[lead.stage] ?? STAGE_CHIP_CLASSES.NEW
+                            )}
+                          >
+                            {STAGE_LABELS[lead.stage] ?? lead.stage}
+                          </span>
+                        </div>
+                        <p
+                          className={cn(
+                            "mt-0.5 truncate text-xs tabular-nums",
+                            stale
+                              ? "font-medium text-amber-700 dark:text-amber-400"
+                              : "text-muted-foreground"
+                          )}
+                        >
+                          Quiet for {formatDistanceToNowStrict(new Date(lead.updatedAt))}
+                        </p>
+                      </div>
+                      {lead.estimatedTotalCents != null ? (
+                        <span className="shrink-0 text-sm font-semibold tabular-nums">
+                          {formatCentsCompact(lead.estimatedTotalCents)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <Link
+                      href={`/admin/inquiries/${lead.id}`}
+                      aria-label={`View lead from ${lead.name}`}
+                      className="absolute inset-0"
+                    />
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
 
 /* ───────────────────────── pieces ───────────────────────── */
 
-function StatCard({
-  href,
-  icon,
-  tint,
-  value,
+function FinRow({
   label,
-  urgent = false,
+  value,
+  accent,
+  last = false,
 }: {
-  href: string;
-  icon: React.ReactNode;
-  tint: string;
-  value: string;
   label: string;
-  urgent?: boolean;
+  value: string;
+  accent?: string;
+  last?: boolean;
 }) {
   return (
-    <Link
-      href={href}
-      className="group flex items-center gap-3.5 rounded-2xl border border-border/60 bg-card p-4 shadow-sm transition-shadow hover:shadow-md sm:p-5"
+    <div
+      className={cn(
+        "flex items-center justify-between gap-3 py-2.5",
+        !last && "border-b border-border/40"
+      )}
     >
-      <span
-        className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", tint)}
-      >
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className={cn("text-sm font-semibold tabular-nums", accent)}>{value}</dd>
+    </div>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <div className="flex flex-col items-center px-5 py-12 text-center">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
         {icon}
-      </span>
-      <span className="min-w-0">
-        <span
-          className={cn(
-            "block truncate text-xl font-semibold tabular-nums tracking-tight",
-            urgent && "text-red-600 dark:text-red-400"
-          )}
-        >
-          {value}
-        </span>
-        <span className="block truncate text-xs text-muted-foreground">{label}</span>
-      </span>
-    </Link>
+      </div>
+      <p className="text-sm font-semibold">{title}</p>
+      <p className="mt-1 max-w-[18rem] text-xs text-muted-foreground">{subtitle}</p>
+    </div>
   );
 }
 
@@ -384,11 +513,7 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
       {/* Actions */}
       <div className="relative z-10 flex items-center gap-1.5 lg:justify-end">
         <ClaimInquiryButton inquiryId={lead.id} className="rounded-full" />
-        <AssignInquiryMenu
-          inquiryId={lead.id}
-          admins={admins}
-          triggerClassName="rounded-full"
-        />
+        <AssignInquiryMenu inquiryId={lead.id} admins={admins} triggerClassName="rounded-full" />
         <ArchiveButton inquiryId={lead.id} />
       </div>
     </li>

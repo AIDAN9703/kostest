@@ -80,9 +80,12 @@ export const getFollowUpInquiries = cache(async (limit = 6): Promise<InquiryList
       stage: inquiry.stage,
       date: inquiry.date,
       outcome: inquiry.outcome,
+      leadType: inquiry.leadType,
+      source: inquiry.source,
       budget: inquiry.budget,
       guests: inquiry.guests,
       message: inquiry.message,
+      estimatedTotalCents: inquiry.estimatedTotalCents,
       createdAt: inquiry.createdAt,
       updatedAt: inquiry.updatedAt,
     })
