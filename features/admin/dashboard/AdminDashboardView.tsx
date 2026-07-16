@@ -60,9 +60,10 @@ function formatCentsCompact(cents: number) {
 
 /* White surfaces on the gray canvas — contrast comes from the background
    swap, so the shadow stays whisper-light. */
-/* Hard-coded white for the canvas experiment (dark mode keeps its token). */
+/* Brand experiment: fixed navy surfaces on a deeper navy canvas, gold accents.
+   The root carries the `dark` class so all inner theme tokens render dark. */
 const CARD_CLASS =
-  "overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm dark:bg-card";
+  "overflow-hidden rounded-2xl border border-white/10 bg-[#0e2032] shadow-[0_12px_32px_-16px_rgb(0_0_0/0.55)]";
 const CARD_HEADER_CLASS =
   "flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-5 py-4";
 const PILL_LINK_CLASS =
@@ -99,13 +100,13 @@ export function AdminDashboardView({
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    /* Inverted canvas, scoped to this page: cancel the admin shell's padding
-       with negative margins and repaint it gray so white cards sit on top. */
-    <div className="-m-4 flex min-h-[calc(100%+2rem)] w-auto flex-col gap-8 bg-muted/50 p-4 pb-14 md:-m-6 md:min-h-[calc(100%+3rem)] md:p-6 md:pb-16">
+    /* Brand canvas, scoped to this page: cancel the admin shell's padding and
+       paint deep navy; `dark` flips all descendant tokens to dark values. */
+    <div className="dark -m-4 flex min-h-[calc(100%+2rem)] w-auto flex-col gap-8 bg-[#0a1725] p-4 pb-14 text-foreground md:-m-6 md:min-h-[calc(100%+3rem)] md:p-6 md:pb-16">
       {/* ── Header ─────────────────────────────────────────────── */}
       <header className="flex flex-wrap items-center justify-between gap-4 pt-1">
         <div className="min-w-0">
-          <p className="text-xs font-medium text-muted-foreground">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gold">
             {format(new Date(), "EEEE, MMMM d")}
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">
@@ -117,7 +118,7 @@ export function AdminDashboardView({
           pricingTiers={pricingTiers}
           triggerLabel="New booking"
           triggerSize="default"
-          triggerClassName="gap-1.5 rounded-full px-5 shadow-sm"
+          triggerClassName="gap-1.5 rounded-full bg-gold px-5 text-[#0a1725] shadow-sm hover:bg-gold/90"
         />
       </header>
 
@@ -149,13 +150,13 @@ export function AdminDashboardView({
                   key={day.toISOString()}
                   className={cn(
                     "flex min-h-[9.5rem] flex-col gap-1.5 rounded-xl p-2",
-                    isToday && "bg-primary/5 ring-1 ring-primary/15"
+                    isToday && "bg-gold/10 ring-1 ring-gold/25"
                   )}
                 >
                   <p
                     className={cn(
                       "px-1 text-[11px] font-semibold",
-                      isToday ? "text-primary" : "text-muted-foreground"
+                      isToday ? "text-gold" : "text-muted-foreground"
                     )}
                   >
                     {isToday ? "Today" : format(day, "EEE d")}
@@ -174,14 +175,14 @@ export function AdminDashboardView({
                           className={cn(
                             "rounded-lg px-2 py-1.5 transition-colors",
                             isToday
-                              ? "bg-primary/10 hover:bg-primary/20"
-                              : "bg-muted hover:bg-muted/70"
+                              ? "bg-gold/15 hover:bg-gold/25"
+                              : "bg-white/5 hover:bg-white/10"
                           )}
                         >
                           <span
                             className={cn(
                               "block text-[11px] font-semibold tabular-nums",
-                              isToday && "text-primary"
+                              isToday && "text-gold"
                             )}
                           >
                             {format(new Date(t.startDateTime), "h:mm a")}
@@ -229,7 +230,7 @@ export function AdminDashboardView({
               <FinRow
                 label="KOS commission"
                 value={formatCentsAsWholeDollars(metrics.kosCommissionMtdCents)}
-                accent="text-emerald-700 dark:text-emerald-400"
+                accent="text-gold"
               />
               <FinRow label="Charters" value={metrics.tripsThisMonth.toLocaleString()} />
               <FinRow
