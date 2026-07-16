@@ -24,7 +24,7 @@ interface InquiriesListProps {
 }
 
 const ROW_GRID =
-  "lg:grid lg:grid-cols-[minmax(0,4.5fr)_minmax(0,5fr)_minmax(0,2fr)_minmax(0,1.8fr)_minmax(0,2.4fr)] lg:items-center";
+  "lg:grid lg:grid-cols-[minmax(0,3.8fr)_minmax(0,3.8fr)_minmax(0,2.2fr)_minmax(0,1.7fr)_minmax(0,1.6fr)_minmax(0,2.1fr)] lg:items-center";
 
 /**
  * Contained list card — rounded container, soft column labels,
@@ -54,6 +54,7 @@ export function InquiriesList({ inquiries }: InquiriesListProps) {
           >
             <ColumnLabel>Lead</ColumnLabel>
             <ColumnLabel>Trip request</ColumnLabel>
+            <ColumnLabel>Boat requested</ColumnLabel>
             <ColumnLabel className="lg:text-right">Value</ColumnLabel>
             <ColumnLabel className="lg:text-center">Status</ColumnLabel>
             <ColumnLabel className="lg:text-right">Assigned to</ColumnLabel>
@@ -141,6 +142,24 @@ function InquiryRow({ inquiry }: { inquiry: InquiryWithAssignee }) {
         {inquiry.message ? (
           <p className="mt-0.5 truncate text-xs text-muted-foreground">{inquiry.message}</p>
         ) : null}
+      </div>
+
+      {/* Boat requested */}
+      <div className="min-w-0">
+        {inquiry.boatId ? (
+          inquiry.boatName ? (
+            <Link
+              href={`/boats/${inquiry.boatId}`}
+              className="relative z-10 inline-block max-w-full truncate text-sm font-medium text-primary hover:underline"
+            >
+              {inquiry.boatName}
+            </Link>
+          ) : (
+            <span className="text-sm font-medium">Yes</span>
+          )
+        ) : (
+          <span className="text-sm text-muted-foreground/50">No</span>
+        )}
       </div>
 
       {/* Value */}

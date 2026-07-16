@@ -1,5 +1,6 @@
 import { db } from "@/database/db";
 import {
+  boats,
   inquiry as inquiryTable,
   inquiryEvents,
   users,
@@ -31,7 +32,11 @@ export type InquiryAssignee = {
   profileImage: string | null;
 };
 
-export type InquiryWithAssignee = Inquiry & { assignee: InquiryAssignee | null };
+export type InquiryWithAssignee = Inquiry & {
+  assignee: InquiryAssignee | null;
+  /** Name of the requested boat, when the lead references one. */
+  boatName: string | null;
+};
 
 export interface PaginatedInquiriesResponse {
   inquiries: InquiryWithAssignee[];
@@ -82,9 +87,11 @@ export class InquiryService {
             email: users.email,
             profileImage: users.profileImage,
           },
+          boatName: boats.name,
         })
         .from(inquiryTable)
         .leftJoin(users, eq(inquiryTable.assignedTo, users.id))
+        .leftJoin(boats, eq(inquiryTable.boatId, boats.id))
         .where(whereClause)
         .orderBy(desc(inquiryTable.createdAt))
         .limit(limit)
@@ -95,7 +102,11 @@ export class InquiryService {
     const totalCount = Number(countResult[0]?.value ?? 0);
 
     return {
-      inquiries: inquiryRows.map((r) => ({ ...r.inquiry, assignee: r.assignee ?? null })),
+      inquiries: inquiryRows.map((r) => ({
+        ...r.inquiry,
+        assignee: r.assignee ?? null,
+        boatName: r.boatName ?? null,
+      })),
       totalCount,
       page,
       limit,
