@@ -1,10 +1,12 @@
 # Admin Theme Overhaul Plan — "Demo Parity"
 
-**Created:** 2026-07-16 · **Status:** Phase 1 APPLIED (additively — nothing deleted).
-Aidan is play-testing both modes across the app. Held back on purpose until his verdict:
-accent-switcher retirement (Phase 2), shared primitives (Phase 3), hardcoded-color sweep
-+ dashboard canvas-hack removal (Phase 4), dark QA (Phase 5). Everything reverts with
-`git revert` of the Phase 1 commit.
+**Created:** 2026-07-16 · **Status:** Phases 1–2 DONE. Verdict: navy + gold locked in,
+light + dark both kept, accent switcher removed (2026-07-16). Canvas decision resolved:
+light `--color-background` = #f5f7f9 at the theme root with matching html/body overscroll
+rules; per-page canvas hacks removed. Remaining: Phase 3 (shared primitives + Button
+`brand` variant), Phase 4 (hardcoded emerald/amber/red → success/warning/destructive
+token sweep; legacy gray-override CSS review), Phase 5 (dark-mode QA click-through).
+Possible future: drop light mode entirely (Aidan musing, not decided).
 **Reference:** https://kos-yachts.vercel.app/demo (studied via its shipped CSS), plus
 shadcn-admin / next-shadcn-dashboard-starter as secondary patterns.
 
