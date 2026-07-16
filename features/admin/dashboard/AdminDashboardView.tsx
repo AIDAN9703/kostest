@@ -60,7 +60,9 @@ function formatCentsCompact(cents: number) {
 
 /* White surfaces on the gray canvas — contrast comes from the background
    swap, so the shadow stays whisper-light. */
-const CARD_CLASS = "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm";
+/* Hard-coded white for the canvas experiment (dark mode keeps its token). */
+const CARD_CLASS =
+  "overflow-hidden rounded-2xl border border-border/60 bg-white shadow-sm dark:bg-card";
 const CARD_HEADER_CLASS =
   "flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-5 py-4";
 const PILL_LINK_CLASS =
