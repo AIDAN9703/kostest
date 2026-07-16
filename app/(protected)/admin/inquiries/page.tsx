@@ -38,39 +38,27 @@ export default async function InquiriesPage({
 
   return (
     <div className="flex w-full flex-1 flex-col pb-12">
-      {/* ── Masthead ─────────────────────────────────────────── */}
-      <header className="pb-5 pt-1">
-        <p className="font-mono text-[10px] font-medium uppercase tracking-[0.28em] text-muted-foreground">
-          Kings of the Sea · Lead Pipeline
-        </p>
-        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
-          <h1 className="font-serif text-4xl tracking-tight md:text-5xl">Inquiries</h1>
-          <div className="flex items-end gap-6">
-            <div className="text-right">
-              <p className="font-mono text-3xl leading-none tabular-nums">
-                {result.totalCount.toLocaleString()}
-              </p>
-              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                On the books
-              </p>
-            </div>
-            <NewLeadDialog />
-          </div>
+      {/* Header */}
+      <header className="flex flex-wrap items-center justify-between gap-4 pb-6 pt-1">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight">Inquiries</h1>
+          <p className="mt-1 text-sm tabular-nums text-muted-foreground">
+            {result.totalCount.toLocaleString()}{" "}
+            {result.totalCount === 1 ? "lead" : "leads"} on the books
+          </p>
         </div>
+        <NewLeadDialog />
       </header>
 
-      {/* ── Toolbar (scope tabs on the ink rule, search below) ── */}
-      <InquiriesToolbar />
-
-      {/* ── Manifest ─────────────────────────────────────────── */}
-      <div className="pt-2">
-        <InquiriesList
-          inquiries={result.inquiries}
-          startIndex={(result.page - 1) * result.limit + 1}
-        />
+      {/* Toolbar */}
+      <div className="pb-5">
+        <InquiriesToolbar />
       </div>
 
-      {/* ── Pagination ───────────────────────────────────────── */}
+      {/* List */}
+      <InquiriesList inquiries={result.inquiries} />
+
+      {/* Pagination */}
       {result.totalPages > 1 ? (
         <div className="pt-5">
           <AdminInquiryTablePagination

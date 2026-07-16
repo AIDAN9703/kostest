@@ -103,10 +103,7 @@ export function InquiryCloseActions({
     <>
       {/* Close Inquiry Section */}
       <section>
-        <h2 className="flex items-center gap-3 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
-          <span className="h-px w-6 bg-foreground/50" aria-hidden />
-          Close out
-        </h2>
+        <h2 className="text-sm font-semibold">Close out</h2>
         <div className="flex flex-col gap-2 pt-3">
           <Button
             size="sm"

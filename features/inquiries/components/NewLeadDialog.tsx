@@ -93,11 +93,10 @@ export function NewLeadDialog() {
   return (
     <>
       <Button
-        size="sm"
         onClick={() => setOpen(true)}
-        className="gap-1.5 rounded-none bg-foreground font-mono text-xs uppercase tracking-wider text-background hover:bg-foreground/85"
+        className="gap-1.5 rounded-full px-5 shadow-sm"
       >
-        <Plus className="h-3.5 w-3.5" />
+        <Plus className="h-4 w-4" />
         New lead
       </Button>
 

@@ -14,7 +14,7 @@ const SCOPE_TABS: { value: "mine" | "unassigned" | null; label: string }[] = [
   { value: "unassigned", label: "Unassigned" },
 ];
 
-const OUTCOME_FILTERS: { value: InquiryOutcome | null; label: string }[] = [
+const OUTCOME_TABS: { value: InquiryOutcome | null; label: string }[] = [
   { value: "OPEN", label: "Open" },
   { value: "WON", label: "Won" },
   { value: "LOST", label: "Lost" },
@@ -22,10 +22,7 @@ const OUTCOME_FILTERS: { value: InquiryOutcome | null; label: string }[] = [
   { value: null, label: "All" },
 ];
 
-/**
- * Manifest toolbar: underline scope tabs (ownership) on the ink rule,
- * mono outcome filters at right, underline search beneath.
- */
+/** Scope + outcome segmented pills with a rounded search — the template toolbar. */
 export function InquiriesToolbar() {
   const [filters, setFilters] = useQueryStates(inquirySearchParams, {
     clearOnDefault: true,
@@ -54,10 +51,10 @@ export function InquiriesToolbar() {
   }
 
   return (
-    <div>
-      {/* Scope tabs on the ink rule + outcome filters */}
-      <div className="flex flex-wrap items-end justify-between gap-x-6 border-b-2 border-foreground">
-        <nav className="-mb-0.5 flex items-end gap-0.5" aria-label="Lead ownership">
+    <div className="flex flex-col gap-3">
+      {/* Scope (prominent) + outcome */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center rounded-full bg-muted p-1">
           {SCOPE_TABS.map((tab) => {
             const active = filters.scope === tab.value;
             return (
@@ -66,58 +63,58 @@ export function InquiriesToolbar() {
                 type="button"
                 onClick={() => setFilters({ scope: tab.value, page: 1 })}
                 className={cn(
-                  "border-b-2 px-3.5 pb-2.5 pt-1 text-sm transition-colors",
+                  "rounded-full px-4 py-1.5 text-sm font-medium transition-all",
                   active
-                    ? "border-foreground font-semibold text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {tab.label}
               </button>
             );
           })}
-        </nav>
+        </div>
 
-        <div className="flex items-center gap-4 pb-2.5 font-mono text-[11px] uppercase tracking-wider">
-          {OUTCOME_FILTERS.map((f) => {
-            const active = filters.outcome === f.value;
+        <div className="flex items-center rounded-full bg-muted p-0.5">
+          {OUTCOME_TABS.map((tab) => {
+            const active = filters.outcome === tab.value;
             return (
               <button
-                key={f.label}
+                key={tab.label}
                 type="button"
-                onClick={() => setFilters({ outcome: f.value, page: 1 })}
+                onClick={() => setFilters({ outcome: tab.value, page: 1 })}
                 className={cn(
-                  "transition-colors",
+                  "rounded-full px-3 py-1 text-xs font-medium transition-all",
                   active
-                    ? "font-semibold text-foreground underline underline-offset-4"
+                    ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                {f.label}
+                {tab.label}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Underline search */}
-      <div className="relative mt-4 max-w-md">
-        <Search className="pointer-events-none absolute left-0 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+      {/* Search */}
+      <div className="relative w-full max-w-sm">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
           value={searchValue}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search the manifest — name, email, phone"
-          className="h-9 w-full border-0 border-b border-border bg-transparent pl-6 pr-8 font-mono text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-foreground"
+          placeholder="Search name, email, or phone…"
+          className="h-10 w-full rounded-full border-0 bg-muted pl-10 pr-9 text-sm outline-none transition-all placeholder:text-muted-foreground focus:bg-background focus:shadow-md focus:ring-1 focus:ring-border"
         />
         {searchValue ? (
           <button
             type="button"
             onClick={clearSearch}
             aria-label="Clear search"
-            className="absolute right-0 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+            className="absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted-foreground/10 hover:text-foreground"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-3 w-3" />
           </button>
         ) : null}
       </div>

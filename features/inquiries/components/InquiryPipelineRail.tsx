@@ -13,7 +13,6 @@ import {
   type AdminOption,
 } from "@/features/inquiries/inquiry-ui";
 import type { InquiryAssignee } from "@/features/inquiries/inquiry.service";
-import { MANIFEST_LABEL_CLASS } from "@/features/inquiries/inquiry-ui";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { useToast } from "@/shared/lib/hooks/use-toast";
 import { cn } from "@/shared/lib/utils/general-utils";
@@ -72,10 +71,7 @@ export function InquiryPipelineRail({
     <div className="flex flex-col gap-8">
       {/* Assignment */}
       <section>
-        <h2 className={cn(MANIFEST_LABEL_CLASS, "flex items-center gap-3")}>
-          <span className="h-px w-6 bg-foreground/50" aria-hidden />
-          Assigned to
-        </h2>
+        <h2 className="text-sm font-semibold">Assigned to</h2>
         <div className="flex items-center gap-3 pt-3">
           {assignee ? (
             <>
@@ -108,10 +104,7 @@ export function InquiryPipelineRail({
 
       {/* Pipeline stepper */}
       <section>
-        <h2 className={cn(MANIFEST_LABEL_CLASS, "flex items-center gap-3")}>
-          <span className="h-px w-6 bg-foreground/50" aria-hidden />
-          Pipeline
-        </h2>
+        <h2 className="text-sm font-semibold">Pipeline</h2>
         <ol className="relative flex flex-col pt-3">
           {/* connecting line */}
           <div className="absolute bottom-4 left-[9px] top-6 w-px bg-border/60" />

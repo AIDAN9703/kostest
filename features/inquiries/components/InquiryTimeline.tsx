@@ -46,12 +46,13 @@ function formatStatus(s: string) {
 export function InquiryTimeline({ events, actions }: InquiryTimelineProps) {
   return (
     <section>
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-3 font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
-          <span className="h-px w-6 bg-foreground/50" aria-hidden />
-          Ship&apos;s log
+      <div className="flex items-center justify-between gap-3 pb-3">
+        <h2 className="text-sm font-semibold">
+          Activity
           {events.length > 0 ? (
-            <span className="tabular-nums text-muted-foreground/60">{events.length}</span>
+            <span className="ml-2 text-xs font-medium tabular-nums text-muted-foreground">
+              {events.length}
+            </span>
           ) : null}
         </h2>
         {actions ? <div className="flex shrink-0 flex-wrap gap-2">{actions}</div> : null}
@@ -108,7 +109,7 @@ export function InquiryTimeline({ events, actions }: InquiryTimelineProps) {
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       {formatDateTime(event.createdAt)} · {createdBy}
                     </p>
                     {event.content && (
