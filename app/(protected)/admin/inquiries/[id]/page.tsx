@@ -147,10 +147,12 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
       {/* Body: main + rail */}
       <div className="grid gap-10 lg:grid-cols-3 lg:gap-12">
         <div className="flex min-w-0 flex-col gap-8 lg:col-span-2">
-          {/* Trip request — soft panel */}
-          <section>
-            <h2 className="pb-3 text-sm font-semibold">Trip request</h2>
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-5 rounded-2xl bg-muted/40 p-5 sm:grid-cols-3">
+          {/* Trip request */}
+          <section className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+            <h2 className="border-b border-border/50 px-5 py-4 text-sm font-semibold">
+              Trip request
+            </h2>
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-5 p-5 sm:grid-cols-3">
               <Fact
                 label="Date"
                 value={
@@ -200,25 +202,29 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
 
           {/* Message */}
           {inquiry.message ? (
-            <section>
-              <h2 className="pb-3 text-sm font-semibold">Message</h2>
-              <p className="max-w-prose whitespace-pre-wrap rounded-2xl bg-muted/40 p-5 text-sm leading-relaxed">
+            <section className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+              <h2 className="border-b border-border/50 px-5 py-4 text-sm font-semibold">
+                Message
+              </h2>
+              <p className="max-w-prose whitespace-pre-wrap p-5 text-sm leading-relaxed">
                 {inquiry.message}
               </p>
             </section>
           ) : null}
 
           {/* Activity */}
-          <InquiryTimeline
-            events={inquiry.events as InquiryEvent[]}
-            actions={
-              <InquiryActions
-                inquiryId={inquiry.id}
-                currentStage={inquiry.stage}
-                currentOutcome={inquiry.outcome}
-              />
-            }
-          />
+          <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
+            <InquiryTimeline
+              events={inquiry.events as InquiryEvent[]}
+              actions={
+                <InquiryActions
+                  inquiryId={inquiry.id}
+                  currentStage={inquiry.stage}
+                  currentOutcome={inquiry.outcome}
+                />
+              }
+            />
+          </div>
         </div>
 
         {/* Rail */}
