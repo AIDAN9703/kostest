@@ -6,7 +6,7 @@ import {
   type InquiryStage,
   type InquiryOutcome,
 } from "@/database/schema";
-import { and, count, desc, eq, ilike, or } from "drizzle-orm";
+import { and, count, desc, eq, ilike, isNull, or } from "drizzle-orm";
 import { resolveAdminListPagination } from "@/shared/admin/list-pagination";
 import type { Inquiry } from "@/database/types";
 
@@ -14,6 +14,10 @@ export interface InquiryFilterInput {
   search?: string;
   stage?: InquiryStage;
   outcome?: InquiryOutcome;
+  /** Only inquiries assigned to this admin ("My leads"). */
+  assignedToId?: string;
+  /** Only inquiries nobody has claimed yet. */
+  unassignedOnly?: boolean;
   page?: number;
   limit?: number;
 }
@@ -58,6 +62,12 @@ export class InquiryService {
     }
     if (filters?.outcome) {
       conditions.push(eq(inquiryTable.outcome, filters.outcome));
+    }
+    if (filters?.assignedToId) {
+      conditions.push(eq(inquiryTable.assignedTo, filters.assignedToId));
+    }
+    if (filters?.unassignedOnly) {
+      conditions.push(isNull(inquiryTable.assignedTo));
     }
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 

@@ -86,6 +86,23 @@ export const OUTCOME_LABELS: Record<string, string> = {
   ABANDONED: "Archived",
 };
 
+/* ── "Charter Manifest" design tokens ─────────────────────────
+   The admin template aesthetic: serif display names, monospace
+   microdata, heavy ink rules, per-type colored spines. */
+
+/** Micro section label — ship's-log style. */
+export const MANIFEST_LABEL_CLASS =
+  "font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground";
+
+/** Left color spine per lead type (border-l on the row's identity block). */
+export const LEAD_TYPE_SPINES: Record<string, string> = {
+  GENERAL_QUOTE: "border-muted-foreground/40",
+  BOAT_REQUEST: "border-primary",
+  TERM_CHARTER: "border-amber-500",
+  MANUAL: "border-muted-foreground/40",
+  MARKETPLACE: "border-sky-500",
+};
+
 /** Subtle stage chips — tinted background, readable in both themes. */
 export const STAGE_CHIP_CLASSES: Record<string, string> = {
   NEEDS_CONTACT: "bg-primary/10 text-primary",

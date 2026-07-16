@@ -1,19 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { formatDistanceToNowStrict } from "date-fns";
-import { ArrowLeft, Mail, MessageCircle, Phone } from "lucide-react";
+import { format, formatDistanceToNowStrict } from "date-fns";
 
 import { inquiryService } from "@/features/inquiries/inquiry.service";
 import { userService } from "@/features/users/user.service";
 import {
   LEAD_TYPE_BADGES,
+  MANIFEST_LABEL_CLASS,
   OUTCOME_CHIP_CLASSES,
   OUTCOME_LABELS,
   SOURCE_LABELS,
   STAGE_CHIP_CLASSES,
   STAGE_LABELS,
   TIME_OF_DAY_LABELS,
+  adminInitials,
 } from "@/features/inquiries/inquiry-ui";
 import { InquiryTimeline } from "@/features/inquiries/components/InquiryTimeline";
 import { InquiryActions } from "@/features/inquiries/components/InquiryActions";
@@ -22,7 +23,6 @@ import { InquiryPipelineRail } from "@/features/inquiries/components/InquiryPipe
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { cn, formatDate, formatPlainDate } from "@/shared/lib/utils/general-utils";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
-import { format } from "date-fns";
 import { InquiryEvent } from "@/database/types";
 
 interface InquiryDetailPageProps {
@@ -51,28 +51,31 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
   const badge = LEAD_TYPE_BADGES[inquiry.leadType] ?? LEAD_TYPE_BADGES.GENERAL_QUOTE;
   const isOpen = inquiry.outcome === "OPEN";
   const phoneDigits = inquiry.phone?.replace(/[^\d+]/g, "") ?? "";
+  const contactLinkClass =
+    "font-mono text-[11px] uppercase tracking-wider underline decoration-border underline-offset-4 transition-colors hover:decoration-foreground";
 
   return (
-    <div className="flex w-full flex-1 flex-col pb-10">
+    <div className="flex w-full flex-1 flex-col pb-12">
       {/* Back */}
-      <div className="pb-4 pt-1">
-        <Link
-          href="/admin/inquiries"
-          className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/70"
-        >
-          <ArrowLeft className="h-3 w-3" />
-          All inquiries
+      <div className="pb-5 pt-1">
+        <Link href="/admin/inquiries" className={cn(MANIFEST_LABEL_CLASS, "hover:text-foreground")}>
+          ← All inquiries
         </Link>
       </div>
 
-      {/* Header */}
-      <header className="flex flex-wrap items-start justify-between gap-4 border-b border-border/60 pb-5">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2.5">
-            <h1 className="text-2xl font-semibold tracking-tight">{inquiry.name}</h1>
+      {/* ── Masthead ─────────────────────────────────────────── */}
+      <header className="flex flex-wrap items-start gap-5 pb-6">
+        {/* Monogram */}
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center bg-primary font-serif text-2xl text-primary-foreground">
+          {adminInitials(inquiry.name) || "—"}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-serif text-3xl tracking-tight md:text-4xl">{inquiry.name}</h1>
             <span
               className={cn(
-                "inline-block rounded px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide",
+                "inline-block rounded-sm px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider",
                 badge.className
               )}
             >
@@ -80,7 +83,7 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
             </span>
             <span
               className={cn(
-                "inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                "inline-block rounded-sm px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider",
                 isOpen
                   ? (STAGE_CHIP_CLASSES[inquiry.stage] ?? STAGE_CHIP_CLASSES.NEW)
                   : (OUTCOME_CHIP_CLASSES[inquiry.outcome] ?? OUTCOME_CHIP_CLASSES.OPEN)
@@ -91,42 +94,32 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
                 : (OUTCOME_LABELS[inquiry.outcome] ?? inquiry.outcome)}
             </span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
+
+          <p className="mt-1.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
             {SOURCE_LABELS[inquiry.source] ?? inquiry.source}
             {" · received "}
-            <span className="tabular-nums">
-              {formatDistanceToNowStrict(new Date(inquiry.createdAt))} ago
-            </span>
+            {formatDistanceToNowStrict(new Date(inquiry.createdAt))} ago
             {" · "}
             {formatDate(inquiry.createdAt)}
           </p>
 
-          {/* Contact chips */}
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <a
-              href={`mailto:${inquiry.email}`}
-              className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted/70"
-            >
-              <Mail className="h-3 w-3 text-muted-foreground" />
-              {inquiry.email}
+          {/* Contact links */}
+          <div className="mt-3 flex flex-wrap items-center gap-5">
+            <a href={`mailto:${inquiry.email}`} className={contactLinkClass}>
+              {inquiry.email || "no email"} ↗
             </a>
             {inquiry.phone ? (
               <>
-                <a
-                  href={`tel:${phoneDigits}`}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted/70"
-                >
-                  <Phone className="h-3 w-3 text-muted-foreground" />
-                  {inquiry.phone}
+                <a href={`tel:${phoneDigits}`} className={contactLinkClass}>
+                  {inquiry.phone} ↗
                 </a>
                 <a
                   href={`https://wa.me/${phoneDigits.replace(/^\+/, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted/70"
+                  className={contactLinkClass}
                 >
-                  <MessageCircle className="h-3 w-3 text-muted-foreground" />
-                  WhatsApp
+                  WhatsApp ↗
                 </a>
               </>
             ) : null}
@@ -134,15 +127,15 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
         </div>
       </header>
 
-      {/* Body: main + rail */}
-      <div className="grid gap-10 pt-6 lg:grid-cols-3 lg:gap-12">
-        <div className="flex min-w-0 flex-col gap-8 lg:col-span-2">
-          {/* Trip request */}
+      <div className="h-0.5 bg-foreground" />
+
+      {/* ── Body: manifest + rail ────────────────────────────── */}
+      <div className="grid gap-10 pt-8 lg:grid-cols-3 lg:gap-14">
+        <div className="flex min-w-0 flex-col gap-10 lg:col-span-2">
+          {/* Trip spec */}
           <section>
-            <h2 className="border-b border-border/60 pb-2.5 text-[11px] font-semibold uppercase tracking-[0.16em]">
-              Trip request
-            </h2>
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-5 pt-4 sm:grid-cols-3">
+            <SectionLabel>Trip spec</SectionLabel>
+            <dl className="grid grid-cols-2 gap-x-8 gap-y-6 pt-5 sm:grid-cols-3">
               <Fact
                 label="Date"
                 value={
@@ -154,6 +147,7 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
                         ? formatDate(inquiry.date)
                         : null
                 }
+                mono
               />
               <Fact
                 label="Time"
@@ -164,16 +158,16 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
                       ? (TIME_OF_DAY_LABELS[inquiry.preferredTimeOfDay] ?? null)
                       : (inquiry.time ?? null)
                 }
+                mono
               />
               <Fact
                 label="Duration"
-                value={
-                  inquiry.requestedDurationDays ? `${inquiry.requestedDurationDays}+ days` : null
-                }
+                value={inquiry.requestedDurationDays ? `${inquiry.requestedDurationDays}+ days` : null}
+                mono
               />
               <Fact label="Destination" value={inquiry.destination} />
-              <Fact label="Guests" value={inquiry.guests != null ? `${inquiry.guests}` : null} />
-              <Fact label="Budget" value={inquiry.budget} />
+              <Fact label="Guests" value={inquiry.guests != null ? `${inquiry.guests}` : null} mono />
+              <Fact label="Budget" value={inquiry.budget} mono />
               <Fact
                 label="Estimated total"
                 value={
@@ -181,6 +175,7 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
                     ? formatCentsAsCurrency(inquiry.estimatedTotalCents)
                     : null
                 }
+                mono
               />
               <Fact
                 label="Captain"
@@ -188,20 +183,15 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
                   inquiry.needsCaptain == null ? null : inquiry.needsCaptain ? "Needed" : "Not needed"
                 }
               />
-              <Fact
-                label="SMS consent"
-                value={inquiry.smsConsent ? "Yes" : "No"}
-              />
+              <Fact label="SMS consent" value={inquiry.smsConsent ? "Yes" : "No"} />
             </dl>
           </section>
 
           {/* Message */}
           {inquiry.message ? (
             <section>
-              <h2 className="border-b border-border/60 pb-2.5 text-[11px] font-semibold uppercase tracking-[0.16em]">
-                Message
-              </h2>
-              <p className="whitespace-pre-wrap pt-3 text-sm leading-relaxed">
+              <SectionLabel>Message</SectionLabel>
+              <p className="max-w-prose whitespace-pre-wrap pt-4 font-serif text-[15px] leading-relaxed">
                 {inquiry.message}
               </p>
             </section>
@@ -221,7 +211,7 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
         </div>
 
         {/* Rail */}
-        <aside className="flex min-w-0 flex-col gap-8 lg:border-l lg:border-border/60 lg:pl-8">
+        <aside className="flex min-w-0 flex-col gap-10 lg:border-l lg:border-border lg:pl-10">
           <InquiryPipelineRail
             inquiryId={inquiry.id}
             stage={inquiry.stage}
@@ -232,14 +222,12 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
           <InquiryCloseActions inquiryId={inquiry.id} currentOutcome={inquiry.outcome} />
           {inquiry.convertedBookingId ? (
             <section>
-              <h2 className="border-b border-border/60 pb-2.5 text-[11px] font-semibold uppercase tracking-[0.16em]">
-                Converted
-              </h2>
+              <SectionLabel>Converted</SectionLabel>
               <Link
                 href={`/admin/bookings/${inquiry.convertedBookingId}`}
-                className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-700 transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
+                className="mt-4 inline-block font-mono text-[11px] uppercase tracking-wider text-emerald-700 underline decoration-emerald-500/40 underline-offset-4 transition-colors hover:decoration-emerald-600 dark:text-emerald-400"
               >
-                View booking →
+                View booking ↗
               </Link>
             </section>
           ) : null}
@@ -249,14 +237,33 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
   );
 }
 
-function Fact({ label, value }: { label: string; value: React.ReactNode | null }) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className={cn(MANIFEST_LABEL_CLASS, "flex items-center gap-3")}>
+      <span className="h-px w-6 bg-foreground/50" aria-hidden />
+      {children}
+    </h2>
+  );
+}
+
+function Fact({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string;
+  value: React.ReactNode | null;
+  mono?: boolean;
+}) {
   if (value == null || value === "") return null;
   return (
     <div className="min-w-0">
-      <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+      <dt className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
         {label}
       </dt>
-      <dd className="mt-1 truncate text-sm font-medium">{value}</dd>
+      <dd className={cn("mt-1 truncate text-sm", mono ? "font-mono tabular-nums" : "font-medium")}>
+        {value}
+      </dd>
     </div>
   );
 }
@@ -264,8 +271,12 @@ function Fact({ label, value }: { label: string; value: React.ReactNode | null }
 function InquiryDetailSkeleton() {
   return (
     <div className="flex flex-1 flex-col gap-6 pt-1">
-      <Skeleton className="h-7 w-28 rounded-full" />
-      <Skeleton className="h-24 w-full max-w-xl" />
+      <Skeleton className="h-4 w-28" />
+      <div className="flex gap-5">
+        <Skeleton className="h-16 w-16" />
+        <Skeleton className="h-24 w-full max-w-lg" />
+      </div>
+      <Skeleton className="h-0.5 w-full" />
       <div className="grid gap-10 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
           <Skeleton className="h-40 w-full" />

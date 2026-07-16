@@ -13,6 +13,8 @@ import { ADMIN_LIST_DEFAULT_PAGE_SIZE } from "@/shared/admin/list-pagination";
  */
 export const inquirySearchParams = {
   search: parseAsString.withDefault(""),
+  /** Ownership scope: null = all, "mine" = assigned to me, "unassigned" = nobody's yet. */
+  scope: parseAsStringEnum(["mine", "unassigned"]),
   stage: parseAsStringEnum(inquiryStageEnum.enumValues),
   outcome: parseAsStringEnum(inquiryOutcomeEnum.enumValues),
   page: parseAsInteger.withDefault(1),
