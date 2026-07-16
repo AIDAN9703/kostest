@@ -51,54 +51,10 @@ export function InquiriesToolbar() {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Scope (prominent) + outcome */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center rounded-full bg-muted p-1">
-          {SCOPE_TABS.map((tab) => {
-            const active = filters.scope === tab.value;
-            return (
-              <button
-                key={tab.label}
-                type="button"
-                onClick={() => setFilters({ scope: tab.value, page: 1 })}
-                className={cn(
-                  "rounded-full px-4 py-1.5 text-sm font-medium transition-all",
-                  active
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex items-center rounded-full bg-muted p-0.5">
-          {OUTCOME_TABS.map((tab) => {
-            const active = filters.outcome === tab.value;
-            return (
-              <button
-                key={tab.label}
-                type="button"
-                onClick={() => setFilters({ outcome: tab.value, page: 1 })}
-                className={cn(
-                  "rounded-full px-3 py-1 text-xs font-medium transition-all",
-                  active
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
+    /* One row, one height (h-10), left-aligned: search · scope · outcome */
+    <div className="flex flex-wrap items-center gap-3">
       {/* Search */}
-      <div className="relative w-full max-w-sm">
+      <div className="relative h-10 w-full sm:w-64 lg:w-72">
         <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
@@ -117,6 +73,50 @@ export function InquiriesToolbar() {
             <X className="h-3 w-3" />
           </button>
         ) : null}
+      </div>
+
+      {/* Scope */}
+      <div className="flex h-10 items-center rounded-full bg-muted p-1">
+        {SCOPE_TABS.map((tab) => {
+          const active = filters.scope === tab.value;
+          return (
+            <button
+              key={tab.label}
+              type="button"
+              onClick={() => setFilters({ scope: tab.value, page: 1 })}
+              className={cn(
+                "flex h-8 items-center rounded-full px-4 text-sm font-medium transition-all",
+                active
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Outcome */}
+      <div className="flex h-10 items-center rounded-full bg-muted p-1">
+        {OUTCOME_TABS.map((tab) => {
+          const active = filters.outcome === tab.value;
+          return (
+            <button
+              key={tab.label}
+              type="button"
+              onClick={() => setFilters({ outcome: tab.value, page: 1 })}
+              className={cn(
+                "flex h-8 items-center rounded-full px-3.5 text-sm font-medium transition-all",
+                active
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
