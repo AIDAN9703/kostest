@@ -1,6 +1,10 @@
 # Admin Theme Overhaul Plan — "Demo Parity"
 
-**Created:** 2026-07-16 · **Status:** Planned, awaiting go-ahead
+**Created:** 2026-07-16 · **Status:** Phase 1 APPLIED (additively — nothing deleted).
+Aidan is play-testing both modes across the app. Held back on purpose until his verdict:
+accent-switcher retirement (Phase 2), shared primitives (Phase 3), hardcoded-color sweep
++ dashboard canvas-hack removal (Phase 4), dark QA (Phase 5). Everything reverts with
+`git revert` of the Phase 1 commit.
 **Reference:** https://kos-yachts.vercel.app/demo (studied via its shipped CSS), plus
 shadcn-admin / next-shadcn-dashboard-starter as secondary patterns.
 

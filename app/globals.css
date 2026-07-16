@@ -46,6 +46,18 @@
 
   --color-gold: #b2a37a;
 
+  /* Brand + semantic state tokens (demo-parity). Bare vars are set per
+     mode by .admin-theme / .dark .admin-theme; fallbacks = light values. */
+  --color-brand: var(--brand, #b2a37a);
+  --color-brand-foreground: var(--brand-foreground, #1e293b);
+  --color-brand-soft: var(--brand-soft, #f4f0e6);
+  --color-brand-strong: var(--brand-strong, #73663f);
+  --color-success: var(--success, #1f7a55);
+  --color-success-soft: var(--success-soft, #e9f6ef);
+  --color-warning: var(--warning, #8a5a16);
+  --color-warning-soft: var(--warning-soft, #fbf1e2);
+  --color-destructive-soft: var(--destructive-soft, #fdece9);
+
   --color-red-400: #f46f70;
   --color-red-500: #e27233;
   --color-red-800: #ef3a4b;
