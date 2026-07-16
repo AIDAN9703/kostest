@@ -306,7 +306,6 @@ export default function BookingDetailsClient({
               />
               <BookingSubmitButton
                 user={user}
-                boat={{ instantBook: boat.instantBook }}
                 isSubmitting={isSubmitting}
                 onSubmit={handleBookingSubmit}
                 onNeedAuth={() => setAuthModal("menu")}
@@ -333,7 +332,6 @@ export default function BookingDetailsClient({
           <div className="ml-auto shrink-0">
             <BookingSubmitButton
               user={user}
-              boat={{ instantBook: boat.instantBook }}
               isSubmitting={isSubmitting}
               onSubmit={handleBookingSubmit}
               onNeedAuth={() => setAuthModal("menu")}

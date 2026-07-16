@@ -11,7 +11,7 @@ import {
   inquiryEvents,
   users,
 } from "@/database/schema";
-import { and, asc, count, desc, eq, gte, isNull, lte, ne, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import { cache } from "react";
 import {
   startOfDay,
@@ -253,6 +253,15 @@ export const getRecentDashboardActivity = cache(
         })
         .from(inquiryEvents)
         .innerJoin(inquiry, eq(inquiryEvents.inquiryId, inquiry.id))
+        // Basics only — internal notes and logged contact attempts stay off the board.
+        .where(
+          inArray(inquiryEvents.eventType, [
+            "CREATED",
+            "ASSIGNED",
+            "STAGE_CHANGE",
+            "OUTCOME_CHANGE",
+          ])
+        )
         .orderBy(desc(inquiryEvents.createdAt))
         .limit(perSource),
     ]);

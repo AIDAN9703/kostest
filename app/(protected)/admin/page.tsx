@@ -5,6 +5,7 @@ import {
   getDashboardHeadlineMetrics,
   getFollowUpInquiries,
   getPendingBookingRequests,
+  getRecentDashboardActivity,
   getUnassignedLeads,
   getWeeksBookings,
 } from "@/features/admin/dashboard";
@@ -19,6 +20,7 @@ export default async function AdminDashboardPage() {
     weeksBookings,
     pendingBookings,
     followUps,
+    recentActivity,
     pricingTiers,
     metrics,
     admins,
@@ -27,6 +29,7 @@ export default async function AdminDashboardPage() {
     getWeeksBookings(),
     getPendingBookingRequests(),
     getFollowUpInquiries(6),
+    getRecentDashboardActivity(8),
     boatService.getAllActivePricingTiers(),
     getDashboardHeadlineMetrics(),
     userService.getAdmins(),
@@ -40,6 +43,7 @@ export default async function AdminDashboardPage() {
       weeksBookings={weeksBookings}
       pendingBookings={pendingBookings}
       followUps={followUps}
+      recentActivity={recentActivity}
       metrics={metrics}
       admins={admins}
     />

@@ -12,11 +12,14 @@ import {
   isSameDay,
   startOfDay,
 } from "date-fns";
-import { Archive, CheckCircle2, Clock, Inbox, Ship } from "lucide-react";
+import { Activity, Archive, CheckCircle2, Clock, Inbox, Ship } from "lucide-react";
 
 import { NewBookingModal } from "@/features/bookings/components/admin/new-booking-modal";
 import type { PricingTierOption } from "@/features/bookings/components/admin/booking-forms/types";
-import type { DashboardHeadlineMetrics } from "@/features/admin/dashboard";
+import type {
+  DashboardActivityItem,
+  DashboardHeadlineMetrics,
+} from "@/features/admin/dashboard";
 import type { BookingListItem } from "@/features/bookings/booking.types";
 import type { InquiryListItem } from "@/features/inquiries/inquiry.types";
 import { updateInquiryOutcome } from "@/features/inquiries/inquiry.actions";
@@ -48,6 +51,7 @@ interface AdminDashboardViewProps {
   weeksBookings: BookingListItem[];
   pendingBookings: BookingListItem[];
   followUps: InquiryListItem[];
+  recentActivity: DashboardActivityItem[];
   metrics: DashboardHeadlineMetrics;
   admins: AdminOption[];
 }
@@ -75,6 +79,7 @@ export function AdminDashboardView({
   weeksBookings,
   pendingBookings,
   followUps,
+  recentActivity,
   metrics,
   admins,
 }: AdminDashboardViewProps) {
@@ -272,8 +277,8 @@ export function AdminDashboardView({
         )}
       </section>
 
-      {/* ── Approvals + follow-ups ─────────────────────────────── */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* ── Approvals + follow-ups + activity ──────────────────── */}
+      <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
         {/* Pending approvals */}
         <section className={CARD_CLASS}>
           <div className={CARD_HEADER_CLASS}>
@@ -390,6 +395,52 @@ export function AdminDashboardView({
                   </li>
                 );
               })}
+            </ul>
+          )}
+        </section>
+
+        {/* Recent activity */}
+        <section className={cn(CARD_CLASS, "lg:col-span-2 xl:col-span-1")}>
+          <div className={CARD_HEADER_CLASS}>
+            <h2 className="flex items-center gap-2 text-sm font-semibold">
+              <Activity className="h-4 w-4 text-muted-foreground" />
+              Recent activity
+            </h2>
+          </div>
+
+          {recentActivity.length === 0 ? (
+            <EmptyState
+              icon={<Activity className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+              title="All quiet"
+              subtitle="New leads, assignments, and booking updates will show here."
+            />
+          ) : (
+            <ul className="divide-y divide-border/40">
+              {recentActivity.map((item) => (
+                <li
+                  key={item.id}
+                  className="relative px-5 py-3 transition-colors hover:bg-muted/40"
+                >
+                  <div className="flex items-start gap-2.5">
+                    <span
+                      className={cn(
+                        "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+                        item.kind === "booking" ? "bg-primary" : "bg-sky-500"
+                      )}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm">
+                        <span className="font-semibold">{item.subjectLabel ?? "—"}</span>
+                        <span className="text-muted-foreground"> · {item.message}</span>
+                      </p>
+                      <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
+                        {formatDistanceToNowStrict(new Date(item.createdAt))} ago
+                      </p>
+                    </div>
+                  </div>
+                  <Link href={item.href} aria-label={item.message} className="absolute inset-0" />
+                </li>
+              ))}
             </ul>
           )}
         </section>
