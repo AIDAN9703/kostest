@@ -58,9 +58,9 @@ function formatCentsCompact(cents: number) {
   return formatCentsAsWholeDollars(cents);
 }
 
-/* Soft elevation so white cards read against the white page. */
-const CARD_CLASS =
-  "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05),0_12px_32px_-16px_rgb(0_0_0/0.14)]";
+/* White surfaces on the gray canvas — contrast comes from the background
+   swap, so the shadow stays whisper-light. */
+const CARD_CLASS = "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm";
 const CARD_HEADER_CLASS =
   "flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-5 py-4";
 const PILL_LINK_CLASS =
@@ -97,7 +97,9 @@ export function AdminDashboardView({
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="flex w-full flex-1 flex-col gap-8 pb-14">
+    /* Inverted canvas, scoped to this page: cancel the admin shell's padding
+       with negative margins and repaint it gray so white cards sit on top. */
+    <div className="-m-4 flex min-h-[calc(100%+2rem)] w-auto flex-col gap-8 bg-muted/50 p-4 pb-14 md:-m-6 md:min-h-[calc(100%+3rem)] md:p-6 md:pb-16">
       {/* ── Header ─────────────────────────────────────────────── */}
       <header className="flex flex-wrap items-center justify-between gap-4 pt-1">
         <div className="min-w-0">
@@ -238,8 +240,8 @@ export function AdminDashboardView({
         </section>
       </div>
 
-      {/* ── Row 2: unassigned leads (⅓) + live activity (⅔) ────── */}
-      <div className="grid items-start gap-8 lg:grid-cols-3">
+      {/* ── Row 2: unassigned leads + live activity, 50/50 ─────── */}
+      <div className="grid items-start gap-8 lg:grid-cols-2">
         {/* Unassigned leads — narrow queue */}
         <section className={CARD_CLASS}>
           <div className={CARD_HEADER_CLASS}>
@@ -272,7 +274,7 @@ export function AdminDashboardView({
         </section>
 
         {/* Recent activity — live feed */}
-        <section className={cn(CARD_CLASS, "lg:col-span-2")}>
+        <section className={CARD_CLASS}>
           <div className={CARD_HEADER_CLASS}>
             <h2 className="flex items-center gap-2.5 text-sm font-semibold">
               <span className="relative flex h-2.5 w-2.5" aria-hidden>
