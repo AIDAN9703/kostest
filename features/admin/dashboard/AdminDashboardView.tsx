@@ -12,7 +12,7 @@ import {
   isSameDay,
   startOfDay,
 } from "date-fns";
-import { Activity, Archive, CheckCircle2, Clock, Inbox, Ship } from "lucide-react";
+import { Archive, Inbox, Ship } from "lucide-react";
 
 import { NewBookingModal } from "@/features/bookings/components/admin/new-booking-modal";
 import type { PricingTierOption } from "@/features/bookings/components/admin/booking-forms/types";
@@ -27,19 +27,13 @@ import { AssignInquiryMenu } from "@/features/inquiries/components/AssignInquiry
 import { ClaimInquiryButton } from "@/features/inquiries/components/ClaimInquiryButton";
 import {
   LEAD_TYPE_AVATAR_TINTS,
-  LEAD_TYPE_BADGES,
   SOURCE_LABELS,
-  STAGE_CHIP_CLASSES,
-  STAGE_LABELS,
   adminInitials,
   leadTripSummary,
   type AdminOption,
 } from "@/features/inquiries/inquiry-ui";
 import { cn } from "@/shared/lib/utils/general-utils";
-import {
-  formatCentsAsCurrency,
-  formatCentsAsWholeDollars,
-} from "@/shared/lib/utils/money-utils";
+import { formatCentsAsWholeDollars } from "@/shared/lib/utils/money-utils";
 import { useToast } from "@/shared/lib/hooks/use-toast";
 
 export type { AdminOption };
@@ -49,8 +43,6 @@ interface AdminDashboardViewProps {
   pricingTiers: PricingTierOption[];
   unassignedLeads: InquiryListItem[];
   weeksBookings: BookingListItem[];
-  pendingBookings: BookingListItem[];
-  followUps: InquiryListItem[];
   recentActivity: DashboardActivityItem[];
   metrics: DashboardHeadlineMetrics;
   admins: AdminOption[];
@@ -66,7 +58,9 @@ function formatCentsCompact(cents: number) {
   return formatCentsAsWholeDollars(cents);
 }
 
-const CARD_CLASS = "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm";
+/* Soft elevation so white cards read against the white page. */
+const CARD_CLASS =
+  "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05),0_12px_32px_-16px_rgb(0_0_0/0.14)]";
 const CARD_HEADER_CLASS =
   "flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-5 py-4";
 const PILL_LINK_CLASS =
@@ -77,8 +71,6 @@ export function AdminDashboardView({
   pricingTiers,
   unassignedLeads,
   weeksBookings,
-  pendingBookings,
-  followUps,
   recentActivity,
   metrics,
   admins,
@@ -105,7 +97,7 @@ export function AdminDashboardView({
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="flex w-full flex-1 flex-col gap-6 pb-12">
+    <div className="flex w-full flex-1 flex-col gap-8 pb-14">
       {/* ── Header ─────────────────────────────────────────────── */}
       <header className="flex flex-wrap items-center justify-between gap-4 pt-1">
         <div className="min-w-0">
@@ -125,8 +117,8 @@ export function AdminDashboardView({
         />
       </header>
 
-      {/* ── Top row: week on the water + monthly financials ────── */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      {/* ── Row 1: week on the water + monthly financials ──────── */}
+      <div className="grid gap-8 lg:grid-cols-3">
         {/* Week calendar */}
         <section className={cn(CARD_CLASS, "lg:col-span-2")}>
           <div className={CARD_HEADER_CLASS}>
@@ -246,181 +238,64 @@ export function AdminDashboardView({
         </section>
       </div>
 
-      {/* ── Unassigned leads ───────────────────────────────────── */}
-      <section className={CARD_CLASS}>
-        <div className={CARD_HEADER_CLASS}>
-          <h2 className="flex items-center gap-2.5 text-sm font-semibold">
-            Unassigned leads
-            {metrics.unassignedLeads > 0 ? (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-semibold tabular-nums text-white">
-                {metrics.unassignedLeads}
-              </span>
-            ) : null}
-          </h2>
-          <Link href="/admin/inquiries?scope=unassigned" className={PILL_LINK_CLASS}>
-            All inquiries
-          </Link>
-        </div>
-
-        {unassignedLeads.length === 0 ? (
-          <EmptyState
-            icon={<Inbox className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
-            title="Every lead has an owner"
-            subtitle="New inquiries from the website, marketplaces, and socials land here."
-          />
-        ) : (
-          <ul className="divide-y divide-border/40">
-            {unassignedLeads.map((lead) => (
-              <LeadRow key={lead.id} lead={lead} admins={admins} />
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {/* ── Approvals + follow-ups + activity ──────────────────── */}
-      <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        {/* Pending approvals */}
+      {/* ── Row 2: unassigned leads (⅓) + live activity (⅔) ────── */}
+      <div className="grid items-start gap-8 lg:grid-cols-3">
+        {/* Unassigned leads — narrow queue */}
         <section className={CARD_CLASS}>
           <div className={CARD_HEADER_CLASS}>
             <h2 className="flex items-center gap-2.5 text-sm font-semibold">
-              Pending approvals
-              {pendingBookings.length > 0 ? (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[11px] font-semibold tabular-nums text-white">
-                  {pendingBookings.length}
+              Unassigned leads
+              {metrics.unassignedLeads > 0 ? (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-semibold tabular-nums text-white">
+                  {metrics.unassignedLeads}
                 </span>
               ) : null}
             </h2>
-            <Link href="/admin/bookings" className={PILL_LINK_CLASS}>
-              Bookings
+            <Link href="/admin/inquiries?scope=unassigned" className={PILL_LINK_CLASS}>
+              View all
             </Link>
           </div>
 
-          {pendingBookings.length === 0 ? (
+          {unassignedLeads.length === 0 ? (
             <EmptyState
-              icon={<CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
-              title="No requests waiting"
-              subtitle="Booking requests that need approval will show up here."
+              icon={<Inbox className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+              title="Every lead has an owner"
+              subtitle="New inquiries from the website, marketplaces, and socials land here."
             />
           ) : (
-            <ul className="divide-y divide-border/40">
-              {pendingBookings.map((b) => (
-                <li key={b.id} className="relative px-5 py-3.5 transition-colors hover:bg-muted/40">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold">{b.customerName ?? "Guest"}</p>
-                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                        {b.boatName ?? "—"} · {format(new Date(b.startDateTime), "MMM d, h:mm a")}
-                      </p>
-                    </div>
-                    {typeof b.totalAmountCents === "number" ? (
-                      <span className="shrink-0 text-sm font-semibold tabular-nums">
-                        {formatCentsCompact(b.totalAmountCents)}
-                      </span>
-                    ) : null}
-                  </div>
-                  <Link
-                    href={`/admin/bookings/${b.id}`}
-                    aria-label={`Review booking for ${b.customerName ?? "guest"}`}
-                    className="absolute inset-0"
-                  />
-                </li>
+            <ul className="max-h-[30rem] divide-y divide-border/40 overflow-y-auto">
+              {unassignedLeads.map((lead) => (
+                <LeadRow key={lead.id} lead={lead} admins={admins} />
               ))}
             </ul>
           )}
         </section>
 
-        {/* Needs follow-up */}
-        <section className={CARD_CLASS}>
+        {/* Recent activity — live feed */}
+        <section className={cn(CARD_CLASS, "lg:col-span-2")}>
           <div className={CARD_HEADER_CLASS}>
-            <h2 className="flex items-center gap-2 text-sm font-semibold">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              Needs follow-up
-            </h2>
-            <Link href="/admin/inquiries" className={PILL_LINK_CLASS}>
-              All inquiries
-            </Link>
-          </div>
-
-          {followUps.length === 0 ? (
-            <EmptyState
-              icon={<CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
-              title="Nothing needs a nudge"
-              subtitle="Open leads that go quiet the longest will surface here."
-            />
-          ) : (
-            <ul className="divide-y divide-border/40">
-              {followUps.map((lead) => {
-                const idleHours = differenceInHours(new Date(), new Date(lead.updatedAt));
-                const stale = idleHours >= 48;
-                return (
-                  <li
-                    key={lead.id}
-                    className="relative px-5 py-3.5 transition-colors hover:bg-muted/40"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex min-w-0 items-center gap-2">
-                          <p className="truncate text-sm font-semibold">{lead.name}</p>
-                          <span
-                            className={cn(
-                              "inline-block shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                              STAGE_CHIP_CLASSES[lead.stage] ?? STAGE_CHIP_CLASSES.NEW
-                            )}
-                          >
-                            {STAGE_LABELS[lead.stage] ?? lead.stage}
-                          </span>
-                        </div>
-                        <p
-                          className={cn(
-                            "mt-0.5 truncate text-xs tabular-nums",
-                            stale
-                              ? "font-medium text-amber-700 dark:text-amber-400"
-                              : "text-muted-foreground"
-                          )}
-                        >
-                          Quiet for {formatDistanceToNowStrict(new Date(lead.updatedAt))}
-                        </p>
-                      </div>
-                      {lead.estimatedTotalCents != null ? (
-                        <span className="shrink-0 text-sm font-semibold tabular-nums">
-                          {formatCentsCompact(lead.estimatedTotalCents)}
-                        </span>
-                      ) : null}
-                    </div>
-                    <Link
-                      href={`/admin/inquiries/${lead.id}`}
-                      aria-label={`View lead from ${lead.name}`}
-                      className="absolute inset-0"
-                    />
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </section>
-
-        {/* Recent activity */}
-        <section className={cn(CARD_CLASS, "lg:col-span-2 xl:col-span-1")}>
-          <div className={CARD_HEADER_CLASS}>
-            <h2 className="flex items-center gap-2 text-sm font-semibold">
-              <Activity className="h-4 w-4 text-muted-foreground" />
+            <h2 className="flex items-center gap-2.5 text-sm font-semibold">
+              <span className="relative flex h-2.5 w-2.5" aria-hidden>
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+              </span>
               Recent activity
+              <span className="text-[11px] font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+                Live
+              </span>
             </h2>
           </div>
 
           {recentActivity.length === 0 ? (
             <EmptyState
-              icon={<Activity className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+              icon={<Inbox className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
               title="All quiet"
               subtitle="New leads, assignments, and booking updates will show here."
             />
           ) : (
-            <ul className="divide-y divide-border/40">
+            <ul className="max-h-[30rem] divide-y divide-border/40 overflow-y-auto">
               {recentActivity.map((item) => (
-                <li
-                  key={item.id}
-                  className="relative px-5 py-3 transition-colors hover:bg-muted/40"
-                >
+                <li key={item.id} className="relative px-5 py-3 transition-colors hover:bg-muted/40">
                   <div className="flex items-start gap-2.5">
                     <span
                       className={cn(
@@ -495,17 +370,16 @@ function EmptyState({
   );
 }
 
+/** Compact row for the narrow queue: identity, trip, value, actions stacked. */
 function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[] }) {
-  const badge = LEAD_TYPE_BADGES[lead.leadType] ?? LEAD_TYPE_BADGES.GENERAL_QUOTE;
   const tint = LEAD_TYPE_AVATAR_TINTS[lead.leadType] ?? LEAD_TYPE_AVATAR_TINTS.GENERAL_QUOTE;
   const trip = leadTripSummary(lead);
   const ageHours = differenceInHours(new Date(), new Date(lead.createdAt));
   const isStale = ageHours >= 24;
 
   return (
-    <li className="relative flex flex-col gap-x-5 gap-y-2 px-4 py-3.5 transition-colors hover:bg-muted/40 sm:px-5 lg:grid lg:grid-cols-[minmax(0,4fr)_minmax(0,4.5fr)_minmax(0,1.8fr)_auto] lg:items-center">
-      {/* Who */}
-      <div className="flex min-w-0 items-center gap-3">
+    <li className="relative px-4 py-3.5 transition-colors hover:bg-muted/40">
+      <div className="flex items-start gap-3">
         <div
           className={cn(
             "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
@@ -514,11 +388,17 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
         >
           {adminInitials(lead.name) || "?"}
         </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{lead.name}</p>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="truncate text-sm font-semibold">{lead.name}</p>
+            {lead.estimatedTotalCents != null ? (
+              <span className="shrink-0 text-xs font-semibold tabular-nums">
+                {formatCentsCompact(lead.estimatedTotalCents)}
+              </span>
+            ) : null}
+          </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {badge.label}
-            {" · "}
             {SOURCE_LABELS[lead.source] ?? lead.source}
             {" · "}
             <span
@@ -530,43 +410,22 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
               {formatDistanceToNowStrict(new Date(lead.createdAt))} ago
             </span>
           </p>
+          {trip ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{trip}</p> : null}
+
+          <div className="relative z-10 mt-2 flex items-center gap-1.5">
+            <ClaimInquiryButton inquiryId={lead.id} className="rounded-full" />
+            <AssignInquiryMenu inquiryId={lead.id} admins={admins} triggerClassName="rounded-full" />
+            <ArchiveButton inquiryId={lead.id} />
+          </div>
         </div>
       </div>
 
-      {/* Trip intent */}
-      <div className="min-w-0">
-        <p className="truncate text-sm">
-          {trip ?? <span className="text-muted-foreground/50">No trip details yet</span>}
-        </p>
-        {lead.message ? (
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">{lead.message}</p>
-        ) : null}
-      </div>
-
-      {/* Value */}
-      <span className="text-sm font-semibold tabular-nums lg:text-right">
-        {lead.estimatedTotalCents != null ? (
-          formatCentsAsCurrency(lead.estimatedTotalCents)
-        ) : lead.budget ? (
-          <span className="font-medium text-muted-foreground">{lead.budget}</span>
-        ) : (
-          <span className="text-muted-foreground/40">—</span>
-        )}
-      </span>
-
-      {/* Whole row navigates to the lead. */}
+      {/* Whole row navigates to the lead (actions sit above on z-10). */}
       <Link
         href={`/admin/inquiries/${lead.id}`}
         aria-label={`View lead from ${lead.name}`}
         className="absolute inset-0"
       />
-
-      {/* Actions */}
-      <div className="relative z-10 flex items-center gap-1.5 lg:justify-end">
-        <ClaimInquiryButton inquiryId={lead.id} className="rounded-full" />
-        <AssignInquiryMenu inquiryId={lead.id} admins={admins} triggerClassName="rounded-full" />
-        <ArchiveButton inquiryId={lead.id} />
-      </div>
     </li>
   );
 }
