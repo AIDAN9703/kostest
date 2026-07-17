@@ -98,7 +98,7 @@ export function AdminBookingPaymentCard({
 
         {/* Payment history */}
         <div>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             Payment History
           </h3>
           {payments.length === 0 ? (
@@ -168,7 +168,7 @@ function SummaryItem({
 }) {
   return (
     <div className="space-y-0.5">
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {label}
       </p>
       <p className={`text-lg font-semibold ${className ?? ""}`}>{value}</p>

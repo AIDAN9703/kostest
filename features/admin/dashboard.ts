@@ -11,7 +11,7 @@ import {
   inquiryEvents,
   users,
 } from "@/database/schema";
-import { and, asc, count, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
 import { cache } from "react";
 import {
   startOfDay,
@@ -68,35 +68,6 @@ export interface DashboardActivityItem {
   href: string;
 }
 
-/** OPEN inquiries, longest since last update first — best “who needs a nudge” ordering. */
-export const getFollowUpInquiries = cache(async (limit = 6): Promise<InquiryListItem[]> => {
-  await assertAdmin();
-  const rows = await db
-    .select({
-      id: inquiry.id,
-      name: inquiry.name,
-      email: inquiry.email,
-      phone: inquiry.phone,
-      stage: inquiry.stage,
-      date: inquiry.date,
-      outcome: inquiry.outcome,
-      leadType: inquiry.leadType,
-      source: inquiry.source,
-      budget: inquiry.budget,
-      guests: inquiry.guests,
-      message: inquiry.message,
-      estimatedTotalCents: inquiry.estimatedTotalCents,
-      createdAt: inquiry.createdAt,
-      updatedAt: inquiry.updatedAt,
-    })
-    .from(inquiry)
-    .where(eq(inquiry.outcome, "OPEN"))
-    .orderBy(asc(inquiry.updatedAt))
-    .limit(limit);
-
-  return rows as InquiryListItem[];
-});
-
 /** OPEN inquiries with no admin assigned yet — newest first. */
 export const getUnassignedLeads = cache(async (limit = 8): Promise<InquiryListItem[]> => {
   await assertAdmin();
@@ -130,15 +101,6 @@ export const getUnassignedLeads = cache(async (limit = 8): Promise<InquiryListIt
     .limit(limit);
 
   return rows as InquiryListItem[];
-});
-
-export const getPendingBookingRequests = cache(async (): Promise<BookingListItem[]> => {
-  await assertAdmin();
-  const result = await bookingService.getAllBookings({
-    bookingStatus: "PENDING",
-    limit: 6,
-  });
-  return result.bookings;
 });
 
 /** Today through the next 6 days. */

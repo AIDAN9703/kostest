@@ -1,86 +1,99 @@
+/* ============================================================
+   KOS ADMIN THEME — navy + gold, light & dark
+   All colors come from the palette staples in globals.css
+   (--color-gold-*, --color-dark-*, --color-light-*); this file
+   only assigns them to semantic roles per mode.
+
+   Layering (lighter = closer in light, lighter = closer in dark):
+     light:  canvas light-bg  →  cards light-card  →  fills light-main
+     dark:   root dark-main   →  canvas dark-bg    →  cards dark-card
+   Gold is the accent for selection/highlights; navy stays the
+   action color (buttons, links).
+   ============================================================ */
+
 /* Root/overscroll backgrounds match the canvas in both modes, so
    rubber-band scrolling never flashes a foreign color. */
 html:has([data-admin-theme]) {
-  background-color: #f5f7f9;
+  background-color: var(--color-light-bg);
 }
 
 html:has([data-admin-theme]) body {
-  background-color: #f5f7f9;
+  background-color: var(--color-light-bg);
 }
 
 html.dark:has([data-admin-theme]) {
-  background-color: #0e1b27;
+  background-color: var(--color-dark-bg);
 }
 
 html.dark:has([data-admin-theme]) body {
-  background-color: #0e1b27;
+  background-color: var(--color-dark-bg);
 }
 
-/* ============================================
-   DEMO-PARITY BRAND PALETTE (kos-yachts.vercel.app/demo)
-   Light: white surfaces, navy primary, gold brand accents.
-   Dark: navy canvas, lighter-navy cards, brightened gold.
-   ============================================ */
-
+/* ── Light mode ─────────────────────────────────────────────── */
 .admin-theme {
     --radius: 0.75rem;
     --font-sans: var(--font-montserrat), ui-sans-serif, sans-serif;
-    /* Canvas gray at the root; white cards float on it. */
-    --color-background: #f5f7f9;
+
+    --color-background: var(--color-light-bg);
     --color-foreground: #1e293b;
-    --color-card: #ffffff;
+    --color-card: var(--color-light-card);
     --color-card-foreground: #1e293b;
-    --color-popover: #ffffff;
+    --color-popover: var(--color-light-card);
     --color-popover-foreground: #1e293b;
     --color-primary: #27445c;
     --color-primary-foreground: #f8fafc;
-    --color-secondary: #eef1f5;
+    --color-secondary: var(--color-light-main);
     --color-secondary-foreground: #1e293b;
-    --color-muted: #f5f7f9;
+    --color-muted: var(--color-light-main);
     --color-muted-foreground: #5b6b7b;
-    --color-accent: #eef1f5;
+    --color-accent: var(--color-light-main);
     --color-accent-foreground: #1e293b;
     --color-destructive: #c0392b;
     --color-border: #e4e8ee;
     --color-input: #e4e8ee;
-    --color-ring: #8a7a4e;
+    --color-ring: var(--color-gold-deep);
+
     --color-chart-1: #27445c;
-    --color-chart-2: #b2a37a;
+    --color-chart-2: var(--color-gold-accent);
     --color-chart-3: #5b6b7b;
     --color-chart-4: #9aa7b5;
-    --color-chart-5: #73663f;
-    --color-sidebar: #fbfcfd;
+    --color-chart-5: var(--color-gold-deep);
+
+    --color-sidebar: var(--color-light-card);
     --color-sidebar-foreground: #1e293b;
     --color-sidebar-primary: #27445c;
     --color-sidebar-primary-foreground: #f8fafc;
     /* Active/hover nav items glow brand gold, not gray */
-    --color-sidebar-accent: #f4f0e6;
-    --color-sidebar-accent-foreground: #73663f;
+    --color-sidebar-accent: var(--color-gold-soft);
+    --color-sidebar-accent-foreground: var(--color-gold-deep);
     --color-sidebar-border: #e4e8ee;
-    --color-sidebar-ring: #8a7a4e;
-    /* Brand + semantic state tokens (consumed via bg-brand, bg-success-soft, …) */
-    --brand: #b2a37a;
+    --color-sidebar-ring: var(--color-gold-deep);
+
+    /* Semantic brand/state roles (consumed via bg-brand, bg-success-soft, …) */
+    --brand: var(--color-gold-accent);
     --brand-foreground: #1e293b;
-    --brand-soft: #f4f0e6;
-    --brand-strong: #73663f;
+    --brand-soft: var(--color-gold-soft);
+    --brand-strong: var(--color-gold-deep);
     --success: #1f7a55;
     --success-soft: #e9f6ef;
     --warning: #8a5a16;
     --warning-soft: #fbf1e2;
     --destructive-soft: #fdece9;
+
     color: var(--color-foreground);
     background-color: var(--color-background);
 }
 
+/* ── Dark mode ──────────────────────────────────────────────── */
 .dark .admin-theme {
-    --color-background: #0e1b27;
+    --color-background: var(--color-dark-bg);
     --color-foreground: #e9eef3;
-    --color-card: #15283a;
+    --color-card: var(--color-dark-card);
     --color-card-foreground: #e9eef3;
-    --color-popover: #15283a;
+    --color-popover: var(--color-dark-card);
     --color-popover-foreground: #e9eef3;
     --color-primary: #e9eef3;
-    --color-primary-foreground: #0e1b27;
+    --color-primary-foreground: var(--color-dark-bg);
     --color-secondary: #1c2f40;
     --color-secondary-foreground: #e9eef3;
     --color-muted: #142634;
@@ -90,24 +103,27 @@ html.dark:has([data-admin-theme]) body {
     --color-destructive: #ef5a52;
     --color-border: #213548;
     --color-input: #213548;
-    --color-ring: #c2b184;
+    --color-ring: var(--color-gold-bright);
+
     --color-chart-1: #e9eef3;
-    --color-chart-2: #c2b184;
+    --color-chart-2: var(--color-gold-bright);
     --color-chart-3: #93a4b4;
     --color-chart-4: #64748b;
-    --color-chart-5: #d4c590;
-    --color-sidebar: #0c1722;
+    --color-chart-5: var(--color-gold-glow);
+
+    --color-sidebar: var(--color-dark-main);
     --color-sidebar-foreground: #e9eef3;
-    --color-sidebar-primary: #c2b184;
+    --color-sidebar-primary: var(--color-gold-bright);
     --color-sidebar-primary-foreground: #15110a;
-    --color-sidebar-accent: #2a2417;
-    --color-sidebar-accent-foreground: #d4c590;
+    --color-sidebar-accent: var(--color-gold-soft-dark);
+    --color-sidebar-accent-foreground: var(--color-gold-glow);
     --color-sidebar-border: #213548;
-    --color-sidebar-ring: #c2b184;
-    --brand: #c2b184;
+    --color-sidebar-ring: var(--color-gold-bright);
+
+    --brand: var(--color-gold-bright);
     --brand-foreground: #15110a;
-    --brand-soft: #2a2417;
-    --brand-strong: #d4c590;
+    --brand-soft: var(--color-gold-soft-dark);
+    --brand-strong: var(--color-gold-glow);
     --success: #4ade80;
     --success-soft: #0f2a1d;
     --warning: #e0a23a;
@@ -115,6 +131,7 @@ html.dark:has([data-admin-theme]) body {
     --destructive-soft: #2c1513;
 }
 
+/* ── Structural rules ───────────────────────────────────────── */
 .admin-theme *,
 .admin-theme ::after,
 .admin-theme ::before,
@@ -126,131 +143,4 @@ html.dark:has([data-admin-theme]) body {
 /* Ensure labels hide when sidebar is collapsed */
 .admin-theme [data-collapsible='icon'] .sidebar-label {
     display: none;
-}
-
-/* ============================================
-   LEGACY GRAY/SLATE OVERRIDES
-   Map hardcoded Tailwind colors to semantic CSS variables.
-   ============================================ */
-
-/* Background colors */
-.admin-theme .bg-white {
-    background-color: var(--color-card) !important;
-}
-
-.admin-theme .bg-gray-50,
-.admin-theme .bg-gray-100 {
-    background-color: var(--color-muted) !important;
-}
-
-.admin-theme .bg-gray-200 {
-    background-color: var(--color-border) !important;
-}
-
-/* Text colors */
-.admin-theme .text-gray-900,
-.admin-theme .text-gray-800 {
-    color: var(--color-foreground) !important;
-}
-
-.admin-theme .text-gray-700 {
-    color: var(--color-foreground) !important;
-    opacity: 0.9;
-}
-
-.admin-theme .text-gray-600 {
-    color: var(--color-muted-foreground) !important;
-}
-
-.admin-theme .text-gray-500,
-.admin-theme .text-gray-400 {
-    color: var(--color-muted-foreground) !important;
-}
-
-/* Border colors */
-.admin-theme .border-gray-200,
-.admin-theme .border-gray-300 {
-    border-color: var(--color-border) !important;
-}
-
-.admin-theme .border-gray-100 {
-    border-color: var(--color-border) !important;
-    opacity: 0.5;
-}
-
-/* Dark mode overrides */
-.dark .admin-theme .bg-white {
-    background-color: var(--color-card) !important;
-}
-
-.dark .admin-theme .bg-gray-50,
-.dark .admin-theme .bg-gray-100 {
-    background-color: var(--color-muted) !important;
-}
-
-.dark .admin-theme .text-gray-900,
-.dark .admin-theme .text-gray-800,
-.dark .admin-theme .text-gray-700 {
-    color: var(--color-foreground) !important;
-}
-
-.dark .admin-theme .text-gray-600,
-.dark .admin-theme .text-gray-500,
-.dark .admin-theme .text-gray-400 {
-    color: var(--color-muted-foreground) !important;
-}
-
-.dark .admin-theme .border-gray-200,
-.dark .admin-theme .border-gray-300,
-.dark .admin-theme .border-gray-100 {
-    border-color: var(--color-border) !important;
-}
-
-/* Slate color overrides (used in some tables) */
-.admin-theme .bg-slate-50,
-.admin-theme .bg-slate-100 {
-    background-color: var(--color-muted) !important;
-}
-
-.admin-theme .text-slate-700,
-.admin-theme .text-slate-600 {
-    color: var(--color-foreground) !important;
-}
-
-.admin-theme .text-slate-400 {
-    color: var(--color-muted-foreground) !important;
-}
-
-.admin-theme .border-slate-600 {
-    border-color: var(--color-primary) !important;
-}
-
-.admin-theme .hover\:bg-slate-50:hover,
-.admin-theme .hover\:bg-slate-50\/50:hover {
-    background-color: var(--color-muted) !important;
-    opacity: 0.5;
-}
-
-.dark .admin-theme .bg-slate-50,
-.dark .admin-theme .bg-slate-100 {
-    background-color: var(--color-muted) !important;
-}
-
-.dark .admin-theme .text-slate-700,
-.dark .admin-theme .text-slate-600 {
-    color: var(--color-foreground) !important;
-}
-
-.dark .admin-theme .text-slate-400 {
-    color: var(--color-muted-foreground) !important;
-}
-
-.dark .admin-theme .border-slate-600 {
-    border-color: var(--color-primary) !important;
-}
-
-.dark .admin-theme .hover\:bg-slate-50:hover,
-.dark .admin-theme .hover\:bg-slate-50\/50:hover {
-    background-color: var(--color-muted) !important;
-    opacity: 0.5;
 }

@@ -42,16 +42,35 @@
   --color-chart-5: hsl(var(--chart-5));
 
   --color-primary: #27445c;
-  --color-primary-admin: #25388c;
 
-  --color-gold: #b2a37a;
+  /* ── KOS palette staples — the single source of truth ─────────────
+     Gold accents + the layered surface colors for each mode. The admin
+     theme assigns these to semantic roles; use the utilities directly
+     (bg-gold-accent, bg-dark-card, …) only for one-off brand moments. */
+  --color-gold-accent: #b2a37a;    /* the gold — fills on light surfaces */
+  --color-gold-bright: #c2b184;    /* gold fills on dark surfaces */
+  --color-gold-glow: #d4c590;      /* gold text on dark surfaces */
+  --color-gold-deep: #6a5d38;      /* gold text on light surfaces (AA) */
+  --color-gold-soft: #efe9d8;      /* gold highlight tint, light mode */
+  --color-gold-soft-dark: #2a2417; /* gold highlight tint, dark mode */
 
-  /* Brand + semantic state tokens (demo-parity). Bare vars are set per
-     mode by .admin-theme / .dark .admin-theme; fallbacks = light values. */
-  --color-brand: var(--brand, #b2a37a);
+  --color-dark-bg: #0e1b27;        /* dark mode canvas */
+  --color-dark-card: #15283a;      /* dark mode surfaces */
+  --color-dark-main: #0c1722;      /* dark mode deepest layer (sidebar/root) */
+
+  --color-light-bg: #f5f7f9;       /* light mode canvas */
+  --color-light-card: #ffffff;     /* light mode surfaces */
+  --color-light-main: #eef1f5;     /* light mode secondary fills */
+
+  /* Marketing-site alias — same gold, one definition */
+  --color-gold: var(--color-gold-accent);
+
+  /* Semantic brand/state tokens. Bare vars are set per mode by
+     .admin-theme / .dark .admin-theme; fallbacks = light values. */
+  --color-brand: var(--brand, var(--color-gold-accent));
   --color-brand-foreground: var(--brand-foreground, #1e293b);
-  --color-brand-soft: var(--brand-soft, #f4f0e6);
-  --color-brand-strong: var(--brand-strong, #73663f);
+  --color-brand-soft: var(--brand-soft, var(--color-gold-soft));
+  --color-brand-strong: var(--brand-strong, var(--color-gold-deep));
   --color-success: var(--success, #1f7a55);
   --color-success-soft: var(--success-soft, #e9f6ef);
   --color-warning: var(--warning, #8a5a16);
@@ -156,8 +175,6 @@
 @layer base {
   :root {
     --radius: 0.5rem;
-    --color-primary-site: var(--color-primary);
-    --color-gold-site: var(--color-gold);
 
     /* Sticky main-site navbar height. Used by sticky/scroll layouts (e.g.
        /boats/search map column) so they don't drift if the navbar resizes.

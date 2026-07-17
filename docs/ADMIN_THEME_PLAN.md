@@ -3,9 +3,15 @@
 **Created:** 2026-07-16 · **Status:** Phases 1–2 DONE. Verdict: navy + gold locked in,
 light + dark both kept, accent switcher removed (2026-07-16). Canvas decision resolved:
 light `--color-background` = #f5f7f9 at the theme root with matching html/body overscroll
-rules; per-page canvas hacks removed. Remaining: Phase 3 (shared primitives + Button
-`brand` variant), Phase 4 (hardcoded emerald/amber/red → success/warning/destructive
-token sweep; legacy gray-override CSS review), Phase 5 (dark-mode QA click-through).
+rules; per-page canvas hacks removed. 2026-07-16 later: palette **staples** added in globals.css `@theme` as the single
+source of truth (`gold-accent/bright/glow/deep/soft/soft-dark`, `dark-bg/card/main`,
+`light-bg/card/main`); admin-theme.css now only assigns staples to roles per mode —
+no repeated hexes. Light-contrast fixes: gold text on light = `gold-deep #6a5d38`,
+stronger `gold-soft #efe9d8`. Dead code purged: legacy gray/slate `!important`
+override section (~90 lines, after converting the 2 real users), `-site` aliases,
+`--color-primary-admin`, `getFollowUpInquiries`, `getPendingBookingRequests`.
+Remaining: Phase 3 (shared primitives + Button `brand` variant), Phase 4 (hardcoded
+emerald/amber/red → success/warning/destructive sweep), Phase 5 (dark-mode QA).
 Possible future: drop light mode entirely (Aidan musing, not decided).
 **Reference:** https://kos-yachts.vercel.app/demo (studied via its shipped CSS), plus
 shadcn-admin / next-shadcn-dashboard-starter as secondary patterns.
