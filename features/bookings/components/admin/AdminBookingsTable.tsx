@@ -118,7 +118,13 @@ interface AdminBookingsTableProps {
 
 const columnHelper = createColumnHelper<BookingListItem>();
 
-/** Full-width tables stretch columns by default; w-0 hugs content instead of leaving dead space. */
+/**
+ * Content-hugging column (w-0) — ONLY for the trailing icon/actions column.
+ * Data columns must stay auto-width so the browser distributes leftover
+ * table width proportionally across all of them; pinning them with w-0
+ * forces the slack into whichever column is left, which reads as a giant
+ * gap at wide viewports / zoomed-out windows.
+ */
 const shrinkColumnMeta = {
   headerClassName: "w-0",
   cellClassName: "w-0",
@@ -230,7 +236,6 @@ export function AdminBookingsTable({
       columnHelper.accessor("startDateTime", {
         id: "date",
         header: "Date",
-        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(
@@ -366,7 +371,6 @@ export function AdminBookingsTable({
       columnHelper.display({
         id: "captain",
         header: "Captain",
-        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           const captainOptions = [...captainsProp];
@@ -396,7 +400,6 @@ export function AdminBookingsTable({
       }),
       columnHelper.accessor("totalAmountCents", {
         header: "GMV",
-        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           const amount = getDisplayAmountCents(booking);
@@ -421,7 +424,6 @@ export function AdminBookingsTable({
       columnHelper.display({
         id: "revenue",
         header: "Revenue",
-        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           const expenseCents = booking.opsExpenseCents;
@@ -478,7 +480,6 @@ export function AdminBookingsTable({
       columnHelper.display({
         id: "assignedAdmin",
         header: "Admin",
-        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           if (!booking.assignedAdminId) {
