@@ -132,15 +132,15 @@ export function InquiryPipelineRail({
                   <span
                     className={cn(
                       "flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border transition-colors",
-                      isDone && "border-primary bg-primary text-primary-foreground",
-                      isCurrent && "border-primary bg-background ring-2 ring-primary/25",
+                      isDone && "border-brand bg-brand text-brand-foreground",
+                      isCurrent && "border-brand bg-background ring-2 ring-brand/30",
                       !isDone && !isCurrent && "border-border bg-background"
                     )}
                   >
                     {isDone ? (
                       <Check className="h-2.5 w-2.5" />
                     ) : isCurrent ? (
-                      <span className="h-2 w-2 rounded-full bg-primary" />
+                      <span className="h-2 w-2 rounded-full bg-brand" />
                     ) : null}
                   </span>
                   <span

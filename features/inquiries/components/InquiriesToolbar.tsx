@@ -87,7 +87,7 @@ export function InquiriesToolbar() {
               className={cn(
                 "flex h-8 items-center rounded-full px-4 text-sm font-medium transition-all",
                 active
-                  ? "bg-primary text-primary-foreground shadow-sm"
+                  ? "bg-brand text-brand-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -109,7 +109,7 @@ export function InquiriesToolbar() {
               className={cn(
                 "flex h-8 items-center rounded-full px-3.5 text-sm font-medium transition-all",
                 active
-                  ? "bg-primary text-primary-foreground shadow-sm"
+                  ? "bg-brand text-brand-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >

@@ -114,7 +114,7 @@ export function AdminDashboardView({
           pricingTiers={pricingTiers}
           triggerLabel="New booking"
           triggerSize="default"
-          triggerClassName="gap-1.5 rounded-full px-5 shadow-sm"
+          triggerClassName="gap-1.5 rounded-full bg-brand px-5 text-brand-foreground shadow-sm hover:bg-brand/90"
         />
       </header>
 
@@ -146,13 +146,13 @@ export function AdminDashboardView({
                   key={day.toISOString()}
                   className={cn(
                     "flex min-h-[9.5rem] flex-col gap-1.5 rounded-xl p-2",
-                    isToday && "bg-primary/5 ring-1 ring-primary/15"
+                    isToday && "bg-brand-soft ring-1 ring-brand/30"
                   )}
                 >
                   <p
                     className={cn(
                       "px-1 text-[11px] font-semibold",
-                      isToday ? "text-primary" : "text-muted-foreground"
+                      isToday ? "text-brand-strong" : "text-muted-foreground"
                     )}
                   >
                     {isToday ? "Today" : format(day, "EEE d")}
@@ -171,14 +171,14 @@ export function AdminDashboardView({
                           className={cn(
                             "rounded-lg px-2 py-1.5 transition-colors",
                             isToday
-                              ? "bg-primary/10 hover:bg-primary/20"
+                              ? "bg-brand/20 hover:bg-brand/30"
                               : "bg-muted hover:bg-muted/70"
                           )}
                         >
                           <span
                             className={cn(
                               "block text-[11px] font-semibold tabular-nums",
-                              isToday && "text-primary"
+                              isToday && "text-brand-strong"
                             )}
                           >
                             {format(new Date(t.startDateTime), "h:mm a")}

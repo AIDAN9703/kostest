@@ -53,8 +53,9 @@ html.dark:has([data-admin-theme]) body {
     --color-sidebar-foreground: #1e293b;
     --color-sidebar-primary: #27445c;
     --color-sidebar-primary-foreground: #f8fafc;
-    --color-sidebar-accent: #eef1f5;
-    --color-sidebar-accent-foreground: #1e293b;
+    /* Active/hover nav items glow brand gold, not gray */
+    --color-sidebar-accent: #f4f0e6;
+    --color-sidebar-accent-foreground: #73663f;
     --color-sidebar-border: #e4e8ee;
     --color-sidebar-ring: #8a7a4e;
     /* Brand + semantic state tokens (consumed via bg-brand, bg-success-soft, …) */
@@ -99,8 +100,8 @@ html.dark:has([data-admin-theme]) body {
     --color-sidebar-foreground: #e9eef3;
     --color-sidebar-primary: #c2b184;
     --color-sidebar-primary-foreground: #15110a;
-    --color-sidebar-accent: #1c2f40;
-    --color-sidebar-accent-foreground: #e9eef3;
+    --color-sidebar-accent: #2a2417;
+    --color-sidebar-accent-foreground: #d4c590;
     --color-sidebar-border: #213548;
     --color-sidebar-ring: #c2b184;
     --brand: #c2b184;
