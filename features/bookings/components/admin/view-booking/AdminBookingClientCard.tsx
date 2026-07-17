@@ -63,7 +63,7 @@ export function AdminBookingClientCard({
   const displayName = client.customerName?.trim() || "Unnamed client";
   const hasAccount = Boolean(client.customerUserId);
   const interactiveText =
-    "text-foreground underline-offset-4 hover:text-primary hover:underline";
+    "text-foreground underline-offset-4 hover:text-primary-strong hover:underline";
 
   function saveCustomerField() {
     saveField(() => {

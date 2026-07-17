@@ -83,7 +83,7 @@ export function BookingActivityTimeline({
                 const Icon = iconForEvent(event.eventType);
                 return (
                   <div key={event.id} className="relative flex gap-4 pl-2">
-                    <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-primary">
+                    <div className="relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-primary-strong">
                       <Icon className="h-4 w-4" />
                     </div>
                     <div className="min-w-0 flex-1 pb-6">
@@ -142,11 +142,11 @@ export function BookingActivityTimeline({
                                     event.newState &&
                                     field in event.newState && (
                                       <span className="block pl-2 text-[11px] leading-relaxed">
-                                        <span className="text-red-600/90 dark:text-red-400">
+                                        <span className="text-destructive">
                                           − {String((event.previousState as Record<string, unknown>)[field])}
                                         </span>
                                         <br />
-                                        <span className="text-emerald-600/90 dark:text-emerald-400">
+                                        <span className="text-success">
                                           + {String((event.newState as Record<string, unknown>)[field])}
                                         </span>
                                       </span>

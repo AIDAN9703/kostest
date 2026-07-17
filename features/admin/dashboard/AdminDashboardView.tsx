@@ -114,7 +114,7 @@ export function AdminDashboardView({
           pricingTiers={pricingTiers}
           triggerLabel="New booking"
           triggerSize="default"
-          triggerClassName="gap-1.5 rounded-full bg-brand px-5 text-brand-foreground shadow-sm hover:bg-brand/90"
+          triggerClassName="gap-1.5 rounded-full bg-primary px-5 text-primary-foreground shadow-sm hover:bg-primary/90"
         />
       </header>
 
@@ -146,13 +146,13 @@ export function AdminDashboardView({
                   key={day.toISOString()}
                   className={cn(
                     "flex min-h-[9.5rem] flex-col gap-1.5 rounded-xl p-2",
-                    isToday && "bg-brand-soft ring-1 ring-brand/30"
+                    isToday && "bg-primary-soft ring-1 ring-primary/30"
                   )}
                 >
                   <p
                     className={cn(
                       "px-1 text-[11px] font-semibold",
-                      isToday ? "text-brand-strong" : "text-muted-foreground"
+                      isToday ? "text-primary-strong" : "text-muted-foreground"
                     )}
                   >
                     {isToday ? "Today" : format(day, "EEE d")}
@@ -171,14 +171,14 @@ export function AdminDashboardView({
                           className={cn(
                             "rounded-lg px-2 py-1.5 transition-colors",
                             isToday
-                              ? "bg-brand/20 hover:bg-brand/30"
+                              ? "bg-primary/20 hover:bg-primary/30"
                               : "bg-muted hover:bg-muted/70"
                           )}
                         >
                           <span
                             className={cn(
                               "block text-[11px] font-semibold tabular-nums",
-                              isToday && "text-brand-strong"
+                              isToday && "text-primary-strong"
                             )}
                           >
                             {format(new Date(t.startDateTime), "h:mm a")}
@@ -226,7 +226,7 @@ export function AdminDashboardView({
               <FinRow
                 label="KOS commission"
                 value={formatCentsAsWholeDollars(metrics.kosCommissionMtdCents)}
-                accent="text-emerald-700 dark:text-emerald-400"
+                accent="text-success"
               />
               <FinRow label="Charters" value={metrics.tripsThisMonth.toLocaleString()} />
               <FinRow
@@ -247,7 +247,7 @@ export function AdminDashboardView({
             <h2 className="flex items-center gap-2.5 text-sm font-semibold">
               Unassigned leads
               {metrics.unassignedLeads > 0 ? (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[11px] font-semibold tabular-nums text-white">
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-semibold tabular-nums text-destructive-foreground">
                   {metrics.unassignedLeads}
                 </span>
               ) : null}
@@ -259,7 +259,7 @@ export function AdminDashboardView({
 
           {unassignedLeads.length === 0 ? (
             <EmptyState
-              icon={<Inbox className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+              icon={<Inbox className="h-5 w-5 text-success" />}
               title="Every lead has an owner"
               subtitle="New inquiries from the website, marketplaces, and socials land here."
             />
@@ -277,11 +277,11 @@ export function AdminDashboardView({
           <div className={CARD_HEADER_CLASS}>
             <h2 className="flex items-center gap-2.5 text-sm font-semibold">
               <span className="relative flex h-2.5 w-2.5" aria-hidden>
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/70 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success" />
               </span>
               Recent activity
-              <span className="text-[11px] font-medium uppercase tracking-wide text-emerald-600 dark:text-emerald-400">
+              <span className="text-[11px] font-medium uppercase tracking-wide text-success">
                 Live
               </span>
             </h2>
@@ -289,7 +289,7 @@ export function AdminDashboardView({
 
           {recentActivity.length === 0 ? (
             <EmptyState
-              icon={<Inbox className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
+              icon={<Inbox className="h-5 w-5 text-success" />}
               title="All quiet"
               subtitle="New leads, assignments, and booking updates will show here."
             />
@@ -362,7 +362,7 @@ function EmptyState({
 }) {
   return (
     <div className="flex flex-col items-center px-5 py-12 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10">
+      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-success-soft">
         {icon}
       </div>
       <p className="text-sm font-semibold">{title}</p>
@@ -405,7 +405,7 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
             <span
               className={cn(
                 "tabular-nums",
-                isStale && "font-medium text-amber-700 dark:text-amber-400"
+                isStale && "font-medium text-warning"
               )}
             >
               {formatDistanceToNowStrict(new Date(lead.createdAt))} ago

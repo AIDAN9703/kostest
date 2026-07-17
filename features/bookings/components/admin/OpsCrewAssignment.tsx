@@ -127,7 +127,7 @@ export function OpsCrewAssignment({
               <li key={m.id} className="flex min-w-0 items-center gap-0.5">
                 <Link
                   href={`/admin/users/${m.userId}`}
-                  className="min-w-0 flex-1 truncate font-medium underline-offset-4 hover:text-primary hover:underline"
+                  className="min-w-0 flex-1 truncate font-medium underline-offset-4 hover:text-primary-strong hover:underline"
                   title={formatCrewName(m)}
                 >
                   {formatCrewName(m)}

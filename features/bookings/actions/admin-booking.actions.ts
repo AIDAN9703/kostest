@@ -16,7 +16,6 @@ import { createCheckoutSessionForBooking } from "@/features/bookings/actions/str
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { bookingCrewService } from "@/features/bookings/services/booking-crew.service";
 import { bookingStatusService } from "@/features/bookings/services/booking-status.service";
-import { bookingNotesService } from "@/features/bookings/services/booking-notes.service";
 import {
   sendBookingApprovalEmail,
   sendBookingDenialEmail,
@@ -222,23 +221,48 @@ export async function assignCaptainToBooking(bookingId: string, captainUserId: s
 }
 
 /** Mark booking as contacted (creates admin note) */
-export async function markBookingAsContacted(bookingId: string) {
+/** Mark a payment-confirmed booking as completed (charter happened). */
+export async function markBookingCompleted(bookingId: string) {
   try {
     const authResult = await getAdminSession();
     if (authResult.error) return { success: false, error: authResult.error };
 
-    await bookingNotesService.markAsContacted(bookingId, authResult.session!.user.id);
-    await db.update(bookings).set({ updatedAt: new Date() }).where(eq(bookings.id, bookingId));
+    await bookingStatusService.complete(bookingId, authResult.session!.user.id);
 
     revalidatePath("/admin/bookings");
     revalidatePath(`/admin/bookings/${bookingId}`);
 
-    return { success: true, message: "Booking marked as contacted" };
+    return { success: true, message: "Booking marked as completed" };
   } catch (error) {
-    console.error("Error marking booking as contacted:", error);
+    console.error("Error completing booking:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to mark as contacted",
+      error: error instanceof Error ? error.message : "Failed to complete booking",
     };
   }
 }
+
+/** Cancel a booking with a reason (any active status). */
+export async function cancelBooking(bookingId: string, reason: string) {
+  try {
+    const authResult = await getAdminSession();
+    if (authResult.error) return { success: false, error: authResult.error };
+
+    const trimmed = reason?.trim();
+    if (!trimmed) return { success: false, error: "A cancellation reason is required" };
+
+    await bookingStatusService.cancel(bookingId, trimmed, authResult.session!.user.id);
+
+    revalidatePath("/admin/bookings");
+    revalidatePath(`/admin/bookings/${bookingId}`);
+
+    return { success: true, message: "Booking cancelled" };
+  } catch (error) {
+    console.error("Error cancelling booking:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to cancel booking",
+    };
+  }
+}
+

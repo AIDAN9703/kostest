@@ -40,7 +40,7 @@ export function FilterPopover({
         <Button
           variant="outline"
           size="sm"
-          className="h-9 gap-1.5 border-border bg-card text-foreground hover:bg-muted/60 hover:text-foreground"
+          className="h-10 gap-1.5 rounded-full border-0 bg-muted px-4 text-foreground hover:bg-muted/70 hover:text-foreground"
         >
           <Filter className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-sm">{triggerLabel}</span>

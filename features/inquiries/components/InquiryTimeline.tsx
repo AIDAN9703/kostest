@@ -20,11 +20,11 @@ interface InquiryTimelineProps {
 }
 
 const EVENT_CONFIG: Record<string, { icon: React.ElementType; label: string; color: string }> = {
-  CREATED: { icon: MessageSquare, label: "Inquiry received", color: "text-primary" },
+  CREATED: { icon: MessageSquare, label: "Inquiry received", color: "text-primary-strong" },
   STAGE_CHANGE: { icon: ArrowRightLeft, label: "Stage changed", color: "text-violet-600 dark:text-violet-400" },
   OUTCOME_CHANGE: { icon: ArrowRightLeft, label: "Outcome changed", color: "text-violet-600 dark:text-violet-400" },
-  NOTE: { icon: FileText, label: "Note", color: "text-amber-600 dark:text-amber-400" },
-  CONTACT_ATTEMPT: { icon: Phone, label: "Contact", color: "text-emerald-600 dark:text-emerald-400" },
+  NOTE: { icon: FileText, label: "Note", color: "text-warning" },
+  CONTACT_ATTEMPT: { icon: Phone, label: "Contact", color: "text-success" },
   ASSIGNED: { icon: UserPlus, label: "Assigned", color: "text-sky-600 dark:text-sky-400" },
 };
 

@@ -355,6 +355,8 @@ export interface BookingDetails extends BookingListItem {
   cancellationReason: string | null;
   cancelledAt: Date | null;
   expiresAt: Date | null;
+  /** Draft-proposal share token — null once the booking is past the proposal stage or never had one. */
+  publicToken: string | null;
 
   // Extended boat info
   boatCapacity: number | null;

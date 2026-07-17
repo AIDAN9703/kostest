@@ -1,15 +1,15 @@
 import { notFound } from "next/navigation";
 
 import { AdminBookingHeader } from "@/features/bookings/components/admin/view-booking/AdminBookingHeader";
+import { BookingStatusBar } from "@/features/bookings/components/admin/view-booking/BookingStatusBar";
 import {
   AdminBookingDetailsCard,
   type BookingTripDetailsSnapshot,
 } from "@/features/bookings/components/admin/view-booking/AdminBookingDetailsCard";
 import { AdminBookingClientCard } from "@/features/bookings/components/admin/view-booking/AdminBookingClientCard";
-import { AdminBookingPaymentCard } from "@/features/bookings/components/admin/view-booking/AdminBookingPaymentCard";
-import { AdminBookingOpsSection } from "@/features/bookings/components/admin/view-booking/AdminBookingOpsSection";
+import { BookingPaymentsFinancialsCard } from "@/features/bookings/components/admin/view-booking/BookingPaymentsFinancialsCard";
 import { AdminBookingChecklistCard } from "@/features/bookings/components/admin/view-booking/AdminBookingChecklistCard";
-import { AdminBookingQuickActionsCard } from "@/features/bookings/components/admin/view-booking/AdminBookingQuickActionsCard";
+import { BookingQuickActionsMenu } from "@/features/bookings/components/admin/view-booking/BookingQuickActionsMenu";
 import { BookingActivityTimeline } from "@/features/bookings/components/admin/view-booking/BookingActivityTimeline";
 
 import { bookingService } from "@/features/bookings/services/booking.service";
@@ -161,57 +161,54 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
 
   return (
     <div className="flex w-full flex-1 flex-col gap-6">
-      <AdminBookingHeader booking={booking} />
+      {/* Identity header: who + quick actions + lifecycle */}
+      <header className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4 p-4">
+          <AdminBookingHeader booking={booking} />
+          <BookingQuickActionsMenu
+            bookingId={id}
+            bookingStatus={booking.bookingStatus}
+            allowPaymentLink={allowPaymentLink}
+            publicToken={booking.publicToken}
+          />
+        </div>
+        <div className="border-t border-border/50 px-5 py-3">
+          <BookingStatusBar status={booking.bookingStatus} />
+        </div>
+      </header>
 
-      {/* Client, status, quick actions — one compact row */}
-      <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-3 [&>*]:min-w-0">
-        <AdminBookingClientCard bookingId={id} client={clientSnapshot} />
-        <AdminBookingChecklistCard bookingId={id} items={checklistItems} />
-        <AdminBookingQuickActionsCard bookingId={id} allowPaymentLink={allowPaymentLink} />
-      </div>
+      {/* Body: content left, activity feed running the full right side */}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+        <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
+          <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 [&>*]:min-w-0">
+            <AdminBookingClientCard bookingId={id} client={clientSnapshot} />
+            <AdminBookingChecklistCard bookingId={id} items={checklistItems} />
+          </div>
 
-      {/* Trip details, then payment one row down */}
-      <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
-        <AdminBookingDetailsCard
-          bookingId={id}
-          trip={tripSnapshot}
-          captainUserId={booking.captainUserId}
-          captainFirstName={booking.captainFirstName}
-          captainLastName={booking.captainLastName}
-          captainEmail={booking.captainEmail}
-          captainOptions={captainOptions}
-          bookingCrew={bookingCrew}
-          crewOptions={crewOptions}
-        />
-        <AdminBookingPaymentCard
-          bookingId={id}
-          booking={booking}
-          payments={bookingPayments}
-          opsGmvCents={ops?.gmvCents ?? null}
-        />
-      </div>
+          <AdminBookingDetailsCard
+            bookingId={id}
+            trip={tripSnapshot}
+            captainUserId={booking.captainUserId}
+            captainFirstName={booking.captainFirstName}
+            captainLastName={booking.captainLastName}
+            captainEmail={booking.captainEmail}
+            captainOptions={captainOptions}
+            bookingCrew={bookingCrew}
+            crewOptions={crewOptions}
+          />
 
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[1fr_minmax(0,22rem)] lg:gap-8">
-        <AdminBookingOpsSection
-          bookingId={id}
-          currency={booking.currency ?? "USD"}
-          totalAmountCents={booking.totalAmountCents ?? null}
-          opsExpenseCents={ops?.expenseCents ?? null}
-          opsGmvCents={ops?.gmvCents ?? null}
-          opsPaidCents={ops?.paidCents ?? null}
-          opsSentToOwnerCents={ops?.sentToOwnerCents ?? null}
-          opsCrewName={ops?.crewName ?? null}
-          opsConnected={ops?.connected ?? null}
-          opsClientPaid={ops?.clientPaid ?? null}
-          opsCaptainPaid={ops?.captainPaid ?? null}
-          opsAllPaid={ops?.allPaid ?? null}
-          opsSheetsSent={ops?.sheetsSent ?? null}
-          opsCommissionAgentCents={ops?.commissionAgentCents ?? null}
-          opsCommissionKosCents={ops?.commissionKosCents ?? null}
-          opsSourceOverride={ops?.sourceOverride ?? null}
-          expenseLines={expenseLines}
-          pricingTierId={booking.pricingTierId ?? null}
-        />
+          <BookingPaymentsFinancialsCard
+            bookingId={id}
+            booking={booking}
+            payments={bookingPayments}
+            opsGmvCents={ops?.gmvCents ?? null}
+            opsExpenseCents={ops?.expenseCents ?? null}
+            commissionAgentCents={ops?.commissionAgentCents ?? null}
+            commissionKosCents={ops?.commissionKosCents ?? null}
+            expenseLines={expenseLines}
+          />
+        </div>
+
         <BookingActivityTimeline
           events={activityEvents}
           className="lg:sticky lg:top-20"

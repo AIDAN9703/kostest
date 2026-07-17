@@ -112,7 +112,7 @@ export function AdminBookingDetailsCard({
   const [draft, setDraft] = useState<unknown>(null);
   const [boatPick, setBoatPick] = useState<BoatForAdminSelect | null>(null);
 
-  const interactiveText = "text-foreground underline-offset-4 hover:text-primary hover:underline";
+  const interactiveText = "text-foreground underline-offset-4 hover:text-primary-strong hover:underline";
 
   function openField(field: BookingSingleEditableField) {
     setActiveField(field);

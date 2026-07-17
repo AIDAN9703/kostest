@@ -125,7 +125,7 @@ function InquiryRow({ inquiry }: { inquiry: InquiryWithAssignee }) {
             <span
               className={cn(
                 "tabular-nums",
-                isStale && "font-medium text-amber-700 dark:text-amber-400"
+                isStale && "font-medium text-warning"
               )}
             >
               {formatDistanceToNowStrict(new Date(inquiry.createdAt))} ago
@@ -150,7 +150,7 @@ function InquiryRow({ inquiry }: { inquiry: InquiryWithAssignee }) {
           inquiry.boatName ? (
             <Link
               href={`/boats/${inquiry.boatId}`}
-              className="relative z-10 inline-block max-w-full truncate text-sm font-medium text-primary hover:underline"
+              className="relative z-10 inline-block max-w-full truncate text-sm font-medium text-primary-strong hover:underline"
             >
               {inquiry.boatName}
             </Link>
@@ -209,7 +209,7 @@ function InquiryRow({ inquiry }: { inquiry: InquiryWithAssignee }) {
             </span>
           </>
         ) : isOpen ? (
-          <span className="rounded-full bg-red-500/10 px-2.5 py-1 text-[10px] font-semibold text-red-600 dark:text-red-400">
+          <span className="rounded-full bg-destructive-soft px-2.5 py-1 text-[10px] font-semibold text-destructive">
             Unassigned
           </span>
         ) : (

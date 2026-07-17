@@ -19,7 +19,7 @@ export const adminHeaderControlBase =
 
 /** Neutral ring for header icon buttons. */
 export const adminHeaderNeutralChrome =
-  "border-0 shadow-none ring-1 ring-border/55 dark:ring-2 dark:ring-white/20";
+  "border-0 shadow-none ring-1 ring-border/55 dark:ring-2 dark:ring-foreground/20";
 
 /** Sidebar logo / icon frame. */
 export function adminThemedSidebarFrame(className?: string) {

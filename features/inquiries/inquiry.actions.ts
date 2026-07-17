@@ -20,6 +20,7 @@ import {
   termCharterInquirySchema,
 } from "@/shared/lib/validation/inquiry";
 import { boats, boatPricingTiers } from "@/database/schema";
+import { advanceInquiryStage } from "@/features/inquiries/inquiry-stage";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { calculateBookingPriceFromDollars } from "@/shared/lib/utils/pricing-utils";
 import { getAppSettings } from "@/features/app-settings/app-settings.service";
@@ -548,26 +549,11 @@ export async function logContactAttempt(
       createdBy: session.user.id,
     });
 
-    let stageUpdated = false;
-    if (inquiryRow.stage === "NEEDS_CONTACT" && inquiryRow.outcome === "OPEN") {
-      await db
-        .update(inquiryTable)
-        .set({
-          stage: "CONTACTED",
-          updatedAt: new Date(),
-        })
-        .where(eq(inquiryTable.id, inquiryId));
-
-      await db.insert(inquiryEvents).values({
-        inquiryId,
-        eventType: "STAGE_CHANGE",
-        previousStage: "NEEDS_CONTACT",
-        newStage: "CONTACTED",
-        createdBy: session.user.id,
-      });
-
-      stageUpdated = true;
-    }
+    // First real contact moves the lead forward (never backward — a
+    // follow-up call on a QUALIFIED lead leaves it QUALIFIED).
+    const stageUpdated =
+      inquiryRow.outcome === "OPEN" &&
+      (await advanceInquiryStage(inquiryId, inquiryRow.stage, "CONTACTED", session.user.id));
 
     revalidatePath("/admin/inquiries");
     revalidatePath(`/admin/inquiries/${inquiryId}`);
@@ -584,9 +570,43 @@ export async function logContactAttempt(
 }
 
 /**
- * Reopen a closed inquiry (WON/LOST/ABANDONED → OPEN)
+ * Reopen a closed inquiry (WON/LOST/ABANDONED → OPEN). Thin wrapper over
+ * updateInquiryOutcome — same stage reset, same events, one write path.
  */
 export async function reopenInquiry(inquiryId: string) {
+  const [inquiryRow] = await db
+    .select({ outcome: inquiryTable.outcome })
+    .from(inquiryTable)
+    .where(eq(inquiryTable.id, inquiryId));
+
+  if (!inquiryRow) {
+    return { success: false, error: "Inquiry not found" };
+  }
+  if (inquiryRow.outcome === "OPEN") {
+    return { success: false, error: "Inquiry is already open" };
+  }
+
+  const result = await updateInquiryOutcome(
+    inquiryId,
+    "OPEN",
+    `Reopened from ${inquiryRow.outcome}`
+  );
+  if (!result.success) {
+    return {
+      success: false,
+      error: ("error" in result && result.error) || "Failed to reopen inquiry",
+    };
+  }
+  return { success: true, message: "Inquiry reopened successfully" };
+}
+
+/**
+ * Mark an offer/proposal as sent to the lead — advances the pipeline to
+ * OFFER_SENT (never backward) and logs the moment. Call this from whatever
+ * sends the offer (email, payment link, proposal page) so the pipeline
+ * stays truthful without manual clicks.
+ */
+export async function markInquiryOfferSent(inquiryId: string, note?: string) {
   try {
     const adminAuth = await getAdminSession();
     if (adminAuth.error !== undefined) {
@@ -595,65 +615,40 @@ export async function reopenInquiry(inquiryId: string) {
     const session = adminAuth.session;
 
     const [inquiryRow] = await db
-      .select({
-        outcome: inquiryTable.outcome,
-        stage: inquiryTable.stage,
-      })
+      .select({ stage: inquiryTable.stage, outcome: inquiryTable.outcome })
       .from(inquiryTable)
       .where(eq(inquiryTable.id, inquiryId));
 
     if (!inquiryRow) {
       return { success: false, error: "Inquiry not found" };
     }
-
-    if (inquiryRow.outcome === "OPEN") {
-      return { success: false, error: "Inquiry is already open" };
+    if (inquiryRow.outcome !== "OPEN") {
+      return { success: false, error: "This inquiry is closed" };
     }
 
-    const previousOutcome = inquiryRow.outcome;
-
-    type ReopenUpdatePayload = {
-      outcome: "OPEN";
-      updatedAt: Date;
-      stage?: InquiryStage;
-    };
-    const updateData: ReopenUpdatePayload = {
-      outcome: "OPEN",
-      updatedAt: new Date(),
-    };
-
-    if (inquiryRow.stage === "CONVERTED") {
-      updateData.stage = "CONTACTED";
-    }
-
-    await db.update(inquiryTable).set(updateData).where(eq(inquiryTable.id, inquiryId));
-
-    await db.insert(inquiryEvents).values({
-      inquiryId,
-      eventType: "OUTCOME_CHANGE",
-      previousOutcome,
-      newOutcome: "OPEN",
-      content: `Reopened from ${previousOutcome}`,
-      createdBy: session.user.id,
-    });
-
-    if (updateData.stage && updateData.stage !== inquiryRow.stage) {
+    if (note?.trim()) {
       await db.insert(inquiryEvents).values({
         inquiryId,
-        eventType: "STAGE_CHANGE",
-        previousStage: inquiryRow.stage,
-        newStage: updateData.stage,
+        eventType: "NOTE",
+        content: note.trim(),
         createdBy: session.user.id,
       });
     }
 
+    const stageUpdated = await advanceInquiryStage(
+      inquiryId,
+      inquiryRow.stage,
+      "OFFER_SENT",
+      session.user.id
+    );
+
     revalidatePath("/admin/inquiries");
     revalidatePath(`/admin/inquiries/${inquiryId}`);
 
-    return { success: true, message: "Inquiry reopened successfully" };
+    return { success: true, stageUpdated };
   } catch (error) {
-    console.error("Error reopening inquiry:", error);
-    return { success: false, error: "Failed to reopen inquiry" };
+    console.error("Error marking offer sent:", error);
+    return { success: false, error: "Failed to mark offer as sent" };
   }
 }
 
@@ -688,15 +683,9 @@ export async function claimInquiry(inquiryId: string) {
       return { success: false, error: "Already claimed by someone else — use Reassign" };
     }
 
-    const isFresh = inquiryRow.stage === "NEW" || inquiryRow.stage === "NEEDS_CONTACT";
-
     await db
       .update(inquiryTable)
-      .set({
-        assignedTo: session.user.id,
-        ...(isFresh ? { stage: "CLAIMED" as const } : {}),
-        updatedAt: new Date(),
-      })
+      .set({ assignedTo: session.user.id, updatedAt: new Date() })
       .where(eq(inquiryTable.id, inquiryId));
 
     const claimerName = session.user.name || session.user.email || "admin";
@@ -709,15 +698,7 @@ export async function claimInquiry(inquiryId: string) {
       metadata: { assignedTo: session.user.id, claimed: true },
     });
 
-    if (isFresh) {
-      await db.insert(inquiryEvents).values({
-        inquiryId,
-        eventType: "STAGE_CHANGE",
-        previousStage: inquiryRow.stage as InquiryStage,
-        newStage: "CLAIMED",
-        createdBy: session.user.id,
-      });
-    }
+    await advanceInquiryStage(inquiryId, inquiryRow.stage, "CLAIMED", session.user.id);
 
     revalidatePath("/admin");
     revalidatePath("/admin/inquiries");
@@ -824,7 +805,11 @@ export async function assignInquiry(inquiryId: string, adminId: string | null) {
     const session = adminAuth.session;
 
     const [inquiryRow] = await db
-      .select({ assignedTo: inquiryTable.assignedTo })
+      .select({
+        assignedTo: inquiryTable.assignedTo,
+        stage: inquiryTable.stage,
+        outcome: inquiryTable.outcome,
+      })
       .from(inquiryTable)
       .where(eq(inquiryTable.id, inquiryId));
 
@@ -862,6 +847,11 @@ export async function assignInquiry(inquiryId: string, adminId: string | null) {
       createdBy: session.user.id,
       metadata: { assignedTo: adminId },
     });
+
+    // Giving a fresh lead an owner is the same signal as claiming it.
+    if (adminId && inquiryRow.outcome === "OPEN") {
+      await advanceInquiryStage(inquiryId, inquiryRow.stage, "CLAIMED", session.user.id);
+    }
 
     revalidatePath("/admin");
     revalidatePath("/admin/inquiries");

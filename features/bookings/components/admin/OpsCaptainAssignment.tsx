@@ -183,7 +183,7 @@ export function OpsCaptainAssignment({
               type="button"
               disabled={pending}
               onClick={() => setModalOpen(true)}
-              className="max-w-full truncate text-left text-sm font-medium text-foreground transition-colors hover:text-primary"
+              className="max-w-full truncate text-left text-sm font-medium text-foreground transition-colors hover:text-primary-strong"
               title={formatCaptainName(assigned)}
             >
               {formatCaptainName(assigned)}
@@ -237,7 +237,7 @@ export function OpsCaptainAssignment({
           {assigned ? (
             <Link
               href={`/admin/users/${assigned.id}`}
-              className="font-medium underline-offset-4 hover:text-primary hover:underline"
+              className="font-medium underline-offset-4 hover:text-primary-strong hover:underline"
               title={formatCaptainName(assigned)}
             >
               {formatCaptainName(assigned)}

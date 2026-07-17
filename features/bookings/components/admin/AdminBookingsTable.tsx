@@ -19,13 +19,11 @@ import {
 import {
   CalendarCheck,
   Eye,
-  Mail,
   Trash2,
   MoreVertical,
   CheckCircle2,
   XCircle,
   UserCheck,
-  Phone,
   Plus,
   Copy,
   Check,
@@ -41,7 +39,6 @@ import {
   approveBookingRequest,
   denyBookingRequest,
   assignAdminToBooking,
-  markBookingAsContacted,
 } from "@/features/bookings/actions/admin-booking.actions";
 import { useDeleteBooking } from "@/features/bookings/hooks/useBookingMutations";
 import { useToast } from "@/shared/lib/hooks/use-toast";
@@ -56,22 +53,6 @@ import { useMediaQuery } from "@/shared/lib/hooks/use-media-query";
 
 const tableInlineActionClass =
   "inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-md border border-dashed border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground";
-
-function titleCase(value: string) {
-  return value
-    .toLowerCase()
-    .split(/[_\s]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
-
-/** Prefer ops override; otherwise show a friendly version of the technical booking type. */
-function getDisplaySource(b: BookingListItem): string {
-  if (b.opsSourceOverride && b.opsSourceOverride.trim()) return b.opsSourceOverride.trim();
-  if (!b.bookingType) return "—";
-  return titleCase(b.bookingType);
-}
 
 /** Use ops GMV when admins have set it; otherwise fall back to the quote total. */
 function getDisplayAmountCents(b: BookingListItem): number {
@@ -112,7 +93,7 @@ function CopyableText({ value, label, className }: CopyableTextProps) {
     >
       <span className="truncate">{value}</span>
       {copied ? (
-        <Check className="h-3 w-3 shrink-0 text-emerald-600" />
+        <Check className="h-3 w-3 shrink-0 text-success" />
       ) : (
         <Copy className="h-3 w-3 shrink-0 opacity-0 transition-opacity group-hover/copy:opacity-100" />
       )}
@@ -244,16 +225,6 @@ export function AdminBookingsTable({
     [handleAction]
   );
 
-  const handleMarkContacted = useCallback(
-    (bookingId: string) => {
-      setActionLoading(bookingId);
-      handleAction(() => markBookingAsContacted(bookingId), "Marked as Contacted").finally(() =>
-        setActionLoading(null)
-      );
-    },
-    [handleAction]
-  );
-
   const columns = useMemo<ColumnDef<BookingListItem, any>[]>(
     () => [
       columnHelper.accessor("startDateTime", {
@@ -268,6 +239,17 @@ export function AdminBookingsTable({
           const { time: endTime } = booking.endDateTime
             ? parseDateTimeInBoatTimezone(booking.endDateTime)
             : { time: "" };
+          const isCancelled = booking.bookingStatus === "CANCELLED";
+          const isPaid = booking.paymentDisplayStatus === "PAID";
+          // Red badges = things an admin must act on, right where the eye lands.
+          const attention: string[] = [];
+          if (
+            booking.needsCaptain &&
+            !booking.captainUserId &&
+            (booking.bookingStatus === "APPROVED" || booking.bookingStatus === "CONFIRMED")
+          ) {
+            attention.push("Assign captain");
+          }
           return (
             <div className="text-sm leading-snug">
               <div className="whitespace-nowrap font-medium tabular-nums text-foreground">
@@ -277,13 +259,38 @@ export function AdminBookingsTable({
                 {startTime ? formatTime12Hour(startTime) : ""}
                 {endTime ? ` – ${formatTime12Hour(endTime)}` : ""}
               </div>
+              <div className="mt-1 flex flex-wrap items-center gap-1">
+                {isCancelled ? (
+                  <span className="rounded-full bg-destructive-soft px-2 py-0.5 text-[10px] font-semibold text-destructive">
+                    Cancelled
+                  </span>
+                ) : (
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                      isPaid ? "bg-success-soft text-success" : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {isPaid ? "Paid" : "Unpaid"}
+                  </span>
+                )}
+                {attention.map((label) => (
+                  <span
+                    key={label}
+                    className="rounded-full bg-destructive-soft px-2 py-0.5 text-[10px] font-semibold text-destructive"
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
             </div>
           );
         },
       }),
       columnHelper.accessor("customerName", {
         header: "Customer",
-        meta: shrinkColumnMeta,
+        // Stretch: customer + boat share the table's leftover width so the
+        // right-side columns don't drift away from their content.
         cell: ({ row }) => {
           const booking = row.original;
           const displayName = booking.customerName || booking.userEmail || "Unknown";
@@ -304,7 +311,7 @@ export function AdminBookingsTable({
                   </div>
                 )}
               </div>
-              <div className="min-w-0 max-w-[12rem]">
+              <div className="min-w-0 max-w-[22rem]">
                 <div className="truncate text-sm font-medium leading-tight text-foreground">
                   {displayName}
                 </div>
@@ -329,7 +336,6 @@ export function AdminBookingsTable({
       }),
       columnHelper.accessor("boatName", {
         header: "Boat",
-        meta: shrinkColumnMeta,
         cell: ({ row }) => {
           const booking = row.original;
           return (
@@ -345,7 +351,7 @@ export function AdminBookingsTable({
                   />
                 </div>
               ) : null}
-              <span className="block max-w-[12rem] truncate text-sm font-medium text-foreground">
+              <span className="block max-w-[22rem] truncate text-sm font-medium text-foreground">
                 {booking.boatName || "Unknown"}
               </span>
               {booking.bookingGroupId ? (
@@ -457,8 +463,8 @@ export function AdminBookingsTable({
                 className={cn(
                   "font-semibold tabular-nums whitespace-nowrap",
                   isNegative
-                    ? "text-rose-700 dark:text-rose-400"
-                    : "text-emerald-700 dark:text-emerald-400"
+                    ? "text-destructive"
+                    : "text-success"
                 )}
               >
                 {revenue != null
@@ -466,20 +472,6 @@ export function AdminBookingsTable({
                   : "—"}
               </div>
             </button>
-          );
-        },
-      }),
-      columnHelper.display({
-        id: "source",
-        header: "Source",
-        meta: shrinkColumnMeta,
-        cell: ({ row }) => {
-          const booking = row.original;
-          const source = getDisplaySource(booking);
-          return (
-            <span className="block max-w-[5.5rem] truncate text-sm text-foreground">
-              {source}
-            </span>
           );
         },
       }),
@@ -497,7 +489,7 @@ export function AdminBookingsTable({
               ? `${booking.assignedAdminFirstName || ""} ${booking.assignedAdminLastName || ""}`.trim()
               : booking.assignedAdminEmail || "Unknown";
           return (
-            <span className="block max-w-[5.5rem] truncate text-sm font-medium text-foreground">
+            <span className="block max-w-[12rem] truncate whitespace-nowrap text-sm font-medium text-foreground">
               {adminName}
             </span>
           );
@@ -532,7 +524,7 @@ export function AdminBookingsTable({
                       <DropdownMenuItem
                         onClick={() => handleApprove(booking.id)}
                         disabled={isLoading}
-                        className="text-green-600 cursor-pointer"
+                        className="text-success cursor-pointer"
                       >
                         <CheckCircle2 className="mr-2 h-4 w-4" />
                         Approve
@@ -540,7 +532,7 @@ export function AdminBookingsTable({
                       <DropdownMenuItem
                         onClick={() => handleDeny(booking.id)}
                         disabled={isLoading}
-                        className="text-red-600 cursor-pointer"
+                        className="text-destructive cursor-pointer"
                       >
                         <XCircle className="mr-2 h-4 w-4" />
                         Deny
@@ -579,7 +571,7 @@ export function AdminBookingsTable({
                             >
                               {adminName}
                               {isAssigned && (
-                                <CheckCircle2 className="ml-auto h-4 w-4 text-green-600" />
+                                <CheckCircle2 className="ml-auto h-4 w-4 text-success" />
                               )}
                             </DropdownMenuItem>
                           );
@@ -587,27 +579,11 @@ export function AdminBookingsTable({
                       )}
                     </DropdownMenuSubContent>
                   </DropdownMenuSub>
-                  <DropdownMenuItem
-                    onClick={() => handleMarkContacted(booking.id)}
-                    disabled={isLoading}
-                    className="cursor-pointer"
-                  >
-                    <Phone className="mr-2 h-4 w-4" />
-                    Mark as Contacted
-                  </DropdownMenuItem>
-                  {booking.customerEmail && (
-                    <DropdownMenuItem asChild>
-                      <a href={`mailto:${booking.customerEmail}`} className="cursor-pointer">
-                        <Mail className="mr-2 h-4 w-4" />
-                        Send Email
-                      </a>
-                    </DropdownMenuItem>
-                  )}
                   <>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => handleDelete(booking.id)}
-                      className="text-red-600 cursor-pointer"
+                      className="text-destructive cursor-pointer"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
@@ -624,7 +600,6 @@ export function AdminBookingsTable({
       handleApprove,
       handleDeny,
       handleAssignAdmin,
-      handleMarkContacted,
       handleDelete,
       actionLoading,
       admins,

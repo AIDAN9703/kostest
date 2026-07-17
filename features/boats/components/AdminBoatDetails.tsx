@@ -239,7 +239,7 @@ export function AdminBoatDetails({ boat }: AdminBoatDetailsProps) {
 
             <div>
               <h3 className="text-sm font-medium text-muted-foreground">Owner Email</h3>
-              <p className="mt-1 text-sm text-blue-600">
+              <p className="mt-1 text-sm text-primary-strong">
                 {boat.ownerEmail || "No email available"}
               </p>
             </div>
@@ -256,8 +256,8 @@ export function AdminBoatDetails({ boat }: AdminBoatDetailsProps) {
                 <h3 className="text-sm font-medium text-muted-foreground">
                   Owner Notes
                 </h3>
-                <div className="mt-1 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                  <p className="text-sm text-amber-800 whitespace-pre-line">
+                <div className="mt-1 p-3 bg-warning-soft border border-warning/30 rounded-md">
+                  <p className="text-sm text-warning whitespace-pre-line">
                     {boat.ownerNotes}
                   </p>
                 </div>
@@ -308,7 +308,7 @@ export function AdminBoatDetails({ boat }: AdminBoatDetailsProps) {
                           {tier.name ||
                             `${tier.hours} hour${tier.hours !== 1 ? "s" : ""}`}
                           {tier.isDefault && (
-                            <span className="ml-1 text-xs text-blue-600">
+                            <span className="ml-1 text-xs text-primary-strong">
                               (Default)
                             </span>
                           )}

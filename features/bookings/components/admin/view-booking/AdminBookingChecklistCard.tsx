@@ -37,12 +37,12 @@ export function AdminBookingChecklistCard({
     <Card className="rounded-2xl border border-border/60 shadow-sm">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Status</CardTitle>
+          <CardTitle className="text-lg">Checklist</CardTitle>
           <span
             className={cn(
               "rounded-full px-2 py-0.5 text-xs font-medium tabular-nums",
               summary.done === summary.total
-                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                ? "bg-success-soft text-success"
                 : "bg-muted text-muted-foreground"
             )}
           >
@@ -101,7 +101,7 @@ function ChecklistRow({
       className={cn(
         "flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors",
         done
-          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+          ? "bg-success-soft text-success"
           : "bg-muted text-muted-foreground"
       )}
     >

@@ -11,6 +11,7 @@ import { bookingEventsService } from "@/features/bookings/services/booking-event
 import { paymentService } from "@/features/payments/payment.service";
 import { sendBookingConfirmationEmail } from "@/shared/lib/services/email.service";
 import { fulfillInstantCheckoutSession } from "@/features/bookings/services/instant-checkout-fulfillment.service";
+import { convertInquiryForBooking } from "@/features/inquiries/inquiry-conversion";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -417,6 +418,9 @@ async function ensureBookingConfirmed(bookingId: string, reason: string) {
     .update(bookings)
     .set({ bookingStatus: "CONFIRMED", updatedAt: new Date() })
     .where(eq(bookings.id, bookingId));
+
+  // Payment confirmation wins the originating lead, if there is one.
+  await convertInquiryForBooking(bookingId, null);
 
   await db.insert(bookingStatusHistory).values({
     bookingId,

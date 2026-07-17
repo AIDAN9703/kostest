@@ -56,7 +56,7 @@ function SyncStatus({ cal }: { cal: ExternalCalendarListItem }) {
   if (cal.lastSyncStatus === "SUCCESS") {
     const count = cal.lastEventCount ?? 0;
     return (
-      <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+      <span className="text-xs font-medium text-success">
         {count} block{count === 1 ? "" : "s"}
       </span>
     );

@@ -1,10 +1,12 @@
 import { Suspense } from "react";
+import { auth } from "@/auth";
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { boatService } from "@/features/boats/boat.service";
 import { userService } from "@/features/users/user.service";
 import { captainProfileService } from "@/features/profiles/captain-profile.service";
 import { bookingSearchParamsCache } from "@/features/bookings/searchParams";
 import { AdminBookingFilter } from "@/features/bookings/components/admin/AdminBookingFilter";
+import { BookingsHeaderCta } from "@/features/bookings/components/admin/BookingsHeaderCta";
 import { AdminBookingsTable } from "@/features/bookings/components/admin/AdminBookingsTable";
 import { AdminBookingTablePagination } from "@/features/bookings/components/admin/AdminBookingTablePagination";
 import { AdminBookingsCalendar } from "@/features/bookings/components/admin/AdminBookingsCalendar";
@@ -26,48 +28,90 @@ export default async function BookingsPage({
   ]);
 
   const filter = (
-    <Suspense fallback={<div className="h-9 shrink-0 animate-pulse rounded-md bg-muted pb-3" />}>
-      <AdminBookingFilter admins={admins} pricingTiers={pricingTiers} />
+    <Suspense fallback={<div className="h-10 shrink-0 animate-pulse rounded-full bg-muted pb-3" />}>
+      <AdminBookingFilter admins={admins} />
     </Suspense>
   );
 
+  const headerCta = <BookingsHeaderCta pricingTiers={pricingTiers} />;
+
   if (params.view === "calendar") {
     return (
-      <AdminListShell toolbar={filter}>
-        <AdminBookingsCalendar />
-      </AdminListShell>
+      <div className="flex h-full min-h-0 w-full flex-col">
+        <BookingsPageHeader cta={headerCta} />
+        <div className="flex min-h-0 flex-1 flex-col">
+          <AdminListShell toolbar={filter}>
+            <AdminBookingsCalendar />
+          </AdminListShell>
+        </div>
+      </div>
     );
   }
+
+  const session = await auth();
+  const nowIso = new Date().toISOString();
 
   const result = await bookingService.getAllBookings({
     search: params.search || undefined,
     bookingStatus: params.bookingStatus ?? undefined,
     paymentStatus: params.paymentStatus ?? undefined,
     bookingType: params.bookingType ?? undefined,
-    dateFrom: params.dateFrom ?? undefined,
-    dateTo: params.dateTo ?? undefined,
+    // Explicit date-range filters win over the Upcoming/Past pills.
+    dateFrom: params.dateFrom ?? (params.time === "upcoming" ? nowIso : undefined),
+    dateTo: params.dateTo ?? (params.time === "past" ? nowIso : undefined),
     needsCaptain: params.needsCaptain ?? undefined,
     minAmount: params.minAmount ?? undefined,
     maxAmount: params.maxAmount ?? undefined,
-    assignedAdminId: params.assignedAdminId ?? undefined,
+    assignedAdminId:
+      params.scope === "mine"
+        ? (session?.user?.id ?? undefined)
+        : (params.assignedAdminId ?? undefined),
+    unassignedOnly: params.scope === "unassigned" || undefined,
     bookingGroupId: params.bookingGroupId ?? undefined,
     page: params.page,
     limit: params.limit,
   });
 
   return (
-    <AdminListShell
-      toolbar={filter}
-      pagination={
-        <AdminBookingTablePagination
-          totalCount={result.totalCount}
-          totalPages={result.totalPages}
-          page={result.page}
-          limit={result.limit}
-        />
-      }
-    >
-      <AdminBookingsTable bookings={result.bookings} admins={admins} captains={captains} />
-    </AdminListShell>
+    <div className="flex h-full min-h-0 w-full flex-col">
+      <BookingsPageHeader totalCount={result.totalCount} cta={headerCta} />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <AdminListShell
+          toolbar={filter}
+          pagination={
+            <AdminBookingTablePagination
+              totalCount={result.totalCount}
+              totalPages={result.totalPages}
+              page={result.page}
+              limit={result.limit}
+            />
+          }
+        >
+          <AdminBookingsTable bookings={result.bookings} admins={admins} captains={captains} />
+        </AdminListShell>
+      </div>
+    </div>
+  );
+}
+
+function BookingsPageHeader({
+  totalCount,
+  cta,
+}: {
+  totalCount?: number;
+  cta?: React.ReactNode;
+}) {
+  return (
+    <header className="flex flex-wrap items-center justify-between gap-3 pb-4 pt-1">
+      <div className="flex min-w-0 items-baseline gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight">Bookings</h1>
+        {totalCount != null ? (
+          <p className="text-sm tabular-nums text-muted-foreground">
+            {totalCount.toLocaleString()} {totalCount === 1 ? "booking" : "bookings"}
+          </p>
+        ) : null}
+      </div>
+      {cta}
+    </header>
   );
 }

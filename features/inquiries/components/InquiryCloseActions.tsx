@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, XCircle, PauseCircle } from "lucide-react";
+import { Send, XCircle, PauseCircle } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -64,7 +64,7 @@ export function InquiryCloseActions({
     return null; // Don't show close actions if already closed
   }
 
-  async function handleCloseInquiry(outcome: "WON" | "LOST" | "ABANDONED") {
+  async function handleCloseInquiry(outcome: "LOST" | "ABANDONED") {
     setLoading(outcome.toLowerCase());
     const reason =
       outcome === "LOST"
@@ -82,7 +82,7 @@ export function InquiryCloseActions({
       router.refresh();
       toast({
         title: `Inquiry marked as ${formatLabel(outcome)} ✓`,
-        description: outcome === "WON" ? "Inquiry marked as won." : "Inquiry has been closed",
+        description: "Inquiry has been closed",
       });
     } else {
       toast({ title: "Error", description: res.error, variant: "destructive" });
@@ -101,41 +101,39 @@ export function InquiryCloseActions({
 
   return (
     <>
-      {/* Close Inquiry Section */}
+      {/* Close Inquiry Section — one row: the win path plus the two ways out */}
       <section>
         <h2 className="text-sm font-semibold">Close out</h2>
-        <div className="flex flex-col gap-2 pt-3">
+        <div className="flex gap-2 pt-3">
           <Button
             size="sm"
             onClick={() => setShowCloseDialog("won")}
             disabled={loading !== null}
-            className="justify-start gap-2 rounded-lg bg-green-600 text-white shadow-sm hover:bg-green-700"
+            className="flex-1 gap-2 rounded-lg bg-success text-success-foreground shadow-sm hover:bg-success/90"
           >
-            <CheckCircle2 className="h-4 w-4" />
-            Create a Booking
+            <Send className="h-4 w-4" />
+            Create proposal
           </Button>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowCloseDialog("lost")}
-              disabled={loading !== null}
-              className="flex-1 justify-start gap-2 rounded-lg text-red-600 hover:bg-red-500/10 hover:text-red-700 dark:text-red-400"
-            >
-              <XCircle className="h-4 w-4" />
-              Lost
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowCloseDialog("abandoned")}
-              disabled={loading !== null}
-              className="flex-1 justify-start gap-2 rounded-lg text-muted-foreground hover:text-foreground"
-            >
-              <PauseCircle className="h-4 w-4" />
-              Archive
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCloseDialog("lost")}
+            disabled={loading !== null}
+            className="gap-2 rounded-lg text-destructive hover:bg-destructive-soft"
+          >
+            <XCircle className="h-4 w-4" />
+            Lost
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowCloseDialog("abandoned")}
+            disabled={loading !== null}
+            className="gap-2 rounded-lg text-muted-foreground hover:text-foreground"
+          >
+            <PauseCircle className="h-4 w-4" />
+            Archive
+          </Button>
         </div>
       </section>
 
@@ -146,12 +144,12 @@ export function InquiryCloseActions({
       >
         <DialogContent className="rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Create a booking</DialogTitle>
+            <DialogTitle>Create a proposal</DialogTitle>
             <DialogDescription>
-              Opens the booking form with contact info, guest count, and charter
-              notes prefilled from the inquiry when available. You choose the boat
-              and finish pricing there — the inquiry is marked as won once the
-              booking is created.
+              Opens the proposal form prefilled from this inquiry — contact info,
+              guest count, and charter notes. Choose the boat, price the trip, and
+              send it by email or text. The lead moves to Offer sent when it goes
+              out, and to Won when the customer accepts or pays.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -164,7 +162,7 @@ export function InquiryCloseActions({
             </Button>
             <Button
               onClick={handleCreateBooking}
-              className="rounded-xl gap-2 bg-green-600 text-white hover:bg-green-700"
+              className="rounded-xl gap-2 bg-success text-success-foreground hover:bg-success/90"
             >
               Continue
             </Button>

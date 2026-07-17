@@ -95,7 +95,7 @@ export function AdminBlogsTable({ posts, loading }: AdminBlogsTableProps) {
                     {post.title}
                   </span>
                   {post.isFeatured && (
-                    <Star className="h-3.5 w-3.5 text-amber-500 fill-current shrink-0" />
+                    <Star className="h-3.5 w-3.5 text-warning fill-current shrink-0" />
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground truncate mt-0.5">

@@ -8,7 +8,7 @@ import { AdminQuickActionsDropdown } from "@/shared/admin/components/AdminQuickA
 
 export default function AdminHeader() {
   return (
-    <header className="sticky top-0 z-40 box-border flex h-16 shrink-0 items-center justify-between gap-2 border-b border-border/60 bg-background py-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 group-has-data-[collapsible=icon]/sidebar-wrapper:py-1.5">
+    <header className="sticky top-0 z-40 box-border flex h-18 shrink-0 items-center justify-between gap-2 border-b border-sidebar-border bg-sidebar py-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-14 group-has-data-[collapsible=icon]/sidebar-wrapper:py-1.5">
       <div className="flex min-w-0 items-center gap-2 px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 h-4" />

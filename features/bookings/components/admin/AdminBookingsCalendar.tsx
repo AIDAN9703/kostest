@@ -445,7 +445,7 @@ function BookingEventDialog({
           </Row>
 
           <Row icon={Anchor} label="Captain">
-            {captain ?? (p.needsCaptain ? <em className="text-amber-700 dark:text-amber-400">Captain needed</em> : "Self-drive")}
+            {captain ?? (p.needsCaptain ? <em className="text-warning">Captain needed</em> : "Self-drive")}
           </Row>
 
           <Row icon={Users} label="Guests">
@@ -539,8 +539,8 @@ function Tile({
     <div
       className={cn(
         "rounded-lg border px-3 py-2",
-        tone === "positive" && "border-emerald-200 bg-emerald-50/40 dark:border-emerald-900/40 dark:bg-emerald-950/30",
-        tone === "negative" && "border-rose-200 bg-rose-50/40 dark:border-rose-900/40 dark:bg-rose-950/30",
+        tone === "positive" && "border-success/30 bg-success-soft/50",
+        tone === "negative" && "border-destructive/30 bg-destructive-soft/50",
         tone === "muted" && "border-border bg-muted/30",
         tone === "neutral" && "border-border bg-card",
       )}
@@ -549,8 +549,8 @@ function Tile({
       <div
         className={cn(
           "text-sm font-semibold tabular-nums",
-          tone === "positive" && "text-emerald-700 dark:text-emerald-400",
-          tone === "negative" && "text-rose-700 dark:text-rose-400",
+          tone === "positive" && "text-success",
+          tone === "negative" && "text-destructive",
           tone === "muted" && "text-muted-foreground",
         )}
       >

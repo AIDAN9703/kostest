@@ -1,8 +1,6 @@
 /** Allowed rows-per-page values for admin list tables (URL + UI selector). */
 export const ADMIN_LIST_PAGE_SIZES = [10, 25, 50, 100] as const;
 
-export type AdminListPageSize = (typeof ADMIN_LIST_PAGE_SIZES)[number];
-
 /** Default when `limit` is absent from the URL or service filters. */
 export const ADMIN_LIST_DEFAULT_PAGE_SIZE = 25;
 

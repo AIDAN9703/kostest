@@ -38,7 +38,7 @@ export function AdminUserRecentBookings({ userId, bookings }: UserRecentBookings
           {bookings && bookings.length > 0 && (
             <Link
               href={`/admin/bookings?userId=${userId}`}
-              className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors"
+              className="text-sm font-semibold text-primary-strong hover:text-primary-strong/80 transition-colors"
             >
               View All →
             </Link>
@@ -61,7 +61,7 @@ export function AdminUserRecentBookings({ userId, bookings }: UserRecentBookings
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-1.5">
-                      <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                      <p className="text-sm font-semibold text-foreground group-hover:text-primary-strong transition-colors">
                         {formatDateTime(booking.startDateTime)}
                       </p>
                       <StatusBadge status={booking.bookingStatus} />

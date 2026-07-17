@@ -109,6 +109,10 @@ export function SingleBookingForm({
       startDateTime: inquiryPrefill.startDateTime || s.startDateTime,
       endDateTime: inquiryPrefill.endDateTime || s.endDateTime,
     }));
+    // Coming from a lead, the point is to SEND the proposal — default the
+    // channels on (SMS only with consent) instead of silently saving a draft.
+    setSendProposalEmail(Boolean(inquiryPrefill.customerEmail));
+    setSendProposalSms(inquiryPrefill.smsConsent && Boolean(inquiryPrefill.customerPhone));
   }, [inquiryPrefill]);
 
   useEffect(() => {
@@ -247,9 +251,12 @@ export function SingleBookingForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {inquiryPrefill ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-900/60 dark:bg-emerald-950/35 dark:text-emerald-50">
-          <span className="font-medium">Loaded from inquiry.</span> Customer and trip hints are
-          filled below — choose a boat and pricing, then create the booking.
+        <div className="rounded-xl border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
+          <span className="font-medium">
+            Preparing a proposal for {inquiryPrefill.customerName || "this lead"}.
+          </span>{" "}
+          Customer and trip details are filled from the inquiry — choose a boat and pricing,
+          then send. The lead moves to Offer sent when the proposal goes out.
         </div>
       ) : null}
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
@@ -337,7 +344,13 @@ export function SingleBookingForm({
           onSendProposalEmailChange={setSendProposalEmail}
           sendProposalSms={sendProposalSms}
           onSendProposalSmsChange={setSendProposalSms}
-          submitLabel="Create Booking"
+          submitLabel={
+            inquiryPrefill
+              ? sendProposalEmail || sendProposalSms
+                ? "Create & send proposal"
+                : "Save draft proposal"
+              : "Create Booking"
+          }
           isPending={pending}
           error={actionState.error}
         />

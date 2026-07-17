@@ -78,7 +78,7 @@ export function AdminCaptainProfileCards({ rows }: { rows: CaptainProfileAdminRo
               {showEmail ? (
                 <a
                   href={`mailto:${r.email}`}
-                  className="flex items-center gap-2 text-foreground hover:text-primary hover:underline"
+                  className="flex items-center gap-2 text-foreground hover:text-primary-strong hover:underline"
                 >
                   <Mail className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   <span className="truncate">{r.email}</span>
@@ -87,7 +87,7 @@ export function AdminCaptainProfileCards({ rows }: { rows: CaptainProfileAdminRo
               {r.phoneNumber ? (
                 <a
                   href={`tel:${formatPhoneNumberTelHref(r.phoneNumber)}`}
-                  className="flex items-center gap-2 text-foreground hover:text-primary hover:underline"
+                  className="flex items-center gap-2 text-foreground hover:text-primary-strong hover:underline"
                 >
                   <Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   <span>{formatPhoneNumberForDisplay(r.phoneNumber)}</span>

@@ -21,7 +21,7 @@ import { cn } from "@/shared/lib/utils/general-utils";
 import { LogOut } from "lucide-react";
 
 const navItemButton =
-  "h-11 gap-3 rounded-lg px-3 text-base leading-snug text-sidebar-foreground/90 transition-[background-color,box-shadow,color] hover:bg-sidebar-accent/80 data-[active=true]:bg-primary/10 data-[active=true]:font-semibold data-[active=true]:text-sidebar-foreground data-[active=true]:ring-1 data-[active=true]:ring-primary/35 dark:data-[active=true]:bg-primary/25 dark:data-[active=true]:ring-2 dark:data-[active=true]:ring-primary/50 group-data-[collapsible=icon]:h-11 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:[&_.sidebar-label]:hidden";
+  "h-11 gap-3 rounded-lg px-3 text-base leading-snug text-sidebar-foreground/90 transition-[background-color,box-shadow,color] hover:bg-sidebar-accent/60 data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-sidebar-accent-foreground data-[active=true]:ring-1 data-[active=true]:ring-sidebar-ring/40 group-data-[collapsible=icon]:h-11 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:[&_.sidebar-label]:hidden";
 
 function isNavActive(pathname: string, href: string) {
   if (href === "/admin") return pathname === "/admin";
@@ -29,7 +29,7 @@ function isNavActive(pathname: string, href: string) {
 }
 
 /**
- * Header height matches SidebarInset (`AdminHeader`): h-16 expanded, h-12 when icon-collapsed,
+ * Header height matches SidebarInset (`AdminHeader`): h-18 expanded, h-14 when icon-collapsed,
  * box-border so the divider lines up with the main bar.
  */
 export default function AdminSidebar() {
@@ -39,8 +39,8 @@ export default function AdminSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader
         className={cn(
-          "box-border flex h-16 shrink-0 flex-col justify-center gap-0 border-b border-sidebar-border bg-sidebar p-0 transition-[height,padding] duration-200 ease-linear",
-          "group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:px-0"
+          "box-border flex h-18 shrink-0 flex-col justify-center gap-0 border-b border-sidebar-border bg-sidebar p-0 transition-[height,padding] duration-200 ease-linear",
+          "group-data-[collapsible=icon]:h-14 group-data-[collapsible=icon]:px-0"
         )}
       >
         <div className="flex w-full items-center gap-2 px-4 group-data-[collapsible=icon]:justify-center">

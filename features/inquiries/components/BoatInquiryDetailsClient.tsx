@@ -224,7 +224,7 @@ export default function BoatInquiryDetailsClient({
                 type="submit"
                 form="inquiry-contact-form"
                 disabled={isSubmitting}
-                className="h-12 w-full rounded-full bg-primary text-base font-semibold text-white hover:bg-primary/90"
+                className="h-12 w-full rounded-full bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90"
               >
                 {isSubmitting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -252,7 +252,7 @@ export default function BoatInquiryDetailsClient({
             type="submit"
             form="inquiry-contact-form"
             disabled={isSubmitting}
-            className="h-11 shrink-0 rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-primary/90"
+            className="h-11 shrink-0 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
           >
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Request"}
           </Button>

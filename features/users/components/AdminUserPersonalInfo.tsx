@@ -55,7 +55,7 @@ export function AdminUserPersonalInfo({ user }: { user: UserType }) {
           <InfoRow label="Email">
             <a
               href={`mailto:${user.email}`}
-              className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+              className="text-sm font-medium text-primary-strong hover:text-primary-strong/80 transition-colors"
             >
               {user.email}
             </a>
@@ -64,7 +64,7 @@ export function AdminUserPersonalInfo({ user }: { user: UserType }) {
             <InfoRow label="Phone">
               <a
                 href={`tel:${user.phoneNumber}`}
-                className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                className="text-sm font-medium text-primary-strong hover:text-primary-strong/80 transition-colors"
               >
                 {user.phoneNumber}
               </a>

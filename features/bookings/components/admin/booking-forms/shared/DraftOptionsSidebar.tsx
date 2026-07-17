@@ -136,7 +136,7 @@ export function DraftOptionsSidebar({
       <Button type="submit" size="lg" disabled={isPending} className="w-full">
         {isPending ? "Creating..." : submitLabel}
       </Button>
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-destructive">{error}</p>}
     </div>
   );
 }

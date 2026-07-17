@@ -353,7 +353,7 @@ export function BookingExpensesModal({
               </div>
               <div className="flex justify-between gap-4 border-t border-border/60 pt-2">
                 <span className="font-medium">KOS revenue preview</span>
-                <span className="font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                <span className="font-semibold tabular-nums text-success">
                   {revenuePreview != null ? fmt(revenuePreview) : "—"}
                 </span>
               </div>

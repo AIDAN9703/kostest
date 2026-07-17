@@ -7,8 +7,10 @@
    Layering (lighter = closer in light, lighter = closer in dark):
      light:  canvas light-bg  →  cards light-card  →  fills light-main
      dark:   root dark-main   →  canvas dark-bg    →  cards dark-card
-   Gold is the accent for selection/highlights; navy stays the
-   action color (buttons, links).
+   Gold is the primary/action color (buttons, selected states,
+   highlights) in both modes; navy remains in charts and structure.
+   Primary family: primary (fill) / primary-foreground (text on fill)
+   / primary-soft (tint) / primary-strong (readable gold text).
    ============================================================ */
 
 /* Root/overscroll backgrounds match the canvas in both modes, so
@@ -40,8 +42,12 @@ html.dark:has([data-admin-theme]) body {
     --color-card-foreground: #1e293b;
     --color-popover: var(--color-light-card);
     --color-popover-foreground: #1e293b;
-    --color-primary: #27445c;
-    --color-primary-foreground: #f8fafc;
+    /* Primary family = the gold. Same fill and black text in both
+       modes; only the standalone text shade (-strong) changes. */
+    --color-primary: var(--color-gold-accent);
+    --color-primary-foreground: #000000;
+    --color-primary-soft: var(--color-gold-soft);
+    --color-primary-strong: var(--color-gold-deep);
     --color-secondary: var(--color-light-main);
     --color-secondary-foreground: #1e293b;
     --color-muted: var(--color-light-main);
@@ -53,12 +59,6 @@ html.dark:has([data-admin-theme]) body {
     --color-input: #e4e8ee;
     --color-ring: var(--color-gold-deep);
 
-    --color-chart-1: #27445c;
-    --color-chart-2: var(--color-gold-accent);
-    --color-chart-3: #5b6b7b;
-    --color-chart-4: #9aa7b5;
-    --color-chart-5: var(--color-gold-deep);
-
     --color-sidebar: var(--color-light-card);
     --color-sidebar-foreground: #1e293b;
     --color-sidebar-primary: #27445c;
@@ -69,12 +69,9 @@ html.dark:has([data-admin-theme]) body {
     --color-sidebar-border: #e4e8ee;
     --color-sidebar-ring: var(--color-gold-deep);
 
-    /* Semantic brand/state roles (consumed via bg-brand, bg-success-soft, …) */
-    --brand: var(--color-gold-accent);
-    --brand-foreground: #1e293b;
-    --brand-soft: var(--color-gold-soft);
-    --brand-strong: var(--color-gold-deep);
+    /* Semantic state roles (consumed via bg-success-soft, text-warning, …) */
     --success: #1f7a55;
+    --success-foreground: #ffffff;
     --success-soft: #e9f6ef;
     --warning: #8a5a16;
     --warning-soft: #fbf1e2;
@@ -92,8 +89,10 @@ html.dark:has([data-admin-theme]) body {
     --color-card-foreground: #e9eef3;
     --color-popover: var(--color-dark-card);
     --color-popover-foreground: #e9eef3;
-    --color-primary: #e9eef3;
-    --color-primary-foreground: var(--color-dark-bg);
+    /* --color-primary / -foreground / -soft inherit from .admin-theme
+       (black-on-gold confirmed for both modes); only the standalone
+       gold text shade brightens for dark surfaces. */
+    --color-primary-strong: var(--color-gold-glow);
     --color-secondary: #1c2f40;
     --color-secondary-foreground: #e9eef3;
     --color-muted: #142634;
@@ -103,28 +102,20 @@ html.dark:has([data-admin-theme]) body {
     --color-destructive: #ef5a52;
     --color-border: #213548;
     --color-input: #213548;
-    --color-ring: var(--color-gold-bright);
-
-    --color-chart-1: #e9eef3;
-    --color-chart-2: var(--color-gold-bright);
-    --color-chart-3: #93a4b4;
-    --color-chart-4: #64748b;
-    --color-chart-5: var(--color-gold-glow);
+    --color-ring: var(--color-gold-accent);
 
     --color-sidebar: var(--color-dark-main);
     --color-sidebar-foreground: #e9eef3;
-    --color-sidebar-primary: var(--color-gold-bright);
+    --color-sidebar-primary: var(--color-gold-accent);
     --color-sidebar-primary-foreground: #15110a;
-    --color-sidebar-accent: var(--color-gold-soft-dark);
+    /* --color-sidebar-accent inherits from .admin-theme — the gold is
+       the same in both modes; only text-contrast shades change here. */
     --color-sidebar-accent-foreground: var(--color-gold-glow);
     --color-sidebar-border: #213548;
-    --color-sidebar-ring: var(--color-gold-bright);
+    --color-sidebar-ring: var(--color-gold-accent);
 
-    --brand: var(--color-gold-bright);
-    --brand-foreground: #15110a;
-    --brand-soft: var(--color-gold-soft-dark);
-    --brand-strong: var(--color-gold-glow);
     --success: #4ade80;
+    --success-foreground: #052e16;
     --success-soft: #0f2a1d;
     --warning: #e0a23a;
     --warning-soft: #2a2210;
@@ -138,9 +129,4 @@ html.dark:has([data-admin-theme]) body {
 .admin-theme ::backdrop,
 .admin-theme ::file-selector-button {
     border-color: var(--color-border);
-}
-
-/* Ensure labels hide when sidebar is collapsed */
-.admin-theme [data-collapsible='icon'] .sidebar-label {
-    display: none;
 }

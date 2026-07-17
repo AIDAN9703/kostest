@@ -22,10 +22,24 @@ export default async function AdminBookingCreatePage({ searchParams }: Props) {
     !inquiryPrefill && date?.trim() ? buildDatePrefillForBookingForm(date.trim()) : null;
 
   return (
-    <SingleBookingForm
-      pricingTiers={pricingTiers}
-      inquiryPrefill={inquiryPrefill}
-      datePrefill={datePrefill}
-    />
+    <div className="flex w-full flex-1 flex-col gap-5 pb-8">
+      <header className="pt-1">
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {inquiryPrefill
+            ? `New proposal for ${inquiryPrefill.customerName}`
+            : "New booking"}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {inquiryPrefill
+            ? "Price the trip and send it — the customer accepts and pays from their link."
+            : "Create a draft booking, optionally sending it to the customer as a proposal."}
+        </p>
+      </header>
+      <SingleBookingForm
+        pricingTiers={pricingTiers}
+        inquiryPrefill={inquiryPrefill}
+        datePrefill={datePrefill}
+      />
+    </div>
   );
 }

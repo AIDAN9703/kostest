@@ -47,7 +47,7 @@ function IcalExportSection({
 
   if (feedError) {
     return (
-      <p className="text-sm text-amber-700 dark:text-amber-300">{feedError}</p>
+      <p className="text-sm text-warning">{feedError}</p>
     );
   }
 

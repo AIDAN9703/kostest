@@ -10,8 +10,21 @@ no repeated hexes. Light-contrast fixes: gold text on light = `gold-deep #6a5d38
 stronger `gold-soft #efe9d8`. Dead code purged: legacy gray/slate `!important`
 override section (~90 lines, after converting the 2 real users), `-site` aliases,
 `--color-primary-admin`, `getFollowUpInquiries`, `getPendingBookingRequests`.
-Remaining: Phase 3 (shared primitives + Button `brand` variant), Phase 4 (hardcoded
-emerald/amber/red → success/warning/destructive sweep), Phase 5 (dark-mode QA).
+2026-07-16 evening: **design pivot — gold IS primary in admin.** Per Aidan, the
+`brand` family merged into `primary` (`--color-primary` = gold-accent in both admin
+modes; `primary-foreground` = slate on gold in light / white in dark;
+`primary-soft` = one translucent gold tint shared by both modes; `primary-strong` =
+AA gold text: gold-deep light / gold-glow dark). Marketing keeps navy primary via
+`@theme` defaults. Staples slimmed to `gold-accent/deep/glow/soft` (bright +
+soft-dark deleted). Button variants now use semantic foregrounds (`text-white`
+purged). Phase 4 sweep DONE (emerald/amber/red/green/rose → success/warning/
+destructive utilities; sky/violet/teal stay categorical). Dead code purged:
+8 unused ui components (accordion, collapsible, empty-state, field, input-group,
+progress, slider, toggle-group), chart token chain, legacy numbered light/dark
+palette tokens (light-200 kept), `AdminListPageSize`. Sidebar/primary-family
+tokens registered in `@theme` (utilities like `bg-sidebar` silently didn't exist
+before). Remaining: Phase 3 shared primitives (optional now that tokens carry the
+look), Phase 5 dark-mode QA.
 Possible future: drop light mode entirely (Aidan musing, not decided).
 **Reference:** https://kos-yachts.vercel.app/demo (studied via its shipped CSS), plus
 shadcn-admin / next-shadcn-dashboard-starter as secondary patterns.

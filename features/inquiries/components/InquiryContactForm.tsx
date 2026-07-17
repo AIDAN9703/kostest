@@ -160,7 +160,7 @@ export default function InquiryContactForm({
                     I agree to the{" "}
                     <Link
                       href="/terms-of-service"
-                      className="text-primary underline-offset-4 hover:underline"
+                      className="text-primary-strong underline-offset-4 hover:underline"
                     >
                       terms and conditions
                     </Link>

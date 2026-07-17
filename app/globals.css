@@ -35,24 +35,28 @@
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
 
-  --color-chart-1: hsl(var(--chart-1));
-  --color-chart-2: hsl(var(--chart-2));
-  --color-chart-3: hsl(var(--chart-3));
-  --color-chart-4: hsl(var(--chart-4));
-  --color-chart-5: hsl(var(--chart-5));
-
+  /* Primary = the action color (buttons, selected states, rings).
+     Marketing keeps navy; .admin-theme re-points the family to gold.
+     -soft = translucent tint for highlights/pills
+     -strong = AA-readable text shade (links, labels) — a solid fill color
+     rarely has enough contrast to double as text, hence the split. */
   --color-primary: #27445c;
+  --color-primary-foreground: #f8fafc;
+  --color-primary-soft: color-mix(in srgb, #27445c 10%, transparent);
+  --color-primary-strong: #27445c;
+  --color-destructive-foreground: #ffffff;
+  --color-success-foreground: var(--success-foreground, #ffffff);
 
   /* ── KOS palette staples — the single source of truth ─────────────
      Gold accents + the layered surface colors for each mode. The admin
      theme assigns these to semantic roles; use the utilities directly
      (bg-gold-accent, bg-dark-card, …) only for one-off brand moments. */
-  --color-gold-accent: #b2a37a;    /* the gold — fills on light surfaces */
-  --color-gold-bright: #c2b184;    /* gold fills on dark surfaces */
-  --color-gold-glow: #d4c590;      /* gold text on dark surfaces */
+  --color-gold-accent: #b2a37a;    /* THE gold — fills/rings/highlights, both modes */
   --color-gold-deep: #6a5d38;      /* gold text on light surfaces (AA) */
-  --color-gold-soft: #efe9d8;      /* gold highlight tint, light mode */
-  --color-gold-soft-dark: #2a2417; /* gold highlight tint, dark mode */
+  --color-gold-glow: #d4c590;      /* gold text on dark surfaces (AA) */
+  /* Translucent gold tint for hover/selected highlights — the same color
+     in both modes so highlights read identically everywhere. */
+  --color-gold-soft: color-mix(in srgb, var(--color-gold-accent) 22%, transparent);
 
   --color-dark-bg: #0e1b27;        /* dark mode canvas */
   --color-dark-card: #15283a;      /* dark mode surfaces */
@@ -65,17 +69,25 @@
   /* Marketing-site alias — same gold, one definition */
   --color-gold: var(--color-gold-accent);
 
-  /* Semantic brand/state tokens. Bare vars are set per mode by
+  /* Semantic state tokens. Bare vars are set per mode by
      .admin-theme / .dark .admin-theme; fallbacks = light values. */
-  --color-brand: var(--brand, var(--color-gold-accent));
-  --color-brand-foreground: var(--brand-foreground, #1e293b);
-  --color-brand-soft: var(--brand-soft, var(--color-gold-soft));
-  --color-brand-strong: var(--brand-strong, var(--color-gold-deep));
   --color-success: var(--success, #1f7a55);
   --color-success-soft: var(--success-soft, #e9f6ef);
   --color-warning: var(--warning, #8a5a16);
   --color-warning-soft: var(--warning-soft, #fbf1e2);
   --color-destructive-soft: var(--destructive-soft, #fdece9);
+
+  /* Sidebar/header chrome tokens — required for bg-sidebar, border-sidebar-border,
+     etc. to exist as utilities. Defaults are the light-mode values;
+     .admin-theme / .dark .admin-theme override them per mode. */
+  --color-sidebar: var(--color-light-card);
+  --color-sidebar-foreground: #1e293b;
+  --color-sidebar-primary: #27445c;
+  --color-sidebar-primary-foreground: #f8fafc;
+  --color-sidebar-accent: var(--color-gold-soft);
+  --color-sidebar-accent-foreground: var(--color-gold-deep);
+  --color-sidebar-border: #e4e8ee;
+  --color-sidebar-ring: var(--color-gold-deep);
 
   --color-red-400: #f46f70;
   --color-red-500: #e27233;
@@ -84,23 +96,7 @@
 
   --color-blue-100: #0089f1;
 
-  --color-light-100: #d6e0ff;
   --color-light-200: #eed1ac;
-  --color-light-300: #f8f8ff;
-  --color-light-400: #edf1f1;
-  --color-light-500: #8d8d8d;
-  --color-light-600: #f9fafb;
-  --color-light-700: #e2e8f0;
-  --color-light-800: #f8fafc;
-
-  --color-dark-100: #16191e;
-  --color-dark-200: #3a354e;
-  --color-dark-300: #232839;
-  --color-dark-400: #1e293b;
-  --color-dark-500: #0f172a;
-  --color-dark-600: #333c5c;
-  --color-dark-700: #464f6f;
-  --color-dark-800: #1e2230;
 
   --color-gray-100: #cbd5e1;
 
@@ -236,11 +232,6 @@
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
   }
 
   /* .dark block removed - main site doesn't use dark mode. Admin dark mode

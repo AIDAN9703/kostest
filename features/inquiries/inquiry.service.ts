@@ -145,6 +145,18 @@ export class InquiryService {
 
     if (!inquiry) return null;
 
+    // The list join provides boatName; findFirst has no boat relation, so
+    // resolve it here — without this the detail page can never show the
+    // requested boat even though the type promises it.
+    const boatName = inquiry.boatId
+      ? ((
+          await db.query.boats.findFirst({
+            where: eq(boats.id, inquiry.boatId),
+            columns: { name: true },
+          })
+        )?.name ?? null)
+      : null;
+
     const { assignedToUser, ...rest } = inquiry as typeof inquiry & {
       assignedToUser: InquiryAssignee | null;
     };
@@ -152,6 +164,7 @@ export class InquiryService {
     return {
       ...rest,
       assignee: assignedToUser ?? null,
+      boatName,
       events,
     } as InquiryWithAssignee & { events: unknown[] };
   }

@@ -27,8 +27,6 @@ import { bookingStatusEnum, bookingTypeEnum } from "@/database/schema";
 import { PAYMENT_DISPLAY_STATUSES } from "@/shared/lib/utils/payment-display";
 import { Input } from "@/shared/components/ui/input";
 import { cn } from "@/shared/lib/utils/general-utils";
-import { NewBookingModal } from "@/features/bookings/components/admin/new-booking-modal";
-import type { PricingTierOption } from "@/features/bookings/components/admin/booking-forms/types";
 
 type AdminOption = {
   id: string;
@@ -64,13 +62,7 @@ function getAdminLabel(admin: AdminOption | undefined): string {
   return name || admin.email || admin.username || "Unknown";
 }
 
-export function AdminBookingFilter({
-  admins,
-  pricingTiers,
-}: {
-  admins: AdminOption[];
-  pricingTiers: PricingTierOption[];
-}) {
+export function AdminBookingFilter({ admins }: { admins: AdminOption[] }) {
   const [filters, setFilters] = useQueryStates(bookingSearchParams, {
     clearOnDefault: true,
     shallow: false,
@@ -105,6 +97,8 @@ export function AdminBookingFilter({
       minAmount: null,
       maxAmount: null,
       assignedAdminId: null,
+      scope: null,
+      time: null,
       page: 1,
     });
   };
@@ -162,36 +156,24 @@ export function AdminBookingFilter({
     <div className="space-y-2 pb-3">
       <AdminToolbar
         trailing={
-          <>
-            <NewBookingModal
-              pricingTiers={pricingTiers}
-              triggerLabel="Add booking"
-              defaultOpen={filters.newBooking === true}
-              onCloseComplete={() => {
-                if (filters.newBooking) {
-                  setFilters({ newBooking: null });
-                }
-              }}
+          <div
+            role="tablist"
+            aria-label="Bookings view"
+            className="inline-flex h-10 items-center rounded-full bg-muted p-1"
+          >
+            <ViewToggleButton
+              active={filters.view === "table"}
+              label="Table"
+              icon={LayoutList}
+              onClick={() => updateFilter({ view: "table" })}
             />
-            <div
-              role="tablist"
-              aria-label="Bookings view"
-              className="inline-flex h-9 items-center rounded-md border border-border bg-muted/40 p-0.5"
-            >
-              <ViewToggleButton
-                active={filters.view === "table"}
-                label="Table"
-                icon={LayoutList}
-                onClick={() => updateFilter({ view: "table" })}
-              />
-              <ViewToggleButton
-                active={filters.view === "calendar"}
-                label="Calendar"
-                icon={CalendarDays}
-                onClick={() => updateFilter({ view: "calendar" })}
-              />
-            </div>
-          </>
+            <ViewToggleButton
+              active={filters.view === "calendar"}
+              label="Calendar"
+              icon={CalendarDays}
+              onClick={() => updateFilter({ view: "calendar" })}
+            />
+          </div>
         }
       >
         <FilterSearch
@@ -199,6 +181,43 @@ export function AdminBookingFilter({
           onChange={(v) => updateFilter({ search: v })}
           placeholder="Search by customer, boat, email, phone..."
         />
+
+        {/* Ownership scope — same segmented pills as the inquiries page */}
+        <div className="flex h-10 items-center rounded-full bg-muted p-1">
+          {(
+            [
+              { value: null, label: "All" },
+              { value: "mine", label: "My bookings" },
+              { value: "unassigned", label: "Unassigned" },
+            ] as const
+          ).map((tab) => (
+            <SegmentedPill
+              key={tab.label}
+              active={filters.scope === tab.value}
+              label={tab.label}
+              onClick={() => updateFilter({ scope: tab.value })}
+            />
+          ))}
+        </div>
+
+        {/* Trip-date scope */}
+        <div className="flex h-10 items-center rounded-full bg-muted p-1">
+          {(
+            [
+              { value: "upcoming", label: "Upcoming" },
+              { value: "past", label: "Past" },
+              { value: null, label: "All dates" },
+            ] as const
+          ).map((tab) => (
+            <SegmentedPill
+              key={tab.label}
+              active={filters.time === tab.value}
+              label={tab.label}
+              onClick={() => updateFilter({ time: tab.value })}
+            />
+          ))}
+        </div>
+
         <FilterPopover activeCount={activeFilterCount} onClearAll={clearAll}>
           <FilterField icon={MessageSquare} label="Booking status">
             <FilterSelect
@@ -317,6 +336,31 @@ export function AdminBookingFilter({
   );
 }
 
+function SegmentedPill({
+  active,
+  label,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex h-8 items-center rounded-full px-3.5 text-sm font-medium transition-all",
+        active
+          ? "bg-primary text-primary-foreground shadow-sm"
+          : "text-muted-foreground hover:text-foreground"
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 function ViewToggleButton({
   active,
   label,
@@ -335,9 +379,9 @@ function ViewToggleButton({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "inline-flex h-8 items-center gap-1.5 rounded-[6px] px-2.5 text-sm font-medium transition-colors",
+        "inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium transition-colors",
         active
-          ? "bg-muted text-foreground"
+          ? "bg-primary text-primary-foreground shadow-sm"
           : "text-muted-foreground hover:text-foreground"
       )}
     >

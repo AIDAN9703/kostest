@@ -27,10 +27,21 @@ import {
   payments,
   bookingOps,
   boatPricingTiers,
-  inquiry,
-  inquiryEvents,
 } from "@/database/schema";
-import { and, count, eq, desc, or, ilike, sql, gte, lte, aliasedTable, inArray } from "drizzle-orm";
+import {
+  and,
+  count,
+  eq,
+  desc,
+  or,
+  ilike,
+  isNull,
+  sql,
+  gte,
+  lte,
+  aliasedTable,
+  inArray,
+} from "drizzle-orm";
 
 import {
   type BookingFilterInput,
@@ -58,6 +69,10 @@ import {
   calculateBookingPriceFromDollars,
   calculateBookingPriceCents,
 } from "@/shared/lib/utils/pricing-utils";
+import {
+  convertInquiryForBooking,
+  markInquiryOfferSentForLead,
+} from "@/features/inquiries/inquiry-conversion";
 import { dollarsToCents, type Cents } from "@/shared/lib/utils/money-utils";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { computePaymentDisplayStatus } from "@/shared/lib/utils/payment-display";
@@ -220,9 +235,12 @@ export class BookingService {
       });
     }
 
-    // Close the loop on the originating lead: mark it converted and link both ways.
-    if (input.inquiryId && bookingIds.length > 0) {
-      await this.markInquiryConverted(input.inquiryId, bookingIds[0], assignedAdminId ?? null);
+    // Keep the lead truthful: a DRAFT proposal is an offer, not a win.
+    // Sending it advances the lead to OFFER_SENT; conversion (CONVERTED/WON)
+    // happens when the customer accepts or a payment confirms — see
+    // acceptDraftBookings and the confirmation paths in inquiry-conversion.
+    if (input.inquiryId && bookingIds.length > 0 && input.publishNow) {
+      await markInquiryOfferSentForLead(input.inquiryId, assignedAdminId ?? null);
     }
 
     return {
@@ -230,50 +248,6 @@ export class BookingService {
       publicToken,
       groupId,
     };
-  }
-
-  /**
-   * Marks a lead as converted once a booking has been created from it:
-   * sets convertedBookingId + stage CONVERTED + outcome WON and logs the
-   * stage change on the inquiry timeline. Never throws — conversion linkage
-   * must not roll back an already-created booking.
-   */
-  private async markInquiryConverted(
-    inquiryId: string,
-    bookingId: string,
-    actorId: string | null
-  ) {
-    try {
-      const [lead] = await db
-        .select({ stage: inquiry.stage, outcome: inquiry.outcome })
-        .from(inquiry)
-        .where(eq(inquiry.id, inquiryId));
-      if (!lead) return;
-
-      await db
-        .update(inquiry)
-        .set({
-          convertedBookingId: bookingId,
-          stage: "CONVERTED",
-          outcome: "WON",
-          updatedAt: new Date(),
-        })
-        .where(eq(inquiry.id, inquiryId));
-
-      await db.insert(inquiryEvents).values({
-        inquiryId,
-        eventType: "STAGE_CHANGE",
-        createdBy: actorId,
-        previousStage: lead.stage,
-        newStage: "CONVERTED",
-        previousOutcome: lead.outcome,
-        newOutcome: "WON",
-        content: "Converted to booking",
-        metadata: { bookingId },
-      });
-    } catch (error) {
-      console.error("Failed to mark inquiry as converted:", error);
-    }
   }
 
   /**
@@ -403,6 +377,9 @@ export class BookingService {
       });
       bookingIds.push(b.id);
     }
+
+    // Customer acceptance is the moment the deal is won.
+    await convertInquiryForBooking(bookingIds[0], null);
 
     let checkoutUrl: string | null = null;
     if (input.payNow && draftBookings[0].allowPayment && bookingIds.length > 0) {
@@ -745,6 +722,9 @@ export class BookingService {
     if (filters?.assignedAdminId) {
       whereConditions.push(eq(bookings.assignedAdminId, filters.assignedAdminId));
     }
+    if (filters?.unassignedOnly) {
+      whereConditions.push(isNull(bookings.assignedAdminId));
+    }
     if (filters?.needsCaptain !== undefined) {
       whereConditions.push(eq(bookings.needsCaptain, filters.needsCaptain));
     }
@@ -924,6 +904,7 @@ export class BookingService {
         addOns: bookings.addOns,
         pickupLocation: bookings.pickupLocation,
         dropoffLocation: bookings.dropoffLocation,
+        publicToken: bookings.publicToken,
         // stripePaymentLinkId removed - stored in payments table
         // Pricing from booking_pricing (in cents)
         basePriceCents: bookingPricing.basePriceCents,

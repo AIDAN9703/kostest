@@ -29,6 +29,10 @@ export const bookingSearchParams = {
   maxAmount: parseAsInteger,
   assignedAdminId: parseAsString,
   bookingGroupId: parseAsString,
+  /** Ownership scope: null = all, "mine" = assigned to me, "unassigned" = nobody's yet. */
+  scope: parseAsStringEnum(["mine", "unassigned"] as const),
+  /** Trip-date scope: null = all, "upcoming" = starts today or later, "past" = already started. */
+  time: parseAsStringEnum(["upcoming", "past"] as const),
   /** Layout for the bookings page — "table" (default) or "calendar". */
   view: parseAsStringEnum(["table", "calendar"] as const).withDefault("table"),
   /** Opens the new booking modal when true (e.g. from dashboard or quick actions). */

@@ -12,6 +12,8 @@ export type InquiryBookingPrefill = {
   startDateTime: string;
   endDateTime: string;
   adminNotes: string;
+  /** TCPA: lead opted into SMS — safe to default the SMS send toggle on. */
+  smsConsent: boolean;
 };
 
 function addHoursToIso(iso: string, hours: number): string {
@@ -88,5 +90,6 @@ export function buildInquiryPrefillForBookingForm(
     startDateTime,
     endDateTime,
     adminNotes,
+    smsConsent: inquiry.smsConsent ?? false,
   };
 }

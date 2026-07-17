@@ -34,10 +34,10 @@ export function adminInitials(name: string) {
 
 export const LEAD_TYPE_BADGES: Record<string, { label: string; className: string }> = {
   GENERAL_QUOTE: { label: "General", className: "bg-muted text-muted-foreground" },
-  BOAT_REQUEST: { label: "Boat", className: "bg-primary/10 text-primary" },
+  BOAT_REQUEST: { label: "Boat", className: "bg-primary-soft text-primary-strong" },
   TERM_CHARTER: {
     label: "Term",
-    className: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+    className: "bg-warning-soft text-warning",
   },
   MANUAL: { label: "Manual", className: "bg-muted text-muted-foreground" },
   MARKETPLACE: {
@@ -88,29 +88,29 @@ export const OUTCOME_LABELS: Record<string, string> = {
 
 /** Soft tinted avatar per lead type — the row's leading identity mark. */
 export const LEAD_TYPE_AVATAR_TINTS: Record<string, string> = {
-  GENERAL_QUOTE: "bg-slate-500/12 text-slate-700 dark:text-slate-300",
-  BOAT_REQUEST: "bg-primary/12 text-primary",
-  TERM_CHARTER: "bg-amber-500/15 text-amber-700 dark:text-amber-400",
+  GENERAL_QUOTE: "bg-muted text-muted-foreground",
+  BOAT_REQUEST: "bg-primary-soft text-primary-strong",
+  TERM_CHARTER: "bg-warning-soft text-warning",
   MANUAL: "bg-violet-500/12 text-violet-700 dark:text-violet-400",
   MARKETPLACE: "bg-sky-500/12 text-sky-700 dark:text-sky-400",
 };
 
 /** Subtle stage chips — tinted background, readable in both themes. */
 export const STAGE_CHIP_CLASSES: Record<string, string> = {
-  NEEDS_CONTACT: "bg-primary/10 text-primary",
-  NEW: "bg-primary/10 text-primary",
+  NEEDS_CONTACT: "bg-primary-soft text-primary-strong",
+  NEW: "bg-primary-soft text-primary-strong",
   CLAIMED: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
   CONTACTED: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
   QUALIFIED: "bg-teal-500/10 text-teal-700 dark:text-teal-400",
-  OFFER_SENT: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  CONVERTED: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
+  OFFER_SENT: "bg-warning-soft text-warning",
+  CONVERTED: "bg-success-soft text-success",
   COLD: "bg-muted text-muted-foreground",
 };
 
 export const OUTCOME_CHIP_CLASSES: Record<string, string> = {
   OPEN: "bg-muted text-muted-foreground",
-  WON: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400",
-  LOST: "bg-red-500/10 text-red-700 dark:text-red-400",
+  WON: "bg-success-soft text-success",
+  LOST: "bg-destructive-soft text-destructive",
   ABANDONED: "bg-muted text-muted-foreground",
 };
 

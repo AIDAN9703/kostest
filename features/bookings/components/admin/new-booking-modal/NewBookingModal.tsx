@@ -562,7 +562,7 @@ function NewBookingDialog({
                   </div>
                   <div className="flex justify-between border-t border-border pt-2 font-semibold">
                     <span>KOS revenue</span>
-                    <span className={kosRevenue >= 0 ? "text-emerald-600" : "text-destructive"}>
+                    <span className={kosRevenue >= 0 ? "text-success" : "text-destructive"}>
                       {formatCurrency(kosRevenue)}
                     </span>
                   </div>
@@ -638,8 +638,8 @@ function NewBookingDialog({
 
           {isSuccess && (
             <div className="flex flex-col items-center py-8 text-center">
-              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950">
-                <Check className="h-7 w-7 text-emerald-600" />
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-success-soft">
+                <Check className="h-7 w-7 text-success" />
               </div>
               <h3 className="text-lg font-semibold">Booking created</h3>
               <p className="mt-1 max-w-sm text-sm text-muted-foreground">
@@ -654,7 +654,7 @@ function NewBookingDialog({
                 </div>
                 <div className="mt-1 flex justify-between">
                   <span className="text-muted-foreground">KOS revenue</span>
-                  <span className="font-medium text-emerald-600">
+                  <span className="font-medium text-success">
                     {formatCurrency(kosRevenue)}
                   </span>
                 </div>

@@ -122,7 +122,7 @@ export function AdminBookingMakePaymentButton({
       <Button
         type="button"
         variant="secondary"
-        className="h-11 shrink-0 gap-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-950/60"
+        className="h-11 shrink-0 gap-2 rounded-xl border-success/30 bg-success-soft text-success hover:bg-success/15"
         disabled={disabled}
         onClick={() => setOpen(true)}
       >

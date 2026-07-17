@@ -36,6 +36,8 @@ export const bookingFilterSchema = z.object({
   
   // Boolean filters
   needsCaptain: z.coerce.boolean().optional(),
+  /** Only bookings no admin owns yet ("Unassigned" scope tab). */
+  unassignedOnly: z.coerce.boolean().optional(),
   
   // Amount range
   minAmount: z.coerce.number().min(0).optional(),
