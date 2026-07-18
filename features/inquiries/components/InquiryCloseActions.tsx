@@ -246,7 +246,7 @@ export function InquiryCloseActions({
             <DialogTitle>Mark as Abandoned</DialogTitle>
             <DialogDescription>
               This will close the inquiry and mark it as abandoned. Use this
-              when the customer hasn't responded after multiple attempts.
+              when the customer hasn&apos;t responded after multiple attempts.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

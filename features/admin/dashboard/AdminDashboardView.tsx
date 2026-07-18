@@ -252,7 +252,7 @@ export function AdminDashboardView({
                 </span>
               ) : null}
             </h2>
-            <Link href="/admin/inquiries?scope=unassigned" className={PILL_LINK_CLASS}>
+            <Link href="/admin/bookings?scope=unassigned" className={PILL_LINK_CLASS}>
               View all
             </Link>
           </div>
@@ -423,7 +423,7 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
 
       {/* Whole row navigates to the lead (actions sit above on z-10). */}
       <Link
-        href={`/admin/inquiries/${lead.id}`}
+        href={`/admin/bookings/${lead.id}`}
         aria-label={`View lead from ${lead.name}`}
         className="absolute inset-0"
       />

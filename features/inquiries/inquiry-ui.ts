@@ -95,18 +95,6 @@ export const LEAD_TYPE_AVATAR_TINTS: Record<string, string> = {
   MARKETPLACE: "bg-sky-500/12 text-sky-700 dark:text-sky-400",
 };
 
-/** Subtle stage chips — tinted background, readable in both themes. */
-export const STAGE_CHIP_CLASSES: Record<string, string> = {
-  NEEDS_CONTACT: "bg-primary-soft text-primary-strong",
-  NEW: "bg-primary-soft text-primary-strong",
-  CLAIMED: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
-  CONTACTED: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
-  QUALIFIED: "bg-teal-500/10 text-teal-700 dark:text-teal-400",
-  OFFER_SENT: "bg-warning-soft text-warning",
-  CONVERTED: "bg-success-soft text-success",
-  COLD: "bg-muted text-muted-foreground",
-};
-
 export const OUTCOME_CHIP_CLASSES: Record<string, string> = {
   OPEN: "bg-muted text-muted-foreground",
   WON: "bg-success-soft text-success",

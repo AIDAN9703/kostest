@@ -1,16 +1,19 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
+import nextTypescript from "eslint-config-next/typescript";
+import prettier from "eslint-config-prettier";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
+/**
+ * eslint-config-next v16 ships native flat configs — importing them directly
+ * replaces the old FlatCompat wrapper, which crashed ESLint 9 with a
+ * circular-structure error.
+ */
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript", "prettier"),
+  ...nextCoreWebVitals,
+  ...nextTypescript,
+  prettier,
+  {
+    ignores: [".next/**", "node_modules/**", "public/**"],
+  },
 ];
 
 export default eslintConfig;

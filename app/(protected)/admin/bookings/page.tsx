@@ -65,9 +65,20 @@ export default async function BookingsPage({
     // Explicit date-range filters win over the Upcoming/Past pills.
     dateFrom: params.dateFrom ?? (params.time === "upcoming" ? nowIso : undefined),
     dateTo: params.dateTo ?? (params.time === "past" ? nowIso : undefined),
-    assignedToId: params.scope === "mine" ? (session?.user?.id ?? undefined) : undefined,
+    assignedToId:
+      params.scope === "mine"
+        ? (session?.user?.id ?? undefined)
+        : (params.assignedAdminId ?? undefined),
     unassignedOnly: params.scope === "unassigned" || undefined,
     archived: params.archived ?? undefined,
+    // Booking-only popover filters (these hide lead rows while active).
+    bookingStatus: params.bookingStatus ?? undefined,
+    paymentStatus: params.paymentStatus ?? undefined,
+    bookingType: params.bookingType ?? undefined,
+    needsCaptain: params.needsCaptain ?? undefined,
+    minAmount: params.minAmount ?? undefined,
+    maxAmount: params.maxAmount ?? undefined,
+    bookingGroupId: params.bookingGroupId ?? undefined,
     page: params.page,
     limit: params.limit,
   });

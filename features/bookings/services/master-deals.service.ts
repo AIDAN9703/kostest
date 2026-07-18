@@ -4,6 +4,7 @@ import { and, count, desc, eq, gte, ilike, inArray, isNull, lte, or, sql } from 
 
 import { bookingService } from "@/features/bookings/services/booking.service";
 import type { BookingListItem } from "@/features/bookings/booking.types";
+import type { BookingFilterInput } from "@/features/bookings/booking.validation";
 import {
   computeDealStatusForBooking,
   computeDealStatusForLead,
@@ -45,7 +46,7 @@ export type MasterDealRow =
 
 export interface MasterDealsFilters {
   search?: string;
-  /** Admin id for the "My bookings" scope. */
+  /** Admin id for the "My bookings" scope — applies to both arms. */
   assignedToId?: string;
   unassignedOnly?: boolean;
   /** ISO timestamps mapped from the Upcoming/Past pills or explicit range. */
@@ -53,8 +54,29 @@ export interface MasterDealsFilters {
   dateTo?: string;
   /** false/undefined = live view (hides cancelled/lost/abandoned); true = only those. */
   archived?: boolean;
+  /** Booking-only popover filters — when any is set, lead rows are excluded
+   *  (a lead has no booking status/payment/amount to match against). */
+  bookingStatus?: BookingFilterInput["bookingStatus"];
+  paymentStatus?: BookingFilterInput["paymentStatus"];
+  bookingType?: BookingFilterInput["bookingType"];
+  needsCaptain?: boolean;
+  minAmount?: number;
+  maxAmount?: number;
+  bookingGroupId?: string;
   page?: number;
   limit?: number;
+}
+
+function hasBookingOnlyFilters(filters: MasterDealsFilters): boolean {
+  return Boolean(
+    filters.bookingStatus ||
+      filters.paymentStatus ||
+      filters.bookingType ||
+      filters.needsCaptain !== undefined ||
+      filters.minAmount != null ||
+      filters.maxAmount != null ||
+      filters.bookingGroupId
+  );
 }
 
 export interface MasterDealsResponse {
@@ -78,6 +100,10 @@ export async function getMasterDeals(
   // offset+limit rows from each arm, merge-sort, slice.
   const fetchLimit = page * limit;
 
+  // An explicit booking-status filter beats the archived-bucket defaults.
+  const bookingStatus =
+    filters.bookingStatus ?? (filters.archived ? "CANCELLED" : undefined);
+
   const [bookingsArm, leadsArm] = await Promise.all([
     bookingService.getAllBookings({
       search: filters.search || undefined,
@@ -85,12 +111,20 @@ export async function getMasterDeals(
       unassignedOnly: filters.unassignedOnly || undefined,
       dateFrom: filters.dateFrom,
       dateTo: filters.dateTo,
-      excludeCancelled: !filters.archived || undefined,
-      bookingStatus: filters.archived ? "CANCELLED" : undefined,
+      excludeCancelled: (!filters.archived && !filters.bookingStatus) || undefined,
+      bookingStatus,
+      paymentStatus: filters.paymentStatus,
+      bookingType: filters.bookingType,
+      needsCaptain: filters.needsCaptain,
+      minAmount: filters.minAmount,
+      maxAmount: filters.maxAmount,
+      bookingGroupId: filters.bookingGroupId,
       page: 1,
       limit: fetchLimit,
     }),
-    fetchLeadDeals(filters, fetchLimit),
+    hasBookingOnlyFilters(filters)
+      ? Promise.resolve({ leads: [], totalCount: 0 })
+      : fetchLeadDeals(filters, fetchLimit),
   ]);
 
   const bookingRows: MasterDealRow[] = bookingsArm.bookings.map((b) => ({
