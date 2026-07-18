@@ -193,12 +193,17 @@ export class AvailabilityService {
 
     return [
       ...blockingBookings
-        .filter((b) => b.endDateTime) // Filter out null endDateTime
+        // Calendar-blocking statuses always carry dates; the type-level nulls
+        // exist for INQUIRY-phase deals, which this query never matches.
+        .filter(
+          (b): b is typeof b & { startDateTime: Date; endDateTime: Date } =>
+            b.startDateTime != null && b.endDateTime != null
+        )
         .map((b) => ({
           type: "booking" as const,
           id: b.id,
           startTime: b.startDateTime,
-          endTime: b.endDateTime!,
+          endTime: b.endDateTime,
           reason: `Booked by ${b.customerName}`,
         })),
       ...blockingPeriods.map((b) => ({

@@ -20,7 +20,7 @@ function transformBooking(dbBooking: {
   boatCategory: string | null;
   boatMainImage: string | null;
   bookingStatus: string;
-  numberOfPassengers: number;
+  numberOfPassengers: number | null;
   needsCaptain: boolean | null;
   totalAmountCents: number | null;
   pickupLocation: string | null;
@@ -58,7 +58,7 @@ function transformBooking(dbBooking: {
     date: startDate ? format(startDate, "EEEE, MMMM d, yyyy") : "No date",
     duration: duration,
     location: dbBooking.pickupLocation || "Marina",
-    guests: dbBooking.numberOfPassengers,
+    guests: dbBooking.numberOfPassengers ?? 1,
     captain: dbBooking.needsCaptain,
     price: centsToDollars(dbBooking.totalAmountCents ?? 0),
     status: getBookingDisplayStatus(dbBooking.bookingStatus),

@@ -50,7 +50,7 @@ export default async function BookingRequestSuccessPage({ searchParams }: Props)
           ? new Date(booking.startDateTime).toISOString()
           : null,
         hours,
-        numberOfPassengers: booking.numberOfPassengers,
+        numberOfPassengers: booking.numberOfPassengers ?? 1,
         basePriceCents: booking.basePriceCents ?? null,
         cleaningFeeCents: booking.cleaningFeeCents ?? null,
         serviceFeeCents: booking.serviceFeeCents ?? null,

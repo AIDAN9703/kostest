@@ -159,15 +159,15 @@ export interface BookingWithRelations {
   userId: string | null;
   customerName: string;
   customerEmail: string;
-  customerPhone: string;
+  customerPhone: string | null;
 
-  // Booking details
-  boatId: string;
+  // Booking details — trip fields null while the deal is an INQUIRY
+  boatId: string | null;
   pricingTierId: string | null;
-  startDateTime: Date;
+  startDateTime: Date | null;
   endDateTime: Date | null;
-  numberOfPassengers: number;
-  isMultiDay: boolean;
+  numberOfPassengers: number | null;
+  isMultiDay: boolean | null;
   needsCaptain: boolean | null;
   pickupLocation: string | null;
   dropoffLocation: string | null;
@@ -205,9 +205,9 @@ export interface BookingWithRelations {
   /** Append-only activity log (status, notes, contacts, Stripe, …) */
   activityEvents: BookingActivityEventEntry[];
 
-  // Joined boat info
+  // Joined boat info — null while the deal has no boat chosen (INQUIRY phase)
   boat?: {
-    id: string;
+    id: string | null;
     name: string;
     category: string | null;
     mainImage: string | null;
@@ -262,9 +262,10 @@ export interface BookingListItem {
   customerName: string | null;
   customerEmail: string | null;
   customerPhone: string | null;
-  startDateTime: Date;
+  /** Null while the deal is an INQUIRY without a confirmed trip window. */
+  startDateTime: Date | null;
   endDateTime: Date | null;
-  numberOfPassengers: number;
+  numberOfPassengers: number | null;
 
   // Pricing in cents (from booking_pricing)
   totalAmountCents: number;
@@ -272,6 +273,17 @@ export interface BookingListItem {
 
   needsCaptain: boolean | null;
   createdAt: Date;
+
+  // Lead-phase fields (unified deal hub — see docs/UNIFIED_BOOKINGS_PLAN.md)
+  customerMessage: string | null;
+  preferredDate: string | null;
+  destination: string | null;
+  requestedDurationDays: number | null;
+  budgetCents: number | null;
+  estimatedValueCents: number | null;
+  firstContactedAt: Date | null;
+  coldAt: Date | null;
+  archivedAt: Date | null;
 
   // Joined boat info
   boatId: string | null;

@@ -147,7 +147,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     needsCaptain: booking.needsCaptain,
     pickupLocation: booking.pickupLocation,
     dropoffLocation: booking.dropoffLocation,
-    startDateTime: booking.startDateTime.toISOString(),
+    startDateTime: booking.startDateTime ? booking.startDateTime.toISOString() : null,
     endDateTime: booking.endDateTime ? booking.endDateTime.toISOString() : null,
     boatTimezone: booking.boatTimezone,
     boatId: booking.boatId,

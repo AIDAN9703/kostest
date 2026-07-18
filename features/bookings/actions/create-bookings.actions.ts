@@ -85,7 +85,7 @@ export async function createBookingsAction(
     const lineItemsData = parseAndValidateLineItems(lineItemsRaw);
 
     const payload = createBookingsSchema.parse({
-      inquiryId: formData.get("inquiryId") || null,
+      dealId: formData.get("dealId") || null,
       numberOfPassengers: Number(formData.get("numberOfPassengers") || 0),
       pickupLocation: formData.get("pickupLocation") || null,
       dropoffLocation: formData.get("dropoffLocation") || null,

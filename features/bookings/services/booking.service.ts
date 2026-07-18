@@ -37,6 +37,7 @@ import {
   or,
   ilike,
   isNull,
+  isNotNull,
   sql,
   gte,
   lte,
@@ -172,39 +173,76 @@ export class BookingService {
       const tokenForThisBooking = i === 0 ? publicToken : null;
       const publishNow = input.publishNow ?? false;
 
-      const [booking] = await db
-        .insert(bookings)
-        .values({
-          bookingType: "EXTERNAL_BOOKING",
-          bookingStatus: "DRAFT",
-          source: "ADMIN" as BookingSource,
-          userId: b.userId ?? null,
-          boatOwnerId: boat.ownerId,
-          boatId: boat.id,
-          pricingTierId: tier?.id ?? null,
-          bookingGroupId: groupId,
-          customerName: b.customerName,
-          customerEmail: b.customerEmail,
-          customerPhone: b.customerPhone ?? "",
-          isMultiDay: false,
-          needsCaptain: boat.crewRequired,
-          startDateTime,
-          endDateTime,
-          numberOfPassengers: input.numberOfPassengers,
-          pickupLocation: input.pickupLocation ?? null,
-          dropoffLocation: input.dropoffLocation ?? null,
-          adminNotes: input.adminNotes ?? null,
-          addOns: addOnsPayload.length > 0 ? addOnsPayload : null,
-          inquiryId: input.inquiryId ?? null,
-          assignedAdminId: assignedAdminId ?? null,
-          publicToken: tokenForThisBooking,
-          allowPayment: input.allowPayment ?? false,
-          paymentType: input.paymentType ?? "FULL_PAYMENT",
-          publishedAt: publishNow ? now : null,
-        })
-        .returning({ id: bookings.id });
+      // One-table flow: pricing an INQUIRY deal UPGRADES that same row to a
+      // DRAFT proposal — its id, entry type/source, and history stay intact.
+      // Extra group sections (and creates without a deal) insert new rows.
+      const upgradeDealId = i === 0 ? (input.dealId ?? null) : null;
+      const upgradeDeal = upgradeDealId
+        ? await db
+            .select({ id: bookings.id, bookingStatus: bookings.bookingStatus })
+            .from(bookings)
+            .where(eq(bookings.id, upgradeDealId))
+            .then((rows) => (rows[0]?.bookingStatus === "INQUIRY" ? rows[0] : null))
+        : null;
 
-      await bookingPricingService.createPricingWithCalculation(booking.id, {
+      const dealFields = {
+        userId: b.userId ?? null,
+        boatOwnerId: boat.ownerId,
+        boatId: boat.id,
+        pricingTierId: tier?.id ?? null,
+        bookingGroupId: groupId,
+        customerName: b.customerName,
+        customerEmail: b.customerEmail,
+        customerPhone: b.customerPhone ?? null,
+        isMultiDay: false,
+        needsCaptain: boat.crewRequired,
+        startDateTime,
+        endDateTime,
+        numberOfPassengers: input.numberOfPassengers,
+        pickupLocation: input.pickupLocation ?? null,
+        dropoffLocation: input.dropoffLocation ?? null,
+        adminNotes: input.adminNotes ?? null,
+        addOns: addOnsPayload.length > 0 ? addOnsPayload : null,
+        assignedAdminId: assignedAdminId ?? null,
+        publicToken: tokenForThisBooking,
+        allowPayment: input.allowPayment ?? false,
+        paymentType: input.paymentType ?? "FULL_PAYMENT",
+        publishedAt: publishNow ? now : null,
+      };
+
+      let bookingId: string;
+      if (upgradeDeal) {
+        await db
+          .update(bookings)
+          .set({ ...dealFields, updatedAt: now })
+          .where(eq(bookings.id, upgradeDeal.id));
+        await bookingStatusService.transitionStatus({
+          bookingId: upgradeDeal.id,
+          newStatus: "DRAFT",
+          changedByUserId: assignedAdminId ?? null,
+          reason: "Priced into a proposal",
+        });
+        bookingId = upgradeDeal.id;
+      } else {
+        const [created] = await db
+          .insert(bookings)
+          .values({
+            bookingType: "EXTERNAL_BOOKING",
+            bookingStatus: "DRAFT",
+            source: "ADMIN" as BookingSource,
+            ...dealFields,
+          })
+          .returning({ id: bookings.id });
+        await bookingStatusService.createInitialHistory(
+          created.id,
+          "DRAFT",
+          assignedAdminId,
+          "Booking created"
+        );
+        bookingId = created.id;
+      }
+
+      await bookingPricingService.createPricingWithCalculation(bookingId, {
         basePriceCents,
         addOnsCents,
         cleaningFeeCents: dollarsToCents(boat.cleaningFee ?? 0),
@@ -212,14 +250,7 @@ export class BookingService {
         currency: boat.currency ?? "USD",
       });
 
-      await bookingStatusService.createInitialHistory(
-        booking.id,
-        "DRAFT",
-        assignedAdminId,
-        "Booking created"
-      );
-
-      bookingIds.push(booking.id);
+      bookingIds.push(bookingId);
     }
 
     if (publicToken && bookingIds.length > 0) {
@@ -243,8 +274,14 @@ export class BookingService {
    * Get draft bookings with boat and pricing for public display
    */
   async getDraftBookingsForPublicDisplay(token: string) {
-    const draftBookings = await this.getDraftBookingsByPublicToken(token);
-    if (!draftBookings || draftBookings.length === 0) return null;
+    const rawDrafts = await this.getDraftBookingsByPublicToken(token);
+    // A proposal is only presentable once it's priced against a real boat and
+    // trip window — INQUIRY-phase rows can never leak to the public page.
+    const draftBookings = (rawDrafts ?? []).filter(
+      (b): b is typeof b & { boatId: string; startDateTime: Date } =>
+        b.boatId != null && b.startDateTime != null
+    );
+    if (draftBookings.length === 0) return null;
 
     const boatIds = [...new Set(draftBookings.map((b) => b.boatId))];
     const [boatsRows, pricingRows] = await Promise.all([
@@ -711,8 +748,12 @@ export class BookingService {
     if (filters?.unassignedOnly) {
       whereConditions.push(isNull(bookings.assignedAdminId));
     }
-    if (filters?.excludeCancelled) {
-      whereConditions.push(ne(bookings.bookingStatus, "CANCELLED"));
+    if (filters?.archivedView === true) {
+      const archived = or(isNotNull(bookings.archivedAt), eq(bookings.bookingStatus, "CANCELLED"));
+      if (archived) whereConditions.push(archived);
+    } else if (filters?.archivedView === false) {
+      const live = and(isNull(bookings.archivedAt), ne(bookings.bookingStatus, "CANCELLED"));
+      if (live) whereConditions.push(live);
     }
     if (filters?.needsCaptain !== undefined) {
       whereConditions.push(eq(bookings.needsCaptain, filters.needsCaptain));
@@ -763,6 +804,16 @@ export class BookingService {
       // stripePaymentLinkId removed - stored in payments table
       needsCaptain: bookings.needsCaptain,
       createdAt: bookings.createdAt,
+      // Lead-phase fields (unified deal hub)
+      customerMessage: bookings.customerMessage,
+      preferredDate: bookings.preferredDate,
+      destination: bookings.destination,
+      requestedDurationDays: bookings.requestedDurationDays,
+      budgetCents: bookings.budgetCents,
+      estimatedValueCents: bookings.estimatedValueCents,
+      firstContactedAt: bookings.firstContactedAt,
+      coldAt: bookings.coldAt,
+      archivedAt: bookings.archivedAt,
       boatId: bookings.boatId,
       pricingTierId: bookings.pricingTierId,
       bookingGroupId: bookings.bookingGroupId,
@@ -895,6 +946,16 @@ export class BookingService {
         dropoffLocation: bookings.dropoffLocation,
         publicToken: bookings.publicToken,
         inquiryId: bookings.inquiryId,
+        // Lead-phase fields (unified deal hub)
+        customerMessage: bookings.customerMessage,
+        preferredDate: bookings.preferredDate,
+        destination: bookings.destination,
+        requestedDurationDays: bookings.requestedDurationDays,
+        budgetCents: bookings.budgetCents,
+        estimatedValueCents: bookings.estimatedValueCents,
+        firstContactedAt: bookings.firstContactedAt,
+        coldAt: bookings.coldAt,
+        archivedAt: bookings.archivedAt,
         // stripePaymentLinkId removed - stored in payments table
         // Pricing from booking_pricing (in cents)
         basePriceCents: bookingPricing.basePriceCents,

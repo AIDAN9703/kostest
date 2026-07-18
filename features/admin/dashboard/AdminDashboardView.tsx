@@ -81,7 +81,11 @@ export function AdminDashboardView({
       day,
       isToday: isSameDay(day, new Date()),
       trips: weeksBookings
-        .filter((b) => isSameDay(new Date(b.startDateTime), day))
+        // Undated INQUIRY-phase deals don't belong on the trip calendar.
+        .filter(
+          (b): b is typeof b & { startDateTime: NonNullable<(typeof b)["startDateTime"]> } =>
+            b.startDateTime != null && isSameDay(new Date(b.startDateTime), day)
+        )
         .sort(
           (a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime()
         ),

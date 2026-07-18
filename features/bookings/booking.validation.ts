@@ -38,8 +38,11 @@ export const bookingFilterSchema = z.object({
   needsCaptain: z.coerce.boolean().optional(),
   /** Only bookings no admin owns yet ("Unassigned" scope tab). */
   unassignedOnly: z.coerce.boolean().optional(),
-  /** Master list default view: hide CANCELLED rows (shown via the Archived pill). */
-  excludeCancelled: z.coerce.boolean().optional(),
+  /**
+   * Master-list buckets: true = archive bucket only (archivedAt set or
+   * CANCELLED); false = live bucket only; undefined = no bucket filter.
+   */
+  archivedView: z.coerce.boolean().optional(),
   
   // Amount range
   minAmount: z.coerce.number().min(0).optional(),
@@ -109,8 +112,9 @@ export const bookingAddOnSchema = z.object({
  * Unified create bookings schema - one or more bookings in a group
  */
 export const createBookingsSchema = z.object({
-  /** Originating lead — links booking back to the inquiry pipeline. */
-  inquiryId: z.string().uuid().nullable().optional(),
+  /** INQUIRY-status deal being priced — that row is UPGRADED to the DRAFT
+   *  proposal in place (same id, same history) instead of a new row. */
+  dealId: z.string().uuid().nullable().optional(),
   numberOfPassengers: z.number().int().min(1, "Must have at least 1 passenger"),
   pickupLocation: z.string().nullable().optional(),
   dropoffLocation: z.string().nullable().optional(),

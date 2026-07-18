@@ -66,10 +66,14 @@ events, expense lines, status history.
       INQUIRY added to VALID_TRANSITIONS; inquiry-conversion machinery
       deleted from booking.service / status service / stripe webhook.
       Old inquiry.actions intake fns remain ONLY as Wave 5/6 deletion targets.
-- [ ] Wave 3 — services: getAllBookings serves the master list alone
-      (INQUIRY rows included, archived filter on archivedAt/CANCELLED);
-      master-deals.service deleted; booking list/detail queries tolerate
-      null boat/dates
+- [x] Wave 3 — services: null-tolerant everywhere (tsc CLEAN against the new
+      schema); archivedView bucket filter in getAllBookings; customer-facing
+      surfaces (profile, proposal page, ics feed, availability, checkout,
+      dashboard calendar) explicitly exclude undated INQUIRY rows;
+      createBookings UPGRADES an INQUIRY deal in place (dealId param — same
+      row becomes the DRAFT proposal; entry type/source/history preserved).
+      NOTE: master-deals.service deletion moved to Wave 4 (the table/page
+      still import it until they read getAllBookings directly).
 - [ ] Wave 4 — UI: one detail page for all statuses (INQUIRY rows show
       request card + lead actions, hide payments/checklist until priced);
       LeadDetailView + lead-row branches in the table deleted; DealPipelineBar

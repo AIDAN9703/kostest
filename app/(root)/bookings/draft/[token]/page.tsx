@@ -21,7 +21,7 @@ export default async function PublicDraftBookingPage({ params }: Props) {
     customerEmail: raw.customerEmail,
     startDateTime: raw.startDateTime,
     endDateTime: raw.endDateTime,
-    numberOfPassengers: raw.numberOfPassengers,
+    numberOfPassengers: raw.numberOfPassengers ?? 1,
     pickupLocation: raw.pickupLocation,
     dropoffLocation: raw.dropoffLocation,
     allowPayment: raw.allowPayment,

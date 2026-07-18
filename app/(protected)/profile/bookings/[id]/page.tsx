@@ -85,14 +85,16 @@ export default async function ProfileBookingDetailPage({
         booking={{
           id: row.id,
           bookingStatus: row.bookingStatus,
-          boatId: row.boatId,
+          // Customer-owned bookings always went through boat selection; the
+          // fallbacks are unreachable defensively (nulls exist for INQUIRY deals).
+          boatId: row.boatId ?? "",
           boatName: row.boatName || "Unknown",
           boatType: row.boatCategory || "Yacht",
           boatMainImage: row.boatMainImage,
           date: startDate ? format(startDate, "EEEE, MMMM d, yyyy") : "No date",
           duration,
           location: row.pickupLocation || "Marina",
-          guests: row.numberOfPassengers,
+          guests: row.numberOfPassengers ?? 1,
           captain: row.needsCaptain,
           totalAmountCents: row.totalAmountCents ? Number(row.totalAmountCents) : 0,
           depositAmountCents: row.depositAmountCents ? Number(row.depositAmountCents) : null,

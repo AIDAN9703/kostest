@@ -25,12 +25,13 @@ import { useToast } from "@/shared/lib/hooks/use-toast";
 import { formatDate } from "@/shared/lib/utils/general-utils";
 
 export interface BookingTripDetailsSnapshot {
-  numberOfPassengers: number;
+  /** Trip fields are null while the deal is an INQUIRY without a set trip. */
+  numberOfPassengers: number | null;
   needsCaptain: boolean | null;
   pickupLocation: string | null;
   dropoffLocation: string | null;
   /** ISO string */
-  startDateTime: string;
+  startDateTime: string | null;
   endDateTime: string | null;
   boatTimezone: string | null;
   boatId: string | null;
@@ -230,7 +231,7 @@ export function BookingTripCard({
                 <Input
                   type="number"
                   min={1}
-                  value={passengers}
+                  value={passengers ?? ""}
                   onChange={(e) => setPassengers(Math.max(1, parseInt(e.target.value, 10) || 1))}
                 />
               </div>

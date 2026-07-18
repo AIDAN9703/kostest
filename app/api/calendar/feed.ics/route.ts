@@ -43,16 +43,16 @@ function buildSummary(customerName: string, boatName: string | null): string {
 }
 
 function buildDescription(b: {
-  numberOfPassengers: number;
+  numberOfPassengers: number | null;
   customerEmail: string;
-  customerPhone: string;
+  customerPhone: string | null;
   bookingId: string;
   origin: string;
 }): string {
   const lines = [
-    `Guests: ${b.numberOfPassengers}`,
+    `Guests: ${b.numberOfPassengers ?? "—"}`,
     `Customer email: ${b.customerEmail}`,
-    `Customer phone: ${b.customerPhone}`,
+    `Customer phone: ${b.customerPhone ?? "—"}`,
     `Booking: ${b.origin}/admin/bookings/${b.bookingId}`,
   ];
   return lines.join("\n");
@@ -135,7 +135,10 @@ export async function GET(request: NextRequest) {
     .where(and(...conditions));
 
   const origin = url.origin;
-  const events: IcsEvent[] = rows.map((r) => ({
+  const events: IcsEvent[] = rows
+    // Undated INQUIRY-phase deals have no place on a calendar feed.
+    .filter((r): r is typeof r & { startDateTime: Date } => r.startDateTime != null)
+    .map((r) => ({
     uid: `booking-${r.id}@kosyachts`,
     start: r.startDateTime,
     end: r.endDateTime ?? null,

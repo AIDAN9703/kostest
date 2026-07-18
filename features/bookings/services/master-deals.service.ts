@@ -100,10 +100,6 @@ export async function getMasterDeals(
   // offset+limit rows from each arm, merge-sort, slice.
   const fetchLimit = page * limit;
 
-  // An explicit booking-status filter beats the archived-bucket defaults.
-  const bookingStatus =
-    filters.bookingStatus ?? (filters.archived ? "CANCELLED" : undefined);
-
   const [bookingsArm, leadsArm] = await Promise.all([
     bookingService.getAllBookings({
       search: filters.search || undefined,
@@ -111,8 +107,9 @@ export async function getMasterDeals(
       unassignedOnly: filters.unassignedOnly || undefined,
       dateFrom: filters.dateFrom,
       dateTo: filters.dateTo,
-      excludeCancelled: (!filters.archived && !filters.bookingStatus) || undefined,
-      bookingStatus,
+      // An explicit booking-status filter beats the archived-bucket defaults.
+      archivedView: filters.bookingStatus ? undefined : Boolean(filters.archived),
+      bookingStatus: filters.bookingStatus,
       paymentStatus: filters.paymentStatus,
       bookingType: filters.bookingType,
       needsCaptain: filters.needsCaptain,

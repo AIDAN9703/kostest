@@ -20,7 +20,8 @@ export interface BookingListItemShared {
   id: string;
   bookingStatus: string;
   bookingType: string;
-  startDateTime: Date;
+  /** Null while the deal is an INQUIRY without a confirmed trip window. */
+  startDateTime: Date | null;
   totalAmountCents: Cents | null;
   createdAt: Date;
 }

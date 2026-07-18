@@ -66,6 +66,11 @@ export async function createCheckoutSessionForBooking(
   const baseUrl = getBaseUrl();
   const stripe = getStripe();
 
+  // Checkout is only reachable for priced proposals/requests — an undated
+  // INQUIRY row can never be charged.
+  if (!booking.startDateTime) {
+    throw new Error("This deal has no trip date yet — price and schedule it before charging.");
+  }
   const bookingDate = booking.startDateTime.toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
@@ -75,9 +80,10 @@ export async function createCheckoutSessionForBooking(
 
   const boatName = booking.boat?.name || "Boat Rental";
   const boatImageUrl = toAbsoluteImageUrl(booking.boat?.mainImage ?? null, baseUrl);
+  const passengerCount = booking.numberOfPassengers ?? 1;
   const descriptionParts = [
     `Date: ${bookingDate}`,
-    `${booking.numberOfPassengers} passenger${booking.numberOfPassengers !== 1 ? "s" : ""}`,
+    `${passengerCount} passenger${passengerCount !== 1 ? "s" : ""}`,
   ];
   if (booking.pickupLocation) {
     descriptionParts.push(`Pickup: ${booking.pickupLocation}`);
