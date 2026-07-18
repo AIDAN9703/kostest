@@ -7,7 +7,7 @@ import { Plus } from "lucide-react";
 import {
   createManualLead,
   type ManualLeadInput,
-} from "@/features/inquiries/inquiry.actions";
+} from "@/features/bookings/actions/lead-intake.actions";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, Users, DollarSign, Globe, Anchor } from "lucide-react";
-import { createTermCharterInquiry } from "@/features/inquiries/inquiry.actions";
+import { createTermCharterLead } from "@/features/bookings/actions/lead-intake.actions";
 import { toast } from "@/shared/lib/hooks/use-toast";
 import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 import { termCharterInquirySchema, type TermCharterFormData } from "@/shared/lib/validation/inquiry";
@@ -68,7 +68,7 @@ export default function RequestTermCharter() {
     async (values: TermCharterFormData) => {
       try {
         setIsSubmitting(true);
-        const result = await createTermCharterInquiry(values);
+        const result = await createTermCharterLead(values);
 
         if (result.success) {
           await ghlWebhookService.sendInquiry({

@@ -1,13 +1,13 @@
 import { Suspense } from "react";
 import { auth } from "@/auth";
-import { getMasterDeals } from "@/features/bookings/services/master-deals.service";
+import { bookingService } from "@/features/bookings/services/booking.service";
 import { boatService } from "@/features/boats/boat.service";
 import { userService } from "@/features/users/user.service";
 import { captainProfileService } from "@/features/profiles/captain-profile.service";
 import { bookingSearchParamsCache } from "@/features/bookings/searchParams";
 import { AdminBookingFilter } from "@/features/bookings/components/admin/AdminBookingFilter";
 import { BookingsHeaderCta } from "@/features/bookings/components/admin/BookingsHeaderCta";
-import { NewLeadDialog } from "@/features/inquiries/components/NewLeadDialog";
+import { NewLeadDialog } from "@/features/bookings/components/lead-intake/NewLeadDialog";
 import { AdminBookingsTable } from "@/features/bookings/components/admin/AdminBookingsTable";
 import { AdminBookingTablePagination } from "@/features/bookings/components/admin/AdminBookingTablePagination";
 import { AdminBookingsCalendar } from "@/features/bookings/components/admin/AdminBookingsCalendar";
@@ -59,19 +59,20 @@ export default async function BookingsPage({
   const session = await auth();
   const nowIso = new Date().toISOString();
 
-  // The master list: bookings AND unconverted leads, one view, one vocabulary.
-  const result = await getMasterDeals({
+  // ONE table, one query: every deal — inquiry to completed charter — is a
+  // booking row. The Archived pill flips between the live and hidden buckets.
+  const result = await bookingService.getAllBookings({
     search: params.search || undefined,
     // Explicit date-range filters win over the Upcoming/Past pills.
     dateFrom: params.dateFrom ?? (params.time === "upcoming" ? nowIso : undefined),
     dateTo: params.dateTo ?? (params.time === "past" ? nowIso : undefined),
-    assignedToId:
+    assignedAdminId:
       params.scope === "mine"
         ? (session?.user?.id ?? undefined)
         : (params.assignedAdminId ?? undefined),
     unassignedOnly: params.scope === "unassigned" || undefined,
-    archived: params.archived ?? undefined,
-    // Booking-only popover filters (these hide lead rows while active).
+    // An explicit status filter searches everything; otherwise bucket by pill.
+    archivedView: params.bookingStatus ? undefined : (params.archived ?? false),
     bookingStatus: params.bookingStatus ?? undefined,
     paymentStatus: params.paymentStatus ?? undefined,
     bookingType: params.bookingType ?? undefined,
@@ -98,7 +99,7 @@ export default async function BookingsPage({
             />
           }
         >
-          <AdminBookingsTable rows={result.rows} admins={admins} captains={captains} />
+          <AdminBookingsTable bookings={result.bookings} admins={admins} captains={captains} />
         </AdminListShell>
       </div>
     </div>

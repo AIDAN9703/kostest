@@ -8,7 +8,7 @@ import {
   MARKETPLACE_SENDER_DOMAINS,
   htmlToText,
   processMarketplaceEmail,
-} from "@/features/inquiries/services/inbound-lead.service";
+} from "@/features/bookings/services/inbound-lead.service";
 
 export const runtime = "nodejs";
 
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
 
   try {
     const text = rawText?.trim() || (rawHtml ? htmlToText(rawHtml) : "");
-    const { inquiryId, method } = await processMarketplaceEmail({
+    const { dealId, method } = await processMarketplaceEmail({
       source,
       fromAddress,
       subject,
@@ -143,9 +143,9 @@ export async function POST(request: Request) {
     });
     await db
       .update(inboundEmails)
-      .set({ parseStatus: method, inquiryId })
+      .set({ parseStatus: method, dealId })
       .where(eq(inboundEmails.id, stored.id));
-    return NextResponse.json({ ok: true, inquiryId, method });
+    return NextResponse.json({ ok: true, dealId, method });
   } catch (error) {
     console.error("Inbound email processing failed:", error);
     await db

@@ -1,43 +1,46 @@
 import { SingleBookingForm } from "@/features/bookings/components/admin/booking-forms/SingleBookingForm";
 import { boatService } from "@/features/boats/boat.service";
-import { inquiryService } from "@/features/inquiries/inquiry.service";
-import { buildInquiryPrefillForBookingForm } from "@/features/inquiries/inquiry-booking-prefill";
+import { bookingService } from "@/features/bookings/services/booking.service";
+import { buildDealPrefillForBookingForm } from "@/features/bookings/lib/deal-prefill";
 import { buildDatePrefillForBookingForm } from "@/features/bookings/lib/booking-create-date-prefill";
 
 type Props = {
-  searchParams: Promise<{ inquiryId?: string; date?: string }>;
+  /** `dealId` prices an INQUIRY deal into a proposal (upgrades that row).
+   *  `inquiryId` is the legacy spelling — same ids post-migration. */
+  searchParams: Promise<{ dealId?: string; inquiryId?: string; date?: string }>;
 };
 
 export default async function AdminBookingCreatePage({ searchParams }: Props) {
-  const { inquiryId, date } = await searchParams;
-  const trimmed = inquiryId?.trim();
+  const { dealId, inquiryId, date } = await searchParams;
+  const targetDealId = (dealId ?? inquiryId)?.trim();
 
-  const [pricingTiers, inquiry] = await Promise.all([
+  const [pricingTiers, deal] = await Promise.all([
     boatService.getAllActivePricingTiers(),
-    trimmed ? inquiryService.getInquiryById(trimmed) : Promise.resolve(null),
+    targetDealId ? bookingService.getBookingById(targetDealId) : Promise.resolve(null),
   ]);
 
-  const inquiryPrefill = inquiry ? buildInquiryPrefillForBookingForm(inquiry) : null;
+  // Only INQUIRY-status deals get priced through this form; anything further
+  // along already has its own trip/pricing on the detail page.
+  const dealPrefill =
+    deal && deal.bookingStatus === "INQUIRY" ? buildDealPrefillForBookingForm(deal) : null;
   const datePrefill =
-    !inquiryPrefill && date?.trim() ? buildDatePrefillForBookingForm(date.trim()) : null;
+    !dealPrefill && date?.trim() ? buildDatePrefillForBookingForm(date.trim()) : null;
 
   return (
     <div className="flex w-full flex-1 flex-col gap-5 pb-8">
       <header className="pt-1">
         <h1 className="text-2xl font-semibold tracking-tight">
-          {inquiryPrefill
-            ? `New proposal for ${inquiryPrefill.customerName}`
-            : "New booking"}
+          {dealPrefill ? `New proposal for ${dealPrefill.customerName}` : "New booking"}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {inquiryPrefill
+          {dealPrefill
             ? "Price the trip and send it — the customer accepts and pays from their link."
             : "Create a draft booking, optionally sending it to the customer as a proposal."}
         </p>
       </header>
       <SingleBookingForm
         pricingTiers={pricingTiers}
-        inquiryPrefill={inquiryPrefill}
+        dealPrefill={dealPrefill}
         datePrefill={datePrefill}
       />
     </div>

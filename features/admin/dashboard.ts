@@ -7,11 +7,9 @@ import {
   bookingOps,
   bookingPricing,
   bookings,
-  inquiry,
-  inquiryEvents,
   users,
 } from "@/database/schema";
-import { and, count, desc, eq, gte, inArray, isNull, lte, ne, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, isNull, lte, ne, notInArray, sql } from "drizzle-orm";
 import { cache } from "react";
 import {
   startOfDay,
@@ -22,13 +20,10 @@ import {
   format,
 } from "date-fns";
 import { bookingService } from "@/features/bookings/services/booking.service";
+import { BOOKING_EVENT_TYPES } from "@/features/bookings/booking-events.constants";
 import { getAdminSession } from "@/shared/lib/utils/auth-utils";
 import type { BookingListItem } from "@/features/bookings/booking.types";
-import type { InquiryListItem } from "@/features/inquiries/inquiry.types";
-import {
-  formatBookingActivityMessage,
-  formatInquiryActivityMessage,
-} from "@/features/admin/dashboard/dashboard-utils";
+import { formatBookingActivityMessage } from "@/features/admin/dashboard/dashboard-utils";
 
 async function assertAdmin(): Promise<void> {
   const { error } = await getAdminSession();
@@ -52,9 +47,9 @@ export interface DashboardHeadlineMetrics {
   boatsAddedThisMonth: number;
   /** New user accounts created this month. */
   newUsersThisMonth: number;
-  /** Open (in-progress) inquiries across the pipeline. */
+  /** Live INQUIRY-status deals across the pipeline. */
   openInquiries: number;
-  /** Open inquiries with no admin assigned yet. */
+  /** Live inquiries with no admin assigned yet. */
   unassignedLeads: number;
 }
 
@@ -68,39 +63,65 @@ export interface DashboardActivityItem {
   href: string;
 }
 
-/** OPEN inquiries with no admin assigned yet — newest first. */
-export const getUnassignedLeads = cache(async (limit = 8): Promise<InquiryListItem[]> => {
+/** Lean lead row for the dashboard queue — INQUIRY-status booking rows. */
+export interface DashboardLead {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  bookingType: string;
+  source: string | null;
+  /** Best-known trip start: exact request, else preferred date. */
+  tripStart: Date | null;
+  guests: number | null;
+  budgetCents: number | null;
+  estimatedValueCents: number | null;
+  createdAt: Date;
+}
+
+/** Live INQUIRY deals with no admin assigned yet — newest first. */
+export const getUnassignedLeads = cache(async (limit = 8): Promise<DashboardLead[]> => {
   await assertAdmin();
   const rows = await db
     .select({
-      id: inquiry.id,
-      name: inquiry.name,
-      email: inquiry.email,
-      phone: inquiry.phone,
-      stage: inquiry.stage,
-      outcome: inquiry.outcome,
-      leadType: inquiry.leadType,
-      source: inquiry.source,
-      date: inquiry.date,
-      budget: inquiry.budget,
-      guests: inquiry.guests,
-      message: inquiry.message,
-      estimatedTotalCents: inquiry.estimatedTotalCents,
-      requestedStartDateTime: inquiry.requestedStartDateTime,
-      preferredDate: inquiry.preferredDate,
-      preferredTimeOfDay: inquiry.preferredTimeOfDay,
-      requestedDurationDays: inquiry.requestedDurationDays,
-      destination: inquiry.destination,
-      assignedTo: inquiry.assignedTo,
-      createdAt: inquiry.createdAt,
-      updatedAt: inquiry.updatedAt,
+      id: bookings.id,
+      name: bookings.customerName,
+      email: bookings.customerEmail,
+      phone: bookings.customerPhone,
+      bookingType: bookings.bookingType,
+      source: bookings.source,
+      startDateTime: bookings.startDateTime,
+      preferredDate: bookings.preferredDate,
+      guests: bookings.numberOfPassengers,
+      budgetCents: bookings.budgetCents,
+      estimatedValueCents: bookings.estimatedValueCents,
+      createdAt: bookings.createdAt,
     })
-    .from(inquiry)
-    .where(and(eq(inquiry.outcome, "OPEN"), isNull(inquiry.assignedTo)))
-    .orderBy(desc(inquiry.createdAt))
+    .from(bookings)
+    .where(
+      and(
+        eq(bookings.bookingStatus, "INQUIRY"),
+        isNull(bookings.assignedAdminId),
+        isNull(bookings.archivedAt)
+      )
+    )
+    .orderBy(desc(bookings.createdAt))
     .limit(limit);
 
-  return rows as InquiryListItem[];
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    email: r.email,
+    phone: r.phone,
+    bookingType: r.bookingType,
+    source: r.source,
+    tripStart:
+      r.startDateTime ?? (r.preferredDate ? new Date(`${r.preferredDate}T00:00:00`) : null),
+    guests: r.guests,
+    budgetCents: r.budgetCents != null ? Number(r.budgetCents) : null,
+    estimatedValueCents: r.estimatedValueCents != null ? Number(r.estimatedValueCents) : null,
+    createdAt: r.createdAt,
+  }));
 });
 
 /** Today through the next 6 days. */
@@ -112,7 +133,8 @@ export const getWeeksBookings = cache(async (): Promise<BookingListItem[]> => {
     dateTo: endOfDay(addDays(now, 6)).toISOString(),
     limit: 20,
   });
-  return result.bookings;
+  // Boat inquiries carry requested dates but aren't trips yet.
+  return result.bookings.filter((b) => b.bookingStatus !== "INQUIRY");
 });
 
 /**
@@ -143,16 +165,17 @@ export const getDashboardHeadlineMetrics = cache(
           and(
             gte(bookings.startDateTime, from),
             lte(bookings.startDateTime, to),
-            ne(bookings.bookingStatus, "CANCELLED")
+            // Real trips only — INQUIRY deals aren't booked, CANCELLED aren't happening.
+            notInArray(bookings.bookingStatus, ["CANCELLED", "INQUIRY"])
           )
         ),
       db.select({ value: count() }).from(boats).where(eq(boats.active, true)),
       db
         .select({
-          open: sql<number>`COUNT(*) FILTER (WHERE ${inquiry.outcome} = 'OPEN')::int`,
-          unassigned: sql<number>`COUNT(*) FILTER (WHERE ${inquiry.outcome} = 'OPEN' AND ${inquiry.assignedTo} IS NULL)::int`,
+          open: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'INQUIRY' AND ${bookings.archivedAt} IS NULL)::int`,
+          unassigned: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'INQUIRY' AND ${bookings.archivedAt} IS NULL AND ${bookings.assignedAdminId} IS NULL)::int`,
         })
-        .from(inquiry),
+        .from(bookings),
       db
         .select({ value: count() })
         .from(boats)
@@ -177,80 +200,44 @@ export const getDashboardHeadlineMetrics = cache(
   }
 );
 
-/** Recent cross-module activity from booking + inquiry timelines. */
+/** Recent activity from the one deal timeline (booking_event). */
 export const getRecentDashboardActivity = cache(
   async (limit = 12): Promise<DashboardActivityItem[]> => {
     await assertAdmin();
 
-    const perSource = Math.ceil(limit / 2);
+    const rows = await db
+      .select({
+        id: bookingEvents.id,
+        bookingId: bookingEvents.bookingId,
+        customerName: bookings.customerName,
+        bookingStatus: bookings.bookingStatus,
+        eventType: bookingEvents.eventType,
+        displayMessage: bookingEvents.displayMessage,
+        content: bookingEvents.content,
+        createdAt: bookingEvents.createdAt,
+      })
+      .from(bookingEvents)
+      .innerJoin(bookings, eq(bookingEvents.bookingId, bookings.id))
+      // Basics only — internal notes and logged contact attempts stay off the board.
+      .where(
+        notInArray(bookingEvents.eventType, [
+          BOOKING_EVENT_TYPES.NOTE_ADDED,
+          BOOKING_EVENT_TYPES.CONTACT_LOGGED,
+          "lead.note",
+          "lead.contact_attempt",
+        ])
+      )
+      .orderBy(desc(bookingEvents.createdAt))
+      .limit(limit);
 
-    const [bookingRows, inquiryRows] = await Promise.all([
-      db
-        .select({
-          id: bookingEvents.id,
-          bookingId: bookingEvents.bookingId,
-          customerName: bookings.customerName,
-          eventType: bookingEvents.eventType,
-          displayMessage: bookingEvents.displayMessage,
-          content: bookingEvents.content,
-          createdAt: bookingEvents.createdAt,
-        })
-        .from(bookingEvents)
-        .innerJoin(bookings, eq(bookingEvents.bookingId, bookings.id))
-        .orderBy(desc(bookingEvents.createdAt))
-        .limit(perSource),
-      db
-        .select({
-          id: inquiryEvents.id,
-          inquiryId: inquiryEvents.inquiryId,
-          inquiryName: inquiry.name,
-          eventType: inquiryEvents.eventType,
-          content: inquiryEvents.content,
-          previousStage: inquiryEvents.previousStage,
-          newStage: inquiryEvents.newStage,
-          previousOutcome: inquiryEvents.previousOutcome,
-          newOutcome: inquiryEvents.newOutcome,
-          contactMethod: inquiryEvents.contactMethod,
-          createdAt: inquiryEvents.createdAt,
-        })
-        .from(inquiryEvents)
-        .innerJoin(inquiry, eq(inquiryEvents.inquiryId, inquiry.id))
-        // Basics only — internal notes and logged contact attempts stay off the board.
-        .where(
-          inArray(inquiryEvents.eventType, [
-            "CREATED",
-            "ASSIGNED",
-            "STAGE_CHANGE",
-            "OUTCOME_CHANGE",
-          ])
-        )
-        .orderBy(desc(inquiryEvents.createdAt))
-        .limit(perSource),
-    ]);
-
-    const merged: DashboardActivityItem[] = [
-      ...bookingRows.map((row) => ({
-        id: `b-${row.id}`,
-        kind: "booking" as const,
-        subjectId: row.bookingId,
-        subjectLabel: row.customerName,
-        message: formatBookingActivityMessage(row),
-        createdAt: row.createdAt,
-        href: `/admin/bookings/${row.bookingId}`,
-      })),
-      ...inquiryRows.map((row) => ({
-        id: `i-${row.id}`,
-        kind: "inquiry" as const,
-        subjectId: row.inquiryId,
-        subjectLabel: row.inquiryName,
-        message: formatInquiryActivityMessage(row),
-        createdAt: row.createdAt,
-        href: `/admin/inquiries/${row.inquiryId}`,
-      })),
-    ];
-
-    return merged
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(0, limit);
+    return rows.map((row) => ({
+      id: row.id,
+      kind: row.bookingStatus === "INQUIRY" ? ("inquiry" as const) : ("booking" as const),
+      subjectId: row.bookingId,
+      subjectLabel: row.customerName,
+      message: formatBookingActivityMessage(row),
+      createdAt: row.createdAt,
+      href: `/admin/bookings/${row.bookingId}`,
+    }));
   }
 );

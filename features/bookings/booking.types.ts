@@ -277,10 +277,12 @@ export interface BookingListItem {
   // Lead-phase fields (unified deal hub — see docs/UNIFIED_BOOKINGS_PLAN.md)
   customerMessage: string | null;
   preferredDate: string | null;
+  preferredTimeOfDay: string | null;
   destination: string | null;
   requestedDurationDays: number | null;
   budgetCents: number | null;
   estimatedValueCents: number | null;
+  smsConsent: boolean;
   firstContactedAt: Date | null;
   coldAt: Date | null;
   archivedAt: Date | null;
@@ -347,6 +349,8 @@ export interface BookingListItem {
 export interface BookingDetails extends BookingListItem {
   pricingTierId: string | null;
   paymentMethod: string | null;
+  /** Channel the deal came through (bookings.source). */
+  source: string | null;
   updatedAt: Date;
 
   // Add-ons snapshot (from booking.add_ons JSON)

@@ -14,9 +14,9 @@ import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
 import { toast } from "@/shared/lib/hooks/use-toast";
 import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
-import { createBoatLead } from "@/features/inquiries/inquiry.actions";
+import { createBoatLead } from "@/features/bookings/actions/lead-intake.actions";
 import type { BoatInquiryContactFormData } from "@/shared/lib/validation/inquiry";
-import InquiryContactForm from "@/features/inquiries/components/InquiryContactForm";
+import InquiryContactForm from "@/features/bookings/components/lead-intake/InquiryContactForm";
 
 export default function BoatInquiryDetailsClient({
   serviceFeeRate,
@@ -89,7 +89,7 @@ export default function BoatInquiryDetailsClient({
           ...contact,
         });
 
-        if (result.success && result.inquiry) {
+        if (result.success && result.bookingId) {
           await ghlWebhookService.sendInquiry({
             name: contact.name,
             email: contact.email,

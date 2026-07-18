@@ -1,13 +1,12 @@
 import { db } from "@/database/db";
-import {
-  inquiry as inquiryTable,
-  inquiryEvents,
-  type InquirySource,
-} from "@/database/schema";
+import { bookings } from "@/database/schema";
+import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
 import { revalidatePath } from "next/cache";
 
+type MarketplaceSourceValue = "BOATSETTER" | "GETMYBOAT";
+
 /** Marketplace sources this service knows how to ingest. */
-export type MarketplaceSource = Extract<InquirySource, "BOATSETTER" | "GETMYBOAT">;
+export type MarketplaceSource = MarketplaceSourceValue;
 
 export const MARKETPLACE_SENDER_DOMAINS: Record<string, MarketplaceSource> = {
   "boatsetter.com": "BOATSETTER",
@@ -205,7 +204,7 @@ function isUsable(lead: ExtractedLead): boolean {
  */
 export async function processMarketplaceEmail(
   content: InboundEmailContent
-): Promise<{ inquiryId: string; method: ParseMethod }> {
+): Promise<{ dealId: string; method: ParseMethod }> {
   let method: ParseMethod = "PARSED";
   let lead = templateParse(content);
 
@@ -234,36 +233,35 @@ export async function processMarketplaceEmail(
   }
 
   const [created] = await db
-    .insert(inquiryTable)
+    .insert(bookings)
     .values({
-      name,
-      email: lead.email?.trim() || content.fromAddress,
-      phone: lead.phone?.trim() || "",
-      message: messageParts.join("\n\n") || null,
-      guests: lead.guests && lead.guests > 0 ? lead.guests : null,
+      bookingType: "MARKETPLACE",
+      bookingStatus: "INQUIRY",
+      source: content.source,
+      customerName: name,
+      customerEmail: lead.email?.trim() || content.fromAddress,
+      customerPhone: lead.phone?.trim() || null,
+      customerMessage: messageParts.join("\n\n") || null,
+      numberOfPassengers: lead.guests && lead.guests > 0 ? lead.guests : null,
       preferredDate: /^\d{4}-\d{2}-\d{2}$/.test(lead.preferredDate ?? "")
         ? lead.preferredDate
         : null,
-      stage: "NEW",
-      outcome: "OPEN",
-      leadType: "MARKETPLACE",
-      source: content.source,
       termsAccepted: false,
       smsConsent: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     })
-    .returning({ id: inquiryTable.id });
+    .returning({ id: bookings.id });
 
-  await db.insert(inquiryEvents).values({
-    inquiryId: created.id,
-    eventType: "CREATED",
-    createdBy: null,
+  await bookingEventsService.logEvent({
+    bookingId: created.id,
+    eventType: "lead.created",
+    actorType: "system",
+    channel: "email",
+    displayMessage: "Inquiry received",
     metadata: { ingestedFrom: content.source, parseMethod: method },
   });
 
-  revalidatePath("/admin/inquiries");
+  revalidatePath("/admin/bookings");
   revalidatePath("/admin");
 
-  return { inquiryId: created.id, method };
+  return { dealId: created.id, method };
 }

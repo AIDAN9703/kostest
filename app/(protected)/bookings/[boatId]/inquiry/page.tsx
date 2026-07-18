@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 
 import { getAppSettings } from "@/features/app-settings/app-settings.service";
-import BoatInquiryDetailsClient from "@/features/inquiries/components/BoatInquiryDetailsClient";
+import BoatInquiryDetailsClient from "@/features/bookings/components/lead-intake/BoatInquiryDetailsClient";
 
 export default async function BoatInquiryPage() {
   const settings = await getAppSettings();

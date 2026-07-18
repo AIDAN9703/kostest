@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DollarSign, Users, ArrowRight } from "lucide-react";
-import { createGeneralInquiry } from "@/features/inquiries/inquiry.actions";
+import { createGeneralLead } from "@/features/bookings/actions/lead-intake.actions";
 import { toast } from "@/shared/lib/hooks/use-toast";
 import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 import { requestToBookSchema, type RequestToBookFormData } from "@/shared/lib/validation/inquiry";
@@ -76,7 +76,7 @@ export default function RequestToBook({ source = "HOME_PAGE" }: RequestToBookPro
       try {
         setIsSubmitting(true);
 
-        const result = await createGeneralInquiry({
+        const result = await createGeneralLead({
           name: values.name,
           email: values.email,
           phone: values.phone,

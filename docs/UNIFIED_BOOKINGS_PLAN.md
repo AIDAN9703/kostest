@@ -74,14 +74,18 @@ events, expense lines, status history.
       row becomes the DRAFT proposal; entry type/source/history preserved).
       NOTE: master-deals.service deletion moved to Wave 4 (the table/page
       still import it until they read getAllBookings directly).
-- [ ] Wave 4 — UI: one detail page for all statuses (INQUIRY rows show
-      request card + lead actions, hide payments/checklist until priced);
-      LeadDetailView + lead-row branches in the table deleted; DealPipelineBar
-      reads booking only
-- [ ] Wave 5 — public intake forms call the new lead-intake actions;
-      GHL webhooks preserved; proposal prefill reads booking fields
-- [ ] Wave 6 — delete features/inquiries/* (except public-form components),
-      final tsc/build/lint sweep, docs, memory
+- [x] Wave 4 — UI: one detail page for all statuses (DealRequestCard +
+      lead verbs in the quick-actions menu for INQUIRY rows; trip/payments/
+      checklist appear once priced); LeadDetailView + table lead branches
+      deleted; DealPipelineBar is pure display (derived steps); pricing a
+      deal UPGRADES the same row via ?dealId= prefill
+- [x] Wave 5 — public intake forms (home/contact, term charter, boat page,
+      manual dialog) call lead-intake actions; marketplace inbound-email
+      ingestion creates INQUIRY bookings (inbound_email.deal_id added)
+- [x] Wave 6 — features/inquiries DELETED entirely (public-form components
+      moved to features/bookings/components/lead-intake; inbound-lead service
+      to bookings/services; adminInitials to shared/lib/utils/people-display);
+      dashboard queue/metrics/activity read the one table; tsc 0, build green
 - [ ] Wave 7 (post-verification) — drop-inquiry-tables migration, remove
       deprecated schema defs + legacyInquiryId
 

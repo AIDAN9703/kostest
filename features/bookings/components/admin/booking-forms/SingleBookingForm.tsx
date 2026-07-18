@@ -25,13 +25,13 @@ import {
   type PricingTierOption,
 } from "./types";
 import type { BookingAddOnInput } from "@/features/bookings/booking.types";
-import type { InquiryBookingPrefill } from "@/features/inquiries/inquiry-booking-prefill";
+import type { DealPrefill } from "@/features/bookings/lib/deal-prefill";
 import type { BookingDatePrefill } from "@/features/bookings/lib/booking-create-date-prefill";
 
 interface SingleBookingFormProps {
   pricingTiers: PricingTierOption[];
-  /** When opening from an inquiry (won → create booking) */
-  inquiryPrefill?: InquiryBookingPrefill | null;
+  /** When pricing an INQUIRY deal into a proposal (`?dealId=`) — upgrades that row. */
+  dealPrefill?: DealPrefill | null;
   /** When opening from admin calendar (`?date=YYYY-MM-DD`) */
   datePrefill?: BookingDatePrefill | null;
 }
@@ -45,7 +45,7 @@ const INITIAL_STATE: ActionResponse<{
 
 export function SingleBookingForm({
   pricingTiers,
-  inquiryPrefill = null,
+  dealPrefill = null,
   datePrefill = null,
 }: SingleBookingFormProps) {
   const { toast } = useToast();
@@ -79,41 +79,41 @@ export function SingleBookingForm({
 
   const { data: selectedUser } = useUser(selectedUserId || "");
 
-  const inquiryPrefillApplied = useRef(false);
+  const dealPrefillApplied = useRef(false);
   const datePrefillApplied = useRef(false);
 
   useEffect(() => {
-    if (!datePrefill || datePrefillApplied.current || inquiryPrefill) return;
+    if (!datePrefill || datePrefillApplied.current || dealPrefill) return;
     datePrefillApplied.current = true;
     setSection((s) => ({
       ...s,
       startDateTime: datePrefill.startDateTime,
       endDateTime: datePrefill.endDateTime,
     }));
-  }, [datePrefill, inquiryPrefill]);
+  }, [datePrefill, dealPrefill]);
 
   useEffect(() => {
-    if (!inquiryPrefill || inquiryPrefillApplied.current) return;
-    inquiryPrefillApplied.current = true;
-    setCustomerType(inquiryPrefill.customerType);
+    if (!dealPrefill || dealPrefillApplied.current) return;
+    dealPrefillApplied.current = true;
+    setCustomerType(dealPrefill.customerType);
     setSelectedUserId("");
-    setCustomerName(inquiryPrefill.customerName);
-    setCustomerEmail(inquiryPrefill.customerEmail);
-    setCustomerPhone(inquiryPrefill.customerPhone);
-    setNumberOfPassengers(inquiryPrefill.numberOfPassengers);
-    if (inquiryPrefill.adminNotes.trim()) {
-      setAdminNotes(inquiryPrefill.adminNotes);
+    setCustomerName(dealPrefill.customerName);
+    setCustomerEmail(dealPrefill.customerEmail);
+    setCustomerPhone(dealPrefill.customerPhone);
+    setNumberOfPassengers(dealPrefill.numberOfPassengers);
+    if (dealPrefill.adminNotes.trim()) {
+      setAdminNotes(dealPrefill.adminNotes);
     }
     setSection((s) => ({
       ...s,
-      startDateTime: inquiryPrefill.startDateTime || s.startDateTime,
-      endDateTime: inquiryPrefill.endDateTime || s.endDateTime,
+      startDateTime: dealPrefill.startDateTime || s.startDateTime,
+      endDateTime: dealPrefill.endDateTime || s.endDateTime,
     }));
     // Coming from a lead, the point is to SEND the proposal — default the
     // channels on (SMS only with consent) instead of silently saving a draft.
-    setSendProposalEmail(Boolean(inquiryPrefill.customerEmail));
-    setSendProposalSms(inquiryPrefill.smsConsent && Boolean(inquiryPrefill.customerPhone));
-  }, [inquiryPrefill]);
+    setSendProposalEmail(Boolean(dealPrefill.customerEmail));
+    setSendProposalSms(dealPrefill.smsConsent && Boolean(dealPrefill.customerPhone));
+  }, [dealPrefill]);
 
   useEffect(() => {
     if (customerType === "existing_user" && selectedUser && selectedUserId) {
@@ -183,7 +183,7 @@ export function SingleBookingForm({
       ];
 
       const formData = new FormData();
-      formData.set("dealId", inquiryPrefill?.inquiryId ?? "");
+      formData.set("dealId", dealPrefill?.dealId ?? "");
       formData.set("bookings", JSON.stringify(payload));
       formData.set("lineItems", JSON.stringify(lineItems));
       formData.set("numberOfPassengers", String(numberOfPassengers));
@@ -244,18 +244,18 @@ export function SingleBookingForm({
       paymentType,
       sendProposalEmail,
       sendProposalSms,
-      inquiryPrefill,
+      dealPrefill,
     ]
   );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {inquiryPrefill ? (
+      {dealPrefill ? (
         <div className="rounded-xl border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
           <span className="font-medium">
-            Preparing a proposal for {inquiryPrefill.customerName || "this lead"}.
+            Preparing a proposal for {dealPrefill.customerName || "this lead"}.
           </span>{" "}
-          Customer and trip details are filled from the inquiry — choose a boat and pricing,
+          Customer and trip details are filled from the deal — choose a boat and pricing,
           then send. The lead moves to Offer sent when the proposal goes out.
         </div>
       ) : null}
@@ -345,7 +345,7 @@ export function SingleBookingForm({
           sendProposalSms={sendProposalSms}
           onSendProposalSmsChange={setSendProposalSms}
           submitLabel={
-            inquiryPrefill
+            dealPrefill
               ? sendProposalEmail || sendProposalSms
                 ? "Create & send proposal"
                 : "Save draft proposal"

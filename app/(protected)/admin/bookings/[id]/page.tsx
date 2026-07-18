@@ -1,20 +1,21 @@
 import { notFound } from "next/navigation";
 
 import Link from "next/link";
-import { format } from "date-fns";
+import { format, formatDistanceToNowStrict } from "date-fns";
 import { Ship } from "lucide-react";
+import { auth } from "@/auth";
 import { DealHeaderCard } from "@/features/bookings/components/admin/view-booking/DealHeaderCard";
-import { DEAL_KIND_LABELS } from "@/features/bookings/deal-status";
-import { adminInitials } from "@/features/inquiries/inquiry-ui";
+import { DealRequestCard } from "@/features/bookings/components/admin/view-booking/DealRequestCard";
+import {
+  computeDealStatusForBooking,
+  DEAL_KIND_LABELS,
+  DEAL_SOURCE_LABELS,
+} from "@/features/bookings/deal-status";
+import { adminInitials } from "@/shared/lib/utils/people-display";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
 import type { BookingDetails } from "@/features/bookings/booking.types";
 import { DealPipelineBar } from "@/features/bookings/components/admin/DealPipelineBar";
-import { computeDealStatusForBooking } from "@/features/bookings/deal-status";
-import { LeadDetailView } from "@/features/inquiries/components/LeadDetailView";
-import { inquiryService } from "@/features/inquiries/inquiry.service";
-import { OUTCOME_LABELS, STAGE_LABELS } from "@/features/inquiries/inquiry-ui";
-import type { InquiryEvent } from "@/database/types";
 import {
   BookingTripCard,
   type BookingTripDetailsSnapshot,
@@ -37,6 +38,7 @@ import { bookingCrewService } from "@/features/bookings/services/booking-crew.se
 import { paymentService } from "@/features/payments/payment.service";
 import { captainProfileService } from "@/features/profiles/captain-profile.service";
 import { crewProfileService } from "@/features/profiles/crew-profile.service";
+import { userService } from "@/features/users/user.service";
 import { computeBookingChecklist } from "@/features/bookings/booking-checklist";
 
 import type { BookingActivityEventEntry } from "@/features/bookings/booking.types";
@@ -49,12 +51,6 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
   const { id } = await params;
   const booking = await bookingService.getBookingById(id);
   if (!booking) {
-    // One master view: ids of unconverted leads resolve here too, rendering
-    // the lead-phase face of the same deal page.
-    const lead = await inquiryService.getInquiryById(id);
-    if (lead) {
-      return <LeadDetailView inquiryId={id} />;
-    }
     notFound();
   }
 
@@ -67,7 +63,8 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     bookingCrewRows,
     crewPool,
     lifetimeBookingCount,
-    originatingLead,
+    admins,
+    session,
   ] = await Promise.all([
     bookingOpsService.getByBookingId(id),
     bookingExpenseLineService.getLines(id),
@@ -79,12 +76,13 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     booking.userId
       ? bookingService.countBookingsForUser(booking.userId)
       : Promise.resolve(0),
-    booking.inquiryId
-      ? inquiryService.getInquiryById(booking.inquiryId)
-      : Promise.resolve(null),
+    userService.getAdmins(),
+    auth(),
   ]);
 
-  const bookingActivityEntries: BookingActivityEventEntry[] = rawEvents.map((e) => ({
+  // ONE activity feed per deal — migrated lead history lives natively in
+  // booking_event (lead.* event types), so no merging is needed.
+  const activityEvents: BookingActivityEventEntry[] = rawEvents.map((e) => ({
     id: e.id,
     actorType: e.actorType,
     eventType: e.eventType,
@@ -101,15 +99,6 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         ? `${e.actorFirstName || ""} ${e.actorLastName || ""}`.trim()
         : e.actorEmail || (e.actorType === "system" ? "System" : "—"),
   }));
-
-  // ONE activity feed per deal: the originating lead's history rides along
-  // with the booking's own events, newest first.
-  const activityEvents: BookingActivityEventEntry[] = [
-    ...bookingActivityEntries,
-    ...buildLeadActivityEntries(
-      (originatingLead?.events ?? []) as LeadEventWithActor[]
-    ),
-  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const captainOptions = [...captains];
   if (booking.captainUserId && !captains.some((c) => c.id === booking.captainUserId)) {
@@ -195,39 +184,74 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     lifetimeBookingCount,
   };
 
+  const isInquiry = booking.bookingStatus === "INQUIRY";
+  const dealStatus = computeDealStatusForBooking({
+    bookingStatus: booking.bookingStatus,
+    paymentDisplayStatus: booking.paymentDisplayStatus,
+    hasRefund: booking.hasRefund,
+    archivedAt: booking.archivedAt,
+  });
+  const adminOptions = admins.map((a) => ({
+    id: a.id,
+    name:
+      [a.firstName, a.lastName].filter(Boolean).join(" ").trim() || a.email || "Unknown admin",
+  }));
+
   return (
     <BookingEditModeProvider>
     <div className="flex w-full flex-1 flex-col gap-6">
-      {/* Identity header — identical structure on both faces of the deal page */}
+      {/* Identity header — one face for every deal status */}
       <DealHeaderCard
-        eyebrow={`Booking #${booking.id.slice(0, 6).toUpperCase()}`}
+        eyebrow={`${isInquiry ? "Inquiry" : "Booking"} #${booking.id.slice(0, 6).toUpperCase()}`}
         name={booking.customerName || "Unnamed customer"}
         avatarInitials={adminInitials(booking.customerName ?? "") || "?"}
-        avatarClassName="bg-primary-soft text-primary-strong"
+        avatarClassName={isInquiry ? "bg-muted text-muted-foreground" : "bg-primary-soft text-primary-strong"}
         typeChip={
           <span className="inline-block rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold text-muted-foreground">
             {DEAL_KIND_LABELS[booking.bookingType] ?? booking.bookingType}
           </span>
         }
-        meta={<BookingHeaderMeta booking={booking} />}
+        meta={
+          isInquiry ? (
+            <>
+              {DEAL_SOURCE_LABELS[booking.source ?? ""] ?? booking.source}
+              {" · received "}
+              <span className="tabular-nums">
+                {formatDistanceToNowStrict(new Date(booking.createdAt))} ago
+              </span>
+            </>
+          ) : (
+            <BookingHeaderMeta booking={booking} />
+          )
+        }
         value={
-          booking.totalAmountCents != null
+          booking.totalAmountCents > 0
             ? {
                 label: "Total",
                 text: formatCentsAsCurrency(booking.totalAmountCents, {
                   currency: booking.currency ?? "USD",
                 }),
               }
-            : null
+            : booking.estimatedValueCents != null
+              ? {
+                  label: "Est. value",
+                  text: formatCentsAsCurrency(booking.estimatedValueCents),
+                }
+              : null
         }
         actions={
           <div className="flex shrink-0 items-center gap-2">
-            <BookingPageEditButton />
+            {!isInquiry ? <BookingPageEditButton /> : null}
             <BookingQuickActionsMenu
               bookingId={id}
               bookingStatus={booking.bookingStatus}
               allowPaymentLink={allowPaymentLink}
               publicToken={booking.publicToken}
+              isCold={booking.coldAt != null}
+              isArchived={booking.archivedAt != null}
+              assignedAdminId={booking.assignedAdminId}
+              admins={adminOptions}
+              currentUserId={session?.user?.id ?? null}
             />
           </div>
         }
@@ -235,11 +259,9 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         phone={booking.customerPhone}
         pipeline={
           <DealPipelineBar
-            dealStatus={computeDealStatusForBooking({
-              bookingStatus: booking.bookingStatus,
-              paymentDisplayStatus: booking.paymentDisplayStatus,
-              hasRefund: booking.hasRefund,
-            })}
+            dealStatus={dealStatus}
+            contacted={booking.firstContactedAt != null}
+            cold={booking.coldAt != null}
           />
         }
       />
@@ -247,33 +269,44 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
       {/* Body: content left, activity feed running the full right side */}
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
-          <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 [&>*]:min-w-0">
-            <BookingClientCard bookingId={id} client={clientSnapshot} />
-            <AdminBookingChecklistCard bookingId={id} items={checklistItems} />
-          </div>
+          {isInquiry ? (
+            /* Lead phase: the client + what they asked for. Trip, payments,
+               and checklist appear once the deal is priced into a proposal. */
+            <>
+              <BookingClientCard bookingId={id} client={clientSnapshot} />
+              <DealRequestCard deal={booking} />
+            </>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 [&>*]:min-w-0">
+                <BookingClientCard bookingId={id} client={clientSnapshot} />
+                <AdminBookingChecklistCard bookingId={id} items={checklistItems} />
+              </div>
 
-          <BookingTripCard
-            bookingId={id}
-            trip={tripSnapshot}
-            captainUserId={booking.captainUserId}
-            captainFirstName={booking.captainFirstName}
-            captainLastName={booking.captainLastName}
-            captainEmail={booking.captainEmail}
-            captainOptions={captainOptions}
-            bookingCrew={bookingCrew}
-            crewOptions={crewOptions}
-          />
+              <BookingTripCard
+                bookingId={id}
+                trip={tripSnapshot}
+                captainUserId={booking.captainUserId}
+                captainFirstName={booking.captainFirstName}
+                captainLastName={booking.captainLastName}
+                captainEmail={booking.captainEmail}
+                captainOptions={captainOptions}
+                bookingCrew={bookingCrew}
+                crewOptions={crewOptions}
+              />
 
-          <BookingPaymentsFinancialsCard
-            bookingId={id}
-            booking={booking}
-            payments={bookingPayments}
-            opsGmvCents={ops?.gmvCents ?? null}
-            opsExpenseCents={ops?.expenseCents ?? null}
-            commissionAgentCents={ops?.commissionAgentCents ?? null}
-            commissionKosCents={ops?.commissionKosCents ?? null}
-            expenseLines={expenseLines}
-          />
+              <BookingPaymentsFinancialsCard
+                bookingId={id}
+                booking={booking}
+                payments={bookingPayments}
+                opsGmvCents={ops?.gmvCents ?? null}
+                opsExpenseCents={ops?.expenseCents ?? null}
+                commissionAgentCents={ops?.commissionAgentCents ?? null}
+                commissionKosCents={ops?.commissionKosCents ?? null}
+                expenseLines={expenseLines}
+              />
+            </>
+          )}
         </div>
 
         <BookingActivityTimeline
@@ -284,70 +317,6 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     </div>
     </BookingEditModeProvider>
   );
-}
-
-type LeadEventWithActor = InquiryEvent & {
-  createdByUser?: {
-    firstName?: string | null;
-    lastName?: string | null;
-    email?: string | null;
-  } | null;
-};
-
-/**
- * Fold the originating lead's history into the booking's activity feed —
- * one timeline per deal, from first inquiry to final payment.
- */
-function buildLeadActivityEntries(events: LeadEventWithActor[]) {
-  return events.map((e) => {
-    let displayMessage: string;
-    switch (e.eventType) {
-      case "CREATED":
-        displayMessage = "Inquiry received";
-        break;
-      case "STAGE_CHANGE":
-        displayMessage =
-          e.previousStage && e.newStage
-            ? `Lead stage: ${STAGE_LABELS[e.previousStage] ?? e.previousStage} → ${STAGE_LABELS[e.newStage] ?? e.newStage}`
-            : "Lead stage changed";
-        break;
-      case "OUTCOME_CHANGE":
-        displayMessage =
-          e.previousOutcome && e.newOutcome
-            ? `Lead outcome: ${OUTCOME_LABELS[e.previousOutcome] ?? e.previousOutcome} → ${OUTCOME_LABELS[e.newOutcome] ?? e.newOutcome}`
-            : "Lead outcome changed";
-        break;
-      case "CONTACT_ATTEMPT":
-        displayMessage = "Contact logged";
-        break;
-      case "NOTE":
-        displayMessage = "Note";
-        break;
-      case "ASSIGNED":
-        displayMessage = e.content ?? "Assigned";
-        break;
-      default:
-        displayMessage = String(e.eventType).replace(/_/g, " ").toLowerCase();
-    }
-    const actorName =
-      e.createdByUser?.firstName || e.createdByUser?.lastName
-        ? `${e.createdByUser.firstName ?? ""} ${e.createdByUser.lastName ?? ""}`.trim()
-        : (e.createdByUser?.email ?? "System");
-    return {
-      id: `lead-${e.id}`,
-      actorType: e.createdBy ? "admin" : "system",
-      eventType: `lead.${e.eventType.toLowerCase()}`,
-      channel: null,
-      displayMessage,
-      content: e.eventType === "ASSIGNED" ? null : e.content,
-      contactMethod: e.contactMethod,
-      metadata: (e.metadata as Record<string, unknown> | null) ?? null,
-      previousState: null,
-      newState: null,
-      createdAt: new Date(e.createdAt),
-      actorName,
-    };
-  });
 }
 
 /** Boat link + trip date line under the customer name. */

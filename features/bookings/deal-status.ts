@@ -68,18 +68,30 @@ export function computeDealStatusForBooking(input: {
   return "INQUIRY";
 }
 
-export function computeDealStatusForLead(input: {
-  stage: string;
-  outcome: string;
-}): DealStatus {
-  const { stage, outcome } = input;
-  if (outcome === "LOST") return "CANCELLED";
-  if (outcome === "ABANDONED") return "ARCHIVED";
-  // WON leads don't render as rows — their booking does — but map sanely anyway.
-  if (outcome === "WON") return "PAYMENT_COMPLETE";
-  if (stage === "OFFER_SENT") return "PROPOSAL_SENT";
-  return "INQUIRY";
-}
+/** Channel labels (booking.source) for meta lines. */
+export const DEAL_SOURCE_LABELS: Record<string, string> = {
+  WEBSITE: "Website",
+  ADMIN: "Admin",
+  BROKER: "Broker",
+  HOME_PAGE: "Home page",
+  BOAT_PAGE: "Boat page",
+  CONTACT_PAGE: "Contact page",
+  TERM_CHARTER_PAGE: "Term charter page",
+  PHONE: "Phone",
+  INSTAGRAM: "Instagram",
+  WHATSAPP: "WhatsApp",
+  BOATSETTER: "Boatsetter",
+  GETMYBOAT: "GetMyBoat",
+  OTHER: "Other",
+};
+
+/** Customer's stated time-of-day preference (fuzzy intake). */
+export const TIME_OF_DAY_LABELS: Record<string, string> = {
+  MORNING: "Morning",
+  AFTERNOON: "Afternoon",
+  EVENING: "Evening",
+  FLEXIBLE: "Flexible",
+};
 
 /** Lead-type / origin tags shown next to the deal status. */
 export const DEAL_KIND_LABELS: Record<string, string> = {

@@ -21,17 +21,12 @@ import type {
   DashboardHeadlineMetrics,
 } from "@/features/admin/dashboard";
 import type { BookingListItem } from "@/features/bookings/booking.types";
-import type { InquiryListItem } from "@/features/inquiries/inquiry.types";
-import { updateInquiryOutcome } from "@/features/inquiries/inquiry.actions";
-import { AssignInquiryMenu } from "@/features/inquiries/components/AssignInquiryMenu";
-import { ClaimInquiryButton } from "@/features/inquiries/components/ClaimInquiryButton";
-import {
-  LEAD_TYPE_AVATAR_TINTS,
-  SOURCE_LABELS,
-  adminInitials,
-  leadTripSummary,
-  type AdminOption,
-} from "@/features/inquiries/inquiry-ui";
+import type { DashboardLead } from "@/features/admin/dashboard";
+import { toggleDealArchived } from "@/features/bookings/actions/deal.actions";
+import { AssignDealMenu } from "@/features/bookings/components/admin/AssignDealMenu";
+import { ClaimDealButton } from "@/features/bookings/components/admin/ClaimDealButton";
+import { DEAL_SOURCE_LABELS } from "@/features/bookings/deal-status";
+import { adminInitials, type AdminOption } from "@/shared/lib/utils/people-display";
 import { cn } from "@/shared/lib/utils/general-utils";
 import { formatCentsAsWholeDollars } from "@/shared/lib/utils/money-utils";
 import { useToast } from "@/shared/lib/hooks/use-toast";
@@ -41,7 +36,7 @@ export type { AdminOption };
 interface AdminDashboardViewProps {
   firstName: string | null;
   pricingTiers: PricingTierOption[];
-  unassignedLeads: InquiryListItem[];
+  unassignedLeads: DashboardLead[];
   weeksBookings: BookingListItem[];
   recentActivity: DashboardActivityItem[];
   metrics: DashboardHeadlineMetrics;
@@ -376,9 +371,13 @@ function EmptyState({
 }
 
 /** Compact row for the narrow queue: identity, trip, value, actions stacked. */
-function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[] }) {
-  const tint = LEAD_TYPE_AVATAR_TINTS[lead.leadType] ?? LEAD_TYPE_AVATAR_TINTS.GENERAL_QUOTE;
-  const trip = leadTripSummary(lead);
+function LeadRow({ lead, admins }: { lead: DashboardLead; admins: AdminOption[] }) {
+  const trip = [
+    lead.tripStart ? format(lead.tripStart, "MMM d") : null,
+    lead.guests ? `${lead.guests} guests` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const ageHours = differenceInHours(new Date(), new Date(lead.createdAt));
   const isStale = ageHours >= 24;
 
@@ -388,7 +387,7 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
         <div
           className={cn(
             "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-            tint
+            "bg-muted text-muted-foreground"
           )}
         >
           {adminInitials(lead.name) || "?"}
@@ -397,14 +396,14 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
             <p className="truncate text-sm font-semibold">{lead.name}</p>
-            {lead.estimatedTotalCents != null ? (
+            {(lead.estimatedValueCents ?? lead.budgetCents) != null ? (
               <span className="shrink-0 text-xs font-semibold tabular-nums">
-                {formatCentsCompact(lead.estimatedTotalCents)}
+                {formatCentsCompact((lead.estimatedValueCents ?? lead.budgetCents)!)}
               </span>
             ) : null}
           </div>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {SOURCE_LABELS[lead.source] ?? lead.source}
+            {DEAL_SOURCE_LABELS[lead.source ?? ""] ?? lead.source}
             {" · "}
             <span
               className={cn(
@@ -418,9 +417,9 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
           {trip ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{trip}</p> : null}
 
           <div className="relative z-10 mt-2 flex items-center gap-1.5">
-            <ClaimInquiryButton inquiryId={lead.id} className="rounded-full" />
-            <AssignInquiryMenu inquiryId={lead.id} admins={admins} triggerClassName="rounded-full" />
-            <ArchiveButton inquiryId={lead.id} />
+            <ClaimDealButton bookingId={lead.id} className="rounded-full" />
+            <AssignDealMenu bookingId={lead.id} admins={admins} triggerClassName="rounded-full" />
+            <ArchiveButton bookingId={lead.id} />
           </div>
         </div>
       </div>
@@ -435,14 +434,14 @@ function LeadRow({ lead, admins }: { lead: InquiryListItem; admins: AdminOption[
   );
 }
 
-function ArchiveButton({ inquiryId }: { inquiryId: string }) {
+function ArchiveButton({ bookingId }: { bookingId: string }) {
   const router = useRouter();
   const { toast } = useToast();
   const [pending, setPending] = useState(false);
 
   async function archive() {
     setPending(true);
-    const res = await updateInquiryOutcome(inquiryId, "ABANDONED", "Archived from dashboard");
+    const res = await toggleDealArchived(bookingId);
     setPending(false);
     if (res.success) {
       toast({ title: "Lead archived" });

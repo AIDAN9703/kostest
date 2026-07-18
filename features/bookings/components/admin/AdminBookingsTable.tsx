@@ -31,13 +31,12 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { type BookingListItem } from "@/features/bookings/booking.types";
-import type { MasterDealRow } from "@/features/bookings/services/master-deals.service";
 import {
+  computeDealStatusForBooking,
   DEAL_KIND_LABELS,
   DEAL_STATUS_CHIP_CLASSES,
   DEAL_STATUS_LABELS,
 } from "@/features/bookings/deal-status";
-import { STAGE_LABELS } from "@/features/inquiries/inquiry-ui";
 import { cn, formatTime12Hour } from "@/shared/lib/utils/general-utils";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
@@ -117,13 +116,13 @@ interface Admin {
 }
 
 interface AdminBookingsTableProps {
-  rows: MasterDealRow[];
+  bookings: BookingListItem[];
   loading?: boolean;
   admins?: Admin[];
   captains?: CaptainAssignmentOption[];
 }
 
-const columnHelper = createColumnHelper<MasterDealRow>();
+const columnHelper = createColumnHelper<BookingListItem>();
 
 /**
  * Content-hugging column (w-0) — ONLY for the trailing icon/actions column.
@@ -138,7 +137,7 @@ const shrinkColumnMeta = {
 } as const;
 
 export function AdminBookingsTable({
-  rows,
+  bookings,
   loading = false,
   admins: adminsProp = [],
   captains: captainsProp = [],
@@ -238,26 +237,20 @@ export function AdminBookingsTable({
     [handleAction]
   );
 
-  const columns = useMemo<ColumnDef<MasterDealRow, any>[]>(
+  const columns = useMemo<ColumnDef<BookingListItem, any>[]>(
     () => [
       columnHelper.display({
         id: "date",
         header: "Date",
         cell: ({ row }) => {
-          const deal = row.original;
+          const booking = row.original;
+          const isInquiry = booking.bookingStatus === "INQUIRY";
+          const dealStatus = computeDealStatusForBooking(booking);
           // Red badges = things an admin must act on, right where the eye lands.
           const attention: string[] = [];
           let dateLine: string;
           let timeLine = "";
-          if (deal.kind === "lead") {
-            dateLine = deal.lead.tripStart
-              ? format(deal.lead.tripStart, "MMM d, yyyy")
-              : "No date yet";
-            if (!deal.lead.assignedToId && deal.lead.outcome === "OPEN") {
-              attention.push("Unassigned");
-            }
-          } else {
-            const booking = deal.booking;
+          if (booking.startDateTime) {
             const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(
               booking.startDateTime
             );
@@ -268,13 +261,20 @@ export function AdminBookingsTable({
             timeLine = `${startTime ? formatTime12Hour(startTime) : ""}${
               endTime ? ` – ${formatTime12Hour(endTime)}` : ""
             }`;
-            if (
-              booking.needsCaptain &&
-              !booking.captainUserId &&
-              (booking.bookingStatus === "APPROVED" || booking.bookingStatus === "CONFIRMED")
-            ) {
-              attention.push("Assign captain");
-            }
+          } else if (booking.preferredDate) {
+            dateLine = format(new Date(`${booking.preferredDate}T00:00:00`), "MMM d, yyyy");
+          } else {
+            dateLine = "No date yet";
+          }
+          if (isInquiry && !booking.assignedAdminId && !booking.archivedAt) {
+            attention.push("Unassigned");
+          }
+          if (
+            booking.needsCaptain &&
+            !booking.captainUserId &&
+            (booking.bookingStatus === "APPROVED" || booking.bookingStatus === "CONFIRMED")
+          ) {
+            attention.push("Assign captain");
           }
           return (
             <div className="text-sm leading-snug">
@@ -290,14 +290,14 @@ export function AdminBookingsTable({
                 <span
                   className={cn(
                     "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                    DEAL_STATUS_CHIP_CLASSES[deal.dealStatus]
+                    DEAL_STATUS_CHIP_CLASSES[dealStatus]
                   )}
                 >
-                  {DEAL_STATUS_LABELS[deal.dealStatus]}
+                  {DEAL_STATUS_LABELS[dealStatus]}
                 </span>
-                {deal.kind === "lead" && deal.dealStatus === "INQUIRY" ? (
-                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                    {STAGE_LABELS[deal.lead.stage] ?? deal.lead.stage}
+                {booking.coldAt ? (
+                  <span className="rounded-full bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:text-sky-400">
+                    Cold
                   </span>
                 ) : null}
                 {attention.map((label) => (
@@ -319,21 +319,13 @@ export function AdminBookingsTable({
         // Stretch: customer + boat share the table's leftover width so the
         // right-side columns don't drift away from their content.
         cell: ({ row }) => {
-          const deal = row.original;
-          const customer =
-            deal.kind === "lead"
-              ? {
-                  name: deal.lead.name,
-                  email: deal.lead.email,
-                  phone: deal.lead.phone,
-                  image: null as string | null,
-                }
-              : {
-                  name: deal.booking.customerName || deal.booking.userEmail || "Unknown",
-                  email: deal.booking.customerEmail,
-                  phone: deal.booking.customerPhone,
-                  image: deal.booking.userProfileImage,
-                };
+          const booking = row.original;
+          const customer = {
+            name: booking.customerName || booking.userEmail || "Unknown",
+            email: booking.customerEmail,
+            phone: booking.customerPhone,
+            image: booking.userProfileImage,
+          };
           const displayName = customer.name || "Unknown";
           return (
             <div className="flex items-center gap-1.5">
@@ -379,22 +371,7 @@ export function AdminBookingsTable({
         id: "boat",
         header: "Boat",
         cell: ({ row }) => {
-          const deal = row.original;
-          if (deal.kind === "lead") {
-            return (
-              <div className="flex items-center gap-1.5">
-                <span className="block max-w-[22rem] truncate text-sm font-medium text-foreground">
-                  {deal.lead.boatName ?? (
-                    <span className="font-normal text-muted-foreground/60">No boat yet</span>
-                  )}
-                </span>
-                <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                  {DEAL_KIND_LABELS[deal.lead.leadType] ?? deal.lead.leadType}
-                </span>
-              </div>
-            );
-          }
-          const booking = deal.booking;
+          const booking = row.original;
           return (
             <div className="flex items-center gap-1.5">
               {booking.boatMainImage ? (
@@ -409,7 +386,12 @@ export function AdminBookingsTable({
                 </div>
               ) : null}
               <span className="block max-w-[22rem] truncate text-sm font-medium text-foreground">
-                {booking.boatName || "Unknown"}
+                {booking.boatName ?? (
+                  <span className="font-normal text-muted-foreground/60">No boat yet</span>
+                )}
+              </span>
+              <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                {DEAL_KIND_LABELS[booking.bookingType] ?? booking.bookingType}
               </span>
               {booking.bookingGroupId ? (
                 <span className="shrink-0 rounded-md bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
@@ -424,11 +406,10 @@ export function AdminBookingsTable({
         id: "captain",
         header: "Captain",
         cell: ({ row }) => {
-          const deal = row.original;
-          if (deal.kind === "lead") {
+          const booking = row.original;
+          if (booking.bookingStatus === "INQUIRY") {
             return <span className="text-sm text-muted-foreground/50">—</span>;
           }
-          const booking = deal.booking;
           const captainOptions = [...captainsProp];
           if (
             booking.captainUserId &&
@@ -458,24 +439,21 @@ export function AdminBookingsTable({
         id: "gmv",
         header: "GMV",
         cell: ({ row }) => {
-          const deal = row.original;
-          if (deal.kind === "lead") {
-            const est = deal.lead.estimatedTotalCents;
+          const booking = row.original;
+          if (booking.bookingStatus === "INQUIRY") {
+            const est = booking.estimatedValueCents ?? booking.budgetCents;
             return (
               <div className="whitespace-nowrap text-sm">
                 {est != null ? (
                   <div className="font-semibold tabular-nums text-foreground">
                     {formatCentsAsCurrency(est)}
                   </div>
-                ) : deal.lead.budget ? (
-                  <div className="font-medium text-muted-foreground">{deal.lead.budget}</div>
                 ) : (
                   <span className="text-muted-foreground/50">—</span>
                 )}
               </div>
             );
           }
-          const booking = deal.booking;
           const amount = getDisplayAmountCents(booking);
           const usesOpsOverride =
             booking.opsGmvCents != null &&
@@ -499,11 +477,10 @@ export function AdminBookingsTable({
         id: "revenue",
         header: "Revenue",
         cell: ({ row }) => {
-          const deal = row.original;
-          if (deal.kind === "lead") {
+          const booking = row.original;
+          if (booking.bookingStatus === "INQUIRY") {
             return <span className="text-sm text-muted-foreground/50">—</span>;
           }
-          const booking = deal.booking;
           const expenseCents = booking.opsExpenseCents;
 
           if (expenseCents == null) {
@@ -559,15 +536,12 @@ export function AdminBookingsTable({
         id: "assignedAdmin",
         header: "Admin",
         cell: ({ row }) => {
-          const deal = row.original;
-          const adminName =
-            deal.kind === "lead"
-              ? deal.lead.assignedToName
-              : deal.booking.assignedAdminId
-                ? deal.booking.assignedAdminFirstName || deal.booking.assignedAdminLastName
-                  ? `${deal.booking.assignedAdminFirstName || ""} ${deal.booking.assignedAdminLastName || ""}`.trim()
-                  : deal.booking.assignedAdminEmail || "Unknown"
-                : null;
+          const booking = row.original;
+          const adminName = booking.assignedAdminId
+            ? booking.assignedAdminFirstName || booking.assignedAdminLastName
+              ? `${booking.assignedAdminFirstName || ""} ${booking.assignedAdminLastName || ""}`.trim()
+              : booking.assignedAdminEmail || "Unknown"
+            : null;
           if (!adminName) {
             return <span className="text-sm text-muted-foreground">—</span>;
           }
@@ -584,21 +558,7 @@ export function AdminBookingsTable({
         enableHiding: false,
         meta: shrinkColumnMeta,
         cell: ({ row }) => {
-          const deal = row.original;
-          if (deal.kind === "lead") {
-            // Leads keep it simple: the whole row opens the unified detail
-            // page where claim/assign/proposal actions live.
-            return (
-              <div onClick={(e) => e.stopPropagation()} className="flex justify-end">
-                <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <Link href={`/admin/bookings/${deal.id}`} aria-label="View lead">
-                    <Eye className="h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            );
-          }
-          const booking = deal.booking;
+          const booking = row.original;
           const isPendingRequest =
             booking.bookingType === "REQUEST" && booking.bookingStatus === "PENDING";
           const isLoading = actionLoading === booking.id;
@@ -708,7 +668,7 @@ export function AdminBookingsTable({
   return (
     <>
       <AdminDataTable
-        data={rows}
+        data={bookings}
         columns={columns}
         columnVisibility={columnVisibility}
         loading={loading}
@@ -716,7 +676,7 @@ export function AdminBookingsTable({
         emptyIcon={CalendarCheck}
         emptyTitle="No bookings found"
         emptyDescription="Try adjusting your filters or check back later."
-        onRowClick={(deal) => router.push(`/admin/bookings/${deal.id}`)}
+        onRowClick={(booking) => router.push(`/admin/bookings/${booking.id}`)}
       />
 
       {expensesModalBooking ? (

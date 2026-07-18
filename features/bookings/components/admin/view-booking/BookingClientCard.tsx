@@ -13,7 +13,7 @@ import { Label } from "@/shared/components/ui/label";
 import { updateBookingSingleField } from "@/features/bookings/booking.mutations";
 import { useBookingEditMode } from "@/features/bookings/components/admin/view-booking/BookingEditMode";
 import { useToast } from "@/shared/lib/hooks/use-toast";
-import { adminInitials } from "@/features/inquiries/inquiry-ui";
+import { adminInitials } from "@/shared/lib/utils/people-display";
 
 export interface BookingClientSnapshot {
   customerUserId: string | null;
