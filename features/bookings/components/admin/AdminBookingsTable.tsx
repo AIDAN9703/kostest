@@ -31,6 +31,13 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { type BookingListItem } from "@/features/bookings/booking.types";
+import type { MasterDealRow } from "@/features/bookings/services/master-deals.service";
+import {
+  DEAL_KIND_LABELS,
+  DEAL_STATUS_CHIP_CLASSES,
+  DEAL_STATUS_LABELS,
+} from "@/features/bookings/deal-status";
+import { STAGE_LABELS } from "@/features/inquiries/inquiry-ui";
 import { cn, formatTime12Hour } from "@/shared/lib/utils/general-utils";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
@@ -110,13 +117,13 @@ interface Admin {
 }
 
 interface AdminBookingsTableProps {
-  bookings: BookingListItem[];
+  rows: MasterDealRow[];
   loading?: boolean;
   admins?: Admin[];
   captains?: CaptainAssignmentOption[];
 }
 
-const columnHelper = createColumnHelper<BookingListItem>();
+const columnHelper = createColumnHelper<MasterDealRow>();
 
 /**
  * Content-hugging column (w-0) — ONLY for the trailing icon/actions column.
@@ -131,7 +138,7 @@ const shrinkColumnMeta = {
 } as const;
 
 export function AdminBookingsTable({
-  bookings,
+  rows,
   loading = false,
   admins: adminsProp = [],
   captains: captainsProp = [],
@@ -231,54 +238,68 @@ export function AdminBookingsTable({
     [handleAction]
   );
 
-  const columns = useMemo<ColumnDef<BookingListItem, any>[]>(
+  const columns = useMemo<ColumnDef<MasterDealRow, any>[]>(
     () => [
-      columnHelper.accessor("startDateTime", {
+      columnHelper.display({
         id: "date",
         header: "Date",
         cell: ({ row }) => {
-          const booking = row.original;
-          const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(
-            booking.startDateTime
-          );
-          const { time: endTime } = booking.endDateTime
-            ? parseDateTimeInBoatTimezone(booking.endDateTime)
-            : { time: "" };
-          const isCancelled = booking.bookingStatus === "CANCELLED";
-          const isPaid = booking.paymentDisplayStatus === "PAID";
+          const deal = row.original;
           // Red badges = things an admin must act on, right where the eye lands.
           const attention: string[] = [];
-          if (
-            booking.needsCaptain &&
-            !booking.captainUserId &&
-            (booking.bookingStatus === "APPROVED" || booking.bookingStatus === "CONFIRMED")
-          ) {
-            attention.push("Assign captain");
+          let dateLine: string;
+          let timeLine = "";
+          if (deal.kind === "lead") {
+            dateLine = deal.lead.tripStart
+              ? format(deal.lead.tripStart, "MMM d, yyyy")
+              : "No date yet";
+            if (!deal.lead.assignedToId && deal.lead.outcome === "OPEN") {
+              attention.push("Unassigned");
+            }
+          } else {
+            const booking = deal.booking;
+            const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(
+              booking.startDateTime
+            );
+            const { time: endTime } = booking.endDateTime
+              ? parseDateTimeInBoatTimezone(booking.endDateTime)
+              : { time: "" };
+            dateLine = startDate ? format(startDate, "MMM d, yyyy") : "—";
+            timeLine = `${startTime ? formatTime12Hour(startTime) : ""}${
+              endTime ? ` – ${formatTime12Hour(endTime)}` : ""
+            }`;
+            if (
+              booking.needsCaptain &&
+              !booking.captainUserId &&
+              (booking.bookingStatus === "APPROVED" || booking.bookingStatus === "CONFIRMED")
+            ) {
+              attention.push("Assign captain");
+            }
           }
           return (
             <div className="text-sm leading-snug">
               <div className="whitespace-nowrap font-medium tabular-nums text-foreground">
-                {startDate ? format(startDate, "MMM d, yyyy") : "—"}
+                {dateLine}
               </div>
-              <div className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
-                {startTime ? formatTime12Hour(startTime) : ""}
-                {endTime ? ` – ${formatTime12Hour(endTime)}` : ""}
-              </div>
+              {timeLine ? (
+                <div className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
+                  {timeLine}
+                </div>
+              ) : null}
               <div className="mt-1 flex flex-wrap items-center gap-1">
-                {isCancelled ? (
-                  <span className="rounded-full bg-destructive-soft px-2 py-0.5 text-[10px] font-semibold text-destructive">
-                    Cancelled
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                    DEAL_STATUS_CHIP_CLASSES[deal.dealStatus]
+                  )}
+                >
+                  {DEAL_STATUS_LABELS[deal.dealStatus]}
+                </span>
+                {deal.kind === "lead" && deal.dealStatus === "INQUIRY" ? (
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {STAGE_LABELS[deal.lead.stage] ?? deal.lead.stage}
                   </span>
-                ) : (
-                  <span
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                      isPaid ? "bg-success-soft text-success" : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {isPaid ? "Paid" : "Unpaid"}
-                  </span>
-                )}
+                ) : null}
                 {attention.map((label) => (
                   <span
                     key={label}
@@ -292,19 +313,34 @@ export function AdminBookingsTable({
           );
         },
       }),
-      columnHelper.accessor("customerName", {
+      columnHelper.display({
+        id: "customer",
         header: "Customer",
         // Stretch: customer + boat share the table's leftover width so the
         // right-side columns don't drift away from their content.
         cell: ({ row }) => {
-          const booking = row.original;
-          const displayName = booking.customerName || booking.userEmail || "Unknown";
+          const deal = row.original;
+          const customer =
+            deal.kind === "lead"
+              ? {
+                  name: deal.lead.name,
+                  email: deal.lead.email,
+                  phone: deal.lead.phone,
+                  image: null as string | null,
+                }
+              : {
+                  name: deal.booking.customerName || deal.booking.userEmail || "Unknown",
+                  email: deal.booking.customerEmail,
+                  phone: deal.booking.customerPhone,
+                  image: deal.booking.userProfileImage,
+                };
+          const displayName = customer.name || "Unknown";
           return (
             <div className="flex items-center gap-1.5">
               <div className="hidden h-7 w-7 shrink-0 overflow-hidden rounded-full bg-muted ring-1 ring-border/60 sm:block">
-                {booking.userProfileImage ? (
+                {customer.image ? (
                   <Image
-                    src={booking.userProfileImage}
+                    src={customer.image}
                     alt={displayName}
                     width={28}
                     height={28}
@@ -320,16 +356,16 @@ export function AdminBookingsTable({
                 <div className="truncate text-sm font-medium leading-tight text-foreground">
                   {displayName}
                 </div>
-                {booking.customerEmail ? (
+                {customer.email ? (
                   <CopyableText
-                    value={booking.customerEmail}
+                    value={customer.email}
                     label="email"
                     className="mt-0.5 hidden w-full lg:inline-flex"
                   />
                 ) : null}
-                {booking.customerPhone ? (
+                {customer.phone ? (
                   <CopyableText
-                    value={booking.customerPhone}
+                    value={customer.phone}
                     label="phone"
                     className="hidden w-full xl:inline-flex"
                   />
@@ -339,10 +375,26 @@ export function AdminBookingsTable({
           );
         },
       }),
-      columnHelper.accessor("boatName", {
+      columnHelper.display({
+        id: "boat",
         header: "Boat",
         cell: ({ row }) => {
-          const booking = row.original;
+          const deal = row.original;
+          if (deal.kind === "lead") {
+            return (
+              <div className="flex items-center gap-1.5">
+                <span className="block max-w-[22rem] truncate text-sm font-medium text-foreground">
+                  {deal.lead.boatName ?? (
+                    <span className="font-normal text-muted-foreground/60">No boat yet</span>
+                  )}
+                </span>
+                <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {DEAL_KIND_LABELS[deal.lead.leadType] ?? deal.lead.leadType}
+                </span>
+              </div>
+            );
+          }
+          const booking = deal.booking;
           return (
             <div className="flex items-center gap-1.5">
               {booking.boatMainImage ? (
@@ -372,7 +424,11 @@ export function AdminBookingsTable({
         id: "captain",
         header: "Captain",
         cell: ({ row }) => {
-          const booking = row.original;
+          const deal = row.original;
+          if (deal.kind === "lead") {
+            return <span className="text-sm text-muted-foreground/50">—</span>;
+          }
+          const booking = deal.booking;
           const captainOptions = [...captainsProp];
           if (
             booking.captainUserId &&
@@ -398,10 +454,28 @@ export function AdminBookingsTable({
           );
         },
       }),
-      columnHelper.accessor("totalAmountCents", {
+      columnHelper.display({
+        id: "gmv",
         header: "GMV",
         cell: ({ row }) => {
-          const booking = row.original;
+          const deal = row.original;
+          if (deal.kind === "lead") {
+            const est = deal.lead.estimatedTotalCents;
+            return (
+              <div className="whitespace-nowrap text-sm">
+                {est != null ? (
+                  <div className="font-semibold tabular-nums text-foreground">
+                    {formatCentsAsCurrency(est)}
+                  </div>
+                ) : deal.lead.budget ? (
+                  <div className="font-medium text-muted-foreground">{deal.lead.budget}</div>
+                ) : (
+                  <span className="text-muted-foreground/50">—</span>
+                )}
+              </div>
+            );
+          }
+          const booking = deal.booking;
           const amount = getDisplayAmountCents(booking);
           const usesOpsOverride =
             booking.opsGmvCents != null &&
@@ -425,7 +499,11 @@ export function AdminBookingsTable({
         id: "revenue",
         header: "Revenue",
         cell: ({ row }) => {
-          const booking = row.original;
+          const deal = row.original;
+          if (deal.kind === "lead") {
+            return <span className="text-sm text-muted-foreground/50">—</span>;
+          }
+          const booking = deal.booking;
           const expenseCents = booking.opsExpenseCents;
 
           if (expenseCents == null) {
@@ -481,14 +559,18 @@ export function AdminBookingsTable({
         id: "assignedAdmin",
         header: "Admin",
         cell: ({ row }) => {
-          const booking = row.original;
-          if (!booking.assignedAdminId) {
+          const deal = row.original;
+          const adminName =
+            deal.kind === "lead"
+              ? deal.lead.assignedToName
+              : deal.booking.assignedAdminId
+                ? deal.booking.assignedAdminFirstName || deal.booking.assignedAdminLastName
+                  ? `${deal.booking.assignedAdminFirstName || ""} ${deal.booking.assignedAdminLastName || ""}`.trim()
+                  : deal.booking.assignedAdminEmail || "Unknown"
+                : null;
+          if (!adminName) {
             return <span className="text-sm text-muted-foreground">—</span>;
           }
-          const adminName =
-            booking.assignedAdminFirstName || booking.assignedAdminLastName
-              ? `${booking.assignedAdminFirstName || ""} ${booking.assignedAdminLastName || ""}`.trim()
-              : booking.assignedAdminEmail || "Unknown";
           return (
             <span className="block max-w-[12rem] truncate whitespace-nowrap text-sm font-medium text-foreground">
               {adminName}
@@ -502,7 +584,21 @@ export function AdminBookingsTable({
         enableHiding: false,
         meta: shrinkColumnMeta,
         cell: ({ row }) => {
-          const booking = row.original;
+          const deal = row.original;
+          if (deal.kind === "lead") {
+            // Leads keep it simple: the whole row opens the unified detail
+            // page where claim/assign/proposal actions live.
+            return (
+              <div onClick={(e) => e.stopPropagation()} className="flex justify-end">
+                <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <Link href={`/admin/bookings/${deal.id}`} aria-label="View lead">
+                    <Eye className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            );
+          }
+          const booking = deal.booking;
           const isPendingRequest =
             booking.bookingType === "REQUEST" && booking.bookingStatus === "PENDING";
           const isLoading = actionLoading === booking.id;
@@ -612,7 +708,7 @@ export function AdminBookingsTable({
   return (
     <>
       <AdminDataTable
-        data={bookings}
+        data={rows}
         columns={columns}
         columnVisibility={columnVisibility}
         loading={loading}
@@ -620,7 +716,7 @@ export function AdminBookingsTable({
         emptyIcon={CalendarCheck}
         emptyTitle="No bookings found"
         emptyDescription="Try adjusting your filters or check back later."
-        onRowClick={(booking) => router.push(`/admin/bookings/${booking.id}`)}
+        onRowClick={(deal) => router.push(`/admin/bookings/${deal.id}`)}
       />
 
       {expensesModalBooking ? (

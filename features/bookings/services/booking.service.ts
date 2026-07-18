@@ -32,6 +32,7 @@ import {
   and,
   count,
   eq,
+  ne,
   desc,
   or,
   ilike,
@@ -725,6 +726,9 @@ export class BookingService {
     if (filters?.unassignedOnly) {
       whereConditions.push(isNull(bookings.assignedAdminId));
     }
+    if (filters?.excludeCancelled) {
+      whereConditions.push(ne(bookings.bookingStatus, "CANCELLED"));
+    }
     if (filters?.needsCaptain !== undefined) {
       whereConditions.push(eq(bookings.needsCaptain, filters.needsCaptain));
     }
@@ -905,6 +909,7 @@ export class BookingService {
         pickupLocation: bookings.pickupLocation,
         dropoffLocation: bookings.dropoffLocation,
         publicToken: bookings.publicToken,
+        inquiryId: bookings.inquiryId,
         // stripePaymentLinkId removed - stored in payments table
         // Pricing from booking_pricing (in cents)
         basePriceCents: bookingPricing.basePriceCents,

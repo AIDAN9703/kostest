@@ -33,6 +33,8 @@ export const bookingSearchParams = {
   scope: parseAsStringEnum(["mine", "unassigned"] as const),
   /** Trip-date scope: null = all, "upcoming" = starts today or later, "past" = already started. */
   time: parseAsStringEnum(["upcoming", "past"] as const),
+  /** Show the hidden bucket (cancelled bookings + lost/abandoned leads) instead of the live list. */
+  archived: parseAsBoolean,
   /** Layout for the bookings page — "table" (default) or "calendar". */
   view: parseAsStringEnum(["table", "calendar"] as const).withDefault("table"),
   /** Opens the new booking modal when true (e.g. from dashboard or quick actions). */

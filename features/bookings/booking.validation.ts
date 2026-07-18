@@ -38,6 +38,8 @@ export const bookingFilterSchema = z.object({
   needsCaptain: z.coerce.boolean().optional(),
   /** Only bookings no admin owns yet ("Unassigned" scope tab). */
   unassignedOnly: z.coerce.boolean().optional(),
+  /** Master list default view: hide CANCELLED rows (shown via the Archived pill). */
+  excludeCancelled: z.coerce.boolean().optional(),
   
   // Amount range
   minAmount: z.coerce.number().min(0).optional(),

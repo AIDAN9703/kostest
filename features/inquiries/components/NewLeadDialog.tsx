@@ -93,11 +93,12 @@ export function NewLeadDialog() {
   return (
     <>
       <Button
+        variant="outline"
         onClick={() => setOpen(true)}
         className="gap-1.5 rounded-full px-5 shadow-sm"
       >
         <Plus className="h-4 w-4" />
-        New lead
+        Log lead
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>

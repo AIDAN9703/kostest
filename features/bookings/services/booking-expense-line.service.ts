@@ -108,16 +108,17 @@ export const bookingExpenseLineService = {
       .filter((line) => line.category === "OWNER_PAYOUT")
       .reduce((sum, line) => sum + line.amountCents, 0);
 
-    const savedLines = await db.transaction(async (tx) => {
-      await tx
-        .delete(bookingExpenseLines)
-        .where(eq(bookingExpenseLines.bookingId, bookingId));
+    // Sequential, not transactional: the neon-http driver has no transaction
+    // support (db.transaction throws at runtime). Delete-then-insert leaves a
+    // brief window where lines are missing if the insert fails — acceptable
+    // for an admin-only editor; the modal re-save recovers.
+    await db
+      .delete(bookingExpenseLines)
+      .where(eq(bookingExpenseLines.bookingId, bookingId));
 
-      if (lines.length === 0) {
-        return [];
-      }
-
-      const inserted = await tx
+    let savedLines: BookingExpenseLine[] = [];
+    if (lines.length > 0) {
+      const inserted = await db
         .insert(bookingExpenseLines)
         .values(
           lines.map((line, index) => ({
@@ -132,9 +133,8 @@ export const bookingExpenseLineService = {
           }))
         )
         .returning();
-
-      return inserted.map(mapRow);
-    });
+      savedLines = inserted.map(mapRow);
+    }
 
     await bookingOpsService.upsert(bookingId, {
       expenseCents: ownerPayoutTotal > 0 ? ownerPayoutTotal : null,

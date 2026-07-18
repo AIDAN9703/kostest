@@ -1,12 +1,21 @@
 import { notFound } from "next/navigation";
 
 import { AdminBookingHeader } from "@/features/bookings/components/admin/view-booking/AdminBookingHeader";
-import { BookingStatusBar } from "@/features/bookings/components/admin/view-booking/BookingStatusBar";
+import { DealPipelineBar } from "@/features/bookings/components/admin/DealPipelineBar";
+import { computeDealStatusForBooking } from "@/features/bookings/deal-status";
+import { LeadDetailView } from "@/features/inquiries/components/LeadDetailView";
+import { inquiryService } from "@/features/inquiries/inquiry.service";
+import { OUTCOME_LABELS, STAGE_LABELS } from "@/features/inquiries/inquiry-ui";
+import type { InquiryEvent } from "@/database/types";
 import {
-  AdminBookingDetailsCard,
+  BookingTripCard,
   type BookingTripDetailsSnapshot,
-} from "@/features/bookings/components/admin/view-booking/AdminBookingDetailsCard";
-import { AdminBookingClientCard } from "@/features/bookings/components/admin/view-booking/AdminBookingClientCard";
+} from "@/features/bookings/components/admin/view-booking/BookingTripCard";
+import { BookingClientCard } from "@/features/bookings/components/admin/view-booking/BookingClientCard";
+import {
+  BookingEditModeProvider,
+  BookingPageEditButton,
+} from "@/features/bookings/components/admin/view-booking/BookingEditMode";
 import { BookingPaymentsFinancialsCard } from "@/features/bookings/components/admin/view-booking/BookingPaymentsFinancialsCard";
 import { AdminBookingChecklistCard } from "@/features/bookings/components/admin/view-booking/AdminBookingChecklistCard";
 import { BookingQuickActionsMenu } from "@/features/bookings/components/admin/view-booking/BookingQuickActionsMenu";
@@ -32,6 +41,12 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
   const { id } = await params;
   const booking = await bookingService.getBookingById(id);
   if (!booking) {
+    // One master view: ids of unconverted leads resolve here too, rendering
+    // the lead-phase face of the same deal page.
+    const lead = await inquiryService.getInquiryById(id);
+    if (lead) {
+      return <LeadDetailView inquiryId={id} />;
+    }
     notFound();
   }
 
@@ -44,6 +59,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     bookingCrewRows,
     crewPool,
     lifetimeBookingCount,
+    originatingLead,
   ] = await Promise.all([
     bookingOpsService.getByBookingId(id),
     bookingExpenseLineService.getLines(id),
@@ -55,9 +71,12 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     booking.userId
       ? bookingService.countBookingsForUser(booking.userId)
       : Promise.resolve(0),
+    booking.inquiryId
+      ? inquiryService.getInquiryById(booking.inquiryId)
+      : Promise.resolve(null),
   ]);
 
-  const activityEvents: BookingActivityEventEntry[] = rawEvents.map((e) => ({
+  const bookingActivityEntries: BookingActivityEventEntry[] = rawEvents.map((e) => ({
     id: e.id,
     actorType: e.actorType,
     eventType: e.eventType,
@@ -74,6 +93,15 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         ? `${e.actorFirstName || ""} ${e.actorLastName || ""}`.trim()
         : e.actorEmail || (e.actorType === "system" ? "System" : "—"),
   }));
+
+  // ONE activity feed per deal: the originating lead's history rides along
+  // with the booking's own events, newest first.
+  const activityEvents: BookingActivityEventEntry[] = [
+    ...bookingActivityEntries,
+    ...buildLeadActivityEntries(
+      (originatingLead?.events ?? []) as LeadEventWithActor[]
+    ),
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const captainOptions = [...captains];
   if (booking.captainUserId && !captains.some((c) => c.id === booking.captainUserId)) {
@@ -160,20 +188,30 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
   };
 
   return (
+    <BookingEditModeProvider>
     <div className="flex w-full flex-1 flex-col gap-6">
       {/* Identity header: who + quick actions + lifecycle */}
       <header className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-4 p-4">
           <AdminBookingHeader booking={booking} />
-          <BookingQuickActionsMenu
-            bookingId={id}
-            bookingStatus={booking.bookingStatus}
-            allowPaymentLink={allowPaymentLink}
-            publicToken={booking.publicToken}
-          />
+          <div className="flex shrink-0 items-center gap-2">
+            <BookingPageEditButton />
+            <BookingQuickActionsMenu
+              bookingId={id}
+              bookingStatus={booking.bookingStatus}
+              allowPaymentLink={allowPaymentLink}
+              publicToken={booking.publicToken}
+            />
+          </div>
         </div>
         <div className="border-t border-border/50 px-5 py-3">
-          <BookingStatusBar status={booking.bookingStatus} />
+          <DealPipelineBar
+            dealStatus={computeDealStatusForBooking({
+              bookingStatus: booking.bookingStatus,
+              paymentDisplayStatus: booking.paymentDisplayStatus,
+              hasRefund: booking.hasRefund,
+            })}
+          />
         </div>
       </header>
 
@@ -181,11 +219,11 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
         <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
           <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 [&>*]:min-w-0">
-            <AdminBookingClientCard bookingId={id} client={clientSnapshot} />
+            <BookingClientCard bookingId={id} client={clientSnapshot} />
             <AdminBookingChecklistCard bookingId={id} items={checklistItems} />
           </div>
 
-          <AdminBookingDetailsCard
+          <BookingTripCard
             bookingId={id}
             trip={tripSnapshot}
             captainUserId={booking.captainUserId}
@@ -215,5 +253,70 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         />
       </div>
     </div>
+    </BookingEditModeProvider>
   );
+}
+
+type LeadEventWithActor = InquiryEvent & {
+  createdByUser?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    email?: string | null;
+  } | null;
+};
+
+/**
+ * Fold the originating lead's history into the booking's activity feed —
+ * one timeline per deal, from first inquiry to final payment.
+ */
+function buildLeadActivityEntries(events: LeadEventWithActor[]) {
+  return events.map((e) => {
+    let displayMessage: string;
+    switch (e.eventType) {
+      case "CREATED":
+        displayMessage = "Inquiry received";
+        break;
+      case "STAGE_CHANGE":
+        displayMessage =
+          e.previousStage && e.newStage
+            ? `Lead stage: ${STAGE_LABELS[e.previousStage] ?? e.previousStage} → ${STAGE_LABELS[e.newStage] ?? e.newStage}`
+            : "Lead stage changed";
+        break;
+      case "OUTCOME_CHANGE":
+        displayMessage =
+          e.previousOutcome && e.newOutcome
+            ? `Lead outcome: ${OUTCOME_LABELS[e.previousOutcome] ?? e.previousOutcome} → ${OUTCOME_LABELS[e.newOutcome] ?? e.newOutcome}`
+            : "Lead outcome changed";
+        break;
+      case "CONTACT_ATTEMPT":
+        displayMessage = "Contact logged";
+        break;
+      case "NOTE":
+        displayMessage = "Note";
+        break;
+      case "ASSIGNED":
+        displayMessage = e.content ?? "Assigned";
+        break;
+      default:
+        displayMessage = String(e.eventType).replace(/_/g, " ").toLowerCase();
+    }
+    const actorName =
+      e.createdByUser?.firstName || e.createdByUser?.lastName
+        ? `${e.createdByUser.firstName ?? ""} ${e.createdByUser.lastName ?? ""}`.trim()
+        : (e.createdByUser?.email ?? "System");
+    return {
+      id: `lead-${e.id}`,
+      actorType: e.createdBy ? "admin" : "system",
+      eventType: `lead.${e.eventType.toLowerCase()}`,
+      channel: null,
+      displayMessage,
+      content: e.eventType === "ASSIGNED" ? null : e.content,
+      contactMethod: e.contactMethod,
+      metadata: (e.metadata as Record<string, unknown> | null) ?? null,
+      previousState: null,
+      newState: null,
+      createdAt: new Date(e.createdAt),
+      actorName,
+    };
+  });
 }

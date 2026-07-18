@@ -274,12 +274,6 @@ export const ADMIN_NAV_ITEMS: AdminMainNavItem[] = [
     iconClassName: "h-5 w-5",
   },
   {
-    label: "Inquiries",
-    href: "/admin/inquiries",
-    icon: MessageSquare,
-    iconClassName: "h-5 w-5",
-  },
-  {
     label: "Users",
     href: "/admin/users",
     icon: Users,

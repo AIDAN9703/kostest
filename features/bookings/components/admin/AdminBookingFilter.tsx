@@ -99,6 +99,7 @@ export function AdminBookingFilter({ admins }: { admins: AdminOption[] }) {
       assignedAdminId: null,
       scope: null,
       time: null,
+      archived: null,
       page: 1,
     });
   };
@@ -216,6 +217,15 @@ export function AdminBookingFilter({ admins }: { admins: AdminOption[] }) {
               onClick={() => updateFilter({ time: tab.value })}
             />
           ))}
+        </div>
+
+        {/* Archive bucket — cancelled bookings + lost/abandoned leads */}
+        <div className="flex h-10 items-center rounded-full bg-muted p-1">
+          <SegmentedPill
+            active={filters.archived === true}
+            label="Archived"
+            onClick={() => updateFilter({ archived: filters.archived ? null : true })}
+          />
         </div>
 
         <FilterPopover activeCount={activeFilterCount} onClearAll={clearAll}>

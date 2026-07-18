@@ -1,12 +1,13 @@
 import { Suspense } from "react";
 import { auth } from "@/auth";
-import { bookingService } from "@/features/bookings/services/booking.service";
+import { getMasterDeals } from "@/features/bookings/services/master-deals.service";
 import { boatService } from "@/features/boats/boat.service";
 import { userService } from "@/features/users/user.service";
 import { captainProfileService } from "@/features/profiles/captain-profile.service";
 import { bookingSearchParamsCache } from "@/features/bookings/searchParams";
 import { AdminBookingFilter } from "@/features/bookings/components/admin/AdminBookingFilter";
 import { BookingsHeaderCta } from "@/features/bookings/components/admin/BookingsHeaderCta";
+import { NewLeadDialog } from "@/features/inquiries/components/NewLeadDialog";
 import { AdminBookingsTable } from "@/features/bookings/components/admin/AdminBookingsTable";
 import { AdminBookingTablePagination } from "@/features/bookings/components/admin/AdminBookingTablePagination";
 import { AdminBookingsCalendar } from "@/features/bookings/components/admin/AdminBookingsCalendar";
@@ -33,7 +34,14 @@ export default async function BookingsPage({
     </Suspense>
   );
 
-  const headerCta = <BookingsHeaderCta pricingTiers={pricingTiers} />;
+  // Manual intake lives here now too: "Log lead" for phone/Instagram/broker
+  // inquiries, "Add booking" for real bookings — one tab for everything.
+  const headerCta = (
+    <div className="flex flex-wrap items-center gap-2">
+      <NewLeadDialog />
+      <BookingsHeaderCta pricingTiers={pricingTiers} />
+    </div>
+  );
 
   if (params.view === "calendar") {
     return (
@@ -51,23 +59,15 @@ export default async function BookingsPage({
   const session = await auth();
   const nowIso = new Date().toISOString();
 
-  const result = await bookingService.getAllBookings({
+  // The master list: bookings AND unconverted leads, one view, one vocabulary.
+  const result = await getMasterDeals({
     search: params.search || undefined,
-    bookingStatus: params.bookingStatus ?? undefined,
-    paymentStatus: params.paymentStatus ?? undefined,
-    bookingType: params.bookingType ?? undefined,
     // Explicit date-range filters win over the Upcoming/Past pills.
     dateFrom: params.dateFrom ?? (params.time === "upcoming" ? nowIso : undefined),
     dateTo: params.dateTo ?? (params.time === "past" ? nowIso : undefined),
-    needsCaptain: params.needsCaptain ?? undefined,
-    minAmount: params.minAmount ?? undefined,
-    maxAmount: params.maxAmount ?? undefined,
-    assignedAdminId:
-      params.scope === "mine"
-        ? (session?.user?.id ?? undefined)
-        : (params.assignedAdminId ?? undefined),
+    assignedToId: params.scope === "mine" ? (session?.user?.id ?? undefined) : undefined,
     unassignedOnly: params.scope === "unassigned" || undefined,
-    bookingGroupId: params.bookingGroupId ?? undefined,
+    archived: params.archived ?? undefined,
     page: params.page,
     limit: params.limit,
   });
@@ -87,7 +87,7 @@ export default async function BookingsPage({
             />
           }
         >
-          <AdminBookingsTable bookings={result.bookings} admins={admins} captains={captains} />
+          <AdminBookingsTable rows={result.rows} admins={admins} captains={captains} />
         </AdminListShell>
       </div>
     </div>
