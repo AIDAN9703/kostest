@@ -1,6 +1,11 @@
-import { pgTable, uuid, text, boolean, timestamp, index, json, integer, unique } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, boolean, timestamp, index, json, integer, bigint, date, unique } from "drizzle-orm/pg-core";
 import { users, boats, boatPricingTiers, inquiry, bookingGroups } from "@/database/schema/tables";
-import { bookingStatusEnum, bookingTypeEnum, bookingSourceEnum } from "@/database/schema/enums";
+import {
+  bookingStatusEnum,
+  bookingTypeEnum,
+  bookingSourceEnum,
+  preferredTimeOfDayEnum,
+} from "@/database/schema/enums";
 
 export const bookings = pgTable(
   "booking",
@@ -18,7 +23,8 @@ export const bookings = pgTable(
     // ==========================================================================
     userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
     boatOwnerId: uuid("boat_owner_id").references(() => users.id, { onDelete: "set null" }),
-    boatId: uuid("boat_id").notNull().references(() => boats.id, { onDelete: "restrict" }),
+    // Nullable: INQUIRY-status deals may not have chosen a boat yet.
+    boatId: uuid("boat_id").references(() => boats.id, { onDelete: "restrict" }),
     captainUserId: uuid("captain_user_id").references(() => users.id, { onDelete: "set null" }),
     pricingTierId: uuid("pricing_tier_id").references(() => boatPricingTiers.id, { onDelete: "set null" }),
     bookingGroupId: uuid("booking_group_id").references(() => bookingGroups.id, { onDelete: "set null" }),
@@ -30,22 +36,51 @@ export const bookings = pgTable(
     // ==========================================================================
     customerName: text("customer_name").notNull(),
     customerEmail: text("customer_email").notNull(),
-    customerPhone: text("customer_phone").notNull(),
+    customerPhone: text("customer_phone"),
 
     // ==========================================================================
     // BOOKING DETAILS
+    // Nullable because an INQUIRY-status deal has no confirmed trip yet;
+    // status transitions past INQUIRY require these (enforced in services).
     // ==========================================================================
-    isMultiDay: boolean("is_multi_day").notNull(),
+    isMultiDay: boolean("is_multi_day"),
     needsCaptain: boolean("needs_captain").default(false),
-    startDateTime: timestamp("start_datetime", { mode: "date", withTimezone: true }).notNull(),
+    startDateTime: timestamp("start_datetime", { mode: "date", withTimezone: true }),
     endDateTime: timestamp("end_datetime", { mode: "date", withTimezone: true }),
-    numberOfPassengers: integer("number_of_passengers").notNull(),
+    numberOfPassengers: integer("number_of_passengers"),
     pickupLocation: text("pickup_location"),
     dropoffLocation: text("dropoff_location"),
     specialRequests: text("special_requests"),
     occasionType: text("occasion_type"),
     addOns: json("add_ons"),
     adminNotes: text("admin_notes"),
+
+    // ==========================================================================
+    // LEAD INTAKE (INQUIRY phase) — the customer's ask before it's priced.
+    // Flat nullable scalars by design: they don't repeat, so no spoke table.
+    // ==========================================================================
+    customerMessage: text("customer_message"),
+    preferredDate: date("preferred_date"),
+    preferredTimeOfDay: preferredTimeOfDayEnum("preferred_time_of_day"),
+    requestedDurationDays: integer("requested_duration_days"),
+    destination: text("destination"),
+    budgetCents: bigint("budget_cents", { mode: "number" }),
+    /** Rough deal value before real pricing exists (est. from tier/budget). */
+    estimatedValueCents: bigint("estimated_value_cents", { mode: "number" }),
+    smsConsent: boolean("sms_consent").default(false).notNull(),
+    termsAccepted: boolean("terms_accepted"),
+
+    // ==========================================================================
+    // LIFECYCLE DERIVATION MARKS (see docs/UNIFIED_BOOKINGS_PLAN.md)
+    // ==========================================================================
+    /** First real contact — INQUIRY + set = the "Contacted" pipeline step. */
+    firstContactedAt: timestamp("first_contacted_at", { mode: "date", withTimezone: true }),
+    /** Lead marked cold (INQUIRY rows only); cleared on revive. */
+    coldAt: timestamp("cold_at", { mode: "date", withTimezone: true }),
+    /** Hidden from the default master list; the boss's "archive" bucket. */
+    archivedAt: timestamp("archived_at", { mode: "date", withTimezone: true }),
+    /** Traceability to the migrated inquiry row; dropped with the inquiry table. */
+    legacyInquiryId: uuid("legacy_inquiry_id"),
 
     // ==========================================================================
     // DRAFT FLOW (sent to customer, awaiting acceptance)
@@ -85,5 +120,7 @@ export const bookings = pgTable(
     index("booking_datetime_idx").on(table.startDateTime, table.endDateTime),
     index("booking_assigned_admin_idx").on(table.assignedAdminId),
     index("booking_search_customer_idx").on(table.customerName, table.customerEmail),
+    index("booking_archived_idx").on(table.archivedAt),
+    index("booking_created_idx").on(table.createdAt),
   ]
 );

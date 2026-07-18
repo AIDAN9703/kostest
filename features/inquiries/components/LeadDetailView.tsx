@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { differenceInHours, format, formatDistanceToNowStrict } from "date-fns";
-import { ArrowLeft, Mail, MessageCircle, Phone } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { inquiryService } from "@/features/inquiries/inquiry.service";
 import { userService } from "@/features/users/user.service";
@@ -20,6 +20,10 @@ import { InquiryTimeline } from "@/features/inquiries/components/InquiryTimeline
 import { InquiryActions } from "@/features/inquiries/components/InquiryActions";
 import { InquiryCloseActions } from "@/features/inquiries/components/InquiryCloseActions";
 import { DealPipelineBar } from "@/features/bookings/components/admin/DealPipelineBar";
+import {
+  ContactField,
+  DealHeaderCard,
+} from "@/features/bookings/components/admin/view-booking/DealHeaderCard";
 import { AssignInquiryMenu } from "@/features/inquiries/components/AssignInquiryMenu";
 import { ClaimInquiryButton } from "@/features/inquiries/components/ClaimInquiryButton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
@@ -88,120 +92,69 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
              row 1: identity header (2/3) · action center (1/3)
              row 2: trip request (2/3) · activity (1/3) ── */}
       <div className="grid gap-5 lg:grid-cols-3">
-          {/* Identity header: who + how to reach them + where they are */}
-          <header className="min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm lg:col-span-2">
-        {/* Who */}
-        <div className="flex flex-wrap items-start justify-between gap-4 p-4">
-          <div className="flex min-w-0 items-start gap-4">
-            <div
+        {/* Identity header — identical structure on both faces of the deal page */}
+        <DealHeaderCard
+          eyebrow={`Inquiry #${inquiry.id.slice(0, 6).toUpperCase()}`}
+          name={inquiry.name}
+          avatarInitials={adminInitials(inquiry.name) || "?"}
+          avatarClassName={tint}
+          typeChip={
+            <span
               className={cn(
-                "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-base font-semibold",
-                tint
+                "inline-block rounded-full px-2.5 py-1 text-[10px] font-semibold",
+                badge.className
               )}
             >
-              {adminInitials(inquiry.name) || "?"}
-            </div>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="text-xl font-semibold tracking-tight">{inquiry.name}</h1>
+              {badge.label}
+            </span>
+          }
+          meta={
+            <>
+              {SOURCE_LABELS[inquiry.source] ?? inquiry.source}
+              {" · received "}
+              <span className={cn("tabular-nums", isStale && "font-medium text-warning")}>
+                {formatDistanceToNowStrict(new Date(inquiry.createdAt))} ago
+              </span>
+              {" · "}
+              {formatDate(inquiry.createdAt)}
+            </>
+          }
+          value={estimatedValue ? { label: "Est. value", text: estimatedValue } : null}
+          email={inquiry.email}
+          phone={inquiry.phone}
+          extraContact={
+            <ContactField label="SMS consent" value={inquiry.smsConsent ? "Yes" : "No"} />
+          }
+          pipeline={
+            isOpen ? (
+              <DealPipelineBar
+                lead={{ inquiryId: inquiry.id, stage: inquiry.stage, outcome: inquiry.outcome }}
+              />
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
                 <span
                   className={cn(
                     "inline-block rounded-full px-2.5 py-1 text-[10px] font-semibold",
-                    badge.className
+                    OUTCOME_CHIP_CLASSES[inquiry.outcome] ?? OUTCOME_CHIP_CLASSES.OPEN
                   )}
                 >
-                  {badge.label}
+                  {OUTCOME_LABELS[inquiry.outcome] ?? inquiry.outcome}
                 </span>
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {SOURCE_LABELS[inquiry.source] ?? inquiry.source}
-                {" · received "}
-                <span className={cn("tabular-nums", isStale && "font-medium text-warning")}>
-                  {formatDistanceToNowStrict(new Date(inquiry.createdAt))} ago
-                </span>
-                {" · "}
-                {formatDate(inquiry.createdAt)}
-              </p>
-            </div>
-          </div>
-
-          {estimatedValue ? (
-            <div className="shrink-0 text-right">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                Est. value
-              </p>
-              <p className="mt-0.5 text-xl font-semibold tabular-nums">{estimatedValue}</p>
-            </div>
-          ) : null}
-        </div>
-
-        {/* How to reach them — plain values, small affordances */}
-        <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border/50 px-5 py-3">
-          <ContactField
-            label="Email"
-            value={inquiry.email}
-            actions={
-              inquiry.email ? (
-                <ContactIconLink href={`mailto:${inquiry.email}`} label="Send email">
-                  <Mail className="h-3.5 w-3.5" />
-                </ContactIconLink>
-              ) : null
-            }
-          />
-          <ContactField
-            label="Phone"
-            value={inquiry.phone}
-            actions={
-              inquiry.phone ? (
-                <>
-                  <ContactIconLink href={`tel:${phoneDigits}`} label="Call">
-                    <Phone className="h-3.5 w-3.5" />
-                  </ContactIconLink>
-                  <ContactIconLink
-                    href={`https://wa.me/${phoneDigits.replace(/^\+/, "")}`}
-                    label="WhatsApp"
-                    external
+                {closeReason ? (
+                  <span className="text-sm text-muted-foreground">{closeReason}</span>
+                ) : null}
+                {inquiry.convertedBookingId ? (
+                  <Link
+                    href={`/admin/bookings/${inquiry.convertedBookingId}`}
+                    className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3.5 py-1.5 text-xs font-semibold text-success transition-colors hover:bg-success/20"
                   >
-                    <MessageCircle className="h-3.5 w-3.5" />
-                  </ContactIconLink>
-                </>
-              ) : null
-            }
-          />
-          <ContactField label="SMS consent" value={inquiry.smsConsent ? "Yes" : "No"} />
-        </div>
-
-        {/* Where they are — pipeline when open, outcome band when closed */}
-        <div className="border-t border-border/50 px-5 py-3">
-          {isOpen ? (
-            <DealPipelineBar
-              lead={{ inquiryId: inquiry.id, stage: inquiry.stage, outcome: inquiry.outcome }}
-            />
-          ) : (
-            <div className="flex flex-wrap items-center gap-3">
-              <span
-                className={cn(
-                  "inline-block rounded-full px-2.5 py-1 text-[10px] font-semibold",
-                  OUTCOME_CHIP_CLASSES[inquiry.outcome] ?? OUTCOME_CHIP_CLASSES.OPEN
-                )}
-              >
-                {OUTCOME_LABELS[inquiry.outcome] ?? inquiry.outcome}
-              </span>
-              {closeReason ? (
-                <span className="text-sm text-muted-foreground">{closeReason}</span>
-              ) : null}
-              {inquiry.convertedBookingId ? (
-                <Link
-                  href={`/admin/bookings/${inquiry.convertedBookingId}`}
-                  className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-success-soft px-3.5 py-1.5 text-xs font-semibold text-success transition-colors hover:bg-success/20"
-                >
-                  View booking →
-                </Link>
-              ) : null}
-            </div>
-          )}
-        </div>
-          </header>
+                    View booking →
+                  </Link>
+                ) : null}
+              </div>
+            )
+          }
+        />
 
         {/* Action center — row 1 right, squared off with the header */}
         <section className="flex min-w-0 flex-col gap-5 rounded-2xl border border-border/60 bg-card p-4 shadow-sm">
@@ -341,54 +294,6 @@ async function InquiryDetail({ inquiryId }: { inquiryId: string }) {
         </section>
       </div>
     </div>
-  );
-}
-
-function ContactField({
-  label,
-  value,
-  actions,
-}: {
-  label: string;
-  value: string | null | undefined;
-  actions?: React.ReactNode;
-}) {
-  return (
-    <div className="flex min-w-0 items-center gap-2">
-      <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-          {label}
-        </p>
-        <p className="mt-0.5 truncate text-sm font-medium">
-          {value || <span className="text-muted-foreground/40">—</span>}
-        </p>
-      </div>
-      {actions ? <div className="flex shrink-0 items-center gap-1">{actions}</div> : null}
-    </div>
-  );
-}
-
-function ContactIconLink({
-  href,
-  label,
-  external,
-  children,
-}: {
-  href: string;
-  label: string;
-  external?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <a
-      href={href}
-      aria-label={label}
-      title={label}
-      {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-      className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-    >
-      {children}
-    </a>
   );
 }
 

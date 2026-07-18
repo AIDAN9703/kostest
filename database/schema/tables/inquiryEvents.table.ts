@@ -1,3 +1,7 @@
+/**
+ * @deprecated — history migrated into `booking_event` (docs/UNIFIED_BOOKINGS_PLAN.md).
+ * App code must not read or write this table; dropped in Wave 7.
+ */
 import { pgTable, uuid, text, timestamp, index, jsonb } from "drizzle-orm/pg-core";
 import { inquiry } from "./inquiry";
 import { users } from "./users.table";

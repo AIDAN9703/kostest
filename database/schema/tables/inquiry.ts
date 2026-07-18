@@ -1,3 +1,8 @@
+/**
+ * @deprecated — absorbed into the `booking` hub (docs/UNIFIED_BOOKINGS_PLAN.md).
+ * App code must not read or write this table; it exists only until the
+ * backfill is verified, then drop-inquiry-tables.sql removes it (Wave 7).
+ */
 import { sql } from "drizzle-orm";
 import {
   bigint,

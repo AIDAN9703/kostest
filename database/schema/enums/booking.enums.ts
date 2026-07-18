@@ -1,27 +1,47 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
-// Booking type - how the booking was initiated
+// Booking type — how the deal ENTERED. A deal keeps its entry type for life
+// (a boat inquiry that pays stays a "Boat inquiry" booking); the lifecycle
+// lives in bookingStatus.
 export const bookingTypeEnum = pgEnum("BookingType", [
-  "REQUEST", // Standard booking request that needs approval
+  "REQUEST", // Standard booking request that needs approval (legacy path)
   "INSTANT_BOOK", // Instant booking (no approval needed)
   "EXTERNAL_BOOKING", // Admin-created external booking
+  "GENERAL_QUOTE", // Home/contact-page quote inquiry
+  "BOAT_REQUEST", // Inquiry about a specific boat
+  "TERM_CHARTER", // Multi-day term-charter inquiry
+  "MANUAL", // Admin-logged lead (phone/DM/walk-in)
+  "MARKETPLACE", // Ingested from a marketplace (Boatsetter/GetMyBoat)
 ]);
 
-// Booking status - lifecycle states (pure booking lifecycle, no payment semantics)
+// Booking status — ONE deal lifecycle from first contact to completion.
+// Contacted/proposal-sent/paid sub-steps are derived (firstContactedAt,
+// publishedAt, payments ledger), not separate statuses.
 export const bookingStatusEnum = pgEnum("BookingStatus", [
-  "DRAFT", // Admin-created, sent to customer, awaiting acceptance
-  "PENDING", // Initial state for booking requests
-  "APPROVED", // Request approved, waiting for payment
+  "INQUIRY", // A lead — no boat/dates/pricing required yet
+  "DRAFT", // Priced proposal, sent (publishedAt) or being prepared
+  "PENDING", // Initial state for booking requests (legacy path)
+  "APPROVED", // Accepted/approved, waiting for payment
   "CONFIRMED", // Payment received, booking confirmed
-  "CANCELLED", // Cancelled (covers denied, expired, refunded — see cancellationReason)
+  "CANCELLED", // Cancelled/lost (see cancellationReason)
   "COMPLETED", // Trip completed
 ]);
 
-// Booking source - where the booking originated
+// Booking source — the CHANNEL the deal came through.
 export const bookingSourceEnum = pgEnum("BookingSource", [
-  "WEBSITE", // Customer booked via website
-  "ADMIN", // Admin created (phone/email/text lead)
-  "BROKER", // Created by external broker (future)
+  "WEBSITE", // Customer booked via website checkout
+  "ADMIN", // Admin created
+  "BROKER", // Created by external broker
+  "HOME_PAGE", // Home-page quote form
+  "BOAT_PAGE", // Boat detail page inquiry form
+  "CONTACT_PAGE", // Contact page form
+  "TERM_CHARTER_PAGE", // Term-charter landing form
+  "PHONE", // Called in
+  "INSTAGRAM", // DM
+  "WHATSAPP", // WhatsApp message
+  "BOATSETTER", // Marketplace
+  "GETMYBOAT", // Marketplace
+  "OTHER",
 ]);
 
 // Admin note type - categorizes internal notes

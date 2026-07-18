@@ -1,6 +1,14 @@
 import { notFound } from "next/navigation";
 
-import { AdminBookingHeader } from "@/features/bookings/components/admin/view-booking/AdminBookingHeader";
+import Link from "next/link";
+import { format } from "date-fns";
+import { Ship } from "lucide-react";
+import { DealHeaderCard } from "@/features/bookings/components/admin/view-booking/DealHeaderCard";
+import { DEAL_KIND_LABELS } from "@/features/bookings/deal-status";
+import { adminInitials } from "@/features/inquiries/inquiry-ui";
+import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
+import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
+import type { BookingDetails } from "@/features/bookings/booking.types";
 import { DealPipelineBar } from "@/features/bookings/components/admin/DealPipelineBar";
 import { computeDealStatusForBooking } from "@/features/bookings/deal-status";
 import { LeadDetailView } from "@/features/inquiries/components/LeadDetailView";
@@ -190,10 +198,29 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
   return (
     <BookingEditModeProvider>
     <div className="flex w-full flex-1 flex-col gap-6">
-      {/* Identity header: who + quick actions + lifecycle */}
-      <header className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4 p-4">
-          <AdminBookingHeader booking={booking} />
+      {/* Identity header — identical structure on both faces of the deal page */}
+      <DealHeaderCard
+        eyebrow={`Booking #${booking.id.slice(0, 6).toUpperCase()}`}
+        name={booking.customerName || "Unnamed customer"}
+        avatarInitials={adminInitials(booking.customerName ?? "") || "?"}
+        avatarClassName="bg-primary-soft text-primary-strong"
+        typeChip={
+          <span className="inline-block rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold text-muted-foreground">
+            {DEAL_KIND_LABELS[booking.bookingType] ?? booking.bookingType}
+          </span>
+        }
+        meta={<BookingHeaderMeta booking={booking} />}
+        value={
+          booking.totalAmountCents != null
+            ? {
+                label: "Total",
+                text: formatCentsAsCurrency(booking.totalAmountCents, {
+                  currency: booking.currency ?? "USD",
+                }),
+              }
+            : null
+        }
+        actions={
           <div className="flex shrink-0 items-center gap-2">
             <BookingPageEditButton />
             <BookingQuickActionsMenu
@@ -203,8 +230,10 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
               publicToken={booking.publicToken}
             />
           </div>
-        </div>
-        <div className="border-t border-border/50 px-5 py-3">
+        }
+        email={booking.customerEmail}
+        phone={booking.customerPhone}
+        pipeline={
           <DealPipelineBar
             dealStatus={computeDealStatusForBooking({
               bookingStatus: booking.bookingStatus,
@@ -212,8 +241,8 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
               hasRefund: booking.hasRefund,
             })}
           />
-        </div>
-      </header>
+        }
+      />
 
       {/* Body: content left, activity feed running the full right side */}
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
@@ -319,4 +348,43 @@ function buildLeadActivityEntries(events: LeadEventWithActor[]) {
       actorName,
     };
   });
+}
+
+/** Boat link + trip date line under the customer name. */
+function BookingHeaderMeta({
+  booking,
+}: {
+  booking: Pick<BookingDetails, "boatId" | "boatName" | "boatTimezone" | "startDateTime">;
+}) {
+  const parsed = booking.startDateTime
+    ? parseDateTimeInBoatTimezone(
+        typeof booking.startDateTime === "string"
+          ? booking.startDateTime
+          : booking.startDateTime.toISOString(),
+        { timezone: booking.boatTimezone ?? undefined }
+      )
+    : null;
+  const tripDate = parsed?.date ? format(parsed.date, "EEE, MMM d, yyyy") : null;
+
+  if (!booking.boatName && !tripDate) return null;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-x-2">
+      {booking.boatId && booking.boatName ? (
+        <Link
+          href={`/admin/boats/${booking.boatId}`}
+          className="inline-flex items-center gap-1 hover:text-foreground hover:underline"
+        >
+          <Ship className="h-3.5 w-3.5" />
+          {booking.boatName}
+        </Link>
+      ) : booking.boatName ? (
+        <span className="inline-flex items-center gap-1">
+          <Ship className="h-3.5 w-3.5" />
+          {booking.boatName}
+        </span>
+      ) : null}
+      {booking.boatName && tripDate ? <span aria-hidden>·</span> : null}
+      {tripDate ? <span>{tripDate}</span> : null}
+    </span>
+  );
 }
