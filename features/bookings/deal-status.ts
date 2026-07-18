@@ -47,8 +47,10 @@ export function computeDealStatusForBooking(input: {
   bookingStatus: string;
   paymentDisplayStatus?: string | null;
   hasRefund?: boolean | null;
+  archivedAt?: Date | string | null;
 }): DealStatus {
-  const { bookingStatus, paymentDisplayStatus, hasRefund } = input;
+  const { bookingStatus, paymentDisplayStatus, hasRefund, archivedAt } = input;
+  if (archivedAt) return "ARCHIVED";
   if (bookingStatus === "CANCELLED") return "CANCELLED";
   if (bookingStatus === "COMPLETED") return "COMPLETED";
   if (
@@ -62,7 +64,7 @@ export function computeDealStatusForBooking(input: {
   if (paymentDisplayStatus === "PAID") return "PAYMENT_COMPLETE";
   if (paymentDisplayStatus === "DEPOSIT_PAID") return "DEPOSIT_IN";
   if (bookingStatus === "DRAFT") return "PROPOSAL_SENT";
-  // PENDING / APPROVED, nothing collected yet — still just an inquiry on the sheet.
+  // INQUIRY, or PENDING/APPROVED with nothing collected — an inquiry on the sheet.
   return "INQUIRY";
 }
 

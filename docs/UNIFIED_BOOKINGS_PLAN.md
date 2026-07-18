@@ -59,11 +59,13 @@ events, expense lines, status history.
       notes on inquiry tables) + hand-written backfill SQL
       (`database/migrations/manual/unify-deals-backfill.sql` +
       `drop-inquiry-tables.sql`; Aidan runs `drizzle-kit generate` + these)
-- [ ] Wave 2 — domain layer: deal-status derives from booking alone;
-      lead intake actions create INQUIRY bookings (features/bookings/actions/
-      lead-intake.actions.ts); contact/cold/archive actions on booking;
-      stage-automation + conversion machinery deleted (progression is now just
-      status transitions); proposal publish already advances the deal
+- [x] Wave 2 — domain layer: deal-status derives from booking alone
+      (+archivedAt); lead-intake.actions.ts (general/term/boat/manual →
+      INQUIRY bookings, `lead.created` events); deal.actions.ts (log contact
+      sets firstContactedAt, note, cold/archive toggles, mark lost);
+      INQUIRY added to VALID_TRANSITIONS; inquiry-conversion machinery
+      deleted from booking.service / status service / stripe webhook.
+      Old inquiry.actions intake fns remain ONLY as Wave 5/6 deletion targets.
 - [ ] Wave 3 — services: getAllBookings serves the master list alone
       (INQUIRY rows included, archived filter on archivedAt/CANCELLED);
       master-deals.service deleted; booking list/detail queries tolerate

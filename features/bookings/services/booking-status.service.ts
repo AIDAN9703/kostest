@@ -11,7 +11,6 @@ import { db } from "@/database/db";
 import { bookings, bookingStatusHistory } from "@/database/schema";
 import { eq, desc } from "drizzle-orm";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
-import { convertInquiryForBooking } from "@/features/inquiries/inquiry-conversion";
 import type { BookingStatus, BookingStatusHistory } from "@/database/types";
 
 // ============================================================================
@@ -45,7 +44,9 @@ export interface StatusHistoryEntry {
  * Maps current status to array of valid next statuses
  */
 const VALID_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
-  DRAFT: ["PENDING", "CANCELLED"],
+  // A lead becomes a priced proposal (DRAFT) or dies (CANCELLED = lost).
+  INQUIRY: ["DRAFT", "CANCELLED"],
+  DRAFT: ["PENDING", "APPROVED", "CANCELLED"],
   PENDING: ["APPROVED", "CANCELLED"],
   APPROVED: ["CONFIRMED", "CANCELLED"],
   CONFIRMED: ["COMPLETED", "CANCELLED"],
@@ -136,12 +137,6 @@ export class BookingStatusService {
       reason: reason ?? null,
     });
 
-    // A confirmed booking wins the originating lead regardless of which
-    // path confirmed it (admin action, acceptance, offline payment).
-    if (newStatus === "CONFIRMED") {
-      await convertInquiryForBooking(bookingId, changedByUserId ?? null);
-    }
-
     return historyEntry;
   }
 
@@ -188,10 +183,6 @@ export class BookingStatusService {
       actorId: changedByUserId ?? null,
       reason,
     });
-
-    if (newStatus === "CONFIRMED") {
-      await convertInquiryForBooking(bookingId, changedByUserId ?? null);
-    }
 
     return historyEntry;
   }

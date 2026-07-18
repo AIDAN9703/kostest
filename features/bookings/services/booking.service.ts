@@ -70,10 +70,6 @@ import {
   calculateBookingPriceFromDollars,
   calculateBookingPriceCents,
 } from "@/shared/lib/utils/pricing-utils";
-import {
-  convertInquiryForBooking,
-  markInquiryOfferSentForLead,
-} from "@/features/inquiries/inquiry-conversion";
 import { dollarsToCents, type Cents } from "@/shared/lib/utils/money-utils";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { computePaymentDisplayStatus } from "@/shared/lib/utils/payment-display";
@@ -236,14 +232,6 @@ export class BookingService {
       });
     }
 
-    // Keep the lead truthful: a DRAFT proposal is an offer, not a win.
-    // Sending it advances the lead to OFFER_SENT; conversion (CONVERTED/WON)
-    // happens when the customer accepts or a payment confirms — see
-    // acceptDraftBookings and the confirmation paths in inquiry-conversion.
-    if (input.inquiryId && bookingIds.length > 0 && input.publishNow) {
-      await markInquiryOfferSentForLead(input.inquiryId, assignedAdminId ?? null);
-    }
-
     return {
       bookingIds,
       publicToken,
@@ -378,9 +366,6 @@ export class BookingService {
       });
       bookingIds.push(b.id);
     }
-
-    // Customer acceptance is the moment the deal is won.
-    await convertInquiryForBooking(bookingIds[0], null);
 
     let checkoutUrl: string | null = null;
     if (input.payNow && draftBookings[0].allowPayment && bookingIds.length > 0) {
