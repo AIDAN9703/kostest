@@ -947,7 +947,6 @@ export class BookingService {
         pickupLocation: bookings.pickupLocation,
         dropoffLocation: bookings.dropoffLocation,
         publicToken: bookings.publicToken,
-        inquiryId: bookings.inquiryId,
         // Lead-phase fields (unified deal hub)
         customerMessage: bookings.customerMessage,
         preferredDate: bookings.preferredDate,

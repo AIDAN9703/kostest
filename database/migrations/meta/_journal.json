@@ -358,6 +358,13 @@
       "when": 1784432189465,
       "tag": "0054_cultured_meteorite",
       "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1784436008266,
+      "tag": "0055_chilly_sentinel",
+      "breakpoints": true
     }
   ]
 }

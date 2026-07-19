@@ -51,3 +51,37 @@ export const adminNoteTypeEnum = pgEnum("AdminNoteType", [
   "FOLLOW_UP", // Follow-up needed
   "ISSUE", // Problem or concern
 ]);
+
+// ============================================================================
+// DEAL INTAKE / TIMELINE ENUMS
+// (relocated from the retired inquiry.enums.ts — used by booking + booking_event
+//  + inbound_email; not inquiry-specific)
+// ============================================================================
+
+/** Fuzzy time-of-day preference for leads without an exact requested time. */
+export const preferredTimeOfDayEnum = pgEnum("PreferredTimeOfDay", [
+  "MORNING",
+  "AFTERNOON",
+  "EVENING",
+  "FLEXIBLE",
+]);
+
+/** How a customer was reached (booking_event contact log). */
+export const contactMethodEnum = pgEnum("ContactMethod", [
+  "EMAIL",
+  "PHONE",
+  "SMS",
+  "IN_PERSON",
+  "OTHER",
+]);
+
+/** Lifecycle of an ingested marketplace notification email. */
+export const inboundEmailParseStatusEnum = pgEnum("InboundEmailParseStatus", [
+  "PENDING",
+  "PARSED",
+  "FALLBACK_LLM",
+  "FAILED",
+  "IGNORED",
+]);
+
+export type PreferredTimeOfDay = (typeof preferredTimeOfDayEnum.enumValues)[number];

@@ -12,7 +12,6 @@ import { bookingAdminNotes } from "../tables/bookingAdminNotes.table";
 import { bookingOps } from "../tables/bookingOps.table";
 import { bookingCrew } from "../tables/bookingCrew.table";
 import { bookingExpenseLines } from "../tables/bookingExpenseLines.table";
-import { inquiry } from "../tables/inquiry";
 
 // Relations for bookings table
 export const bookingsRelations = relations(bookings, ({ one, many }) => ({
@@ -43,11 +42,6 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   bookingGroup: one(bookingGroups, {
     fields: [bookings.bookingGroupId],
     references: [bookingGroups.id],
-  }),
-  inquiry: one(inquiry, {
-    fields: [bookings.inquiryId],
-    references: [inquiry.id],
-    relationName: "inquirySourceBooking",
   }),
 
   // New related tables (1:1 and 1:many)

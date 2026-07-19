@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, boolean, timestamp, index, json, integer, bigint, date, unique } from "drizzle-orm/pg-core";
-import { users, boats, boatPricingTiers, inquiry, bookingGroups } from "@/database/schema/tables";
+import { users, boats, boatPricingTiers, bookingGroups } from "@/database/schema/tables";
 import {
   bookingStatusEnum,
   bookingTypeEnum,
@@ -28,7 +28,6 @@ export const bookings = pgTable(
     captainUserId: uuid("captain_user_id").references(() => users.id, { onDelete: "set null" }),
     pricingTierId: uuid("pricing_tier_id").references(() => boatPricingTiers.id, { onDelete: "set null" }),
     bookingGroupId: uuid("booking_group_id").references(() => bookingGroups.id, { onDelete: "set null" }),
-    inquiryId: uuid("inquiry_id").references(() => inquiry.id, { onDelete: "set null" }),
     assignedAdminId: uuid("assigned_admin_id").references(() => users.id, { onDelete: "set null" }),
 
     // ==========================================================================
@@ -79,7 +78,7 @@ export const bookings = pgTable(
     coldAt: timestamp("cold_at", { mode: "date", withTimezone: true }),
     /** Hidden from the default master list; the boss's "archive" bucket. */
     archivedAt: timestamp("archived_at", { mode: "date", withTimezone: true }),
-    /** Traceability to the migrated inquiry row; dropped with the inquiry table. */
+    /** Migration audit breadcrumb: the source inquiry id, if this deal was backfilled. */
     legacyInquiryId: uuid("legacy_inquiry_id"),
 
     // ==========================================================================
@@ -116,7 +115,6 @@ export const bookings = pgTable(
     index("booking_captain_idx").on(table.captainUserId),
     index("booking_group_idx").on(table.bookingGroupId),
     index("booking_public_token_idx").on(table.publicToken),
-    index("booking_inquiry_idx").on(table.inquiryId),
     index("booking_datetime_idx").on(table.startDateTime, table.endDateTime),
     index("booking_assigned_admin_idx").on(table.assignedAdminId),
     index("booking_search_customer_idx").on(table.customerName, table.customerEmail),

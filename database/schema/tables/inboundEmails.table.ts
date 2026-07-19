@@ -1,5 +1,4 @@
 import { index, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
-import { inquiry } from "./inquiry";
 import { bookings } from "./bookings.table";
 import { inboundEmailParseStatusEnum } from "@/database/schema/enums";
 
@@ -26,8 +25,6 @@ export const inboundEmails = pgTable(
       .notNull(),
     /** The deal (INQUIRY booking) this email produced, when parsing succeeded. */
     dealId: uuid("deal_id").references(() => bookings.id, { onDelete: "set null" }),
-    /** @deprecated pre-unification link to the old inquiry table — dropped in Wave 7. */
-    inquiryId: uuid("inquiry_id").references(() => inquiry.id, { onDelete: "set null" }),
     error: text("error"),
 
     receivedAt: timestamp("received_at", { mode: "date", withTimezone: true }),
@@ -37,6 +34,5 @@ export const inboundEmails = pgTable(
   },
   (table) => [
     index("inbound_email_parse_status_idx").on(table.parseStatus),
-    index("inbound_email_inquiry_idx").on(table.inquiryId),
   ]
 );

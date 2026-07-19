@@ -23,8 +23,6 @@ export * from "./payments.table";
 export * from "./reviews.table";
 export * from "./verifications.table";
 export * from "./notifications.table";
-export * from "./inquiry";
-export * from "./inquiryEvents.table";
 export * from "./blogPosts.table";
 export * from "./boatPricingTiers.table";
 export * from "./boatBlocking.table";

@@ -21,8 +21,6 @@ import {
   bookingCrew,
   bookingExpenseLines,
   blogPosts,
-  inquiry,
-  inquiryEvents,
   verifications,
   notifications,
   boatBlocking,
@@ -181,11 +179,7 @@ export type NewReview = typeof reviews.$inferInsert;
 // INQUIRY TYPES
 // ========================================
 
-export type Inquiry = typeof inquiry.$inferSelect;
-export type NewInquiry = typeof inquiry.$inferInsert;
 
-export type InquiryEvent = typeof inquiryEvents.$inferSelect;
-export type NewInquiryEvent = typeof inquiryEvents.$inferInsert;
 
 // ========================================
 // VERIFICATION TYPES
