@@ -74,8 +74,8 @@ SELECT
   i.email,
   NULLIF(i.phone, ''),
   i.needs_captain,
-  i.requested_start_date_time,
-  i.requested_end_date_time,
+  i.requested_start_datetime,
+  i.requested_end_datetime,
   i.guests,
   CASE WHEN i.lead_type = 'TERM_CHARTER' THEN true ELSE NULL END,
   -- Fold the legacy free-text budget into the message so nothing is lost.
