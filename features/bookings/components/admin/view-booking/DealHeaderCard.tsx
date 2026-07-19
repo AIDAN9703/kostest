@@ -124,7 +124,7 @@ export function DealHeaderCard({
   );
 }
 
-export function ContactField({
+function ContactField({
   label,
   value,
   actions,

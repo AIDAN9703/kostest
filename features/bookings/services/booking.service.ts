@@ -1325,29 +1325,6 @@ export class BookingService {
   // ==========================================================================
 
   /**
-   * Update booking status (creates history entry)
-   * Delegates to status service for consistency
-   */
-  async updateBookingStatus(
-    id: string,
-    status: BookingStatus,
-    changedByUserId?: string,
-    reason?: string
-  ): Promise<Booking> {
-    await bookingStatusService.forceSetStatus(
-      id,
-      status,
-      reason ?? "Status updated",
-      changedByUserId ?? null
-    );
-
-    const [updated] = await db.select().from(bookings).where(eq(bookings.id, id)).limit(1);
-
-    if (!updated) throw new Error(`Booking not found: ${id}`);
-    return updated;
-  }
-
-  /**
    * Reprice booking after switching boats (tier affinity + default tier fallback).
    */
   async applyBoatIdChange(

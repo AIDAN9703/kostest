@@ -43,43 +43,6 @@ export async function deleteBooking(id: string): Promise<ActionResponse<{ messag
 }
 
 /**
- * Update booking status
- */
-export async function updateBookingStatus(
-  id: string,
-  status: string
-): Promise<ActionResponse<{ booking: any }>> {
-  const session = await auth();
-
-  if (!session?.user) {
-    return { success: false, error: "Authentication required" };
-  }
-
-  // Only admins can update booking status
-  if (!session?.user?.isAdmin) {
-    return { success: false, error: "Admin access required" };
-  }
-
-  try {
-    // Cast status to BookingStatus type
-    const bookingStatus = status as
-      | "DRAFT"
-      | "PENDING"
-      | "APPROVED"
-      | "CONFIRMED"
-      | "CANCELLED"
-      | "COMPLETED";
-    const updatedBooking = await bookingService.updateBookingStatus(id, bookingStatus);
-    revalidatePath("/admin/bookings");
-    revalidatePath(`/admin/bookings/${id}`);
-    return { success: true, data: { booking: updatedBooking } };
-  } catch (error) {
-    console.error("Error updating booking status:", error);
-    return { success: false, error: "Failed to update booking status" };
-  }
-}
-
-/**
  * Admin: update exactly one booking column (validated per-field).
  */
 export async function updateBookingSingleField(
