@@ -27,6 +27,9 @@ export type BookingChecklistItemKind = "manual" | "derived";
  */
 export type BookingChecklistManualField = "contractSigned" | "captainPaid";
 
+/** Display grouping for the checks panel (fleet-inspection style sections). */
+export type BookingChecklistSection = "Sales" | "Money" | "Paperwork" | "Crew" | "Trip";
+
 export interface BookingChecklistItem {
   id: string;
   label: string;
@@ -36,6 +39,7 @@ export interface BookingChecklistItem {
   kind: BookingChecklistItemKind;
   /** Only set when `kind === "manual"`. */
   field?: BookingChecklistManualField;
+  section: BookingChecklistSection;
 }
 
 export interface ComputeBookingChecklistInput {
@@ -48,6 +52,10 @@ export interface ComputeBookingChecklistInput {
   opsGmvCents: number | null | undefined;
   opsExpenseCents: number | null | undefined;
   opsSentToOwnerCents: number | null | undefined;
+  // Lead-phase inputs (drive the INQUIRY checklist)
+  assignedAdminId?: string | null;
+  firstContactedAt?: Date | string | null;
+  boatId?: string | null;
 }
 
 /**
@@ -76,6 +84,45 @@ export function computeBookingChecklist(
 
   const tripCompleted = input.bookingStatus === "COMPLETED";
 
+  // Inquiry stage gets its own to-do list: work the lead, pick a boat, get a
+  // proposal out. The booking checklist takes over once the deal is priced.
+  if (input.bookingStatus === "INQUIRY" || input.bookingStatus === "PENDING") {
+    return [
+      {
+        id: "adminAssigned",
+        label: "Admin assigned",
+        hint: "Auto: an admin owns this deal. Claim it or assign via Quick actions.",
+        done: !!input.assignedAdminId,
+        kind: "derived",
+        section: "Sales",
+      },
+      {
+        id: "customerContacted",
+        label: "Customer contacted",
+        hint: "Auto: set when a contact is logged (Quick actions → Log contact).",
+        done: input.firstContactedAt != null,
+        kind: "derived",
+        section: "Sales",
+      },
+      {
+        id: "boatSelected",
+        label: "Boat selected",
+        hint: "Auto: a boat is linked to this deal.",
+        done: !!input.boatId,
+        kind: "derived",
+        section: "Trip",
+      },
+      {
+        id: "proposalSent",
+        label: "Proposal sent",
+        hint: "Auto: done once this is priced into a proposal (moves the deal past the inquiry stage).",
+        done: false,
+        kind: "derived",
+        section: "Paperwork",
+      },
+    ];
+  }
+
   return [
     {
       id: "contractSigned",
@@ -84,6 +131,7 @@ export function computeBookingChecklist(
       done: !!input.opsContractSigned,
       kind: "manual",
       field: "contractSigned",
+      section: "Paperwork",
     },
     {
       id: "clientPaidInFull",
@@ -94,6 +142,7 @@ export function computeBookingChecklist(
           : "Auto: no charter total set yet.",
       done: clientPaidInFull,
       kind: "derived",
+      section: "Money",
     },
     {
       id: "captainAssigned",
@@ -101,6 +150,7 @@ export function computeBookingChecklist(
       hint: "Auto: captain user is linked on the booking. Assign one in Trip details.",
       done: !!input.captainUserId,
       kind: "derived",
+      section: "Crew",
     },
     {
       id: "ownerPaidOut",
@@ -111,6 +161,7 @@ export function computeBookingChecklist(
           : "Auto: no owner expense recorded yet — add expense lines in the Ops section.",
       done: ownerPaidOut,
       kind: "derived",
+      section: "Money",
     },
     {
       id: "captainPaid",
@@ -119,6 +170,7 @@ export function computeBookingChecklist(
       done: !!input.opsCaptainPaid,
       kind: "manual",
       field: "captainPaid",
+      section: "Crew",
     },
     {
       id: "tripCompleted",
@@ -128,6 +180,7 @@ export function computeBookingChecklist(
         : `Auto: marked when booking status transitions to COMPLETED (currently ${input.bookingStatus}).`,
       done: tripCompleted,
       kind: "derived",
+      section: "Trip",
     },
   ];
 
@@ -140,23 +193,3 @@ export function computeBookingChecklist(
   void effectiveGmv;
 }
 
-/**
- * Progress summary — used to render the "3 / 6 complete" pill in the card header.
- */
-export interface BookingChecklistSummary {
-  done: number;
-  total: number;
-  /** 0..1 */
-  ratio: number;
-}
-
-export function summarizeChecklist(
-  items: BookingChecklistItem[]
-): BookingChecklistSummary {
-  const done = items.filter((item) => item.done).length;
-  return {
-    done,
-    total: items.length,
-    ratio: items.length === 0 ? 0 : done / items.length,
-  };
-}

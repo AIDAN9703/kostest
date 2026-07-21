@@ -1,0 +1,149 @@
+import {
+  CalendarRange,
+  ClipboardList,
+  Globe,
+  MessageSquareText,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
+
+/**
+ * Visual identity for each deal KIND (booking.bookingType) — the loud,
+ * color-coded "what is this row" signal that leads the bookings board and
+ * the type command strip. One source of truth so the row's left rail, its
+ * type badge, and the top strip all share a colour.
+ *
+ * Colours are categorical (sky/violet/emerald/…) on purpose — kind is an
+ * identity, not a semantic state. Lifecycle state uses the semantic
+ * success/warning/destructive tokens via deal-status.ts instead.
+ */
+export interface DealKindPresentation {
+  /** Canonical short label. */
+  label: string;
+  /** Icon shown in the type badge. */
+  Icon: LucideIcon;
+  /** Left accent rail colour (solid). */
+  rail: string;
+  /** Icon-square background + foreground. */
+  iconWrap: string;
+  /** Pill/badge classes (bg tint + text). */
+  badge: string;
+  /** Subtle row hover tint matching the kind. */
+  rowHover: string;
+  /** Solid dot (used in the command strip). */
+  dot: string;
+  /** True for pre-sale lead kinds (no boat/pricing guaranteed). */
+  isLead: boolean;
+  /** Ordering for the command strip (leads first, money last). */
+  order: number;
+  /**
+   * Filter/strip grouping — kinds sharing a group render as ONE strip segment
+   * and filter together. "INQUIRY" covers boat + general inquiries (whether a
+   * boat/date exists is visible on the row itself); every other kind is its
+   * own group.
+   */
+  group: string;
+}
+
+const FALLBACK: DealKindPresentation = {
+  label: "Booking",
+  Icon: ClipboardList,
+  rail: "bg-slate-400",
+  iconWrap: "bg-slate-500/10 text-slate-600 dark:text-slate-300",
+  badge: "bg-slate-500/10 text-slate-600 dark:text-slate-300",
+  rowHover: "hover:bg-muted/40",
+  dot: "bg-slate-400",
+  isLead: false,
+  order: 99,
+  group: "OTHER",
+};
+
+/**
+ * Everything that starts as "someone wants to charter a boat" presents as one
+ * kind: Inquiry. That covers boat/general inquiries, admin-logged leads,
+ * admin-built bookings, and legacy website requests — the row's boat/date
+ * cell, source line, and pipeline stage carry the differences. Only kinds
+ * with genuinely different mechanics keep their own identity: term charters
+ * (multi-day product), marketplace ingests, and instant books.
+ */
+const INQUIRY: DealKindPresentation = {
+  label: "Inquiry",
+  Icon: MessageSquareText,
+  rail: "bg-primary",
+  iconWrap: "bg-primary-soft text-primary-strong",
+  badge: "bg-primary-soft text-primary-strong",
+  rowHover: "hover:bg-primary-soft/40",
+  dot: "bg-primary",
+  isLead: true,
+  order: 1,
+  group: "INQUIRY",
+};
+
+export const DEAL_KIND_PRESENTATION: Record<string, DealKindPresentation> = {
+  BOAT_REQUEST: INQUIRY,
+  GENERAL_QUOTE: INQUIRY,
+  MANUAL: INQUIRY,
+  EXTERNAL_BOOKING: INQUIRY,
+  REQUEST: INQUIRY,
+  TERM_CHARTER: {
+    label: "Term charter",
+    Icon: CalendarRange,
+    rail: "bg-violet-500",
+    iconWrap: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+    badge: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+    rowHover: "hover:bg-violet-500/5",
+    dot: "bg-violet-500",
+    isLead: true,
+    order: 2,
+    group: "TERM_CHARTER",
+  },
+  MARKETPLACE: {
+    label: "Marketplace",
+    Icon: Globe,
+    rail: "bg-teal-500",
+    iconWrap: "bg-teal-500/10 text-teal-700 dark:text-teal-300",
+    badge: "bg-teal-500/10 text-teal-700 dark:text-teal-300",
+    rowHover: "hover:bg-teal-500/5",
+    dot: "bg-teal-500",
+    isLead: true,
+    order: 3,
+    group: "MARKETPLACE",
+  },
+  INSTANT_BOOK: {
+    label: "Instant book",
+    Icon: Zap,
+    rail: "bg-emerald-500",
+    iconWrap: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+    badge: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+    rowHover: "hover:bg-emerald-500/5",
+    dot: "bg-emerald-500",
+    isLead: false,
+    order: 4,
+    group: "INSTANT_BOOK",
+  },
+};
+
+export function getDealKind(bookingType: string): DealKindPresentation {
+  return DEAL_KIND_PRESENTATION[bookingType] ?? FALLBACK;
+}
+
+/** One command-strip segment: possibly several bookingTypes filtered as one. */
+export interface DealKindStripGroup {
+  /** Filter value written to ?bookingType= (a raw type, or "INQUIRY"). */
+  key: string;
+  /** Underlying bookingType values this segment counts. */
+  types: string[];
+  presentation: DealKindPresentation;
+}
+
+/** The segments the type strip renders, in display order. */
+export const DEAL_KIND_STRIP_GROUPS: DealKindStripGroup[] = Object.entries(
+  DEAL_KIND_PRESENTATION
+)
+  .sort((a, b) => a[1].order - b[1].order)
+  .reduce<DealKindStripGroup[]>((groups, [type, presentation]) => {
+    const existing = groups.find((g) => g.key === presentation.group);
+    if (existing) existing.types.push(type);
+    else groups.push({ key: presentation.group, types: [type], presentation });
+    return groups;
+  }, []);

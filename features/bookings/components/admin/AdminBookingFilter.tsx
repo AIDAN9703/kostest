@@ -22,8 +22,12 @@ import {
   FilterSelect,
   type FilterChipItem,
 } from "@/shared/admin/filters";
-import { bookingSearchParams } from "@/features/bookings/searchParams";
+import {
+  bookingSearchParams,
+  type BookingTypeFilter,
+} from "@/features/bookings/searchParams";
 import { bookingStatusEnum, bookingTypeEnum } from "@/database/schema";
+import { INQUIRY_GROUP_TYPES } from "@/features/bookings/booking.validation";
 import { PAYMENT_DISPLAY_STATUSES } from "@/shared/lib/utils/payment-display";
 import { Input } from "@/shared/components/ui/input";
 import { cn } from "@/shared/lib/utils/general-utils";
@@ -43,6 +47,17 @@ const ENUM_LABEL_OVERRIDES: Record<string, string> = {
   EXTERNAL_BOOKING: "Admin-created",
   DEPOSIT_PAID: "Deposit paid",
 };
+
+/**
+ * Type dropdown options — every kind that folds into the "INQUIRY" group
+ * collapses into that single option (matches the command strip).
+ */
+const BOOKING_TYPE_OPTIONS: BookingTypeFilter[] = [
+  "INQUIRY",
+  ...bookingTypeEnum.enumValues.filter(
+    (t) => !(INQUIRY_GROUP_TYPES as readonly string[]).includes(t)
+  ),
+];
 
 function friendlyEnumLabel(value: string): string {
   return (
@@ -255,7 +270,7 @@ export function AdminBookingFilter({ admins }: { admins: AdminOption[] }) {
             <FilterSelect
               value={filters.bookingType}
               onChange={(v) => updateFilter({ bookingType: v })}
-              options={bookingTypeEnum.enumValues}
+              options={BOOKING_TYPE_OPTIONS}
               placeholder="Any type"
               allLabel="Any type"
               width="w-full"
@@ -361,8 +376,9 @@ function SegmentedPill({
       onClick={onClick}
       className={cn(
         "flex h-8 items-center rounded-full px-3.5 text-sm font-medium transition-all",
+        // Neutral active state — gold is reserved for the page's main CTA.
         active
-          ? "bg-primary text-primary-foreground shadow-sm"
+          ? "bg-background text-foreground shadow-sm ring-1 ring-border/60"
           : "text-muted-foreground hover:text-foreground"
       )}
     >
@@ -390,8 +406,9 @@ function ViewToggleButton({
       onClick={onClick}
       className={cn(
         "inline-flex h-8 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium transition-colors",
+        // Neutral active state — gold is reserved for the page's main CTA.
         active
-          ? "bg-primary text-primary-foreground shadow-sm"
+          ? "bg-background text-foreground shadow-sm ring-1 ring-border/60"
           : "text-muted-foreground hover:text-foreground"
       )}
     >

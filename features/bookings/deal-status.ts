@@ -1,47 +1,23 @@
 /**
- * The unified deal lifecycle — one status vocabulary for everything in the
- * master bookings list, whether the row is an unconverted lead (inquiry
- * table) or a booking. Mirrors the ops team's master-sheet color key:
- * inquiry (no color) → deposit in (yellow) → payment complete (green),
- * reconcile/dispute (orange), cancelled (red). Proposal sent and Completed
- * are the two states the sheet tracked implicitly.
+ * The unified deal lifecycle — one status vocabulary for every row in the
+ * master bookings list. Matches the pipeline the ops lead runs the business
+ * on: Inquiry → Booking inquiry → Invoice sent → Partial payment → Payment
+ * complete, with Dispute (orange) and Cancelled off to the side. Completed
+ * (trip happened) and Archived are the two housekeeping states the sheet
+ * tracked implicitly. Every stage is DERIVED — bookingStatus + the payments
+ * ledger stay the source of truth; nothing here is stored.
  */
 
 export type DealStatus =
   | "INQUIRY"
-  | "PROPOSAL_SENT"
-  | "DEPOSIT_IN"
+  | "BOOKING_INQUIRY"
+  | "INVOICE_SENT"
+  | "PARTIAL_PAYMENT"
   | "PAYMENT_COMPLETE"
-  | "RECONCILE"
+  | "DISPUTE"
   | "COMPLETED"
   | "CANCELLED"
   | "ARCHIVED";
-
-export const DEAL_STATUS_LABELS: Record<DealStatus, string> = {
-  INQUIRY: "Inquiry",
-  PROPOSAL_SENT: "Proposal sent",
-  DEPOSIT_IN: "Deposit in",
-  PAYMENT_COMPLETE: "Paid",
-  RECONCILE: "Reconcile",
-  COMPLETED: "Completed",
-  CANCELLED: "Cancelled",
-  ARCHIVED: "Archived",
-};
-
-/** Boss's sheet key, in semantic tokens (orange stays categorical — no token maps to it). */
-export const DEAL_STATUS_CHIP_CLASSES: Record<DealStatus, string> = {
-  INQUIRY: "bg-muted text-muted-foreground",
-  PROPOSAL_SENT: "bg-primary-soft text-primary-strong",
-  DEPOSIT_IN: "bg-warning-soft text-warning",
-  PAYMENT_COMPLETE: "bg-success-soft text-success",
-  RECONCILE: "bg-orange-500/10 text-orange-700 dark:text-orange-400",
-  COMPLETED: "bg-muted text-foreground",
-  CANCELLED: "bg-destructive-soft text-destructive",
-  ARCHIVED: "bg-muted text-muted-foreground/70",
-};
-
-/** Statuses hidden from the default master list (shown via the Archived pill). */
-export const HIDDEN_DEAL_STATUSES: DealStatus[] = ["CANCELLED", "ARCHIVED"];
 
 export function computeDealStatusForBooking(input: {
   bookingStatus: string;
@@ -59,12 +35,15 @@ export function computeDealStatusForBooking(input: {
     paymentDisplayStatus === "CHARGEBACK" ||
     paymentDisplayStatus === "FAILED"
   ) {
-    return "RECONCILE";
+    return "DISPUTE";
   }
   if (paymentDisplayStatus === "PAID") return "PAYMENT_COMPLETE";
-  if (paymentDisplayStatus === "DEPOSIT_PAID") return "DEPOSIT_IN";
-  if (bookingStatus === "DRAFT") return "PROPOSAL_SENT";
-  // INQUIRY, or PENDING/APPROVED with nothing collected — an inquiry on the sheet.
+  if (paymentDisplayStatus === "DEPOSIT_PAID") return "PARTIAL_PAYMENT";
+  // APPROVED = the customer has the payment link/invoice; DRAFT = a priced
+  // proposal exists (sent or being finished — publishedAt isn't in list rows).
+  if (bookingStatus === "DRAFT" || bookingStatus === "APPROVED") return "INVOICE_SENT";
+  // PENDING = a formal request to book (boat + date + price) awaiting review.
+  if (bookingStatus === "PENDING") return "BOOKING_INQUIRY";
   return "INQUIRY";
 }
 
@@ -85,6 +64,37 @@ export const DEAL_SOURCE_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
+/**
+ * Origin badge tint, grouped by channel family: admin work slate, human
+ * channels amber, our own site sky, marketplaces teal, brokers violet.
+ */
+export const SOURCE_BADGE_CLASSES: Record<string, string> = {
+  ADMIN: "bg-slate-500/10 text-slate-600 dark:text-slate-300",
+  PHONE: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  INSTAGRAM: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  WHATSAPP: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  WEBSITE: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
+  HOME_PAGE: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
+  BOAT_PAGE: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
+  CONTACT_PAGE: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
+  TERM_CHARTER_PAGE: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
+  BOATSETTER: "bg-teal-500/10 text-teal-700 dark:text-teal-300",
+  GETMYBOAT: "bg-teal-500/10 text-teal-700 dark:text-teal-300",
+  BROKER: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+  OTHER: "bg-muted text-muted-foreground",
+};
+
+/** Compact payment chip per computed payment display status (board rows). */
+export const PAYMENT_CHIP: Record<string, { label: string; className: string }> = {
+  PAID: { label: "Paid", className: "bg-success-soft text-success" },
+  DEPOSIT_PAID: { label: "Partial", className: "bg-warning-soft text-warning" },
+  PROCESSING: { label: "Processing", className: "bg-sky-500/10 text-sky-700 dark:text-sky-400" },
+  REFUNDED: { label: "Refunded", className: "bg-orange-500/10 text-orange-700 dark:text-orange-400" },
+  CHARGEBACK: { label: "Chargeback", className: "bg-orange-500/10 text-orange-700 dark:text-orange-400" },
+  FAILED: { label: "Failed", className: "bg-destructive-soft text-destructive" },
+  UNPAID: { label: "Unpaid", className: "bg-muted text-muted-foreground" },
+};
+
 /** Customer's stated time-of-day preference (fuzzy intake). */
 export const TIME_OF_DAY_LABELS: Record<string, string> = {
   MORNING: "Morning",
@@ -95,12 +105,12 @@ export const TIME_OF_DAY_LABELS: Record<string, string> = {
 
 /** Lead-type / origin tags shown next to the deal status. */
 export const DEAL_KIND_LABELS: Record<string, string> = {
-  GENERAL_QUOTE: "General",
-  BOAT_REQUEST: "Boat inquiry",
+  GENERAL_QUOTE: "Inquiry",
+  BOAT_REQUEST: "Inquiry",
+  MANUAL: "Inquiry",
+  REQUEST: "Inquiry",
+  EXTERNAL_BOOKING: "Inquiry",
   TERM_CHARTER: "Term charter",
-  MANUAL: "Manual",
   MARKETPLACE: "Marketplace",
-  REQUEST: "Request",
   INSTANT_BOOK: "Instant book",
-  EXTERNAL_BOOKING: "Admin",
 };

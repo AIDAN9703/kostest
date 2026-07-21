@@ -5,16 +5,16 @@ import { cn } from "@/shared/lib/utils/general-utils";
 
 /**
  * THE deal lifecycle bar — one pipeline for every deal, read-only because
- * every step is derived: Contacted from firstContactedAt, Proposal sent from
- * DRAFT, the money steps from the payments ledger, Completed from status.
- * Actions that move the deal live in the quick-actions menu.
+ * every step is derived: Contacted from firstContactedAt, Invoice sent from
+ * DRAFT/APPROVED, the money steps from the payments ledger, Completed from
+ * status. Actions that move the deal live in the quick-actions menu.
  */
 const DEAL_STEPS = [
   "Inquiry",
   "Contacted",
-  "Proposal sent",
-  "Deposit in",
-  "Paid",
+  "Invoice sent",
+  "Partial payment",
+  "Payment complete",
   "Completed",
 ] as const;
 
@@ -23,14 +23,14 @@ function stepIndex(dealStatus: DealStatus, contacted: boolean): number {
     case "COMPLETED":
       return 5;
     case "PAYMENT_COMPLETE":
-    case "RECONCILE":
+    case "DISPUTE":
       return 4;
-    case "DEPOSIT_IN":
+    case "PARTIAL_PAYMENT":
       return 3;
-    case "PROPOSAL_SENT":
+    case "INVOICE_SENT":
       return 2;
     default:
-      // INQUIRY bucket (incl. unpaid PENDING/APPROVED legacy rows)
+      // INQUIRY / BOOKING_INQUIRY bucket — pre-invoice either way.
       return contacted ? 1 : 0;
   }
 }

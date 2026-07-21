@@ -20,13 +20,12 @@ import {
   BookingTripCard,
   type BookingTripDetailsSnapshot,
 } from "@/features/bookings/components/admin/view-booking/BookingTripCard";
-import { BookingClientCard } from "@/features/bookings/components/admin/view-booking/BookingClientCard";
 import {
   BookingEditModeProvider,
   BookingPageEditButton,
 } from "@/features/bookings/components/admin/view-booking/BookingEditMode";
 import { BookingPaymentsFinancialsCard } from "@/features/bookings/components/admin/view-booking/BookingPaymentsFinancialsCard";
-import { AdminBookingChecklistCard } from "@/features/bookings/components/admin/view-booking/AdminBookingChecklistCard";
+import { BookingChecksPanel } from "@/features/bookings/components/admin/view-booking/BookingChecksPanel";
 import { BookingQuickActionsMenu } from "@/features/bookings/components/admin/view-booking/BookingQuickActionsMenu";
 import { BookingActivityTimeline } from "@/features/bookings/components/admin/view-booking/BookingActivityTimeline";
 
@@ -62,7 +61,6 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     captains,
     bookingCrewRows,
     crewPool,
-    lifetimeBookingCount,
     admins,
     session,
   ] = await Promise.all([
@@ -73,9 +71,6 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     captainProfileService.getCaptainsForAssignment(),
     bookingCrewService.listByBookingId(id),
     crewProfileService.getCrewForAssignment(),
-    booking.userId
-      ? bookingService.countBookingsForUser(booking.userId)
-      : Promise.resolve(0),
     userService.getAdmins(),
     auth(),
   ]);
@@ -166,6 +161,9 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     opsGmvCents: ops?.gmvCents ?? null,
     opsExpenseCents: ops?.expenseCents ?? null,
     opsSentToOwnerCents: ops?.sentToOwnerCents ?? null,
+    assignedAdminId: booking.assignedAdminId,
+    firstContactedAt: booking.firstContactedAt,
+    boatId: booking.boatId,
   });
 
   // Hide the "send payment link" quick action once the booking is fully paid
@@ -174,15 +172,6 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     (booking.totalAmountCents ?? 0) > 0 &&
     (booking.totalPaidCents ?? 0) < (booking.totalAmountCents ?? 0) &&
     booking.bookingStatus !== "CANCELLED";
-
-  const clientSnapshot = {
-    customerUserId: booking.userId,
-    customerName: booking.customerName ?? "",
-    customerEmail: booking.customerEmail ?? "",
-    customerPhone: booking.customerPhone ?? "",
-    profileImage: booking.userProfileImage,
-    lifetimeBookingCount,
-  };
 
   const isInquiry = booking.bookingStatus === "INQUIRY";
   const dealStatus = computeDealStatusForBooking({
@@ -199,9 +188,13 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
 
   return (
     <BookingEditModeProvider>
-    <div className="flex w-full flex-1 flex-col gap-6">
-      {/* Identity header — one face for every deal status */}
-      <DealHeaderCard
+    <div className="flex w-full flex-1 flex-col">
+      {/* Content left (header + cards share one width), activity rail running
+          the FULL right side of the page. */}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+        <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
+          {/* Identity header — one face for every deal status */}
+          <DealHeaderCard
         eyebrow={`${isInquiry ? "Inquiry" : "Booking"} #${booking.id.slice(0, 6).toUpperCase()}`}
         name={booking.customerName || "Unnamed customer"}
         avatarInitials={adminInitials(booking.customerName ?? "") || "?"}
@@ -257,31 +250,25 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         }
         email={booking.customerEmail}
         phone={booking.customerPhone}
-        pipeline={
-          <DealPipelineBar
-            dealStatus={dealStatus}
-            contacted={booking.firstContactedAt != null}
-            cold={booking.coldAt != null}
+            pipeline={
+              <DealPipelineBar
+                dealStatus={dealStatus}
+                contacted={booking.firstContactedAt != null}
+                cold={booking.coldAt != null}
+              />
+            }
           />
-        }
-      />
 
-      {/* Body: content left, activity feed running the full right side */}
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-        <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
           {isInquiry ? (
-            /* Lead phase: the client + what they asked for. Trip, payments,
-               and checklist appear once the deal is priced into a proposal. */
+            /* Lead phase: same skeleton as a booking — checks first, then
+               what the customer asked for. Contact info lives in the header. */
             <>
-              <BookingClientCard bookingId={id} client={clientSnapshot} />
+              <BookingChecksPanel bookingId={id} items={checklistItems} />
               <DealRequestCard deal={booking} />
             </>
           ) : (
             <>
-              <div className="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 [&>*]:min-w-0">
-                <BookingClientCard bookingId={id} client={clientSnapshot} />
-                <AdminBookingChecklistCard bookingId={id} items={checklistItems} />
-              </div>
+              <BookingChecksPanel bookingId={id} items={checklistItems} />
 
               <BookingTripCard
                 bookingId={id}
@@ -309,9 +296,11 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
           )}
         </div>
 
+        {/* top-2 (not top-20): a sticky offset larger than the card's natural
+            distance from the scrollport pushes it down on first paint. */}
         <BookingActivityTimeline
           events={activityEvents}
-          className="lg:sticky lg:top-20"
+          className="lg:sticky lg:top-2"
         />
       </div>
     </div>

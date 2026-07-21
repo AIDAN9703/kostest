@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/database/db";
-import { boats, boatPricingTiers, bookings } from "@/database/schema";
+import { boats, boatPricingTiers } from "@/database/schema";
 import { auth } from "@/auth";
 import { bookingRequestSchema, BookingRequest } from "@/features/_validation/validations";
 import { z } from "zod";

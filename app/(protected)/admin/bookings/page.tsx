@@ -3,12 +3,11 @@ import { auth } from "@/auth";
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { boatService } from "@/features/boats/boat.service";
 import { userService } from "@/features/users/user.service";
-import { captainProfileService } from "@/features/profiles/captain-profile.service";
 import { bookingSearchParamsCache } from "@/features/bookings/searchParams";
 import { AdminBookingFilter } from "@/features/bookings/components/admin/AdminBookingFilter";
 import { BookingsHeaderCta } from "@/features/bookings/components/admin/BookingsHeaderCta";
-import { NewLeadDialog } from "@/features/bookings/components/lead-intake/NewLeadDialog";
-import { AdminBookingsTable } from "@/features/bookings/components/admin/AdminBookingsTable";
+import { BookingTypeStrip } from "@/features/bookings/components/admin/BookingTypeStrip";
+import { AdminBookingsBoard } from "@/features/bookings/components/admin/AdminBookingsBoard";
 import { AdminBookingTablePagination } from "@/features/bookings/components/admin/AdminBookingTablePagination";
 import { AdminBookingsCalendar } from "@/features/bookings/components/admin/AdminBookingsCalendar";
 import { AdminListShell } from "@/shared/admin/components/AdminListShell";
@@ -22,9 +21,8 @@ export default async function BookingsPage({
   await bookingSearchParamsCache.parse(searchParams);
   const params = bookingSearchParamsCache.all();
 
-  const [admins, captains, pricingTiers] = await Promise.all([
+  const [admins, pricingTiers] = await Promise.all([
     userService.getAdmins(),
-    captainProfileService.getCaptainsForAssignment(),
     boatService.getAllActivePricingTiers(),
   ]);
 
@@ -34,14 +32,9 @@ export default async function BookingsPage({
     </Suspense>
   );
 
-  // Manual intake lives here now too: "Log lead" for phone/Instagram/broker
-  // inquiries, "Add booking" for real bookings — one tab for everything.
-  const headerCta = (
-    <div className="flex flex-wrap items-center gap-2">
-      <NewLeadDialog />
-      <BookingsHeaderCta pricingTiers={pricingTiers} />
-    </div>
-  );
+  // ONE way in: Add booking. Phone/DM inquiries go through the same door —
+  // an inquiry is just a booking at its first stage, not a separate thing.
+  const headerCta = <BookingsHeaderCta pricingTiers={pricingTiers} />;
 
   if (params.view === "calendar") {
     return (
@@ -59,11 +52,10 @@ export default async function BookingsPage({
   const session = await auth();
   const nowIso = new Date().toISOString();
 
-  // ONE table, one query: every deal — inquiry to completed charter — is a
-  // booking row. The Archived pill flips between the live and hidden buckets.
-  const result = await bookingService.getAllBookings({
+  // Base filters shared by the list AND the type-count strip (the strip omits
+  // bookingType so every segment shows its true count while one is selected).
+  const scopeFilters = {
     search: params.search || undefined,
-    // Explicit date-range filters win over the Upcoming/Past pills.
     dateFrom: params.dateFrom ?? (params.time === "upcoming" ? nowIso : undefined),
     dateTo: params.dateTo ?? (params.time === "past" ? nowIso : undefined),
     assignedAdminId:
@@ -73,20 +65,30 @@ export default async function BookingsPage({
     unassignedOnly: params.scope === "unassigned" || undefined,
     // An explicit status filter searches everything; otherwise bucket by pill.
     archivedView: params.bookingStatus ? undefined : (params.archived ?? false),
-    bookingStatus: params.bookingStatus ?? undefined,
-    paymentStatus: params.paymentStatus ?? undefined,
-    bookingType: params.bookingType ?? undefined,
-    needsCaptain: params.needsCaptain ?? undefined,
-    minAmount: params.minAmount ?? undefined,
-    maxAmount: params.maxAmount ?? undefined,
-    bookingGroupId: params.bookingGroupId ?? undefined,
-    page: params.page,
-    limit: params.limit,
-  });
+  };
+
+  // ONE table, one query: every deal — inquiry to completed charter — is a
+  // booking row. The type command strip filters by bookingType.
+  const [result, typeCounts] = await Promise.all([
+    bookingService.getAllBookings({
+      ...scopeFilters,
+      bookingStatus: params.bookingStatus ?? undefined,
+      paymentStatus: params.paymentStatus ?? undefined,
+      bookingType: params.bookingType ?? undefined,
+      needsCaptain: params.needsCaptain ?? undefined,
+      minAmount: params.minAmount ?? undefined,
+      maxAmount: params.maxAmount ?? undefined,
+      bookingGroupId: params.bookingGroupId ?? undefined,
+      page: params.page,
+      limit: params.limit,
+    }),
+    bookingService.getBookingTypeCounts(scopeFilters),
+  ]);
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col">
       <BookingsPageHeader totalCount={result.totalCount} cta={headerCta} />
+      <BookingTypeStrip counts={typeCounts.counts} total={typeCounts.total} />
       <div className="flex min-h-0 flex-1 flex-col">
         <AdminListShell
           toolbar={filter}
@@ -99,7 +101,7 @@ export default async function BookingsPage({
             />
           }
         >
-          <AdminBookingsTable bookings={result.bookings} admins={admins} captains={captains} />
+          <AdminBookingsBoard bookings={result.bookings} admins={admins} />
         </AdminListShell>
       </div>
     </div>

@@ -249,6 +249,8 @@ export interface BookingListItem {
   id: string;
   bookingType: string;
   bookingStatus: string;
+  /** Channel the deal came through (bookings.source) — drives the origin line. */
+  source: string | null;
 
   /** Raw status of the most recent payment transaction (DB enum value). */
   paymentStatus: string | null;

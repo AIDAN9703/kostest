@@ -13,6 +13,16 @@ import { PAYMENT_DISPLAY_STATUSES } from "@/shared/lib/utils/payment-display";
 import { ADMIN_LIST_DEFAULT_PAGE_SIZE } from "@/shared/admin/list-pagination";
 
 /**
+ * ?bookingType= accepts every raw type plus the "INQUIRY" group, which the
+ * service expands to boat + general inquiries (they present as one kind).
+ */
+export const BOOKING_TYPE_FILTER_VALUES = [
+  ...bookingTypeEnum.enumValues,
+  "INQUIRY",
+] as const;
+export type BookingTypeFilter = (typeof BOOKING_TYPE_FILTER_VALUES)[number];
+
+/**
  * Shared search params config for bookings page.
  * Uses database enums as single source of truth (matches booking.validation).
  * Used by both Server Component (createSearchParamsCache) and Client (useQueryStates).
@@ -21,7 +31,7 @@ export const bookingSearchParams = {
   search: parseAsString.withDefault(""),
   bookingStatus: parseAsStringEnum(bookingStatusEnum.enumValues),
   paymentStatus: parseAsStringEnum([...PAYMENT_DISPLAY_STATUSES]),
-  bookingType: parseAsStringEnum(bookingTypeEnum.enumValues),
+  bookingType: parseAsStringEnum([...BOOKING_TYPE_FILTER_VALUES]),
   dateFrom: parseAsString,
   dateTo: parseAsString,
   needsCaptain: parseAsBoolean,

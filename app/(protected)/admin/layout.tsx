@@ -17,7 +17,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    // forcedTheme: admin is dark-mode only for now (owners' call). Light-mode
+    // styles stay in the codebase — drop forcedTheme to bring the toggle back.
+    <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false} disableTransitionOnChange>
       <KBar>
         <SidebarProvider
           defaultOpen={defaultOpen}

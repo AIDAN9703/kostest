@@ -6,10 +6,6 @@
  */
 import { revalidatePath } from "next/cache";
 
-import { eq } from "drizzle-orm";
-import { db } from "@/database/db";
-import { bookings } from "@/database/schema";
-
 import { getAdminSession } from "@/shared/lib/utils/auth-utils";
 import { createCheckoutSessionForBooking } from "@/features/bookings/actions/stripe-checkout";
 

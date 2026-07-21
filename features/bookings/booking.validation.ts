@@ -8,6 +8,19 @@ import {
 import { PAYMENT_DISPLAY_STATUSES } from "@/shared/lib/utils/payment-display";
 
 /**
+ * The bookingType values behind the "INQUIRY" filter group. Everything that
+ * enters as "someone wants to charter" presents as one "Inquiry" kind — the
+ * source line and pipeline stage carry the differences.
+ */
+export const INQUIRY_GROUP_TYPES = [
+  "GENERAL_QUOTE",
+  "BOAT_REQUEST",
+  "MANUAL",
+  "EXTERNAL_BOOKING",
+  "REQUEST",
+] as const;
+
+/**
  * Booking filter/search schema for URL params - Comprehensive filters for admin
  * Uses database enums as single source of truth (matches searchParams).
  */
@@ -22,7 +35,8 @@ export const bookingFilterSchema = z.object({
   // Status filters (from database schema)
   bookingStatus: z.enum(bookingStatusEnum.enumValues).optional(),
   paymentStatus: z.enum(PAYMENT_DISPLAY_STATUSES).optional(),
-  bookingType: z.enum(bookingTypeEnum.enumValues).optional(),
+  // Raw types plus the "INQUIRY" group (boat + general inquiries filter as one).
+  bookingType: z.enum([...bookingTypeEnum.enumValues, "INQUIRY"]).optional(),
   
   // Date range
   dateFrom: z.string().optional(),

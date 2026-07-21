@@ -14,7 +14,6 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/database/db";
 import { bookings, boats, boatPricingTiers } from "@/database/schema";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
-import { getAdminSession } from "@/shared/lib/utils/auth-utils";
 import { emailSchema, phoneRequiredSchema } from "@/shared/lib/validation/common";
 import {
   boatInquirySchema,
@@ -319,79 +318,5 @@ export async function createBoatLead(data: BoatLeadInput) {
   }
 }
 
-// ============================================================================
-// Manual lead (admin logs a phone call / DM / broker referral)
-// ============================================================================
-
-const manualLeadSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: emailSchema.optional().or(z.literal("")),
-  phone: z.string().optional(),
-  source: z.enum(["PHONE", "INSTAGRAM", "WHATSAPP", "BROKER", "OTHER"]),
-  date: z.string().optional(),
-  timeOfDay: preferredTimeOfDaySchema.optional(),
-  guests: z.string().optional(),
-  budget: z.string().optional(),
-  message: z.string().optional(),
-});
-
-export type ManualLeadInput = z.input<typeof manualLeadSchema>;
-
-/**
- * Admin logs a lead that arrived outside the website. Auto-assigned to the
- * creator (they took the call), so it lands in the pipeline already owned.
- */
-export async function createManualLead(data: ManualLeadInput) {
-  try {
-    const adminAuth = await getAdminSession();
-    if (adminAuth.error !== undefined) {
-      return { success: false, error: adminAuth.error };
-    }
-    const session = adminAuth.session;
-
-    const validated = manualLeadSchema.parse(data);
-    if (!validated.email && !validated.phone?.trim()) {
-      return { success: false, error: "Provide at least an email or a phone number" };
-    }
-
-    const [deal] = await db
-      .insert(bookings)
-      .values({
-        bookingType: "MANUAL",
-        bookingStatus: "INQUIRY",
-        source: validated.source,
-        customerName: validated.name,
-        customerEmail: validated.email || "",
-        customerPhone: validated.phone?.trim() || null,
-        preferredDate: validated.date || null,
-        preferredTimeOfDay: validated.timeOfDay ?? (validated.date ? "FLEXIBLE" : null),
-        numberOfPassengers: parseGuests(validated.guests),
-        budgetCents: parseBudgetCents(validated.budget),
-        customerMessage: messageWithBudgetLabel(validated.message, validated.budget),
-        assignedAdminId: session.user.id,
-        termsAccepted: false,
-        smsConsent: false,
-      })
-      .returning({ id: bookings.id });
-
-    if (deal) {
-      await logLeadCreated(deal.id, session.user.id, {
-        manual: true,
-        source: validated.source,
-      });
-    }
-    revalidateDealSurfaces();
-
-    return { success: true, bookingId: deal?.id ?? null };
-  } catch (error) {
-    console.error("Error creating manual lead:", error);
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        error: "Invalid lead data",
-        fieldErrors: error.flatten().fieldErrors,
-      };
-    }
-    return { success: false, error: "Failed to create lead" };
-  }
-}
+// (Manual "log lead" intake removed 2026-07-21 — the admin's one door is the
+// Add booking flow; inquiries only arrive from customer-facing forms above.)

@@ -45,7 +45,7 @@ export function FilterPopover({
           <Filter className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-sm">{triggerLabel}</span>
           {activeCount > 0 ? (
-            <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
+            <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-foreground px-1 text-[10px] font-semibold leading-none text-background">
               {activeCount}
             </span>
           ) : null}

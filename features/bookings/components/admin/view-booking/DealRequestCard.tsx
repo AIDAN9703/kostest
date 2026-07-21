@@ -59,11 +59,11 @@ export function DealRequestCard({ deal }: { deal: BookingDetails }) {
             value={deal.numberOfPassengers != null ? `${deal.numberOfPassengers}` : null}
           />
           <Fact
-            label="Budget"
+            label="Customer budget"
             value={deal.budgetCents != null ? formatCentsAsCurrency(deal.budgetCents) : null}
           />
           <Fact
-            label="Estimated value"
+            label="Est. charter value"
             value={
               deal.estimatedValueCents != null
                 ? formatCentsAsCurrency(deal.estimatedValueCents)

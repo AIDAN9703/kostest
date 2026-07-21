@@ -48,6 +48,7 @@ import {
 import {
   type BookingFilterInput,
   type CreateBookingsInput,
+  INQUIRY_GROUP_TYPES,
 } from "@/features/bookings/booking.validation";
 import {
   type BookingSingleFieldUpdate,
@@ -61,17 +62,12 @@ import {
   type BookingWithRelations,
   type BookingAddOn,
 } from "@/features/bookings/booking.types";
-import {
-  type Booking,
-  type BookingStatus,
-  type PaymentStatus,
-  type BookingSource,
-} from "@/database/types";
+import { type Booking, type BookingSource } from "@/database/types";
 import {
   calculateBookingPriceFromDollars,
   calculateBookingPriceCents,
 } from "@/shared/lib/utils/pricing-utils";
-import { dollarsToCents, type Cents } from "@/shared/lib/utils/money-utils";
+import { dollarsToCents } from "@/shared/lib/utils/money-utils";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { computePaymentDisplayStatus } from "@/shared/lib/utils/payment-display";
 import { resolveAdminListPagination } from "@/shared/admin/list-pagination";
@@ -725,7 +721,12 @@ export class BookingService {
       }
     }
     if (filters?.bookingType) {
-      whereConditions.push(eq(bookings.bookingType, filters.bookingType));
+      // "INQUIRY" is a filter group, not a real type — expand to its members.
+      whereConditions.push(
+        filters.bookingType === "INQUIRY"
+          ? inArray(bookings.bookingType, [...INQUIRY_GROUP_TYPES])
+          : eq(bookings.bookingType, filters.bookingType)
+      );
     }
     if (filters?.dateFrom) {
       whereConditions.push(gte(bookings.startDateTime, new Date(filters.dateFrom)));
@@ -777,6 +778,7 @@ export class BookingService {
       id: bookings.id,
       bookingType: bookings.bookingType,
       bookingStatus: bookings.bookingStatus,
+      source: bookings.source,
       paymentStatus: sql<string>`(
         SELECT p.status FROM payment p 
         WHERE p.payable_type = 'BOOKING' AND p.payable_id = ${bookings.id} 
@@ -910,6 +912,70 @@ export class BookingService {
       limit,
       totalPages: Math.ceil(countResult[0].value / limit),
     };
+  }
+
+  /**
+   * Deal counts grouped by bookingType for the command strip. Respects the
+   * same base filters as the list (search / scope / date / archived) but NOT
+   * bookingType itself, so every segment shows its true count while one is
+   * selected (faceted-filter pattern).
+   */
+  async getBookingTypeCounts(
+    filters?: Pick<
+      BookingFilterInput,
+      | "search"
+      | "dateFrom"
+      | "dateTo"
+      | "assignedAdminId"
+      | "unassignedOnly"
+      | "archivedView"
+    >
+  ): Promise<{ counts: Record<string, number>; total: number }> {
+    const conditions = [];
+
+    if (filters?.search) {
+      const clause = or(
+        ilike(bookings.customerName, `%${filters.search}%`),
+        ilike(bookings.customerEmail, `%${filters.search}%`),
+        ilike(bookings.customerPhone, `%${filters.search}%`),
+        ilike(boats.name, `%${filters.search}%`)
+      );
+      if (clause) conditions.push(clause);
+    }
+    if (filters?.dateFrom) {
+      conditions.push(gte(bookings.startDateTime, new Date(filters.dateFrom)));
+    }
+    if (filters?.dateTo) {
+      conditions.push(lte(bookings.startDateTime, new Date(filters.dateTo)));
+    }
+    if (filters?.assignedAdminId) {
+      conditions.push(eq(bookings.assignedAdminId, filters.assignedAdminId));
+    }
+    if (filters?.unassignedOnly) {
+      conditions.push(isNull(bookings.assignedAdminId));
+    }
+    if (filters?.archivedView === true) {
+      const archived = or(isNotNull(bookings.archivedAt), eq(bookings.bookingStatus, "CANCELLED"));
+      if (archived) conditions.push(archived);
+    } else if (filters?.archivedView === false) {
+      const live = and(isNull(bookings.archivedAt), ne(bookings.bookingStatus, "CANCELLED"));
+      if (live) conditions.push(live);
+    }
+
+    const rows = await db
+      .select({ bookingType: bookings.bookingType, value: count() })
+      .from(bookings)
+      .leftJoin(boats, eq(bookings.boatId, boats.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .groupBy(bookings.bookingType);
+
+    const counts: Record<string, number> = {};
+    let total = 0;
+    for (const r of rows) {
+      counts[r.bookingType] = Number(r.value);
+      total += Number(r.value);
+    }
+    return { counts, total };
   }
 
   /**
