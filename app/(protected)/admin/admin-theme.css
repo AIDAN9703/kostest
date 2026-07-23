@@ -1,97 +1,52 @@
 /* ============================================================
-   KOS ADMIN THEME — navy + gold, light & dark
+   KOS ADMIN THEME — navy + gold, DARK ONLY
    All colors come from the palette staples in globals.css
-   (--color-gold-*, --color-dark-*, --color-light-*); this file
-   only assigns them to semantic roles per mode.
+   (--color-gold-*, --color-dark-*); this file only assigns them
+   to semantic roles.
 
-   Layering (lighter = closer in light, lighter = closer in dark):
-     light:  canvas light-bg  →  cards light-card  →  fills light-main
-     dark:   root dark-main   →  canvas dark-bg    →  cards dark-card
-   Gold is the primary/action color (buttons, selected states,
-   highlights) in both modes; navy remains in charts and structure.
-   Primary family: primary (fill) / primary-foreground (text on fill)
-   / primary-soft (tint) / primary-strong (readable gold text).
+   Light mode was removed 2026-07-21 (owners' call — admin ships
+   dark only). If it ever comes back: restore the light token
+   block from git history (pre-removal admin-theme.css) and the
+   kbar theme-switching actions, and drop forcedTheme from the
+   admin layout's ThemeProvider.
+
+   Layering (lighter = closer): root dark-main → canvas dark-bg
+   → cards dark-card. Gold is the primary/action color (buttons,
+   selected states, highlights); navy remains in charts and
+   structure. Primary family: primary (fill) / primary-foreground
+   (text on fill) / primary-soft (tint) / primary-strong
+   (readable gold text).
+
+   NOTE: the admin layout still stamps `class="dark"` on <html>
+   (via next-themes forcedTheme) — Tailwind `dark:` variants all
+   over the admin depend on it. Do not remove that provider.
    ============================================================ */
 
-/* Root/overscroll backgrounds match the canvas in both modes, so
-   rubber-band scrolling never flashes a foreign color. */
+/* Root/overscroll backgrounds match the canvas, so rubber-band
+   scrolling never flashes a foreign color. */
 html:has([data-admin-theme]) {
-  background-color: var(--color-light-bg);
+  background-color: var(--color-dark-bg);
 }
 
 html:has([data-admin-theme]) body {
-  background-color: var(--color-light-bg);
-}
-
-html.dark:has([data-admin-theme]) {
   background-color: var(--color-dark-bg);
 }
 
-html.dark:has([data-admin-theme]) body {
-  background-color: var(--color-dark-bg);
-}
-
-/* ── Light mode ─────────────────────────────────────────────── */
 .admin-theme {
     --radius: 0.75rem;
     --font-sans: var(--font-montserrat), ui-sans-serif, sans-serif;
 
-    --color-background: var(--color-light-bg);
-    --color-foreground: #1e293b;
-    --color-card: var(--color-light-card);
-    --color-card-foreground: #1e293b;
-    --color-popover: var(--color-light-card);
-    --color-popover-foreground: #1e293b;
-    /* Primary family = the gold. Same fill and black text in both
-       modes; only the standalone text shade (-strong) changes. */
-    --color-primary: var(--color-gold-accent);
-    --color-primary-foreground: #000000;
-    --color-primary-soft: var(--color-gold-soft);
-    --color-primary-strong: var(--color-gold-deep);
-    --color-secondary: var(--color-light-main);
-    --color-secondary-foreground: #1e293b;
-    --color-muted: var(--color-light-main);
-    --color-muted-foreground: #5b6b7b;
-    --color-accent: var(--color-light-main);
-    --color-accent-foreground: #1e293b;
-    --color-destructive: #c0392b;
-    --color-border: #e4e8ee;
-    --color-input: #e4e8ee;
-    --color-ring: var(--color-gold-deep);
-
-    --color-sidebar: var(--color-light-card);
-    --color-sidebar-foreground: #1e293b;
-    --color-sidebar-primary: #27445c;
-    --color-sidebar-primary-foreground: #f8fafc;
-    /* Active/hover nav items glow brand gold, not gray */
-    --color-sidebar-accent: var(--color-gold-soft);
-    --color-sidebar-accent-foreground: var(--color-gold-deep);
-    --color-sidebar-border: #e4e8ee;
-    --color-sidebar-ring: var(--color-gold-deep);
-
-    /* Semantic state roles (consumed via bg-success-soft, text-warning, …) */
-    --success: #1f7a55;
-    --success-foreground: #ffffff;
-    --success-soft: #e9f6ef;
-    --warning: #8a5a16;
-    --warning-soft: #fbf1e2;
-    --destructive-soft: #fdece9;
-
-    color: var(--color-foreground);
-    background-color: var(--color-background);
-}
-
-/* ── Dark mode ──────────────────────────────────────────────── */
-.dark .admin-theme {
     --color-background: var(--color-dark-bg);
     --color-foreground: #e9eef3;
     --color-card: var(--color-dark-card);
     --color-card-foreground: #e9eef3;
     --color-popover: var(--color-dark-card);
     --color-popover-foreground: #e9eef3;
-    /* --color-primary / -foreground / -soft inherit from .admin-theme
-       (black-on-gold confirmed for both modes); only the standalone
-       gold text shade brightens for dark surfaces. */
+    /* Primary family = the gold: gold fill, black text on it,
+       glow shade for standalone gold text on dark surfaces. */
+    --color-primary: var(--color-gold-accent);
+    --color-primary-foreground: #000000;
+    --color-primary-soft: var(--color-gold-soft);
     --color-primary-strong: var(--color-gold-glow);
     --color-secondary: #1c2f40;
     --color-secondary-foreground: #e9eef3;
@@ -108,18 +63,22 @@ html.dark:has([data-admin-theme]) body {
     --color-sidebar-foreground: #e9eef3;
     --color-sidebar-primary: var(--color-gold-accent);
     --color-sidebar-primary-foreground: #15110a;
-    /* --color-sidebar-accent inherits from .admin-theme — the gold is
-       the same in both modes; only text-contrast shades change here. */
+    /* Active/hover nav items glow brand gold, not gray */
+    --color-sidebar-accent: var(--color-gold-soft);
     --color-sidebar-accent-foreground: var(--color-gold-glow);
     --color-sidebar-border: #213548;
     --color-sidebar-ring: var(--color-gold-accent);
 
+    /* Semantic state roles (consumed via bg-success-soft, text-warning, …) */
     --success: #4ade80;
     --success-foreground: #052e16;
     --success-soft: #0f2a1d;
     --warning: #e0a23a;
     --warning-soft: #2a2210;
     --destructive-soft: #2c1513;
+
+    color: var(--color-foreground);
+    background-color: var(--color-background);
 }
 
 /* ── Structural rules ───────────────────────────────────────── */

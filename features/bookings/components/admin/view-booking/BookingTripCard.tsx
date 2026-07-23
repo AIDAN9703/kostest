@@ -168,7 +168,7 @@ export function BookingTripCard({
   }
 
   return (
-    <Card className="rounded-2xl border border-border/60 shadow-sm">
+    <Card className="rounded-2xl border-border/60">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg">Trip details</CardTitle>
       </CardHeader>

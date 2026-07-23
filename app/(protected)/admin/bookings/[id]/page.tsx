@@ -296,11 +296,13 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
           )}
         </div>
 
-        {/* top-2 (not top-20): a sticky offset larger than the card's natural
-            distance from the scrollport pushes it down on first paint. */}
+        {/* lg:top-0 — the rail's natural offset from the scrollport is ~0px
+            (proven by screenshot), and sticky enforces its top value even at
+            rest. Any positive offset pushes the card below the header card;
+            zero is the only value that can never misalign it. */}
         <BookingActivityTimeline
           events={activityEvents}
-          className="lg:sticky lg:top-2"
+          className="lg:sticky lg:top-0"
         />
       </div>
     </div>

@@ -43,9 +43,11 @@ export function DealHeaderCard({
   const phoneDigits = phone?.replace(/[^\d+]/g, "") ?? "";
 
   return (
-    <header className="min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm lg:col-span-2">
+    // Not a <Card> (multi-band header element) but wears the same shell:
+    // rounded-2xl border-border/60 bg-card shadow-sm + px-6 bands.
+    <header className="min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
       {/* Who */}
-      <div className="flex flex-wrap items-start justify-between gap-4 p-4">
+      <div className="flex flex-wrap items-start justify-between gap-4 px-6 py-4">
         <div className="flex min-w-0 items-start gap-4">
           <div
             className={cn(
@@ -83,7 +85,7 @@ export function DealHeaderCard({
       </div>
 
       {/* How to reach them */}
-      <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border/50 px-5 py-3">
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border/50 px-6 py-3">
         <ContactField
           label="Email"
           value={email}
@@ -119,7 +121,7 @@ export function DealHeaderCard({
       </div>
 
       {/* Where the deal is */}
-      <div className="border-t border-border/50 px-5 py-3">{pipeline}</div>
+      <div className="border-t border-border/50 px-6 py-3">{pipeline}</div>
     </header>
   );
 }

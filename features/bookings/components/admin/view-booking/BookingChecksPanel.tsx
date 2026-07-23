@@ -47,7 +47,7 @@ export function BookingChecksPanel({ bookingId, items }: BookingChecksPanelProps
   })).filter((s) => s.items.length > 0);
 
   return (
-    <Card className="rounded-2xl border border-border/60 shadow-sm">
+    <Card className="rounded-2xl border-border/60">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-base">

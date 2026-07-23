@@ -87,7 +87,7 @@ export function BookingPaymentsFinancialsCard({
   const revenue = computeOpsRevenueCents(opsGmvCents, booking.totalAmountCents, opsExpenseCents);
 
   return (
-    <Card className="rounded-2xl border border-border/60 shadow-sm">
+    <Card className="rounded-2xl border-border/60">
       <CardHeader className="pb-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-lg">Payments &amp; financials</CardTitle>

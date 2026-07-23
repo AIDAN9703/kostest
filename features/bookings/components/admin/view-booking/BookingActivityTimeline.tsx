@@ -23,7 +23,6 @@ import { format, isToday, isYesterday } from "date-fns";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/shared/components/ui/card";
@@ -40,85 +39,80 @@ const CONTACT_LABELS: Record<string, string> = {
 };
 
 /**
- * Event categories → icon + bubble tint. One color family per KIND of event
- * so the rail can be skimmed: gold milestones, green money, sky
- * communication, violet people moves, slate edits/audit.
+ * Event styling — TWO TIERS so the rail reads like a story, not a list:
+ *
+ * MAJOR events (deal milestones: created, stage moves, proposal out, money,
+ * outcome) get solid filled markers in their family color. MINOR events
+ * (notes, contacts, people moves, edits) get small soft-tint markers. Same
+ * axis, different weight — a skim catches the milestones, a read gets it all.
+ *
+ * Families: gold milestones, green money, sky communication, violet people,
+ * slate edits/audit.
  */
 interface EventStyle {
   Icon: LucideIcon;
   bubble: string;
+  /** Solid full-size milestone marker vs small soft-tint routine marker. */
+  major?: boolean;
 }
 
+// Hollow-ring markers: colored border + icon on the card background. Nothing
+// else in the admin looks like this, so timeline nodes never read as buttons
+// (solid gold fills did — gold is the app's action color).
+const MILESTONE = "border-primary/70 text-primary-strong";
+const MONEY = "border-success/70 text-success";
+const COMMS = "border-sky-500/50 text-sky-400";
+const PEOPLE = "border-violet-500/50 text-violet-400";
+const QUIET = "border-border text-muted-foreground";
+
 const EVENT_STYLES: Record<string, EventStyle> = {
-  // Milestones — gold
-  [BOOKING_EVENT_TYPES.CREATED]: {
-    Icon: Sparkles,
-    bubble: "bg-primary-soft text-primary-strong",
-  },
-  "lead.created": { Icon: Sparkles, bubble: "bg-primary-soft text-primary-strong" },
-  [BOOKING_EVENT_TYPES.STATUS_CHANGED]: {
-    Icon: GitBranch,
-    bubble: "bg-primary-soft text-primary-strong",
-  },
-  "lead.stage_change": { Icon: GitBranch, bubble: "bg-primary-soft text-primary-strong" },
-  [BOOKING_EVENT_TYPES.DRAFT_PUBLISHED]: {
-    Icon: Send,
-    bubble: "bg-primary-soft text-primary-strong",
-  },
-  // Money — green
+  // Milestones — solid gold
+  [BOOKING_EVENT_TYPES.CREATED]: { Icon: Sparkles, bubble: MILESTONE, major: true },
+  "lead.created": { Icon: Sparkles, bubble: MILESTONE, major: true },
+  [BOOKING_EVENT_TYPES.STATUS_CHANGED]: { Icon: GitBranch, bubble: MILESTONE, major: true },
+  "lead.stage_change": { Icon: GitBranch, bubble: MILESTONE, major: true },
+  [BOOKING_EVENT_TYPES.DRAFT_PUBLISHED]: { Icon: Send, bubble: MILESTONE, major: true },
+  // Money — green ring
   [BOOKING_EVENT_TYPES.PAYMENT_RECEIVED]: {
     Icon: DollarSign,
-    bubble: "bg-success-soft text-success",
+    bubble: MONEY,
+    major: true,
   },
-  // Communication — sky
-  [BOOKING_EVENT_TYPES.CONTACT_LOGGED]: {
-    Icon: Phone,
-    bubble: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
-  },
-  "lead.contact_attempt": {
-    Icon: Phone,
-    bubble: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
-  },
-  [BOOKING_EVENT_TYPES.NOTE_ADDED]: {
-    Icon: FileText,
-    bubble: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
-  },
-  "lead.note": { Icon: FileText, bubble: "bg-sky-500/10 text-sky-700 dark:text-sky-400" },
-  // People — violet
-  [BOOKING_EVENT_TYPES.ASSIGNED_ADMIN_CHANGED]: {
-    Icon: UserCog,
-    bubble: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
-  },
-  "lead.assigned": {
-    Icon: UserCog,
-    bubble: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
-  },
-  [BOOKING_EVENT_TYPES.ASSIGNED_CAPTAIN_CHANGED]: {
-    Icon: Anchor,
-    bubble: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
-  },
-  [BOOKING_EVENT_TYPES.CREW_MEMBER_ADDED]: {
-    Icon: Users,
-    bubble: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
-  },
-  [BOOKING_EVENT_TYPES.CREW_MEMBER_REMOVED]: {
-    Icon: Users,
-    bubble: "bg-violet-500/10 text-violet-700 dark:text-violet-400",
-  },
-  // Outcome / housekeeping
+  // Outcome — amber ring by default; won/lost tint resolved in styleForEvent
   "lead.outcome_change": {
     Icon: Flag,
-    bubble: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+    bubble: "border-amber-500/70 text-amber-400",
+    major: true,
   },
-  "deal.archived": { Icon: Archive, bubble: "bg-muted text-muted-foreground" },
-  // Edits / audit — slate
-  [BOOKING_EVENT_TYPES.UPDATED]: {
-    Icon: Pencil,
-    bubble: "bg-slate-500/10 text-slate-600 dark:text-slate-300",
-  },
+  // Communication — sky, routine
+  [BOOKING_EVENT_TYPES.CONTACT_LOGGED]: { Icon: Phone, bubble: COMMS },
+  "lead.contact_attempt": { Icon: Phone, bubble: COMMS },
+  [BOOKING_EVENT_TYPES.NOTE_ADDED]: { Icon: FileText, bubble: COMMS },
+  "lead.note": { Icon: FileText, bubble: COMMS },
+  // People — violet, routine
+  [BOOKING_EVENT_TYPES.ASSIGNED_ADMIN_CHANGED]: { Icon: UserCog, bubble: PEOPLE },
+  "lead.assigned": { Icon: UserCog, bubble: PEOPLE },
+  [BOOKING_EVENT_TYPES.ASSIGNED_CAPTAIN_CHANGED]: { Icon: Anchor, bubble: PEOPLE },
+  [BOOKING_EVENT_TYPES.CREW_MEMBER_ADDED]: { Icon: Users, bubble: PEOPLE },
+  [BOOKING_EVENT_TYPES.CREW_MEMBER_REMOVED]: { Icon: Users, bubble: PEOPLE },
+  // Housekeeping / audit — quiet, routine
+  "deal.archived": { Icon: Archive, bubble: QUIET },
+  [BOOKING_EVENT_TYPES.UPDATED]: { Icon: Pencil, bubble: QUIET },
 };
 
-const FALLBACK_STYLE: EventStyle = { Icon: Circle, bubble: "bg-muted text-muted-foreground" };
+const FALLBACK_STYLE: EventStyle = { Icon: Circle, bubble: QUIET };
+
+/** Resolve the marker style, tinting outcome markers by what happened. */
+function styleForEvent(event: BookingActivityEventEntry): EventStyle {
+  const base = EVENT_STYLES[event.eventType] ?? FALLBACK_STYLE;
+  if (event.eventType === "lead.outcome_change") {
+    const outcome = stateValue(event.newState, TRANSITION_KEYS)?.toUpperCase();
+    if (outcome === "WON") return { ...base, bubble: MONEY };
+    if (outcome && ["LOST", "ABANDONED", "SPAM"].includes(outcome))
+      return { ...base, bubble: "border-destructive/70 text-destructive" };
+  }
+  return base;
+}
 
 function labelForEvent(e: BookingActivityEventEntry) {
   if (e.displayMessage) return e.displayMessage;
@@ -401,23 +395,22 @@ export function BookingActivityTimeline({
 
   return (
     <Card
-      className={`flex flex-col overflow-hidden lg:max-h-[calc(100vh-5.5rem)] ${className ?? ""}`}
+      // Same rounded-2xl border-border/60 override as every detail-page card;
+      // gap-2/py-4 keep the rail compact vertically while its px-6 content
+      // edges line up with the rest of the page.
+      className={cn(
+        "rounded-2xl border-border/60",
+        "flex flex-col gap-2 overflow-hidden py-4 lg:max-h-[calc(100vh-5.5rem)]",
+        className
+      )}
     >
-      <CardHeader className="shrink-0 pb-3 pt-4">
+      <CardHeader className="shrink-0 px-6">
         <CardTitle className="flex items-center gap-2 text-base">
           <History className="h-4 w-4 text-muted-foreground" />
           Activity
-          {visibleEvents.length > 0 ? (
-            <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold tabular-nums text-muted-foreground">
-              {visibleEvents.length}
-            </span>
-          ) : null}
         </CardTitle>
-        <CardDescription className="text-xs">
-          Everything that happened on this deal, newest first
-        </CardDescription>
       </CardHeader>
-      <CardContent className="min-h-0 flex-1 overflow-y-auto pb-4 [-ms-overflow-style:none] [scrollbar-gutter:stable]">
+      <CardContent className="min-h-0 flex-1 overflow-y-auto px-6 pb-2 [-ms-overflow-style:none] [scrollbar-gutter:stable]">
         {visibleEvents.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-10 text-center">
             <History className="h-6 w-6 text-muted-foreground/40" />
@@ -429,35 +422,53 @@ export function BookingActivityTimeline({
           <div className="space-y-5">
             {dayGroups.map((group) => (
               <section key={group.key}>
-                {/* Day divider */}
-                <div className="mb-3 flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                {/* Day divider — sticky pill anchor, so scrolling always shows
+                    which day you're in and groups read as clear sections */}
+                <div className="sticky top-0 z-20 -mx-1.5 mb-3 flex items-center gap-2 bg-card px-1.5 py-1.5">
+                  <span
+                    className={cn(
+                      "rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                      group.label === "Today"
+                        ? "bg-primary-soft text-primary-strong"
+                        : "bg-muted text-muted-foreground"
+                    )}
+                  >
                     {group.label}
                   </span>
                   <span className="h-px flex-1 bg-border/70" aria-hidden />
                 </div>
 
                 <div className="relative">
-                  <div className="absolute bottom-2 left-[15px] top-2 w-px bg-border/70" aria-hidden />
-                  <div className="space-y-4">
+                  {/* Axis — fades in and out instead of ending abruptly */}
+                  <div
+                    className="absolute bottom-0 left-[15px] top-0 w-px bg-gradient-to-b from-transparent via-muted-foreground/30 to-transparent"
+                    aria-hidden
+                  />
+                  <ol className="space-y-4">
                     {group.items.map((event) => {
-                      const { Icon, bubble } = EVENT_STYLES[event.eventType] ?? FALLBACK_STYLE;
+                      const { Icon, bubble, major } = styleForEvent(event);
                       const title = buildEventTitle(event);
                       return (
-                        <div
-                          key={event.id}
-                          className="relative -mx-1.5 flex gap-3 rounded-lg px-1.5 py-1 transition-colors hover:bg-muted/40"
-                        >
-                          <div
-                            className={cn(
-                              "relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-4 ring-card",
-                              bubble
-                            )}
-                          >
-                            <Icon className="h-3.5 w-3.5" />
+                        <li key={event.id} className="relative flex gap-3 py-1">
+                          {/* Fixed gutter keeps every marker centered on the axis */}
+                          <div className="flex w-8 shrink-0 justify-center">
+                            <span
+                              className={cn(
+                                "relative z-10 flex shrink-0 items-center justify-center rounded-full bg-card ring-4 ring-card",
+                                major ? "h-8 w-8 border-2" : "mt-0.5 h-6 w-6 border",
+                                bubble
+                              )}
+                            >
+                              <Icon className={major ? "h-3.5 w-3.5" : "h-3 w-3"} />
+                            </span>
                           </div>
                           <div className="min-w-0 flex-1 pt-0.5">
-                            <p className="text-sm font-medium leading-snug text-foreground">
+                            <p
+                              className={cn(
+                                "text-sm leading-snug text-foreground",
+                                major ? "font-semibold" : "font-medium"
+                              )}
+                            >
                               {title.node}
                             </p>
                             <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[11px] text-muted-foreground">
@@ -541,10 +552,10 @@ export function BookingActivityTimeline({
                                 </details>
                               )}
                           </div>
-                        </div>
+                        </li>
                       );
                     })}
-                  </div>
+                  </ol>
                 </div>
               </section>
             ))}

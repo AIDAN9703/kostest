@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CreditCard, Loader2, Palette, type LucideIcon } from "lucide-react";
+import { CreditCard, Loader2, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
@@ -12,7 +12,6 @@ import { cn, formatCurrency } from "@/shared/lib/utils/general-utils";
 import { updateAppSettings } from "@/features/app-settings/app-settings.mutations";
 import { formatBpsAsPercent } from "@/features/app-settings/app-settings.config";
 import type { AppSettings } from "@/features/app-settings/app-settings.types";
-import { AdminAppearanceSelect } from "@/features/app-settings/components/AdminThemeSettings";
 
 type SectionId = "payments" | "theme";
 
@@ -22,12 +21,6 @@ const SECTIONS: { id: SectionId; label: string; description: string; icon: Lucid
     label: "Payments & fees",
     description: "Fees applied to customer checkouts.",
     icon: CreditCard,
-  },
-  {
-    id: "theme",
-    label: "Theme",
-    description: "Admin appearance — saved on this device.",
-    icon: Palette,
   },
 ];
 
@@ -145,16 +138,6 @@ export function AdminSettingsClient({ settings }: { settings: AppSettings }) {
                 </SettingRow>
               )}
 
-              {active === "theme" && (
-                <>
-                  <SettingRow
-                    label="Appearance"
-                    description="Light or dark mode for the admin panel. System follows your device setting."
-                  >
-                    <AdminAppearanceSelect />
-                  </SettingRow>
-                </>
-              )}
             </div>
 
             {active === "payments" && (

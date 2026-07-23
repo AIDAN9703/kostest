@@ -69,8 +69,8 @@
   /* Marketing-site alias — same gold, one definition */
   --color-gold: var(--color-gold-accent);
 
-  /* Semantic state tokens. Bare vars are set per mode by
-     .admin-theme / .dark .admin-theme; fallbacks = light values. */
+  /* Semantic state tokens. Bare vars are set by .admin-theme (dark-only
+     admin); fallbacks = the marketing site's light values. */
   --color-success: var(--success, #1f7a55);
   --color-success-soft: var(--success-soft, #e9f6ef);
   --color-warning: var(--warning, #8a5a16);
@@ -78,8 +78,8 @@
   --color-destructive-soft: var(--destructive-soft, #fdece9);
 
   /* Sidebar/header chrome tokens — required for bg-sidebar, border-sidebar-border,
-     etc. to exist as utilities. Defaults are the light-mode values;
-     .admin-theme / .dark .admin-theme override them per mode. */
+     etc. to exist as utilities. Defaults suit the marketing site;
+     .admin-theme overrides them (dark-only admin). */
   --color-sidebar: var(--color-light-card);
   --color-sidebar-foreground: #1e293b;
   --color-sidebar-primary: #27445c;
@@ -234,11 +234,11 @@
     --ring: 222.2 84% 4.9%;
   }
 
-  /* .dark block removed - main site doesn't use dark mode. Admin dark mode
-     is scoped via admin-theme.css (.dark .admin-theme) and never affects
-     main site variables. Without this block, html.dark from next-themes
-     won't change --background etc., so main site stays light when navigating
-     from admin with dark mode on. */
+  /* .dark block removed - main site doesn't use dark mode. The admin's
+     dark styling is scoped via admin-theme.css (.admin-theme) and never
+     affects main site variables. Without this block, html.dark (stamped by
+     the admin layout's forced dark theme) won't change --background etc.,
+     so the main site stays light when navigating from admin. */
 }
 
 @layer utilities {

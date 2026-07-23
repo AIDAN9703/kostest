@@ -12,7 +12,7 @@ import type { BookingDetails } from "@/features/bookings/booking.types";
  */
 export function DealRequestCard({ deal }: { deal: BookingDetails }) {
   return (
-    <Card className="rounded-2xl border border-border/60 shadow-sm">
+    <Card className="rounded-2xl border-border/60">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg">Request</CardTitle>
       </CardHeader>

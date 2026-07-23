@@ -12,7 +12,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { useKBar, useRegisterActions } from 'kbar';
 import RenderResults from './render-result';
-import useThemeSwitching from './use-theme-switching';
 import { adminShellClassName } from '@/shared/admin/admin-shell-classes';
 
 export default function KBar({ children }: { children: React.ReactNode }) {
@@ -41,7 +40,6 @@ export default function KBar({ children }: { children: React.ReactNode }) {
 }
 
 const KBarComponent = ({ children }: { children: React.ReactNode }) => {
-  useThemeSwitching();
   useGlobalSearchActions();
 
   return (

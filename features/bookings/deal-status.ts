@@ -47,6 +47,26 @@ export function computeDealStatusForBooking(input: {
   return "INQUIRY";
 }
 
+/**
+ * Hours before trip start when unresolved pre-trip items (captain, contract)
+ * flip from "pending" (yellow) to "urgent" (red).
+ */
+export const PRETRIP_URGENT_HOURS = 48;
+
+/**
+ * True when the trip starts within PRETRIP_URGENT_HOURS — or has already
+ * started (a missing captain on a trip that left the dock is past urgent).
+ * False when there's no trip date yet.
+ */
+export function isTripImminent(
+  startDateTime: Date | string | null | undefined,
+  now: Date = new Date()
+): boolean {
+  if (!startDateTime) return false;
+  const msUntilStart = new Date(startDateTime).getTime() - now.getTime();
+  return msUntilStart <= PRETRIP_URGENT_HOURS * 60 * 60 * 1000;
+}
+
 /** Channel labels (booking.source) for meta lines. */
 export const DEAL_SOURCE_LABELS: Record<string, string> = {
   WEBSITE: "Website",
@@ -82,17 +102,6 @@ export const SOURCE_BADGE_CLASSES: Record<string, string> = {
   GETMYBOAT: "bg-teal-500/10 text-teal-700 dark:text-teal-300",
   BROKER: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
   OTHER: "bg-muted text-muted-foreground",
-};
-
-/** Compact payment chip per computed payment display status (board rows). */
-export const PAYMENT_CHIP: Record<string, { label: string; className: string }> = {
-  PAID: { label: "Paid", className: "bg-success-soft text-success" },
-  DEPOSIT_PAID: { label: "Partial", className: "bg-warning-soft text-warning" },
-  PROCESSING: { label: "Processing", className: "bg-sky-500/10 text-sky-700 dark:text-sky-400" },
-  REFUNDED: { label: "Refunded", className: "bg-orange-500/10 text-orange-700 dark:text-orange-400" },
-  CHARGEBACK: { label: "Chargeback", className: "bg-orange-500/10 text-orange-700 dark:text-orange-400" },
-  FAILED: { label: "Failed", className: "bg-destructive-soft text-destructive" },
-  UNPAID: { label: "Unpaid", className: "bg-muted text-muted-foreground" },
 };
 
 /** Customer's stated time-of-day preference (fuzzy intake). */

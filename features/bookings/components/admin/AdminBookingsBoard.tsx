@@ -4,17 +4,26 @@ import React, { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+  AlertTriangle,
+  Anchor,
   CalendarCheck,
   Check,
   CheckCircle2,
+  Clock,
   Copy,
-  CornerDownRight,
+  DollarSign,
   Eye,
+  FileCheck2,
+  FileX2,
   MoreVertical,
+  Plus,
+  RotateCcw,
   Ship,
+  Snowflake,
   Trash2,
   UserCheck,
   XCircle,
+  type LucideIcon,
 } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
@@ -36,13 +45,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/shared/components/ui/tooltip";
 import { type BookingListItem } from "@/features/bookings/booking.types";
 import {
   DEAL_SOURCE_LABELS,
-  PAYMENT_CHIP,
+  isTripImminent,
+  PRETRIP_URGENT_HOURS,
   SOURCE_BADGE_CLASSES,
 } from "@/features/bookings/deal-status";
 import { getDealKind } from "@/features/bookings/deal-presentation";
+import { BookingExpensesModal } from "@/features/bookings/components/admin/BookingExpensesModal";
 import { cn, formatTime12Hour } from "@/shared/lib/utils/general-utils";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
@@ -71,19 +88,28 @@ interface AdminBookingsBoardProps {
 
 /**
  * The master deals table. Fixed-percentage columns (table-fixed + colgroup)
- * so proportions hold at every viewport and zoom level: identity columns get
- * steady shares, Status gets the widest slice for its key→chip stack, and
- * min-width + overflow keeps zoom usable instead of crushing columns.
+ * so proportions hold at every viewport and zoom. The Type column carries the
+ * at-a-glance state as hoverable color-coded emblems; the middle is the money
+ * read the owners run on (GMV → expense → revenue → commission); ownership
+ * meta (admin, source) sits on the right edge. Widths are sized to content so
+ * spare screen width flows into the readable columns (customer, boat, date),
+ * not into padding around badges.
  */
 const COLUMNS: { key: string; width: string }[] = [
-  { key: "type", width: "15%" },
-  { key: "customer", width: "17%" },
-  { key: "boat", width: "18%" },
-  { key: "status", width: "27%" },
-  { key: "value", width: "9%" },
-  { key: "admin", width: "8%" },
-  { key: "actions", width: "6%" },
+  { key: "type", width: "12%" },
+  { key: "customer", width: "15%" },
+  { key: "boat", width: "12%" },
+  { key: "datetime", width: "10%" },
+  { key: "gmv", width: "8%" },
+  { key: "expense", width: "7%" },
+  { key: "revenue", width: "7%" },
+  { key: "commission", width: "9%" },
+  { key: "admin", width: "6%" },
+  { key: "source", width: "9%" },
+  { key: "actions", width: "5%" },
 ];
+
+const HEAD_CLASS = "text-[11px] font-semibold uppercase tracking-wider";
 
 export function AdminBookingsBoard({
   bookings,
@@ -141,89 +167,221 @@ export function AdminBookingsBoard({
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-      <div className="min-h-0 flex-1 overflow-auto">
-        <table className="w-full min-w-[960px] table-fixed caption-bottom text-sm">
-          <colgroup>
-            {COLUMNS.map((c) => (
-              <col key={c.key} style={{ width: c.width }} />
-            ))}
-          </colgroup>
-          <TableHeader className="sticky top-0 z-10 bg-card">
-            <TableRow className="border-border/60 hover:bg-transparent">
-              <TableHead className="pl-4 text-[11px] font-semibold uppercase tracking-wider">
-                Type
-              </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider">
-                Customer
-              </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider">
-                Boat &amp; date
-              </TableHead>
-              <TableHead className="text-[11px] font-semibold uppercase tracking-wider">
-                Status
-              </TableHead>
-              <TableHead className="text-right text-[11px] font-semibold uppercase tracking-wider">
-                Value
-              </TableHead>
-              <TableHead className="px-2 text-center text-[11px] font-semibold uppercase tracking-wider">
-                Admin
-              </TableHead>
-              <TableHead className="pr-3" aria-label="Actions" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {bookings.map((b) => (
-              <BookingRow
-                key={b.id}
-                booking={b}
-                admins={admins}
-                actionLoading={actionLoading}
-                onApprove={(id) => runAction(() => approveBookingRequest(id), "Request approved", id)}
-                onDeny={(id) => {
-                  const reason = prompt("Reason for denial:");
-                  if (!reason?.trim()) return;
-                  runAction(() => denyBookingRequest(id, reason), "Request denied", id);
-                }}
-                onAssign={(id, adminId) =>
-                  runAction(() => assignAdminToBooking(id, adminId), "Admin assigned", id)
-                }
-                onDelete={handleDelete}
-                onOpen={(id) => router.push(`/admin/bookings/${id}`)}
-              />
-            ))}
-          </TableBody>
-        </table>
+    <TooltipProvider delayDuration={150}>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
+        <div className="min-h-0 flex-1 overflow-auto">
+          <table className="w-full min-w-[1180px] table-fixed caption-bottom text-sm">
+            <colgroup>
+              {COLUMNS.map((c) => (
+                <col key={c.key} style={{ width: c.width }} />
+              ))}
+            </colgroup>
+            <TableHeader className="sticky top-0 z-10 bg-card">
+              <TableRow className="border-border/60 hover:bg-transparent">
+                <TableHead className={cn(HEAD_CLASS, "pl-4")}>Type</TableHead>
+                <TableHead className={HEAD_CLASS}>Customer</TableHead>
+                <TableHead className={HEAD_CLASS}>Boat</TableHead>
+                <TableHead className={HEAD_CLASS}>Date &amp; time</TableHead>
+                <TableHead className={cn(HEAD_CLASS, "text-right")}>GMV</TableHead>
+                <TableHead className={cn(HEAD_CLASS, "text-right")}>Expense</TableHead>
+                <TableHead className={cn(HEAD_CLASS, "text-right")}>Revenue</TableHead>
+                <TableHead className={cn(HEAD_CLASS, "pr-6 text-right")}>Comm.</TableHead>
+                <TableHead className={cn(HEAD_CLASS, "px-2 text-center")}>Admin</TableHead>
+                <TableHead className={cn(HEAD_CLASS, "pl-4")}>Source</TableHead>
+                <TableHead className="pr-3" aria-label="Actions" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {bookings.map((b) => (
+                <BookingRow
+                  key={b.id}
+                  booking={b}
+                  admins={admins}
+                  actionLoading={actionLoading}
+                  onApprove={(id) => runAction(() => approveBookingRequest(id), "Request approved", id)}
+                  onDeny={(id) => {
+                    const reason = prompt("Reason for denial:");
+                    if (!reason?.trim()) return;
+                    runAction(() => denyBookingRequest(id, reason), "Request denied", id);
+                  }}
+                  onAssign={(id, adminId) =>
+                    runAction(() => assignAdminToBooking(id, adminId), "Admin assigned", id)
+                  }
+                  onDelete={handleDelete}
+                  onOpen={(id) => router.push(`/admin/bookings/${id}`)}
+                />
+              ))}
+            </TableBody>
+          </table>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
 
 /** Statuses where a deal no longer needs a working admin. */
 const SETTLED_STATUSES = new Set(["CANCELLED", "COMPLETED"]);
 
-/** "Payment?" → badge — one labeled check flag in the Status cell. */
-function FlagPair({ label, children }: { label: string; children: React.ReactNode }) {
+/** Statuses where an invoice could exist (payment state is meaningful). */
+const INVOICED_STATUSES = new Set(["DRAFT", "APPROVED", "CONFIRMED", "COMPLETED"]);
+
+interface EmblemSpec {
+  label: string;
+  className: string;
+  Icon: LucideIcon;
+  /** Diagonal strike through the icon (e.g. unpaid $). */
+  slash?: boolean;
+}
+
+/** Payment emblem per computed display status: green paid, yellow partial, red slashed unpaid. */
+const PAYMENT_EMBLEMS: Record<string, EmblemSpec> = {
+  PAID: { label: "Payment: paid in full", className: "bg-success-soft text-success", Icon: DollarSign },
+  DEPOSIT_PAID: { label: "Payment: partial", className: "bg-warning-soft text-warning", Icon: DollarSign },
+  UNPAID: { label: "Payment: unpaid", className: "bg-destructive-soft text-destructive", Icon: DollarSign, slash: true },
+  PROCESSING: { label: "Payment: processing", className: "bg-sky-500/10 text-sky-600 dark:text-sky-400", Icon: Clock },
+  REFUNDED: { label: "Payment: refunded", className: "bg-orange-500/10 text-orange-600 dark:text-orange-400", Icon: RotateCcw },
+  CHARGEBACK: { label: "Payment: chargeback", className: "bg-orange-500/10 text-orange-600 dark:text-orange-400", Icon: AlertTriangle },
+  FAILED: { label: "Payment: failed", className: "bg-destructive-soft text-destructive", Icon: AlertTriangle },
+};
+
+/**
+ * Tone for a pre-trip requirement emblem (captain, contract): green when
+ * resolved, yellow while pending, red once the trip is inside the
+ * PRETRIP_URGENT_HOURS window with the item still open.
+ */
+function preTripTone(done: boolean, tripImminent: boolean): string {
+  if (done) return "bg-success-soft text-success";
+  return tripImminent
+    ? "bg-destructive-soft text-destructive"
+    : "bg-warning-soft text-warning";
+}
+
+function preTripLabel(item: string, state: string, urgent: boolean): string {
+  return `${item} ${state}${urgent ? ` — trip inside ${PRETRIP_URGENT_HOURS}h` : ""}`;
+}
+
+/** One hoverable color-coded status emblem in the Type column. */
+function StatusEmblem({ label, className, Icon, slash }: EmblemSpec) {
   return (
-    <span className="inline-flex items-center gap-1">
-      <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={cn(
+            "relative flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-full",
+            className
+          )}
+        >
+          <Icon className="h-3.5 w-3.5" />
+          {slash ? (
+            <span className="absolute h-8 w-px rotate-45 bg-current" aria-hidden />
+          ) : null}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs">
         {label}
-      </span>
-      {children}
-    </span>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
-function Chip({ className, children }: { className?: string; children: React.ReactNode }) {
+/** Right-aligned money value; em-dash when there's nothing to show. */
+function MoneyCell({
+  cents,
+  currency,
+  estimate = false,
+  sub,
+  className,
+  strong = false,
+  signed = false,
+}: {
+  cents: number | null | undefined;
+  currency: string;
+  /** Prefixes "est." — inquiry money is a guess, not booked revenue. */
+  estimate?: boolean;
+  sub?: string | null;
+  className?: string;
+  /** Bigger + bolder — for the number the row is really about. */
+  strong?: boolean;
+  /** Color by sign: green in the black, red in the red. */
+  signed?: boolean;
+}) {
   return (
-    <span
-      className={cn(
-        "inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold",
-        className
+    <TableCell className={cn("py-3 pr-1 text-right align-top text-sm", className)}>
+      {cents != null && cents !== 0 ? (
+        <>
+          <span
+            className={cn(
+              "whitespace-nowrap tabular-nums",
+              strong ? "text-[15px] font-bold" : "font-semibold",
+              signed ? (cents > 0 ? "text-success" : "text-destructive") : "text-foreground"
+            )}
+          >
+            {estimate ? (
+              <span className="mr-1 text-[10px] font-medium text-muted-foreground">est.</span>
+            ) : null}
+            {formatCentsAsCurrency(cents, { currency })}
+          </span>
+          {sub ? (
+            <div className="mt-0.5 whitespace-nowrap text-[10px] tabular-nums text-muted-foreground">
+              {sub}
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <span className="text-muted-foreground/40">—</span>
       )}
+    </TableCell>
+  );
+}
+
+/**
+ * Expense column cell: shows the total once expenses exist; before that, real
+ * bookings get an inline "+ Add" that opens the expense tracker right from
+ * the row (inquiries just show the dash — nothing to expense yet).
+ */
+function ExpenseCell({ booking, currency }: { booking: BookingListItem; currency: string }) {
+  const [open, setOpen] = useState(false);
+  // Mount the modal only after first use — not 25 hidden dialogs per page.
+  const [mounted, setMounted] = useState(false);
+
+  if (booking.opsExpenseCents) {
+    return <MoneyCell cents={booking.opsExpenseCents} currency={currency} />;
+  }
+
+  const canTrack = INVOICED_STATUSES.has(booking.bookingStatus);
+  return (
+    <TableCell
+      className="py-3 pr-1 text-right align-top text-sm"
+      onClick={(e) => e.stopPropagation()}
     >
-      {children}
-    </span>
+      {canTrack ? (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              setMounted(true);
+              setOpen(true);
+            }}
+            className="inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+          >
+            <Plus className="h-3 w-3" />
+            Add
+          </button>
+          {mounted ? (
+            <BookingExpensesModal
+              open={open}
+              onOpenChange={setOpen}
+              bookingId={booking.id}
+              totalAmountCents={booking.totalAmountCents}
+              opsGmvCents={booking.opsGmvCents ?? null}
+              currency={currency}
+            />
+          ) : null}
+        </>
+      ) : (
+        <span className="text-muted-foreground/40">—</span>
+      )}
+    </TableCell>
   );
 }
 
@@ -254,19 +412,10 @@ function BookingRow({
     booking.bookingType === "REQUEST" && booking.bookingStatus === "PENDING";
   const isLive = !booking.archivedAt && !SETTLED_STATUSES.has(booking.bookingStatus);
   const isNew = differenceInHours(new Date(), new Date(booking.createdAt)) < 48;
-
-  // Origin — the one discriminator new admins need, worn as a colored badge.
-  const origin =
-    booking.source === "ADMIN"
-      ? "Admin created"
-      : booking.source
-        ? (DEAL_SOURCE_LABELS[booking.source] ?? null)
-        : null;
-  const originClasses =
-    SOURCE_BADGE_CLASSES[booking.source ?? ""] ?? SOURCE_BADGE_CLASSES.OTHER;
+  const currency = booking.currency ?? "USD";
 
   // Trip / requested date
-  let dateLine = "No date yet";
+  let dateLine: string | null = null;
   let timeLine = "";
   if (booking.startDateTime) {
     const { date: sd, time: st } = parseDateTimeInBoatTimezone(booking.startDateTime);
@@ -280,32 +429,43 @@ function BookingRow({
     timeLine = "requested";
   }
 
-  // Status stack lines. Payment only once an invoice could exist — a lead or
-  // an unreviewed request showing "Unpaid" is noise, money already in always shows.
-  const paymentChip =
-    booking.paymentDisplayStatus && PAYMENT_CHIP[booking.paymentDisplayStatus]
-      ? PAYMENT_CHIP[booking.paymentDisplayStatus]
-      : null;
-  const showPayment =
-    paymentChip != null &&
-    (["DRAFT", "APPROVED", "CONFIRMED", "COMPLETED"].includes(booking.bookingStatus) ||
+  // Status emblems — payment once an invoice could exist (or money moved),
+  // captain/contract once the deal is locked in, cold for quiet leads.
+  const paymentEmblem =
+    (INVOICED_STATUSES.has(booking.bookingStatus) ||
       booking.totalPaidCents > 0 ||
-      booking.hasRefund);
+      booking.hasRefund) &&
+    booking.paymentDisplayStatus
+      ? PAYMENT_EMBLEMS[booking.paymentDisplayStatus]
+      : null;
   const showCaptain =
     Boolean(booking.needsCaptain) &&
     (booking.bookingStatus === "APPROVED" || booking.bookingStatus === "CONFIRMED");
-  const captainAssigned = Boolean(booking.captainUserId);
-  // Contract matters once the deal is locked in (approved onward).
   const showContract = ["APPROVED", "CONFIRMED", "COMPLETED"].includes(booking.bookingStatus);
+  // Unresolved pre-trip items are pending (yellow) until the trip is inside
+  // the urgency window, then red — see PRETRIP_URGENT_HOURS in deal-status.
+  const tripImminent = isTripImminent(booking.startDateTime);
   const unassigned = !booking.assignedAdminId && isLive;
 
-  // Value: GMV for real bookings, estimate/budget for inquiries
-  const estimateCents = booking.estimatedValueCents ?? booking.budgetCents;
-  const valueCents = isInquiry
-    ? estimateCents
+  // Money: GMV falls back to the charter total; inquiries show their estimate.
+  const gmvCents = isInquiry
+    ? (booking.estimatedValueCents ?? booking.budgetCents)
     : booking.opsGmvCents && booking.opsGmvCents > 0
       ? booking.opsGmvCents
       : booking.totalAmountCents;
+  const commissionSplit =
+    booking.opsCommissionAgentCents || booking.opsCommissionKosCents
+      ? [
+          booking.opsCommissionAgentCents
+            ? `A ${formatCentsAsCurrency(booking.opsCommissionAgentCents, { currency })}`
+            : null,
+          booking.opsCommissionKosCents
+            ? `K ${formatCentsAsCurrency(booking.opsCommissionKosCents, { currency })}`
+            : null,
+        ]
+          .filter(Boolean)
+          .join(" · ")
+      : null;
 
   const customerName = booking.customerName || booking.userEmail || "Unknown";
   const adminName = booking.assignedAdminId
@@ -319,7 +479,7 @@ function BookingRow({
       onClick={() => onOpen(booking.id)}
       className={cn("group cursor-pointer border-border/50", kind.rowHover)}
     >
-      {/* Type — carries the colored kind rail + origin badge */}
+      {/* Deal — type + hoverable status emblems, one glance for the row's state */}
       <TableCell className="relative py-3 pl-4 align-top">
         <span className={cn("absolute inset-y-0 left-0 w-1", kind.rail)} aria-hidden />
         <div className="flex items-start gap-2.5">
@@ -341,106 +501,90 @@ function BookingRow({
                 </span>
               ) : null}
             </div>
-            {origin ? (
-              <div className="mt-1 flex items-center gap-1">
-                <CornerDownRight className="h-3 w-3 shrink-0 text-muted-foreground/60" aria-hidden />
-                <span
-                  className={cn(
-                    "truncate rounded-md px-1.5 py-0.5 text-[10px] font-semibold",
-                    originClasses
-                  )}
-                >
-                  {origin}
-                </span>
+            {paymentEmblem || showCaptain || showContract || booking.coldAt ? (
+              <div className="mt-1.5 flex items-center gap-1">
+                {paymentEmblem ? <StatusEmblem {...paymentEmblem} /> : null}
+                {showCaptain ? (
+                  <StatusEmblem
+                    label={preTripLabel("Captain", booking.captainUserId ? "assigned" : "needed", !booking.captainUserId && tripImminent)}
+                    className={preTripTone(Boolean(booking.captainUserId), tripImminent)}
+                    Icon={Anchor}
+                  />
+                ) : null}
+                {showContract ? (
+                  <StatusEmblem
+                    label={preTripLabel("Contract", booking.opsContractSigned ? "signed" : "unsigned", !booking.opsContractSigned && tripImminent)}
+                    className={preTripTone(Boolean(booking.opsContractSigned), tripImminent)}
+                    Icon={booking.opsContractSigned ? FileCheck2 : FileX2}
+                  />
+                ) : null}
+                {booking.coldAt ? (
+                  <StatusEmblem
+                    label="Gone cold — no recent activity"
+                    className="bg-sky-500/10 text-sky-600 dark:text-sky-400"
+                    Icon={Snowflake}
+                  />
+                ) : null}
               </div>
             ) : null}
           </div>
         </div>
       </TableCell>
 
-      {/* Customer */}
+      {/* Customer — name + copyable email and phone */}
       <TableCell className="py-3 align-top">
         <div className="truncate text-sm font-medium text-foreground">{customerName}</div>
+        {/* Each contact line in its own block so phone always stacks under email. */}
         {booking.customerEmail ? (
-          <CopyableText value={booking.customerEmail} label="email" className="mt-0.5 max-w-full" />
+          <div className="mt-0.5">
+            <CopyableText value={booking.customerEmail} label="email" className="max-w-full" />
+          </div>
+        ) : null}
+        {booking.customerPhone ? (
+          <div>
+            <CopyableText value={booking.customerPhone} label="phone" className="max-w-full" />
+          </div>
         ) : null}
       </TableCell>
 
-      {/* Boat & date */}
+      {/* Boat */}
       <TableCell className="py-3 align-top">
         <div className="flex items-center gap-1.5 text-sm">
           <Ship className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate font-medium text-foreground">
+          <span className="truncate font-medium text-foreground" title={booking.boatName ?? undefined}>
             {booking.boatName ?? <span className="font-normal text-muted-foreground/60">No boat yet</span>}
           </span>
         </div>
-        <div className="mt-0.5 truncate text-xs tabular-nums text-muted-foreground">
-          {dateLine}
-          {timeLine ? <span className="text-muted-foreground/70"> · {timeLine}</span> : null}
-        </div>
       </TableCell>
 
-      {/* Status — the booking's check flags: labeled question → answer badge.
-          Horizontal, wraps in twos. The row-level cousin of the pre-booking
-          checklist on the detail page. */}
+      {/* Date & time — date on top, time below */}
       <TableCell className="py-3 align-top">
-        {showPayment || showCaptain || showContract || booking.coldAt ? (
-          <div className="flex max-w-[19rem] flex-wrap items-center gap-x-3 gap-y-1.5">
-            {showPayment && paymentChip ? (
-              <FlagPair label="Payment">
-                <Chip className={paymentChip.className}>{paymentChip.label}</Chip>
-              </FlagPair>
+        {dateLine ? (
+          <>
+            <div className="truncate text-sm tabular-nums text-foreground">{dateLine}</div>
+            {timeLine ? (
+              <div className="mt-0.5 truncate text-xs tabular-nums text-muted-foreground">
+                {timeLine}
+              </div>
             ) : null}
-            {showCaptain ? (
-              <FlagPair label="Captain">
-                <Chip
-                  className={
-                    captainAssigned
-                      ? "bg-success-soft text-success"
-                      : "bg-destructive-soft text-destructive"
-                  }
-                >
-                  {captainAssigned ? "Assigned" : "Needed"}
-                </Chip>
-              </FlagPair>
-            ) : null}
-            {showContract ? (
-              <FlagPair label="Contract">
-                <Chip
-                  className={
-                    booking.opsContractSigned
-                      ? "bg-success-soft text-success"
-                      : "bg-warning-soft text-warning"
-                  }
-                >
-                  {booking.opsContractSigned ? "Signed" : "Unsigned"}
-                </Chip>
-              </FlagPair>
-            ) : null}
-            {booking.coldAt ? (
-              <Chip className="bg-sky-500/10 font-medium text-sky-700 dark:text-sky-400">Cold</Chip>
-            ) : null}
-          </div>
+          </>
         ) : (
-          <span className="text-sm text-muted-foreground/40">—</span>
+          <span className="text-sm text-muted-foreground/60">No date yet</span>
         )}
       </TableCell>
 
-      {/* Value */}
-      <TableCell className="py-3 pr-1 text-right align-top text-sm">
-        {valueCents != null && valueCents > 0 ? (
-          <span className="whitespace-nowrap font-semibold tabular-nums text-foreground">
-            {isInquiry ? (
-              <span className="mr-1 text-[10px] font-medium text-muted-foreground">est.</span>
-            ) : null}
-            {formatCentsAsCurrency(valueCents, { currency: booking.currency ?? "USD" })}
-          </span>
-        ) : (
-          <span className="text-muted-foreground/40">—</span>
-        )}
-      </TableCell>
+      {/* Money: GMV → expense → revenue (the headline number) → commission */}
+      <MoneyCell cents={gmvCents} currency={currency} estimate={isInquiry} />
+      <ExpenseCell booking={booking} currency={currency} />
+      <MoneyCell cents={booking.opsRevenueCents} currency={currency} strong signed />
+      <MoneyCell
+        cents={booking.opsCommissionCents}
+        currency={currency}
+        sub={commissionSplit}
+        className="pr-6"
+      />
 
-      {/* Assigned admin — "Unassigned" lives HERE, not in status */}
+      {/* Assigned admin */}
       <TableCell className="px-2 py-3 text-center align-top">
         {adminName ? (
           <span
@@ -450,7 +594,25 @@ function BookingRow({
             {adminInitials(adminName) || "?"}
           </span>
         ) : unassigned ? (
-          <Chip className="bg-destructive-soft text-destructive">Unassigned</Chip>
+          <span className="inline-block whitespace-nowrap rounded-full bg-destructive-soft px-2 py-0.5 text-[10px] font-semibold text-destructive">
+            Unassigned
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground/40">—</span>
+        )}
+      </TableCell>
+
+      {/* Source */}
+      <TableCell className="py-3 pl-4 align-top">
+        {booking.source ? (
+          <span
+            className={cn(
+              "inline-block max-w-full truncate rounded-md px-1.5 py-0.5 text-[10px] font-semibold",
+              SOURCE_BADGE_CLASSES[booking.source] ?? SOURCE_BADGE_CLASSES.OTHER
+            )}
+          >
+            {DEAL_SOURCE_LABELS[booking.source] ?? booking.source}
+          </span>
         ) : (
           <span className="text-xs text-muted-foreground/40">—</span>
         )}

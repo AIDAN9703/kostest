@@ -17,9 +17,10 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
   return (
-    // forcedTheme: admin is dark-mode only for now (owners' call). Light-mode
-    // styles stay in the codebase — drop forcedTheme to bring the toggle back.
-    <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false} disableTransitionOnChange>
+    // The admin is dark-only (light mode removed 2026-07-21). This provider is
+    // NOT dead code: forcedTheme stamps class="dark" on <html>, which every
+    // Tailwind dark: variant and portal (dialogs, dropdowns) depends on.
+    <ThemeProvider attribute="class" forcedTheme="dark" disableTransitionOnChange>
       <KBar>
         <SidebarProvider
           defaultOpen={defaultOpen}
