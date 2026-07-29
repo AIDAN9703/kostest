@@ -102,7 +102,9 @@ export const getUnassignedLeads = cache(async (limit = 8): Promise<DashboardLead
       and(
         eq(bookings.bookingStatus, "INQUIRY"),
         isNull(bookings.assignedAdminId),
-        isNull(bookings.archivedAt)
+        isNull(bookings.archivedAt),
+        // Cold = deliberately parked; it doesn't belong in "needs attention".
+        isNull(bookings.coldAt)
       )
     )
     .orderBy(desc(bookings.createdAt))
@@ -172,8 +174,8 @@ export const getDashboardHeadlineMetrics = cache(
       db.select({ value: count() }).from(boats).where(eq(boats.active, true)),
       db
         .select({
-          open: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'INQUIRY' AND ${bookings.archivedAt} IS NULL)::int`,
-          unassigned: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'INQUIRY' AND ${bookings.archivedAt} IS NULL AND ${bookings.assignedAdminId} IS NULL)::int`,
+          open: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'INQUIRY' AND ${bookings.archivedAt} IS NULL AND ${bookings.coldAt} IS NULL)::int`,
+          unassigned: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'INQUIRY' AND ${bookings.archivedAt} IS NULL AND ${bookings.coldAt} IS NULL AND ${bookings.assignedAdminId} IS NULL)::int`,
         })
         .from(bookings),
       db

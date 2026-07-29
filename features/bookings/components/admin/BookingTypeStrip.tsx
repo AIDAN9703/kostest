@@ -7,7 +7,7 @@ import {
   bookingSearchParams,
   type BookingTypeFilter,
 } from "@/features/bookings/searchParams";
-import { DEAL_KIND_STRIP_GROUPS } from "@/features/bookings/deal-presentation";
+import { DISPLAY_KINDS } from "@/features/bookings/deal-presentation";
 import { cn } from "@/shared/lib/utils/general-utils";
 
 interface BookingTypeStripProps {
@@ -27,9 +27,8 @@ export function BookingTypeStrip({ counts, total }: BookingTypeStripProps) {
   });
 
   const active = filters.bookingType;
-  const groups = DEAL_KIND_STRIP_GROUPS.filter((g) =>
-    g.types.some((t) => (counts[t] ?? 0) > 0)
-  );
+  // Counts arrive already bucketed by display kind (stage-aware, server-side).
+  const kinds = DISPLAY_KINDS.filter((k) => (counts[k.key] ?? 0) > 0);
 
   function select(key: BookingTypeFilter | null) {
     setFilters({ bookingType: active === key ? null : key, page: 1 });
@@ -63,16 +62,14 @@ export function BookingTypeStrip({ counts, total }: BookingTypeStripProps) {
         </span>
       </button>
 
-      {groups.map((group) => {
-        const p = group.presentation;
-        const isActive = active === group.key;
-        const groupCount = group.types.reduce((sum, t) => sum + (counts[t] ?? 0), 0);
+      {kinds.map(({ key, presentation: p }) => {
+        const isActive = active === key;
         const Icon = p.Icon;
         return (
           <button
-            key={group.key}
+            key={key}
             type="button"
-            onClick={() => select(group.key as BookingTypeFilter)}
+            onClick={() => select(key as BookingTypeFilter)}
             aria-pressed={isActive}
             className={cn(
               "group flex shrink-0 items-center gap-2.5 rounded-xl border px-3 py-2 text-left transition-colors",
@@ -91,7 +88,7 @@ export function BookingTypeStrip({ counts, total }: BookingTypeStripProps) {
             </span>
             <span className="min-w-0">
               <span className="block text-lg font-semibold leading-5 tabular-nums text-foreground">
-                {groupCount}
+                {counts[key] ?? 0}
               </span>
               <span className="block whitespace-nowrap text-xs font-medium text-muted-foreground">
                 {p.label}

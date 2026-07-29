@@ -1,4 +1,5 @@
 import {
+  CalendarCheck,
   CalendarRange,
   ClipboardList,
   Globe,
@@ -34,8 +35,6 @@ export interface DealKindPresentation {
   dot: string;
   /** True for pre-sale lead kinds (no boat/pricing guaranteed). */
   isLead: boolean;
-  /** Ordering for the command strip (leads first, money last). */
-  order: number;
   /**
    * Filter/strip grouping — kinds sharing a group render as ONE strip segment
    * and filter together. "INQUIRY" covers boat + general inquiries (whether a
@@ -54,7 +53,6 @@ const FALLBACK: DealKindPresentation = {
   rowHover: "hover:bg-muted/40",
   dot: "bg-slate-400",
   isLead: false,
-  order: 99,
   group: "OTHER",
 };
 
@@ -75,7 +73,6 @@ const INQUIRY: DealKindPresentation = {
   rowHover: "hover:bg-primary-soft/40",
   dot: "bg-primary",
   isLead: true,
-  order: 1,
   group: "INQUIRY",
 };
 
@@ -94,7 +91,6 @@ export const DEAL_KIND_PRESENTATION: Record<string, DealKindPresentation> = {
     rowHover: "hover:bg-violet-500/5",
     dot: "bg-violet-500",
     isLead: true,
-    order: 2,
     group: "TERM_CHARTER",
   },
   MARKETPLACE: {
@@ -106,7 +102,6 @@ export const DEAL_KIND_PRESENTATION: Record<string, DealKindPresentation> = {
     rowHover: "hover:bg-teal-500/5",
     dot: "bg-teal-500",
     isLead: true,
-    order: 3,
     group: "MARKETPLACE",
   },
   INSTANT_BOOK: {
@@ -118,7 +113,6 @@ export const DEAL_KIND_PRESENTATION: Record<string, DealKindPresentation> = {
     rowHover: "hover:bg-emerald-500/5",
     dot: "bg-emerald-500",
     isLead: false,
-    order: 4,
     group: "INSTANT_BOOK",
   },
 };
@@ -127,23 +121,57 @@ export function getDealKind(bookingType: string): DealKindPresentation {
   return DEAL_KIND_PRESENTATION[bookingType] ?? FALLBACK;
 }
 
-/** One command-strip segment: possibly several bookingTypes filtered as one. */
-export interface DealKindStripGroup {
-  /** Filter value written to ?bookingType= (a raw type, or "INQUIRY"). */
-  key: string;
-  /** Underlying bookingType values this segment counts. */
-  types: string[];
-  presentation: DealKindPresentation;
+/** Statuses where a deal has been priced past the inquiry stage. */
+export const PRICED_STATUSES = new Set(["DRAFT", "APPROVED", "CONFIRMED", "COMPLETED"]);
+
+/**
+ * Once an inquiry-family deal is priced, it IS a booking — and it changes
+ * color: gold stays the lead color (inquiries need selling), deep indigo
+ * marks the real thing.
+ */
+const BOOKING_STAGE: DealKindPresentation = {
+  label: "Booking",
+  Icon: CalendarCheck,
+  rail: "bg-indigo-500",
+  iconWrap: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
+  badge: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
+  rowHover: "hover:bg-indigo-500/5",
+  dot: "bg-indigo-500",
+  isLead: false,
+  group: "INQUIRY",
+};
+
+/**
+ * Stage-aware display kind: inquiry-family deals present as "Inquiry" while
+ * they're still leads and as "Booking" once priced (including cancelled deals
+ * that had real pricing — a dead lead stays "Inquiry", a dead booking stays
+ * "Booking"). Distinct kinds (term charter / marketplace / instant book)
+ * keep their identity at every stage.
+ */
+export function getDisplayKind(booking: {
+  bookingType: string;
+  bookingStatus: string;
+  totalAmountCents?: number | null;
+}): DealKindPresentation {
+  const kind = getDealKind(booking.bookingType);
+  if (kind.group !== "INQUIRY") return kind;
+  const priced =
+    PRICED_STATUSES.has(booking.bookingStatus) ||
+    (booking.bookingStatus === "CANCELLED" && (booking.totalAmountCents ?? 0) > 0);
+  return priced ? BOOKING_STAGE : kind;
 }
 
-/** The segments the type strip renders, in display order. */
-export const DEAL_KIND_STRIP_GROUPS: DealKindStripGroup[] = Object.entries(
-  DEAL_KIND_PRESENTATION
-)
-  .sort((a, b) => a[1].order - b[1].order)
-  .reduce<DealKindStripGroup[]>((groups, [type, presentation]) => {
-    const existing = groups.find((g) => g.key === presentation.group);
-    if (existing) existing.types.push(type);
-    else groups.push({ key: presentation.group, types: [type], presentation });
-    return groups;
-  }, []);
+/**
+ * The strip's segments, in display order — DISPLAY kinds, not entry types.
+ * The server buckets counts with the exact same stage-aware rule (see
+ * getBookingTypeCounts), so each segment's number, its filter, and the row
+ * labels always agree: an inquiry that gets priced moves from the Inquiry
+ * segment to the Booking segment.
+ */
+export const DISPLAY_KINDS: { key: string; presentation: DealKindPresentation }[] = [
+  { key: "INQUIRY", presentation: INQUIRY },
+  { key: "BOOKING", presentation: BOOKING_STAGE },
+  { key: "TERM_CHARTER", presentation: DEAL_KIND_PRESENTATION.TERM_CHARTER },
+  { key: "MARKETPLACE", presentation: DEAL_KIND_PRESENTATION.MARKETPLACE },
+  { key: "INSTANT_BOOK", presentation: DEAL_KIND_PRESENTATION.INSTANT_BOOK },
+];

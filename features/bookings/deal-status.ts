@@ -112,14 +112,3 @@ export const TIME_OF_DAY_LABELS: Record<string, string> = {
   FLEXIBLE: "Flexible",
 };
 
-/** Lead-type / origin tags shown next to the deal status. */
-export const DEAL_KIND_LABELS: Record<string, string> = {
-  GENERAL_QUOTE: "Inquiry",
-  BOAT_REQUEST: "Inquiry",
-  MANUAL: "Inquiry",
-  REQUEST: "Inquiry",
-  EXTERNAL_BOOKING: "Inquiry",
-  TERM_CHARTER: "Term charter",
-  MARKETPLACE: "Marketplace",
-  INSTANT_BOOK: "Instant book",
-};

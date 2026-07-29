@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { DollarSign, Users, ArrowRight } from "lucide-react";
 import { createGeneralLead } from "@/features/bookings/actions/lead-intake.actions";
 import { toast } from "@/shared/lib/hooks/use-toast";
-import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 import { requestToBookSchema, type RequestToBookFormData } from "@/shared/lib/validation/inquiry";
 
 //UI Imports
@@ -91,24 +90,7 @@ export default function RequestToBook({ source = "HOME_PAGE" }: RequestToBookPro
         });
 
         if (result.success) {
-          await ghlWebhookService.sendInquiry({
-            name: values.name,
-            email: values.email,
-            phone: values.phone,
-            date: values.date || "",
-            time: values.timeOfDay || "",
-            budget: values.budget || "",
-            guests: values.guests || "",
-            message: values.message || "",
-            sms_consent: values.smsConsent,
-            source:
-              source === "CONTACT_PAGE"
-                ? "KOS Yacht Club - Contact Page Form"
-                : "KOS Yacht Club - Request to Book Form",
-            lead_type: "Charter Inquiry",
-            submitted_at: new Date().toISOString(),
-          });
-
+          // CRM sync happens server-side inside createGeneralLead.
           toast({
             title: "Request Submitted",
             description: result.message ?? "We'll contact you soon!",
@@ -131,7 +113,7 @@ export default function RequestToBook({ source = "HOME_PAGE" }: RequestToBookPro
         setIsSubmitting(false);
       }
     },
-    [form]
+    [form, source, toast]
   );
 
   return (

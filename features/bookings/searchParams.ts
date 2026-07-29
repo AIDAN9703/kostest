@@ -13,12 +13,14 @@ import { PAYMENT_DISPLAY_STATUSES } from "@/shared/lib/utils/payment-display";
 import { ADMIN_LIST_DEFAULT_PAGE_SIZE } from "@/shared/admin/list-pagination";
 
 /**
- * ?bookingType= accepts every raw type plus the "INQUIRY" group, which the
- * service expands to boat + general inquiries (they present as one kind).
+ * ?bookingType= accepts every raw type plus two stage-aware pseudo-values the
+ * service expands over the inquiry family: "INQUIRY" (still a lead) and
+ * "BOOKING" (priced past inquiry). Same rule as getDisplayKind, in SQL.
  */
 export const BOOKING_TYPE_FILTER_VALUES = [
   ...bookingTypeEnum.enumValues,
   "INQUIRY",
+  "BOOKING",
 ] as const;
 export type BookingTypeFilter = (typeof BOOKING_TYPE_FILTER_VALUES)[number];
 

@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { z, ZodError } from "zod";
 import { getAdminSession } from "@/shared/lib/utils/auth-utils";
 import { bookingService } from "@/features/bookings/services/booking.service";
@@ -125,6 +126,13 @@ export async function createBookingsAction(
           `Kings Of The Sea: Your charter proposal is ready. View & accept: ${draftLink}`
         ).catch((err) => console.error("Draft SMS failed:", err));
       }
+    }
+
+    // Every surface that shows this deal must see DRAFT, not a stale INQUIRY.
+    revalidatePath("/admin/bookings");
+    revalidatePath("/admin");
+    for (const bookingId of result.bookingIds) {
+      revalidatePath(`/admin/bookings/${bookingId}`);
     }
 
     return {

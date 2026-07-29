@@ -114,6 +114,7 @@ export async function assignAdminToBooking(bookingId: string, adminId: string | 
     await bookingService.assignAdmin(bookingId, adminId, authResult.session!.user.id!);
     revalidatePath("/admin/bookings");
     revalidatePath(`/admin/bookings/${bookingId}`);
+    revalidatePath("/admin"); // dashboard queue shows unassigned leads
 
     return {
       success: true,

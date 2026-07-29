@@ -15,6 +15,9 @@ function callbackUrlFromRequest(req: NextRequest): string {
 function isPublicGuestBookingPath(pathname: string): boolean {
   // /bookings/:boatId/details — charter checkout (query string has dates / tier)
   if (/^\/bookings\/[^/]+\/details$/.test(pathname)) return true;
+  // /bookings/:boatId/inquiry — non-instant boats redirect guests HERE from
+  // /details; without this the whole public boat-lead funnel dead-ends at sign-in.
+  if (/^\/bookings\/[^/]+\/inquiry$/.test(pathname)) return true;
   // Public draft acceptance links
   if (pathname.startsWith("/bookings/draft/")) return true;
   // Stripe return URL

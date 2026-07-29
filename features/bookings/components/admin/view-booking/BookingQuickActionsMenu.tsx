@@ -57,6 +57,7 @@ import {
   addDealNote,
   logDealContact,
   markDealLost,
+  shareProposalLink,
   toggleDealArchived,
   toggleDealCold,
 } from "@/features/bookings/actions/deal.actions";
@@ -151,6 +152,13 @@ export function BookingQuickActionsMenu({
   const handleCopyProposalLink = async () => {
     if (!publicToken) return;
     const url = `${window.location.origin}/bookings/draft/${publicToken}`;
+    // Copying = publishing: activate the link server-side so the public page
+    // accepts the token (unsent drafts are private until shared).
+    const shared = await shareProposalLink(bookingId);
+    if (!shared.success) {
+      toast({ title: "Couldn't activate the link", description: shared.error, variant: "destructive" });
+      return;
+    }
     try {
       await navigator.clipboard.writeText(url);
       toast({
@@ -166,7 +174,13 @@ export function BookingQuickActionsMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="shrink-0 gap-1.5" disabled={isPending}>
+          <Button
+            variant="outline"
+            size="sm"
+            // Toolbar pill: visible gray fill (bg-muted blends into the card), gold text.
+            className="shrink-0 gap-1.5 rounded-full border-0 bg-foreground/10 px-4 text-primary-strong hover:bg-foreground/15 hover:text-primary-strong"
+            disabled={isPending}
+          >
             {isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (

@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarDays, Users, DollarSign, Globe, Anchor } from "lucide-react";
 import { createTermCharterLead } from "@/features/bookings/actions/lead-intake.actions";
 import { toast } from "@/shared/lib/hooks/use-toast";
-import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 import { termCharterInquirySchema, type TermCharterFormData } from "@/shared/lib/validation/inquiry";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/shared/components/ui/form";
@@ -71,21 +70,7 @@ export default function RequestTermCharter() {
         const result = await createTermCharterLead(values);
 
         if (result.success) {
-          await ghlWebhookService.sendInquiry({
-            name: values.name,
-            email: values.email,
-            phone: values.phone,
-            source: "KOS - Term Charter Form",
-            lead_type: "Term Charter",
-            submitted_at: new Date().toISOString(),
-            start_date: values.startDate,
-            duration: values.duration,
-            destination: values.destination,
-            guests: values.guests,
-            budget: values.budget,
-            accommodations: values.accommodations,
-            message: values.message,
-          });
+          // CRM sync happens server-side inside createTermCharterLead.
           toast({ title: "Request Submitted", description: "Our specialists will contact you soon!" });
           form.reset();
         } else {

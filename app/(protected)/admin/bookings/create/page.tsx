@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 import { SingleBookingForm } from "@/features/bookings/components/admin/booking-forms/SingleBookingForm";
 import { boatService } from "@/features/boats/boat.service";
 import { bookingService } from "@/features/bookings/services/booking.service";
@@ -19,10 +21,13 @@ export default async function AdminBookingCreatePage({ searchParams }: Props) {
     targetDealId ? bookingService.getBookingById(targetDealId) : Promise.resolve(null),
   ]);
 
-  // Only INQUIRY-status deals get priced through this form; anything further
-  // along already has its own trip/pricing on the detail page.
-  const dealPrefill =
-    deal && deal.bookingStatus === "INQUIRY" ? buildDealPrefillForBookingForm(deal) : null;
+  // Only INQUIRY-status deals get priced through this form. A deal that's
+  // already past inquiry has its own trip/pricing — send the admin there
+  // instead of silently showing a blank form that would fork a new booking.
+  if (deal && deal.bookingStatus !== "INQUIRY") {
+    redirect(`/admin/bookings/${deal.id}`);
+  }
+  const dealPrefill = deal ? buildDealPrefillForBookingForm(deal) : null;
   const datePrefill =
     !dealPrefill && date?.trim() ? buildDatePrefillForBookingForm(date.trim()) : null;
 

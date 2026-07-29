@@ -17,9 +17,10 @@ import { bookingEventsService } from "@/features/bookings/services/booking-event
 import { emailSchema, phoneRequiredSchema } from "@/shared/lib/validation/common";
 import {
   boatInquirySchema,
-  preferredTimeOfDaySchema,
+  requestToBookSchema,
   termCharterInquirySchema,
 } from "@/shared/lib/validation/inquiry";
+import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { calculateBookingPriceFromDollars } from "@/shared/lib/utils/pricing-utils";
 import { getAppSettings } from "@/features/app-settings/app-settings.service";
@@ -55,9 +56,12 @@ async function logLeadCreated(
  */
 function parseBudgetCents(budget?: string): number | null {
   if (!budget) return null;
-  const match = budget.trim().match(/^\$?\s*([\d,]+(?:\.\d+)?)$/);
-  if (!match) return null;
-  const dollars = Number(match[1].replace(/,/g, ""));
+  // Accepts "$12,000", "12000", "$10k", and range labels like "$10k–$25k"
+  // (first number wins as the anchor). Pure words ("Flexible") stay null.
+  const match = budget.trim().match(/\$?\s*([\d,]+(?:\.\d+)?)\s*([kK])?/);
+  if (!match?.[1]) return null;
+  let dollars = Number(match[1].replace(/,/g, ""));
+  if (match[2]) dollars *= 1000;
   return Number.isFinite(dollars) && dollars > 0 ? Math.round(dollars * 100) : null;
 }
 
@@ -73,7 +77,9 @@ function messageWithBudgetLabel(
   budget: string | undefined
 ): string | null {
   const label = budget?.trim();
-  const labelNeeded = Boolean(label) && parseBudgetCents(budget) == null;
+  // Keep the label whenever it says more than a plain dollar figure —
+  // "Under $10k" parses to an anchor amount but the nuance lives in the text.
+  const labelNeeded = Boolean(label) && !/^\$?\s*[\d,]+(?:\.\d+)?$/.test(label ?? "");
   const parts = [message?.trim() || null, labelNeeded ? `Budget: ${label}` : null].filter(
     Boolean
   );
@@ -84,20 +90,8 @@ function messageWithBudgetLabel(
 // General quote (home page / contact page)
 // ============================================================================
 
-const generalLeadSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: emailSchema,
-  phone: phoneRequiredSchema,
-  /** Plain calendar date "yyyy-MM-dd" — stored as DATE, never a timestamp. */
-  date: z.string().optional(),
-  timeOfDay: preferredTimeOfDaySchema.optional(),
-  budget: z.string().optional(),
-  guests: z.string().optional(),
-  message: z.string().optional(),
-  termsAgreed: z.boolean().refine((val) => val === true, {
-    message: "You must agree to the terms and conditions",
-  }),
-  smsConsent: z.boolean().default(false),
+/** The public quote form's own schema plus the page it came from. */
+const generalLeadSchema = requestToBookSchema.extend({
   source: z.enum(["HOME_PAGE", "CONTACT_PAGE"]).default("HOME_PAGE"),
 });
 
@@ -126,7 +120,28 @@ export async function createGeneralLead(data: GeneralLeadInput) {
       })
       .returning({ id: bookings.id });
 
-    if (deal) await logLeadCreated(deal.id, null);
+    if (deal) {
+      await logLeadCreated(deal.id, null);
+      // CRM sync is server-side, fire-and-forget: a closed tab can't lose the
+      // record and the webhook URL never ships in the client bundle.
+      void ghlWebhookService.sendInquiry({
+        name: validated.name,
+        email: validated.email,
+        phone: validated.phone,
+        date: validated.date || "",
+        time: validated.timeOfDay || "",
+        budget: validated.budget || "",
+        guests: validated.guests || "",
+        message: validated.message || "",
+        sms_consent: validated.smsConsent,
+        source:
+          validated.source === "CONTACT_PAGE"
+            ? "KOS Yacht Club - Contact Page Form"
+            : "KOS Yacht Club - Request to Book Form",
+        lead_type: "Charter Inquiry",
+        submitted_at: new Date().toISOString(),
+      });
+    }
     revalidateDealSurfaces();
 
     return {
@@ -198,7 +213,24 @@ export async function createTermCharterLead(data: TermCharterLeadInput) {
       })
       .returning({ id: bookings.id });
 
-    if (deal) await logLeadCreated(deal.id, null);
+    if (deal) {
+      await logLeadCreated(deal.id, null);
+      void ghlWebhookService.sendInquiry({
+        name: validated.name,
+        email: validated.email,
+        phone: validated.phone,
+        source: "KOS - Term Charter Form",
+        lead_type: "Term Charter",
+        submitted_at: new Date().toISOString(),
+        start_date: validated.startDate || "",
+        duration: validated.duration || "",
+        destination: validated.destination || "",
+        guests: validated.guests || "",
+        budget: validated.budget || "",
+        accommodations: validated.accommodations || "",
+        message: validated.message || "",
+      });
+    }
     revalidateDealSurfaces();
 
     return {
@@ -240,6 +272,7 @@ export async function createBoatLead(data: BoatLeadInput) {
     const [boat] = await db
       .select({
         id: boats.id,
+        name: boats.name,
         cleaningFee: boats.cleaningFee,
         crewRequired: boats.crewRequired,
       })
@@ -295,7 +328,25 @@ export async function createBoatLead(data: BoatLeadInput) {
       })
       .returning({ id: bookings.id });
 
-    if (deal) await logLeadCreated(deal.id, null);
+    if (deal) {
+      await logLeadCreated(deal.id, null);
+      void ghlWebhookService.sendInquiry({
+        name: validated.name,
+        email: validated.email,
+        phone: validated.phone,
+        date: validated.startDateTime,
+        guests: String(validated.numberOfPassengers),
+        message: validated.message || "",
+        boat_id: boat.id,
+        boat_name: boat.name,
+        lead_type: "BOAT_REQUEST",
+        source: "BOAT_PAGE",
+        pricing_tier_hours: String(pricingTier.hours),
+        needs_captain: String(needsCaptain),
+        submitted_at: new Date().toISOString(),
+        source_label: `KOS Yacht Club - ${boat.name} Inquiry`,
+      });
+    }
     revalidateDealSurfaces();
     revalidatePath(`/boats/${boatId}`);
 

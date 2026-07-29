@@ -34,7 +34,8 @@ export function BookingPageEditButton() {
     <Button
       variant="outline"
       size="sm"
-      className="gap-1.5 shrink-0"
+      // Toolbar pill: visible gray fill (bg-muted blends into the card), gold text.
+      className="shrink-0 gap-1.5 rounded-full border-0 bg-foreground/10 px-4 text-primary-strong hover:bg-foreground/15 hover:text-primary-strong"
       onClick={() => setEditing(!editing)}
     >
       {editing ? (

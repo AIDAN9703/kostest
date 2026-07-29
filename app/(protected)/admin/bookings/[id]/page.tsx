@@ -8,9 +8,9 @@ import { DealHeaderCard } from "@/features/bookings/components/admin/view-bookin
 import { DealRequestCard } from "@/features/bookings/components/admin/view-booking/DealRequestCard";
 import {
   computeDealStatusForBooking,
-  DEAL_KIND_LABELS,
   DEAL_SOURCE_LABELS,
 } from "@/features/bookings/deal-status";
+import { getDisplayKind } from "@/features/bookings/deal-presentation";
 import { adminInitials } from "@/shared/lib/utils/people-display";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
@@ -195,13 +195,13 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
           {/* Identity header — one face for every deal status */}
           <DealHeaderCard
-        eyebrow={`${isInquiry ? "Inquiry" : "Booking"} #${booking.id.slice(0, 6).toUpperCase()}`}
+        eyebrow={`Booking #${booking.id.slice(0, 6).toUpperCase()}`}
         name={booking.customerName || "Unnamed customer"}
         avatarInitials={adminInitials(booking.customerName ?? "") || "?"}
-        avatarClassName={isInquiry ? "bg-muted text-muted-foreground" : "bg-primary-soft text-primary-strong"}
+        avatarClassName="bg-primary-soft text-primary-strong"
         typeChip={
           <span className="inline-block rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold text-muted-foreground">
-            {DEAL_KIND_LABELS[booking.bookingType] ?? booking.bookingType}
+            {getDisplayKind(booking).label}
           </span>
         }
         meta={
@@ -250,6 +250,16 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         }
         email={booking.customerEmail}
         phone={booking.customerPhone}
+        ownerName={
+          booking.assignedAdminId
+            ? [booking.assignedAdminFirstName, booking.assignedAdminLastName]
+                .filter(Boolean)
+                .join(" ")
+                .trim() ||
+              booking.assignedAdminEmail ||
+              "Admin"
+            : null
+        }
             pipeline={
               <DealPipelineBar
                 dealStatus={dealStatus}
@@ -267,9 +277,9 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
               <DealRequestCard deal={booking} />
             </>
           ) : (
+            /* Priority order: the trip and the money are what admins open
+               this page for — checks ride below (modal move pending). */
             <>
-              <BookingChecksPanel bookingId={id} items={checklistItems} />
-
               <BookingTripCard
                 bookingId={id}
                 trip={tripSnapshot}
@@ -292,6 +302,8 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
                 commissionKosCents={ops?.commissionKosCents ?? null}
                 expenseLines={expenseLines}
               />
+
+              <BookingChecksPanel bookingId={id} items={checklistItems} />
             </>
           )}
         </div>

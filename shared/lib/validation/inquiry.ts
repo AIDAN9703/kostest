@@ -33,9 +33,9 @@ export const requestToBookSchema = baseContactSchema.extend({
   termsAgreed: z.boolean().refine((val) => val === true, {
     message: "You must agree to the terms and conditions",
   }),
-  smsConsent: z.boolean().refine((val) => val === true, {
-    message: "You must agree to receive SMS messages to submit this form",
-  }),
+  // Optional by design (and by the checkbox label) — declining SMS must
+  // never block a lead from submitting.
+  smsConsent: z.boolean().default(false),
 });
 
 /** Term charter - structured fields, stored in real inquiry columns */

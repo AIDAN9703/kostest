@@ -78,6 +78,18 @@ import { bookingEventsService } from "@/features/bookings/services/booking-event
 import { fetchBoatAndTier, fetchBoatsAndTiersBulk } from "@/features/bookings/booking-helpers";
 import { getAppSettings } from "@/features/app-settings/app-settings.service";
 
+/**
+ * Stage rule shared by the list filter and the type-count strip: an
+ * inquiry-family row is "priced past inquiry" (displays as BOOKING) once its
+ * status moved beyond the lead stage — or it was cancelled with real pricing
+ * attached (a dead booking, not a dead lead). SQL twin of getDisplayKind in
+ * deal-presentation.tsx; requires booking_pricing to be joined.
+ */
+function pricedPastInquirySql() {
+  return sql`(${bookings.bookingStatus} IN ('DRAFT', 'APPROVED', 'CONFIRMED', 'COMPLETED')
+    OR (${bookings.bookingStatus} = 'CANCELLED' AND COALESCE(${bookingPricing.totalAmountCents}, 0) > 0))`;
+}
+
 // ============================================================================
 // BOOKING SERVICE CLASS
 // ============================================================================
@@ -111,10 +123,6 @@ export class BookingService {
 
     const publicToken = crypto.randomUUID();
     const bookingIds: string[] = [];
-    const lineItemsTotal = (input.lineItems ?? []).reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
-      0
-    );
 
     for (let i = 0; i < input.bookings.length; i++) {
       const b = input.bookings[i];
@@ -144,14 +152,6 @@ export class BookingService {
       const addOnsCents = dollarsToCents(addOnsTotalDollars);
       const basePriceCents = dollarsToCents(basePrice);
 
-      const { serviceFeeRate } = await getAppSettings();
-      const priceBreakdown = calculateBookingPriceCents(
-        basePriceCents,
-        dollarsToCents(boat.cleaningFee ?? 0),
-        0,
-        addOnsCents,
-        serviceFeeRate
-      );
       const depositDollars =
         b.depositAmount != null && b.depositAmount >= 0
           ? b.depositAmount
@@ -173,13 +173,6 @@ export class BookingService {
       // DRAFT proposal — its id, entry type/source, and history stay intact.
       // Extra group sections (and creates without a deal) insert new rows.
       const upgradeDealId = i === 0 ? (input.dealId ?? null) : null;
-      const upgradeDeal = upgradeDealId
-        ? await db
-            .select({ id: bookings.id, bookingStatus: bookings.bookingStatus })
-            .from(bookings)
-            .where(eq(bookings.id, upgradeDealId))
-            .then((rows) => (rows[0]?.bookingStatus === "INQUIRY" ? rows[0] : null))
-        : null;
 
       const dealFields = {
         userId: b.userId ?? null,
@@ -191,7 +184,6 @@ export class BookingService {
         customerEmail: b.customerEmail,
         customerPhone: b.customerPhone ?? null,
         isMultiDay: false,
-        needsCaptain: boat.crewRequired,
         startDateTime,
         endDateTime,
         numberOfPassengers: input.numberOfPassengers,
@@ -207,18 +199,37 @@ export class BookingService {
       };
 
       let bookingId: string;
-      if (upgradeDeal) {
-        await db
+      if (upgradeDealId) {
+        // Compare-and-swap: only a row still at INQUIRY can be upgraded. Two
+        // admins pricing the same lead → second one fails loudly here instead
+        // of silently overwriting (no transactions on the neon-http driver).
+        const [upgraded] = await db
           .update(bookings)
-          .set({ ...dealFields, updatedAt: now })
-          .where(eq(bookings.id, upgradeDeal.id));
+          .set({
+            ...dealFields,
+            // crewRequired boats force a captain; otherwise the customer's
+            // stored preference survives the upgrade untouched.
+            ...(boat.crewRequired ? { needsCaptain: true } : {}),
+            // A priced deal is no longer a parked lead.
+            coldAt: null,
+            updatedAt: now,
+          })
+          .where(
+            and(eq(bookings.id, upgradeDealId), eq(bookings.bookingStatus, "INQUIRY"))
+          )
+          .returning({ id: bookings.id });
+        if (!upgraded) {
+          throw new Error(
+            "This deal is no longer at the inquiry stage — it may have just been priced by another admin. Refresh to see the latest."
+          );
+        }
         await bookingStatusService.transitionStatus({
-          bookingId: upgradeDeal.id,
+          bookingId: upgraded.id,
           newStatus: "DRAFT",
           changedByUserId: assignedAdminId ?? null,
           reason: "Priced into a proposal",
         });
-        bookingId = upgradeDeal.id;
+        bookingId = upgraded.id;
       } else {
         const [created] = await db
           .insert(bookings)
@@ -226,6 +237,7 @@ export class BookingService {
             bookingType: "EXTERNAL_BOOKING",
             bookingStatus: "DRAFT",
             source: "ADMIN" as BookingSource,
+            needsCaptain: boat.crewRequired,
             ...dealFields,
           })
           .returning({ id: bookings.id });
@@ -249,7 +261,9 @@ export class BookingService {
       bookingIds.push(bookingId);
     }
 
-    if (publicToken && bookingIds.length > 0) {
+    // Only log "published" when the proposal actually went out — saving a
+    // draft without sending must not fabricate a timeline entry.
+    if (publicToken && bookingIds.length > 0 && (input.publishNow ?? false)) {
       await bookingEventsService.logDraftPublished({
         bookingId: bookingIds[0],
         actorId: assignedAdminId ?? null,
@@ -362,6 +376,9 @@ export class BookingService {
 
     if (!first) return null;
     if (first.bookingStatus !== "DRAFT" && first.bookingStatus !== "APPROVED") return null;
+    // Unsent proposals are private: the token only works once the draft has
+    // actually been published (emailed/SMS'd or link explicitly shared).
+    if (!first.publishedAt) return null;
 
     if (first.bookingGroupId) {
       const groupBookings = await db
@@ -393,10 +410,14 @@ export class BookingService {
     const bookingIds: string[] = [];
 
     for (const b of draftBookings) {
-      await bookingStatusService.acceptDraft(b.id, {
-        acceptedAt: now,
-        acceptedCustomerNote: input.customerNote ?? null,
-      });
+      // Idempotent: a retried submit or a mixed-status group must not blow
+      // up — rows already past DRAFT are kept as-is.
+      if (b.bookingStatus === "DRAFT") {
+        await bookingStatusService.acceptDraft(b.id, {
+          acceptedAt: now,
+          acceptedCustomerNote: input.customerNote ?? null,
+        });
+      }
       bookingIds.push(b.id);
     }
 
@@ -721,12 +742,26 @@ export class BookingService {
       }
     }
     if (filters?.bookingType) {
-      // "INQUIRY" is a filter group, not a real type — expand to its members.
-      whereConditions.push(
-        filters.bookingType === "INQUIRY"
-          ? inArray(bookings.bookingType, [...INQUIRY_GROUP_TYPES])
-          : eq(bookings.bookingType, filters.bookingType)
-      );
+      // "INQUIRY"/"BOOKING" are stage-aware pseudo-types over the inquiry
+      // family — same rule as getDisplayKind, so the filter always matches
+      // what the row labels say. Raw types filter as themselves.
+      if (filters.bookingType === "INQUIRY") {
+        whereConditions.push(
+          and(
+            inArray(bookings.bookingType, [...INQUIRY_GROUP_TYPES]),
+            sql`NOT ${pricedPastInquirySql()}`
+          )
+        );
+      } else if (filters.bookingType === "BOOKING") {
+        whereConditions.push(
+          and(
+            inArray(bookings.bookingType, [...INQUIRY_GROUP_TYPES]),
+            pricedPastInquirySql()
+          )
+        );
+      } else {
+        whereConditions.push(eq(bookings.bookingType, filters.bookingType));
+      }
     }
     if (filters?.dateFrom) {
       whereConditions.push(gte(bookings.startDateTime, new Date(filters.dateFrom)));
@@ -962,17 +997,30 @@ export class BookingService {
       if (live) conditions.push(live);
     }
 
+    // Bucket by DISPLAY kind, not entry type — the inquiry family splits into
+    // INQUIRY (still a lead) vs BOOKING (priced past inquiry) with the exact
+    // rule the rows use (getDisplayKind), so strip counts match row labels.
+    const displayKind = sql<string>`CASE
+      WHEN ${inArray(bookings.bookingType, [...INQUIRY_GROUP_TYPES])}
+      THEN CASE WHEN ${pricedPastInquirySql()} THEN 'BOOKING' ELSE 'INQUIRY' END
+      ELSE ${bookings.bookingType}::text
+    END`;
+
+    // GROUP BY 1 (ordinal), NOT the expression again: re-rendering the CASE
+    // gives it fresh $n placeholders, and Postgres then treats the SELECT and
+    // GROUP BY copies as different expressions and rejects the query.
     const rows = await db
-      .select({ bookingType: bookings.bookingType, value: count() })
+      .select({ kind: displayKind, value: count() })
       .from(bookings)
+      .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
       .leftJoin(boats, eq(bookings.boatId, boats.id))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .groupBy(bookings.bookingType);
+      .groupBy(sql`1`);
 
     const counts: Record<string, number> = {};
     let total = 0;
     for (const r of rows) {
-      counts[r.bookingType] = Number(r.value);
+      counts[r.kind] = Number(r.value);
       total += Number(r.value);
     }
     return { counts, total };

@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, Plus, UserPlus } from "lucide-react";
+import { Loader2, Pencil, Plus, UserPlus } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
+import { adminInitials } from "@/shared/lib/utils/people-display";
 import {
   Dialog,
   DialogContent,
@@ -46,8 +47,9 @@ function displayAssigned(
   };
 }
 
-const tableAssignButtonClass =
-  "inline-flex items-center gap-1 rounded-md border border-dashed border-border px-2 py-1 text-xs font-medium text-muted-foreground transition-colors hover:border-border hover:bg-muted/50 hover:text-foreground";
+/** Dashed pill for the empty state — same affordance as OpsCrewAssignment. */
+const assignPillClass =
+  "inline-flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground";
 
 interface OpsCaptainAssignmentProps {
   bookingId: string;
@@ -56,8 +58,6 @@ interface OpsCaptainAssignmentProps {
   captainLastName: string | null;
   captainEmail: string | null;
   captainOptions: CaptainAssignmentOption[];
-  /** Bookings table: dashed Captain button / clickable name only */
-  compact?: boolean;
 }
 
 export function OpsCaptainAssignment({
@@ -67,7 +67,6 @@ export function OpsCaptainAssignment({
   captainLastName,
   captainEmail,
   captainOptions,
-  compact = false,
 }: OpsCaptainAssignmentProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -174,79 +173,53 @@ export function OpsCaptainAssignment({
     </Dialog>
   );
 
-  if (compact) {
-    return (
-      <>
-        <div onClick={(e) => e.stopPropagation()}>
-          {assigned ? (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => setModalOpen(true)}
-              className="max-w-full truncate text-left text-sm font-medium text-foreground transition-colors hover:text-primary-strong"
-              title={formatCaptainName(assigned)}
-            >
-              {formatCaptainName(assigned)}
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => setModalOpen(true)}
-              className={tableAssignButtonClass}
-              title="Assign captain"
-            >
-              {pending ? (
-                <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-              ) : (
-                <Plus className="h-3 w-3" aria-hidden />
-              )}
-              Captain
-            </button>
-          )}
-        </div>
-        {assignDialog}
-      </>
-    );
-  }
-
+  // Label ("Captain") is owned by the parent card — this renders only the
+  // person chip, or the dashed assign pill when nobody's on the wheel yet.
   return (
     <>
-      <div className="inline-flex w-fit max-w-[13.5rem] flex-col gap-1">
-        <div className="flex items-center gap-0.5">
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Captain
+      {assigned ? (
+        <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-border/60 bg-muted/30 py-1 pl-1 pr-1">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-foreground">
+            {adminInitials(formatCaptainName(assigned)) || "?"}
           </span>
+          <Link
+            href={`/admin/users/${assigned.id}`}
+            className="min-w-0 truncate text-xs font-medium underline-offset-4 hover:text-primary-strong hover:underline"
+            title={formatCaptainName(assigned)}
+          >
+            {formatCaptainName(assigned)}
+          </Link>
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            className="h-6 w-6 shrink-0 rounded-md text-muted-foreground hover:text-foreground"
+            className="h-6 w-6 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
             disabled={pending}
-            aria-label="Assign or change captain"
+            aria-label="Change captain"
             onClick={() => setModalOpen(true)}
           >
             {pending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
             ) : (
-              <Plus className="h-3.5 w-3.5" aria-hidden />
+              <Pencil className="h-3 w-3" aria-hidden />
             )}
           </Button>
-        </div>
-        <div className="min-w-0 truncate text-xs leading-snug text-foreground">
-          {assigned ? (
-            <Link
-              href={`/admin/users/${assigned.id}`}
-              className="font-medium underline-offset-4 hover:text-primary-strong hover:underline"
-              title={formatCaptainName(assigned)}
-            >
-              {formatCaptainName(assigned)}
-            </Link>
+        </span>
+      ) : (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => setModalOpen(true)}
+          className={assignPillClass}
+        >
+          {pending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
           ) : (
-            <span className="text-muted-foreground">Unassigned</span>
+            <Plus className="h-3.5 w-3.5" aria-hidden />
           )}
-        </div>
-      </div>
+          Assign captain
+        </button>
+      )}
 
       {assignDialog}
     </>

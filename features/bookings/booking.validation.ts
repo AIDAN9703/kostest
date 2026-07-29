@@ -35,8 +35,9 @@ export const bookingFilterSchema = z.object({
   // Status filters (from database schema)
   bookingStatus: z.enum(bookingStatusEnum.enumValues).optional(),
   paymentStatus: z.enum(PAYMENT_DISPLAY_STATUSES).optional(),
-  // Raw types plus the "INQUIRY" group (boat + general inquiries filter as one).
-  bookingType: z.enum([...bookingTypeEnum.enumValues, "INQUIRY"]).optional(),
+  // Raw types plus the stage-aware pseudo-values over the inquiry family:
+  // "INQUIRY" = still a lead, "BOOKING" = priced past inquiry.
+  bookingType: z.enum([...bookingTypeEnum.enumValues, "INQUIRY", "BOOKING"]).optional(),
   
   // Date range
   dateFrom: z.string().optional(),

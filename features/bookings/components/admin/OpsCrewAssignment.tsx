@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Loader2, Plus, UserPlus, X } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
+import { adminInitials } from "@/shared/lib/utils/people-display";
 import {
   Dialog,
   DialogContent,
@@ -96,57 +97,53 @@ export function OpsCrewAssignment({
     }
   }
 
+  // Label ("Crew") is owned by the parent card — this renders person chips
+  // (one per member, X to remove) plus a dashed add pill, mirroring
+  // OpsCaptainAssignment so the two sections read as one system.
   return (
     <>
-      <div className="inline-flex w-fit max-w-[13.5rem] flex-col gap-1">
-        <div className="flex items-center gap-0.5">
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Assigned crew
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 shrink-0 rounded-md text-muted-foreground hover:text-foreground"
-            disabled={pending}
-            aria-label="Add crew member"
-            onClick={() => setModalOpen(true)}
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+        {assignedCrew.map((m) => (
+          <span
+            key={m.id}
+            className="inline-flex max-w-full items-center gap-2 rounded-full border border-border/60 bg-muted/30 py-1 pl-1 pr-1"
           >
-            {pending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-            ) : (
-              <Plus className="h-3.5 w-3.5" />
-            )}
-          </Button>
-        </div>
-        <ul className="min-w-0 space-y-1 text-xs leading-snug text-foreground">
-          {assignedCrew.length === 0 ? (
-            <li className="text-muted-foreground">None assigned</li>
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[10px] font-semibold text-foreground">
+              {adminInitials(formatCrewName(m)) || "?"}
+            </span>
+            <Link
+              href={`/admin/users/${m.userId}`}
+              className="min-w-0 truncate text-xs font-medium underline-offset-4 hover:text-primary-strong hover:underline"
+              title={formatCrewName(m)}
+            >
+              {formatCrewName(m)}
+            </Link>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 shrink-0 rounded-full text-muted-foreground hover:text-destructive"
+              disabled={pending}
+              aria-label={`Remove ${formatCrewName(m)}`}
+              onClick={() => remove(m.id)}
+            >
+              <X className="h-3 w-3" aria-hidden />
+            </Button>
+          </span>
+        ))}
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => setModalOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+        >
+          {pending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
           ) : (
-            assignedCrew.map((m) => (
-              <li key={m.id} className="flex min-w-0 items-center gap-0.5">
-                <Link
-                  href={`/admin/users/${m.userId}`}
-                  className="min-w-0 flex-1 truncate font-medium underline-offset-4 hover:text-primary-strong hover:underline"
-                  title={formatCrewName(m)}
-                >
-                  {formatCrewName(m)}
-                </Link>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 shrink-0 rounded-md text-muted-foreground hover:text-destructive"
-                  disabled={pending}
-                  aria-label={`Remove ${formatCrewName(m)}`}
-                  onClick={() => remove(m.id)}
-                >
-                  <X className="h-3.5 w-3.5" aria-hidden />
-                </Button>
-              </li>
-            ))
+            <Plus className="h-3.5 w-3.5" aria-hidden />
           )}
-        </ul>
+          {assignedCrew.length === 0 ? "Add crew" : null}
+        </button>
       </div>
 
       <Dialog

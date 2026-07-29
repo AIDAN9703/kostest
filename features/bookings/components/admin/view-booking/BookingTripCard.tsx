@@ -173,8 +173,9 @@ export function BookingTripCard({
         <CardTitle className="text-lg">Trip details</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
-        {/* Boat + assignment — live controls in both modes */}
-        <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+        {/* Boat + people — live controls in both modes. Captain and Crew get
+            their own labeled cells with matching person-chip affordances. */}
+        <div className="grid gap-x-6 gap-y-4 sm:grid-cols-3">
           <Fact label="Boat">
             {trip.boatId ? (
               <Link
@@ -187,23 +188,22 @@ export function BookingTripCard({
               <span className="text-sm text-muted-foreground">—</span>
             )}
           </Fact>
-          <Fact label="Captain & crew">
-            <div className="flex flex-wrap items-center gap-3">
-              <OpsCaptainAssignment
-                compact
-                bookingId={bookingId}
-                captainUserId={captainUserId}
-                captainFirstName={captainFirstName}
-                captainLastName={captainLastName}
-                captainEmail={captainEmail}
-                captainOptions={captainOptions}
-              />
-              <OpsCrewAssignment
-                bookingId={bookingId}
-                assignedCrew={bookingCrew}
-                crewOptions={crewOptions}
-              />
-            </div>
+          <Fact label="Captain">
+            <OpsCaptainAssignment
+              bookingId={bookingId}
+              captainUserId={captainUserId}
+              captainFirstName={captainFirstName}
+              captainLastName={captainLastName}
+              captainEmail={captainEmail}
+              captainOptions={captainOptions}
+            />
+          </Fact>
+          <Fact label="Crew">
+            <OpsCrewAssignment
+              bookingId={bookingId}
+              assignedCrew={bookingCrew}
+              crewOptions={crewOptions}
+            />
           </Fact>
         </div>
 

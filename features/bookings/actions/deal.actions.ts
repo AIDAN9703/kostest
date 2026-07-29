@@ -35,6 +35,7 @@ async function getDeal(bookingId: string) {
       firstContactedAt: bookings.firstContactedAt,
       coldAt: bookings.coldAt,
       archivedAt: bookings.archivedAt,
+      assignedAdminId: bookings.assignedAdminId,
     })
     .from(bookings)
     .where(eq(bookings.id, bookingId));
@@ -50,6 +51,11 @@ export async function claimDeal(bookingId: string): Promise<DealActionResult> {
 
     const deal = await getDeal(bookingId);
     if (!deal) return { success: false, error: "Deal not found" };
+    // Claim ≠ steal: if someone already owns it, reassignment must go through
+    // the explicit Assign menu, not a silent last-write-wins.
+    if (deal.assignedAdminId && deal.assignedAdminId !== session.user.id) {
+      return { success: false, error: "Already claimed by another admin — use Assign to reassign it" };
+    }
 
     await db
       .update(bookings)
@@ -216,6 +222,50 @@ export async function toggleDealArchived(bookingId: string): Promise<DealActionR
   }
 }
 
+/**
+ * Copying the proposal link IS publishing it — the customer is about to hold
+ * a working URL. Stamps publishedAt on first share so the public draft page
+ * (which refuses unpublished tokens) accepts it, and logs the share once.
+ */
+export async function shareProposalLink(bookingId: string): Promise<DealActionResult> {
+  try {
+    const adminAuth = await getAdminSession();
+    if (adminAuth.error !== undefined) return { success: false, error: adminAuth.error };
+    const session = adminAuth.session;
+
+    const [row] = await db
+      .select({
+        id: bookings.id,
+        publicToken: bookings.publicToken,
+        publishedAt: bookings.publishedAt,
+      })
+      .from(bookings)
+      .where(eq(bookings.id, bookingId));
+    if (!row?.publicToken) return { success: false, error: "No proposal link exists for this booking" };
+
+    if (!row.publishedAt) {
+      await db
+        .update(bookings)
+        .set({ publishedAt: new Date(), updatedAt: new Date() })
+        .where(eq(bookings.id, bookingId));
+      await bookingEventsService.logEvent({
+        bookingId,
+        eventType: "booking.draft_published",
+        actorType: "admin",
+        actorId: session.user.id,
+        channel: "admin_portal",
+        displayMessage: "Proposal link shared with the customer",
+        metadata: { publicToken: row.publicToken, via: "copy_link" },
+      });
+      revalidateDeal(bookingId);
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error sharing proposal link:", error);
+    return { success: false, error: "Failed to activate the proposal link" };
+  }
+}
+
 /** Lose an INQUIRY-stage deal — status CANCELLED with the reason recorded. */
 export async function markDealLost(bookingId: string, reason: string): Promise<DealActionResult> {
   try {
@@ -229,6 +279,11 @@ export async function markDealLost(bookingId: string, reason: string): Promise<D
     if (!deal) return { success: false, error: "Deal not found" };
 
     await bookingStatusService.cancel(bookingId, trimmed, session.user.id);
+    // The menu promises "moves to the archive bucket" — make it true.
+    await db
+      .update(bookings)
+      .set({ archivedAt: new Date(), updatedAt: new Date() })
+      .where(eq(bookings.id, bookingId));
 
     revalidateDeal(bookingId);
     return { success: true, message: "Deal marked as lost" };

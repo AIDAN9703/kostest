@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryStates, parseAsString, parseAsInteger, parseAsBoolean } from "nuqs";
 import { Loader2 } from "lucide-react";
@@ -13,7 +14,6 @@ import { Button } from "@/shared/components/ui/button";
 import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
 import { toast } from "@/shared/lib/hooks/use-toast";
-import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 import { createBoatLead } from "@/features/bookings/actions/lead-intake.actions";
 import type { BoatInquiryContactFormData } from "@/shared/lib/validation/inquiry";
 import InquiryContactForm from "@/features/bookings/components/lead-intake/InquiryContactForm";
@@ -90,23 +90,7 @@ export default function BoatInquiryDetailsClient({
         });
 
         if (result.success && result.bookingId) {
-          await ghlWebhookService.sendInquiry({
-            name: contact.name,
-            email: contact.email,
-            phone: contact.phone,
-            date: startDateTime,
-            guests: String(numberOfPassengers),
-            message: contact.message || "",
-            boat_id: boat.id,
-            boat_name: boat.name,
-            lead_type: "BOAT_REQUEST",
-            source: "BOAT_PAGE",
-            pricing_tier_hours: String(selectedTier.hours),
-            needs_captain: String(needsCaptain),
-            submitted_at: new Date().toISOString(),
-            source_label: `KOS Yacht Club - ${boat.name} Inquiry`,
-          });
-
+          // CRM sync happens server-side inside createBoatLead.
           setSubmitted(true);
           toast({
             title: "Request submitted",
@@ -131,7 +115,6 @@ export default function BoatInquiryDetailsClient({
     },
     [
       boat.id,
-      boat.name,
       isTripComplete,
       needsCaptain,
       numberOfPassengers,
@@ -164,7 +147,7 @@ export default function BoatInquiryDetailsClient({
               <a href={`/boats/${boat.id}`}>Back to boat</a>
             </Button>
             <Button asChild variant="outline" className="rounded-xl">
-              <a href="/">Explore more yachts</a>
+              <Link href="/">Explore more yachts</Link>
             </Button>
           </div>
         </div>

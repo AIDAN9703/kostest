@@ -58,7 +58,7 @@ import {
   PRETRIP_URGENT_HOURS,
   SOURCE_BADGE_CLASSES,
 } from "@/features/bookings/deal-status";
-import { getDealKind } from "@/features/bookings/deal-presentation";
+import { getDisplayKind, PRICED_STATUSES } from "@/features/bookings/deal-presentation";
 import { BookingExpensesModal } from "@/features/bookings/components/admin/BookingExpensesModal";
 import { cn, formatTime12Hour } from "@/shared/lib/utils/general-utils";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
@@ -222,9 +222,6 @@ export function AdminBookingsBoard({
 /** Statuses where a deal no longer needs a working admin. */
 const SETTLED_STATUSES = new Set(["CANCELLED", "COMPLETED"]);
 
-/** Statuses where an invoice could exist (payment state is meaningful). */
-const INVOICED_STATUSES = new Set(["DRAFT", "APPROVED", "CONFIRMED", "COMPLETED"]);
-
 interface EmblemSpec {
   label: string;
   className: string;
@@ -348,7 +345,7 @@ function ExpenseCell({ booking, currency }: { booking: BookingListItem; currency
     return <MoneyCell cents={booking.opsExpenseCents} currency={currency} />;
   }
 
-  const canTrack = INVOICED_STATUSES.has(booking.bookingStatus);
+  const canTrack = PRICED_STATUSES.has(booking.bookingStatus);
   return (
     <TableCell
       className="py-3 pr-1 text-right align-top text-sm"
@@ -404,7 +401,7 @@ function BookingRow({
   onDelete: (id: string) => void;
   onOpen: (id: string) => void;
 }) {
-  const kind = getDealKind(booking.bookingType);
+  const kind = getDisplayKind(booking);
   const KindIcon = kind.Icon;
   const isInquiry = booking.bookingStatus === "INQUIRY";
   const isLoading = actionLoading === booking.id;
@@ -432,7 +429,7 @@ function BookingRow({
   // Status emblems — payment once an invoice could exist (or money moved),
   // captain/contract once the deal is locked in, cold for quiet leads.
   const paymentEmblem =
-    (INVOICED_STATUSES.has(booking.bookingStatus) ||
+    (PRICED_STATUSES.has(booking.bookingStatus) ||
       booking.totalPaidCents > 0 ||
       booking.hasRefund) &&
     booking.paymentDisplayStatus

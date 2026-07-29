@@ -49,11 +49,13 @@ const ENUM_LABEL_OVERRIDES: Record<string, string> = {
 };
 
 /**
- * Type dropdown options — every kind that folds into the "INQUIRY" group
- * collapses into that single option (matches the command strip).
+ * Type dropdown options — the inquiry family filters by STAGE ("Inquiry" =
+ * still a lead, "Booking" = priced), matching the command strip; distinct
+ * kinds keep their raw values.
  */
 const BOOKING_TYPE_OPTIONS: BookingTypeFilter[] = [
   "INQUIRY",
+  "BOOKING",
   ...bookingTypeEnum.enumValues.filter(
     (t) => !(INQUIRY_GROUP_TYPES as readonly string[]).includes(t)
   ),
