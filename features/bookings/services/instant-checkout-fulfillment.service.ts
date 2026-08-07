@@ -5,7 +5,10 @@ import { db } from "@/database/db";
 import { bookings, bookingStatusHistory } from "@/database/schema";
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
-import { AvailabilityService } from "@/features/availability/services/availability.service";
+import {
+  availabilityService,
+  isOverlapConstraintError,
+} from "@/features/availability/services/availability.service";
 import { paymentService } from "@/features/payments/payment.service";
 import { sendBookingConfirmationEmail } from "@/shared/lib/services/email.service";
 import { dollarsToCents } from "@/shared/lib/utils/money-utils";
@@ -75,7 +78,16 @@ export async function fulfillInstantCheckoutSession(
       : session.payment_intent?.id ?? null;
 
   if (existingPayment) {
-    await ensureBookingConfirmed(existingPayment.payableId, "Payment received (instant book)");
+    try {
+      await ensureBookingConfirmed(existingPayment.payableId, "Payment received (instant book)");
+    } catch (error) {
+      // A held overlap booking must not be force-confirmed by a webhook retry.
+      if (!isOverlapConstraintError(error)) throw error;
+      console.error(
+        "[InstantCheckout] Confirm blocked by overlap constraint — booking stays held:",
+        existingPayment.payableId
+      );
+    }
     if (existingPayment.status !== "SUCCEEDED" && paymentIntentId) {
       await paymentService.markPaymentSucceeded(existingPayment.id, paymentIntentId);
     }
@@ -85,17 +97,21 @@ export async function fulfillInstantCheckoutSession(
   const startDateTime = new Date(metadata.startDateTime);
   const endDateTime = metadata.endDateTime ? new Date(metadata.endDateTime) : null;
 
+  // If the slot was taken while the customer sat in Stripe checkout, their
+  // money is already captured — so the booking is created as a PENDING
+  // "overlap hold" (doesn't block the calendar, can't violate the DB
+  // constraint) and flagged loudly for manual resolution: refund, move, or
+  // rebook. It is NEVER silently stacked on top of another charter.
+  let holdReason: string | null = null;
   if (endDateTime) {
-    const availability = await new AvailabilityService().checkTimeSlotAvailability(
+    const availability = await availabilityService.checkTimeSlotAvailability(
       metadata.boatId,
       startDateTime,
       endDateTime
     );
     if (!availability.isAvailable) {
-      console.error(
-        `[InstantCheckout] OVERLAP: boat ${metadata.boatId} ` +
-          `(${metadata.startDateTime} – ${metadata.endDateTime}) — paid booking needs manual resolution.`
-      );
+      holdReason =
+        availability.conflicts.map((c) => c.reason).join("; ") || "slot conflict";
     }
   }
 
@@ -108,7 +124,7 @@ export async function fulfillInstantCheckoutSession(
     }
   }
 
-  const newBooking = await bookingService.createInstantBooking({
+  const instantInput = {
     boatId: metadata.boatId,
     pricingTierId: metadata.pricingTierId || null,
     userId: metadata.userId,
@@ -131,9 +147,40 @@ export async function fulfillInstantCheckoutSession(
       totalPriceCents: dollarsToCents(parseFloat(metadata.totalAmount || "0")),
       depositAmountCents: dollarsToCents(parseFloat(metadata.depositAmount || "0")),
     },
-  });
+  };
 
-  if (options?.sendConfirmationEmail !== false) {
+  let newBooking;
+  try {
+    newBooking = await bookingService.createInstantBooking({
+      ...instantInput,
+      ...(holdReason ? { holdForReview: { reason: holdReason } } : {}),
+    });
+  } catch (error) {
+    if (!isOverlapConstraintError(error)) throw error;
+    // Race loser: another booking landed between our check and this insert.
+    // The DB constraint did its job — hold the paid booking instead.
+    holdReason = holdReason ?? "Lost a booking race — slot was taken at payment time";
+    newBooking = await bookingService.createInstantBooking({
+      ...instantInput,
+      holdForReview: { reason: holdReason },
+    });
+  }
+
+  if (holdReason) {
+    await bookingEventsService.logEvent({
+      bookingId: newBooking.id,
+      eventType: "booking.overlap_hold",
+      actorType: "system",
+      channel: "webhook",
+      displayMessage:
+        "⚠ Paid instant booking landed on a taken slot — held for manual resolution",
+      metadata: { reason: holdReason },
+    });
+  }
+
+  // A held booking is NOT confirmed — the customer must not get a
+  // confirmation email until an admin resolves the conflict.
+  if (!holdReason && options?.sendConfirmationEmail !== false) {
     const fullBooking = await bookingService.getBookingById(newBooking.id);
     if (fullBooking) {
       await sendBookingConfirmationEmail(fullBooking).catch((e) =>

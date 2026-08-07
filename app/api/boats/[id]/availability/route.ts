@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AvailabilityService } from '@/features/availability/services/availability.service';
+import { availabilityService } from '@/features/availability/services/availability.service';
 
 export async function GET(
   request: NextRequest,
@@ -17,7 +17,6 @@ export async function GET(
       return NextResponse.json({ error: 'Missing date range' }, { status: 400 });
     }
 
-    const availabilityService = new AvailabilityService();
     const availability = await availabilityService.checkTimeSlotAvailability(
       boatId,
       new Date(startDate),

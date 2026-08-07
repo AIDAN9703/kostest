@@ -1,35 +1,38 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, type ReactNode } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   addDays,
+  differenceInCalendarDays,
   differenceInHours,
   eachDayOfInterval,
   format,
   formatDistanceToNowStrict,
   isSameDay,
+  isToday,
+  isTomorrow,
   startOfDay,
 } from "date-fns";
-import { Archive, Inbox, Ship } from "lucide-react";
+import { ChevronRight, Clock, DollarSign, History } from "lucide-react";
 
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { NewBookingModal } from "@/features/bookings/components/admin/new-booking-modal";
 import type { PricingTierOption } from "@/features/bookings/components/admin/booking-forms/types";
 import type {
   DashboardActivityItem,
   DashboardHeadlineMetrics,
+  DashboardLead,
+  PipelineSnapshot,
 } from "@/features/admin/dashboard";
 import type { BookingListItem } from "@/features/bookings/booking.types";
-import type { DashboardLead } from "@/features/admin/dashboard";
-import { toggleDealArchived } from "@/features/bookings/actions/deal.actions";
 import { AssignDealMenu } from "@/features/bookings/components/admin/AssignDealMenu";
 import { ClaimDealButton } from "@/features/bookings/components/admin/ClaimDealButton";
-import { DEAL_SOURCE_LABELS } from "@/features/bookings/deal-status";
-import { adminInitials, type AdminOption } from "@/shared/lib/utils/people-display";
-import { cn } from "@/shared/lib/utils/general-utils";
+import { DEAL_SOURCE_LABELS, PRETRIP_URGENT_HOURS } from "@/features/bookings/deal-status";
+import type { AdminOption } from "@/shared/lib/utils/people-display";
+import { cn, formatTime12Hour } from "@/shared/lib/utils/general-utils";
 import { formatCentsAsWholeDollars } from "@/shared/lib/utils/money-utils";
-import { useToast } from "@/shared/lib/hooks/use-toast";
+import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
 
 export type { AdminOption };
 
@@ -37,430 +40,462 @@ interface AdminDashboardViewProps {
   firstName: string | null;
   pricingTiers: PricingTierOption[];
   unassignedLeads: DashboardLead[];
-  weeksBookings: BookingListItem[];
+  upcomingTrips: BookingListItem[];
+  myDeals: BookingListItem[];
+  pipeline: PipelineSnapshot;
   recentActivity: DashboardActivityItem[];
   metrics: DashboardHeadlineMetrics;
   admins: AdminOption[];
 }
 
-/** $12.4K / $1.65M — compact money for dense rows. */
-function formatCentsCompact(cents: number) {
+/* ── Layering (lighter = closer, per admin-theme.css) ────────────────
+   canvas dark-bg → section surfaces bg-card → nested pieces
+   bg-secondary (#1c2f40, a real step lighter than card — bg-muted is
+   DARKER than card and reads flat, never use it for elevation inside
+   a card). Pipeline + This week stay as open sections with uppercase
+   labels; Your move + Recent activity are detail-page cards. Worklist
+   rows share one anatomy: tone bubble → name → muted meta line. */
+
+const SECTION_HEAD =
+  "text-[11px] font-semibold uppercase tracking-wider text-muted-foreground";
+// Worklist row shell; the parent <ul> draws dividers (divide-y).
+const ROW =
+  "-mx-2 flex items-center gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-secondary/30";
+
+const BUBBLE_TONE = {
+  warning: "bg-warning/15 text-warning",
+  destructive: "bg-destructive/15 text-destructive",
+  sky: "bg-sky-400/15 text-sky-400",
+} as const;
+
+/** The shared row badge — a small tone-colored notification bubble. */
+function RowBubble({ tone, children }: { tone: keyof typeof BUBBLE_TONE; children: ReactNode }) {
+  return (
+    <span
+      className={cn(
+        "flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+        BUBBLE_TONE[tone]
+      )}
+      aria-hidden
+    >
+      {children}
+    </span>
+  );
+}
+
+/** $12.4K / $1.65M — compact money for dense reading. */
+function compactMoney(cents: number) {
   const dollars = cents / 100;
-  if (dollars >= 1_000_000) {
-    return `$${(dollars / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
-  }
+  if (dollars >= 1_000_000) return `$${(dollars / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
   if (dollars >= 10_000) return `$${(dollars / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
   return formatCentsAsWholeDollars(cents);
 }
 
-/* Card white now comes from the theme token (matches header/sidebar);
-   the gray canvas + soft shadow do the separation. */
-const CARD_CLASS = "overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm";
-const CARD_HEADER_CLASS =
-  "flex flex-wrap items-center justify-between gap-3 border-b border-border/50 px-5 py-4";
-const PILL_LINK_CLASS =
-  "rounded-full bg-muted px-3.5 py-1.5 text-xs font-medium transition-colors hover:bg-muted/70";
+function tripTiming(trip: BookingListItem) {
+  const start = new Date(trip.startDateTime as Date);
+  const parsed = parseDateTimeInBoatTimezone(start);
+  return {
+    start,
+    dayLabel: isToday(start) ? "today" : isTomorrow(start) ? "tomorrow" : format(start, "EEE, MMM d"),
+    time: parsed.time ? formatTime12Hour(parsed.time) : "",
+    imminent: differenceInHours(start, new Date()) <= PRETRIP_URGENT_HOURS,
+  };
+}
+
+/** What's still missing before this boat can leave the dock. */
+function readinessGaps(trip: BookingListItem) {
+  const gaps: string[] = [];
+  if (trip.needsCaptain && !trip.captainUserId) gaps.push("Captain");
+  if (!trip.opsContractSigned) gaps.push("Contract");
+  const total = trip.totalAmountCents ?? 0;
+  if (total > 0 && (trip.totalPaidCents ?? 0) < total) gaps.push("Balance");
+  return gaps;
+}
 
 export function AdminDashboardView({
   firstName,
   pricingTiers,
   unassignedLeads,
-  weeksBookings,
+  upcomingTrips,
+  myDeals,
+  pipeline,
   recentActivity,
   metrics,
   admins,
 }: AdminDashboardViewProps) {
-  const days = useMemo(() => {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
+  // Seven-day schedule: today + 6.
+  const week = useMemo(() => {
     const start = startOfDay(new Date());
     return eachDayOfInterval({ start, end: addDays(start, 6) }).map((day) => ({
       day,
       isToday: isSameDay(day, new Date()),
-      trips: weeksBookings
-        // Undated INQUIRY-phase deals don't belong on the trip calendar.
-        .filter(
-          (b): b is typeof b & { startDateTime: NonNullable<(typeof b)["startDateTime"]> } =>
-            b.startDateTime != null && isSameDay(new Date(b.startDateTime), day)
-        )
+      trips: upcomingTrips
+        .filter((t) => isSameDay(new Date(t.startDateTime as Date), day))
         .sort(
-          (a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime()
+          (a, b) =>
+            new Date(a.startDateTime as Date).getTime() -
+            new Date(b.startDateTime as Date).getTime()
         ),
     }));
-  }, [weeksBookings]);
+  }, [upcomingTrips]);
 
-  const weekRevenue = weeksBookings.reduce((s, b) => s + (b.totalAmountCents ?? 0), 0);
-  const avgCharterCents =
-    metrics.tripsThisMonth > 0 ? Math.round(metrics.gmvMtdCents / metrics.tripsThisMonth) : 0;
+  // Your move: unclaimed leads, balances to chase on confirmed trips, stale deals.
+  const collectRows = useMemo(
+    () =>
+      upcomingTrips
+        .filter(
+          (t) =>
+            t.bookingStatus === "CONFIRMED" &&
+            (t.totalAmountCents ?? 0) > 0 &&
+            (t.totalPaidCents ?? 0) < (t.totalAmountCents ?? 0)
+        )
+        .slice(0, 4),
+    [upcomingTrips]
+  );
+  const staleDeals = useMemo(
+    () =>
+      myDeals
+        .filter(
+          (d) =>
+            differenceInCalendarDays(new Date(), new Date(d.firstContactedAt ?? d.createdAt)) >= 3
+        )
+        .slice(0, 4),
+    [myDeals]
+  );
 
-  const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const yourMoveCount = unassignedLeads.length + collectRows.length + staleDeals.length;
 
   return (
-    /* The gray canvas comes from the theme's --color-background now. */
-    <div className="flex w-full flex-1 flex-col gap-8 pb-14">
-      {/* ── Header ─────────────────────────────────────────────── */}
-      <header className="flex flex-wrap items-center justify-between gap-4 pt-1">
+    <div className="flex w-full flex-1 flex-col gap-10 pb-16">
+      {/* ── Header: greeting + the month in one line ── */}
+      <header className="flex flex-wrap items-end justify-between gap-4 pt-2">
         <div className="min-w-0">
           <p className="text-xs font-medium text-muted-foreground">
             {format(new Date(), "EEEE, MMMM d")}
           </p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight">
             {greeting}
-            {firstName ? `, ${firstName}` : ""} <span aria-hidden>👋</span>
+            {firstName ? `, ${firstName}` : ""}
           </h1>
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            {metrics.monthLabel} so far:{" "}
+            <span className="font-semibold text-primary-strong">
+              {compactMoney(metrics.gmvMtdCents)}
+            </span>{" "}
+            across{" "}
+            <span className="font-medium text-foreground">{metrics.tripsThisMonth}</span>{" "}
+            {metrics.tripsThisMonth === 1 ? "charter" : "charters"} ·{" "}
+            <span className="font-medium text-foreground">
+              {compactMoney(metrics.kosCommissionMtdCents)}
+            </span>{" "}
+            commission
+          </p>
         </div>
         <NewBookingModal
           pricingTiers={pricingTiers}
           triggerLabel="New booking"
-          triggerSize="default"
-          triggerClassName="gap-1.5 rounded-full bg-primary px-5 text-primary-foreground shadow-sm hover:bg-primary/90"
+          triggerClassName="gap-1.5 rounded-full px-5 shadow-sm"
         />
       </header>
 
-      {/* ── Row 1: week on the water + monthly financials ──────── */}
-      <div className="grid gap-8 lg:grid-cols-3">
-        {/* Week calendar */}
-        <section className={cn(CARD_CLASS, "lg:col-span-2")}>
-          <div className={CARD_HEADER_CLASS}>
-            <h2 className="flex items-center gap-2 text-sm font-semibold">
-              <Ship className="h-4 w-4 text-muted-foreground" />
-              On the water
-              <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                {weeksBookings.length} charter{weeksBookings.length === 1 ? "" : "s"} this week
-                {weekRevenue > 0 ? ` · ${formatCentsCompact(weekRevenue)}` : ""}
-              </span>
-            </h2>
-            <Link href="/admin/bookings?view=calendar" className={PILL_LINK_CLASS}>
-              Calendar
-            </Link>
-          </div>
+      {/* ── Pipeline: the funnel as one connected bar ── */}
+      <section>
+        <h2 className={SECTION_HEAD}>Pipeline</h2>
+        <div className="mt-2 flex items-stretch overflow-x-auto rounded-2xl border border-border/60 bg-card shadow-sm">
+          <PipelineStage
+            href="/admin/bookings?bookingType=INQUIRY"
+            count={pipeline.leads}
+            label="Leads"
+            valueCents={pipeline.leadsValueCents}
+            estimate
+          />
+          <PipelineStage
+            href="/admin/bookings?bookingStatus=DRAFT"
+            count={pipeline.proposalsOut}
+            label="Proposals out"
+            valueCents={pipeline.proposalsValueCents}
+          />
+          <PipelineStage
+            href="/admin/bookings?bookingStatus=APPROVED"
+            count={pipeline.awaitingPayment}
+            label="Awaiting payment"
+            valueCents={pipeline.awaitingPaymentValueCents}
+          />
+          <PipelineStage
+            href="/admin/bookings?bookingType=BOOKING&time=upcoming"
+            count={pipeline.bookedUpcoming}
+            label="Booked & upcoming"
+            valueCents={pipeline.bookedUpcomingValueCents}
+            last
+          />
+        </div>
+      </section>
 
-          <div className="grid grid-cols-2 gap-2 p-4 sm:grid-cols-4 lg:grid-cols-7">
-            {days.map(({ day, isToday, trips }) => {
-              const dayRevenue = trips.reduce((s, t) => s + (t.totalAmountCents ?? 0), 0);
-              const shown = trips.slice(0, 3);
-              const extra = trips.length - shown.length;
-              return (
-                <div
-                  key={day.toISOString()}
+      {/* ── This week on the water ── */}
+      <section>
+        <div className="flex items-baseline justify-between">
+          <h2 className={SECTION_HEAD}>This week</h2>
+          <Link
+            href="/admin/bookings?view=calendar"
+            className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Full calendar →
+          </Link>
+        </div>
+        <div className="mt-2 overflow-x-auto">
+          <div className="grid min-w-[42rem] grid-cols-7 gap-1.5">
+            {week.map(({ day, isToday: today, trips }) => (
+              <div
+                key={day.toISOString()}
+                className={cn(
+                  "min-h-[6.5rem] rounded-xl p-2",
+                  today ? "bg-primary-soft/40 ring-1 ring-primary/30" : "bg-muted/30"
+                )}
+              >
+                <p
                   className={cn(
-                    "flex min-h-[9.5rem] flex-col gap-1.5 rounded-xl p-2",
-                    isToday && "bg-primary-soft ring-1 ring-primary/30"
+                    "px-0.5 pb-1.5 text-[11px] font-semibold",
+                    today ? "text-primary-strong" : "text-muted-foreground"
                   )}
                 >
-                  <p
-                    className={cn(
-                      "px-1 text-[11px] font-semibold",
-                      isToday ? "text-primary-strong" : "text-muted-foreground"
-                    )}
-                  >
-                    {isToday ? "Today" : format(day, "EEE d")}
-                  </p>
-
-                  {trips.length === 0 ? (
-                    <p className="flex flex-1 items-center justify-center text-xs text-muted-foreground/40">
-                      —
-                    </p>
-                  ) : (
-                    <div className="flex flex-1 flex-col gap-1">
-                      {shown.map((t) => (
+                  {today ? "Today" : format(day, "EEE d")}
+                </p>
+                {trips.length === 0 ? (
+                  <p className="px-0.5 text-xs text-muted-foreground/30">—</p>
+                ) : (
+                  <div className="flex flex-col gap-1">
+                    {trips.slice(0, 3).map((t) => {
+                      const gaps = readinessGaps(t);
+                      return (
                         <Link
                           key={t.id}
                           href={`/admin/bookings/${t.id}`}
-                          className={cn(
-                            "rounded-lg px-2 py-1.5 transition-colors",
-                            isToday
-                              ? "bg-primary/20 hover:bg-primary/30"
-                              : "bg-muted hover:bg-muted/70"
-                          )}
+                          className="rounded-lg bg-card/80 px-1.5 py-1 transition-colors hover:bg-card"
                         >
-                          <span
-                            className={cn(
-                              "block text-[11px] font-semibold tabular-nums",
-                              isToday && "text-primary-strong"
-                            )}
-                          >
-                            {format(new Date(t.startDateTime), "h:mm a")}
+                          <span className="flex items-center gap-1">
+                            <span
+                              className={cn(
+                                "h-1.5 w-1.5 shrink-0 rounded-full",
+                                gaps.length === 0
+                                  ? "bg-success"
+                                  : tripTiming(t).imminent
+                                    ? "bg-destructive"
+                                    : "bg-warning"
+                              )}
+                              aria-hidden
+                            />
+                            <span className="truncate text-[11px] font-medium tabular-nums text-foreground">
+                              {tripTiming(t).time || "TBD"}
+                            </span>
                           </span>
                           <span className="block truncate text-[11px] text-muted-foreground">
                             {t.boatName ?? t.customerName ?? "Charter"}
                           </span>
                         </Link>
-                      ))}
-                      {extra > 0 ? (
-                        <Link
-                          href="/admin/bookings?view=calendar"
-                          className="px-2 text-[11px] font-medium text-muted-foreground hover:text-foreground"
-                        >
-                          +{extra} more
-                        </Link>
-                      ) : null}
-                    </div>
-                  )}
-
-                  <p className="px-1 text-[11px] font-medium tabular-nums text-muted-foreground">
-                    {dayRevenue > 0 ? formatCentsCompact(dayRevenue) : ""}
-                  </p>
-                </div>
-              );
-            })}
+                      );
+                    })}
+                    {trips.length > 3 ? (
+                      <span className="px-1 text-[10px] text-muted-foreground">
+                        +{trips.length - 3} more
+                      </span>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Monthly financials */}
-        <section className={CARD_CLASS}>
-          <div className={CARD_HEADER_CLASS}>
-            <h2 className="text-sm font-semibold">{metrics.monthLabel} financials</h2>
-            <Link href="/admin/bookings" className={PILL_LINK_CLASS}>
-              Bookings
-            </Link>
-          </div>
-          <div className="p-5">
-            <p className="text-3xl font-semibold tabular-nums tracking-tight">
-              {formatCentsAsWholeDollars(metrics.gmvMtdCents)}
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">Gross charter volume</p>
-
-            <dl className="mt-5 flex flex-col">
-              <FinRow
-                label="KOS commission"
-                value={formatCentsAsWholeDollars(metrics.kosCommissionMtdCents)}
-                accent="text-success"
-              />
-              <FinRow label="Charters" value={metrics.tripsThisMonth.toLocaleString()} />
-              <FinRow
-                label="Avg per charter"
-                value={avgCharterCents > 0 ? formatCentsAsWholeDollars(avgCharterCents) : "—"}
-              />
-              <FinRow label="Open pipeline" value={`${metrics.openInquiries} leads`} last />
-            </dl>
-          </div>
-        </section>
-      </div>
-
-      {/* ── Row 2: unassigned leads + live activity, 50/50 ─────── */}
-      <div className="grid items-start gap-8 lg:grid-cols-2">
-        {/* Unassigned leads — narrow queue */}
-        <section className={CARD_CLASS}>
-          <div className={CARD_HEADER_CLASS}>
-            <h2 className="flex items-center gap-2.5 text-sm font-semibold">
-              Unassigned leads
-              {metrics.unassignedLeads > 0 ? (
-                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[11px] font-semibold tabular-nums text-destructive-foreground">
-                  {metrics.unassignedLeads}
+      {/* ── Your move · Recent activity ── */}
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <Card className="rounded-2xl border-border/60">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-baseline gap-2 text-base">
+              Your move
+              {yourMoveCount > 0 ? (
+                <span className="text-sm font-medium tabular-nums text-muted-foreground">
+                  {yourMoveCount}
                 </span>
               ) : null}
-            </h2>
-            <Link href="/admin/bookings?scope=unassigned" className={PILL_LINK_CLASS}>
-              View all
-            </Link>
-          </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {yourMoveCount === 0 ? (
+              <p className="py-4 text-sm text-muted-foreground">Nothing waiting on you.</p>
+            ) : (
+              <ul className="divide-y divide-border/40">
+                {unassignedLeads.map((lead) => (
+                  <LeadRow key={lead.id} lead={lead} admins={admins} />
+                ))}
+                {collectRows.map((trip) => (
+                  <CollectRow key={trip.id} trip={trip} />
+                ))}
+                {staleDeals.map((deal) => (
+                  <FollowUpRow key={deal.id} deal={deal} />
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
 
-          {unassignedLeads.length === 0 ? (
-            <EmptyState
-              icon={<Inbox className="h-5 w-5 text-success" />}
-              title="Every lead has an owner"
-              subtitle="New inquiries from the website, marketplaces, and socials land here."
-            />
-          ) : (
-            <ul className="max-h-[30rem] divide-y divide-border/40 overflow-y-auto">
-              {unassignedLeads.map((lead) => (
-                <LeadRow key={lead.id} lead={lead} admins={admins} />
-              ))}
-            </ul>
-          )}
-        </section>
-
-        {/* Recent activity — live feed */}
-        <section className={CARD_CLASS}>
-          <div className={CARD_HEADER_CLASS}>
-            <h2 className="flex items-center gap-2.5 text-sm font-semibold">
-              <span className="relative flex h-2.5 w-2.5" aria-hidden>
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success/70 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success" />
-              </span>
+        <Card className="rounded-2xl border-border/60">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <History className="h-4 w-4 text-muted-foreground" />
               Recent activity
-              <span className="text-[11px] font-medium uppercase tracking-wide text-success">
-                Live
-              </span>
-            </h2>
-          </div>
-
-          {recentActivity.length === 0 ? (
-            <EmptyState
-              icon={<Inbox className="h-5 w-5 text-success" />}
-              title="All quiet"
-              subtitle="New leads, assignments, and booking updates will show here."
-            />
-          ) : (
-            <ul className="max-h-[30rem] divide-y divide-border/40 overflow-y-auto">
-              {recentActivity.map((item) => (
-                <li key={item.id} className="relative px-5 py-3 transition-colors hover:bg-muted/40">
-                  <div className="flex items-start gap-2.5">
-                    <span
-                      className={cn(
-                        "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                        item.kind === "booking" ? "bg-primary" : "bg-sky-500"
-                      )}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm">
-                        <span className="font-semibold">{item.subjectLabel ?? "—"}</span>
-                        <span className="text-muted-foreground"> · {item.message}</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {recentActivity.length === 0 ? (
+              <p className="py-4 text-sm text-muted-foreground">All quiet.</p>
+            ) : (
+              <ul className="flex flex-col gap-2.5">
+                {recentActivity.slice(0, 6).map((item) => (
+                  <li key={item.id}>
+                    <Link
+                      href={item.href}
+                      className="block rounded-xl border border-border/50 bg-secondary/60 px-4 py-3 transition-colors hover:border-border hover:bg-secondary"
+                    >
+                      <p className="line-clamp-2 text-sm leading-snug text-foreground/90">
+                        {item.message}
                       </p>
-                      <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
+                      <p className="mt-1 text-xs tabular-nums text-muted-foreground/70">
                         {formatDistanceToNowStrict(new Date(item.createdAt))} ago
                       </p>
-                    </div>
-                  </div>
-                  <Link href={item.href} aria-label={item.message} className="absolute inset-0" />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
 
-/* ───────────────────────── pieces ───────────────────────── */
+/* ── Pieces ─────────────────────────────────────────────────────────── */
 
-function FinRow({
+function PipelineStage({
+  href,
+  count,
   label,
-  value,
-  accent,
+  valueCents,
+  estimate = false,
   last = false,
 }: {
+  href: string;
+  count: number;
   label: string;
-  value: string;
-  accent?: string;
+  valueCents: number;
+  estimate?: boolean;
   last?: boolean;
 }) {
   return (
-    <div
-      className={cn(
-        "flex items-center justify-between gap-3 py-2.5",
-        !last && "border-b border-border/40"
-      )}
+    <Link
+      href={href}
+      className="group relative flex min-w-[11rem] flex-1 items-center justify-between gap-2 px-5 py-4 transition-colors first:rounded-l-2xl last:rounded-r-2xl hover:bg-secondary/30 [&:not(:first-child)]:border-l [&:not(:first-child)]:border-border/50"
     >
-      <dt className="text-xs text-muted-foreground">{label}</dt>
-      <dd className={cn("text-sm font-semibold tabular-nums", accent)}>{value}</dd>
-    </div>
+      <span>
+        <span className="block text-2xl font-semibold leading-7 tabular-nums text-foreground">
+          {count}
+        </span>
+        <span className="block text-xs font-medium text-muted-foreground">{label}</span>
+        <span className="mt-0.5 block text-[11px] tabular-nums text-muted-foreground/70">
+          {valueCents > 0 ? `${estimate ? "est. " : ""}${compactMoney(valueCents)}` : "—"}
+        </span>
+      </span>
+      {!last ? (
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30" aria-hidden />
+      ) : null}
+    </Link>
   );
 }
 
-function EmptyState({
-  icon,
-  title,
-  subtitle,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <div className="flex flex-col items-center px-5 py-12 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-success-soft">
-        {icon}
-      </div>
-      <p className="text-sm font-semibold">{title}</p>
-      <p className="mt-1 max-w-[18rem] text-xs text-muted-foreground">{subtitle}</p>
-    </div>
-  );
-}
-
-/** Compact row for the narrow queue: identity, trip, value, actions stacked. */
 function LeadRow({ lead, admins }: { lead: DashboardLead; admins: AdminOption[] }) {
-  const trip = [
-    lead.tripStart ? format(lead.tripStart, "MMM d") : null,
-    lead.guests ? `${lead.guests} guests` : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-  const ageHours = differenceInHours(new Date(), new Date(lead.createdAt));
-  const isStale = ageHours >= 24;
-
+  const value = lead.estimatedValueCents ?? lead.budgetCents;
   return (
-    <li className="relative px-4 py-3.5 transition-colors hover:bg-muted/40">
-      <div className="flex items-start gap-3">
-        <div
-          className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-            "bg-muted text-muted-foreground"
-          )}
-        >
-          {adminInitials(lead.name) || "?"}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="truncate text-sm font-semibold">{lead.name}</p>
-            {(lead.estimatedValueCents ?? lead.budgetCents) != null ? (
-              <span className="shrink-0 text-xs font-semibold tabular-nums">
-                {formatCentsCompact((lead.estimatedValueCents ?? lead.budgetCents)!)}
-              </span>
-            ) : null}
-          </div>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">
-            {DEAL_SOURCE_LABELS[lead.source ?? ""] ?? lead.source}
-            {" · "}
-            <span
-              className={cn(
-                "tabular-nums",
-                isStale && "font-medium text-warning"
-              )}
-            >
-              {formatDistanceToNowStrict(new Date(lead.createdAt))} ago
-            </span>
-          </p>
-          {trip ? <p className="mt-0.5 truncate text-xs text-muted-foreground">{trip}</p> : null}
-
-          <div className="relative z-10 mt-2 flex items-center gap-1.5">
-            <ClaimDealButton bookingId={lead.id} className="rounded-full" />
-            <AssignDealMenu bookingId={lead.id} admins={admins} triggerClassName="rounded-full" />
-            <ArchiveButton bookingId={lead.id} />
-          </div>
-        </div>
+    // Plain <li> so divide-y dividers stay full row width; the -mx-2 hover
+    // surface lives on the inner div (same as the Link rows).
+    <li>
+      <div className={cn(ROW, "relative")}>
+        <Link
+          href={`/admin/bookings/${lead.id}`}
+          className="absolute inset-0"
+          aria-label={`Open lead from ${lead.name}`}
+        />
+        <RowBubble tone="warning">
+          <span className="text-[13px] font-bold leading-none">!</span>
+        </RowBubble>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium text-foreground">{lead.name}</span>
+          <span className="block truncate text-xs text-muted-foreground">
+            New lead · {DEAL_SOURCE_LABELS[lead.source ?? ""] ?? "Unknown source"}
+            {value ? ` · est. ${compactMoney(value)}` : ""} ·{" "}
+            {formatDistanceToNowStrict(new Date(lead.createdAt))} ago
+          </span>
+        </span>
+        <span className="relative z-10 flex shrink-0 items-center gap-1.5">
+          <ClaimDealButton bookingId={lead.id} />
+          <AssignDealMenu bookingId={lead.id} admins={admins} />
+        </span>
       </div>
-
-      {/* Whole row navigates to the lead (actions sit above on z-10). */}
-      <Link
-        href={`/admin/bookings/${lead.id}`}
-        aria-label={`View lead from ${lead.name}`}
-        className="absolute inset-0"
-      />
     </li>
   );
 }
 
-function ArchiveButton({ bookingId }: { bookingId: string }) {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [pending, setPending] = useState(false);
-
-  async function archive() {
-    setPending(true);
-    const res = await toggleDealArchived(bookingId);
-    setPending(false);
-    if (res.success) {
-      toast({ title: "Lead archived" });
-      router.refresh();
-    } else {
-      toast({ title: "Couldn't archive", description: res.error, variant: "destructive" });
-    }
-  }
-
+function CollectRow({ trip }: { trip: BookingListItem }) {
+  const timing = tripTiming(trip);
+  const total = trip.totalAmountCents ?? 0;
+  const paid = trip.totalPaidCents ?? 0;
   return (
-    <button
-      type="button"
-      onClick={archive}
-      disabled={pending}
-      aria-label="Archive lead"
-      title="Archive lead"
-      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
-    >
-      <Archive className="h-3.5 w-3.5" />
-    </button>
+    <li>
+      <Link href={`/admin/bookings/${trip.id}`} className={ROW}>
+        <RowBubble tone="destructive">
+          <DollarSign className="h-3.5 w-3.5" />
+        </RowBubble>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium text-foreground">
+            {trip.customerName || "Unnamed customer"}
+          </span>
+          <span className="block truncate text-xs text-muted-foreground">
+            Collect {compactMoney(total - paid)} · sails{" "}
+            <span className={cn(timing.imminent && "font-medium text-destructive")}>
+              {timing.dayLabel}
+            </span>
+            {total > 0 ? ` · ${Math.round((paid / total) * 100)}% paid` : ""}
+          </span>
+        </span>
+      </Link>
+    </li>
+  );
+}
+
+function FollowUpRow({ deal }: { deal: BookingListItem }) {
+  const daysQuiet = differenceInCalendarDays(
+    new Date(),
+    new Date(deal.firstContactedAt ?? deal.createdAt)
+  );
+  return (
+    <li>
+      <Link href={`/admin/bookings/${deal.id}`} className={ROW}>
+        <RowBubble tone="sky">
+          <Clock className="h-3.5 w-3.5" />
+        </RowBubble>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-medium text-foreground">
+            {deal.customerName || "Unnamed deal"}
+          </span>
+          <span className="block truncate text-xs text-muted-foreground">
+            Follow up · quiet {daysQuiet} {daysQuiet === 1 ? "day" : "days"}
+            {deal.boatName ? ` · ${deal.boatName}` : ""}
+          </span>
+        </span>
+      </Link>
+    </li>
   );
 }

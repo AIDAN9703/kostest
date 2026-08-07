@@ -2,8 +2,9 @@ import { notFound } from "next/navigation";
 
 import Link from "next/link";
 import { format, formatDistanceToNowStrict } from "date-fns";
-import { Ship } from "lucide-react";
+import { CalendarPlus, Ship } from "lucide-react";
 import { auth } from "@/auth";
+import { Button } from "@/shared/components/ui/button";
 import { DealHeaderCard } from "@/features/bookings/components/admin/view-booking/DealHeaderCard";
 import { DealRequestCard } from "@/features/bookings/components/admin/view-booking/DealRequestCard";
 import {
@@ -25,8 +26,8 @@ import {
   BookingPageEditButton,
 } from "@/features/bookings/components/admin/view-booking/BookingEditMode";
 import { BookingPaymentsFinancialsCard } from "@/features/bookings/components/admin/view-booking/BookingPaymentsFinancialsCard";
-import { BookingChecksPanel } from "@/features/bookings/components/admin/view-booking/BookingChecksPanel";
-import { BookingQuickActionsMenu } from "@/features/bookings/components/admin/view-booking/BookingQuickActionsMenu";
+import { DealActionsMenu } from "@/features/bookings/components/admin/view-booking/DealActionsMenu";
+import { ActivityComposer } from "@/features/bookings/components/admin/view-booking/ActivityComposer";
 import { BookingActivityTimeline } from "@/features/bookings/components/admin/view-booking/BookingActivityTimeline";
 
 import { bookingService } from "@/features/bookings/services/booking.service";
@@ -38,7 +39,6 @@ import { paymentService } from "@/features/payments/payment.service";
 import { captainProfileService } from "@/features/profiles/captain-profile.service";
 import { crewProfileService } from "@/features/profiles/crew-profile.service";
 import { userService } from "@/features/users/user.service";
-import { computeBookingChecklist } from "@/features/bookings/booking-checklist";
 
 import type { BookingActivityEventEntry } from "@/features/bookings/booking.types";
 
@@ -151,29 +151,18 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         : null,
   };
 
-  const checklistItems = computeBookingChecklist({
-    bookingStatus: booking.bookingStatus,
-    totalAmountCents: booking.totalAmountCents,
-    totalPaidCents: booking.totalPaidCents,
-    captainUserId: booking.captainUserId,
-    opsContractSigned: ops?.contractSigned ?? null,
-    opsCaptainPaid: ops?.captainPaid ?? null,
-    opsGmvCents: ops?.gmvCents ?? null,
-    opsExpenseCents: ops?.expenseCents ?? null,
-    opsSentToOwnerCents: ops?.sentToOwnerCents ?? null,
-    assignedAdminId: booking.assignedAdminId,
-    firstContactedAt: booking.firstContactedAt,
-    boatId: booking.boatId,
-  });
-
-  // Hide the "send payment link" quick action once the booking is fully paid
-  // or has been refunded — nothing meaningful left to collect.
+  // Hide the payment-link button once the booking is fully paid or has been
+  // refunded — nothing meaningful left to collect.
   const allowPaymentLink =
     (booking.totalAmountCents ?? 0) > 0 &&
     (booking.totalPaidCents ?? 0) < (booking.totalAmountCents ?? 0) &&
     booking.bookingStatus !== "CANCELLED";
 
   const isInquiry = booking.bookingStatus === "INQUIRY";
+  // Settled deals are read-only history: no contact/note composer, no
+  // customer-facing money links.
+  const isSettled =
+    booking.bookingStatus === "COMPLETED" || booking.bookingStatus === "CANCELLED";
   const dealStatus = computeDealStatusForBooking({
     bookingStatus: booking.bookingStatus,
     paymentDisplayStatus: booking.paymentDisplayStatus,
@@ -233,14 +222,23 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
               : null
         }
         actions={
+          // Same anatomy for both stages: one primary verb + the quiet ⋯
+          // overflow. Inquiry's winning path is the proposal; a booking's is
+          // editing the page.
           <div className="flex shrink-0 items-center gap-2">
-            {!isInquiry ? <BookingPageEditButton /> : null}
-            <BookingQuickActionsMenu
+            {isInquiry ? (
+              <Button asChild size="sm" className="shrink-0 gap-1.5 rounded-full px-4">
+                <Link href={`/admin/bookings/create?dealId=${id}`}>
+                  <CalendarPlus className="h-3.5 w-3.5" />
+                  Create proposal
+                </Link>
+              </Button>
+            ) : (
+              <BookingPageEditButton />
+            )}
+            <DealActionsMenu
               bookingId={id}
               bookingStatus={booking.bookingStatus}
-              allowPaymentLink={allowPaymentLink}
-              publicToken={booking.publicToken}
-              isCold={booking.coldAt != null}
               isArchived={booking.archivedAt != null}
               assignedAdminId={booking.assignedAdminId}
               admins={adminOptions}
@@ -264,21 +262,17 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
               <DealPipelineBar
                 dealStatus={dealStatus}
                 contacted={booking.firstContactedAt != null}
-                cold={booking.coldAt != null}
               />
             }
           />
 
           {isInquiry ? (
-            /* Lead phase: same skeleton as a booking — checks first, then
-               what the customer asked for. Contact info lives in the header. */
-            <>
-              <BookingChecksPanel bookingId={id} items={checklistItems} />
-              <DealRequestCard deal={booking} />
-            </>
+            /* Lead phase: what the customer asked for. Contact info lives in
+               the header; trip + money appear once the deal is priced. */
+            <DealRequestCard deal={booking} />
           ) : (
             /* Priority order: the trip and the money are what admins open
-               this page for — checks ride below (modal move pending). */
+               this page for. */
             <>
               <BookingTripCard
                 bookingId={id}
@@ -301,9 +295,9 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
                 commissionAgentCents={ops?.commissionAgentCents ?? null}
                 commissionKosCents={ops?.commissionKosCents ?? null}
                 expenseLines={expenseLines}
+                showPaymentLink={allowPaymentLink && !isSettled}
+                publicToken={isSettled ? null : booking.publicToken}
               />
-
-              <BookingChecksPanel bookingId={id} items={checklistItems} />
             </>
           )}
         </div>
@@ -315,6 +309,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         <BookingActivityTimeline
           events={activityEvents}
           className="lg:sticky lg:top-0"
+          actions={!isSettled ? <ActivityComposer bookingId={id} /> : undefined}
         />
       </div>
     </div>

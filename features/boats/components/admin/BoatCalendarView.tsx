@@ -31,7 +31,6 @@ type CalendarView = "dayGridMonth" | "timeGridWeek" | "listWeek";
 
 interface BoatCalendarViewProps {
   boatId: string;
-  boatName: string;
   timezone?: string;
   externalCalendars: ExternalCalendarListItem[];
   icalFeedUrl: string | null;
@@ -68,7 +67,6 @@ function ViewBtn({
 
 export function BoatCalendarView({
   boatId,
-  boatName,
   timezone,
   externalCalendars,
   icalFeedUrl,

@@ -77,6 +77,11 @@ import { bookingStatusService } from "@/features/bookings/services/booking-statu
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
 import { fetchBoatAndTier, fetchBoatsAndTiersBulk } from "@/features/bookings/booking-helpers";
 import { getAppSettings } from "@/features/app-settings/app-settings.service";
+import {
+  availabilityService,
+  isOverlapConstraintError,
+  SlotUnavailableError,
+} from "@/features/availability/services/availability.service";
 
 /**
  * Stage rule shared by the list filter and the type-count strip: an
@@ -86,7 +91,7 @@ import { getAppSettings } from "@/features/app-settings/app-settings.service";
  * deal-presentation.tsx; requires booking_pricing to be joined.
  */
 function pricedPastInquirySql() {
-  return sql`(${bookings.bookingStatus} IN ('DRAFT', 'APPROVED', 'CONFIRMED', 'COMPLETED')
+  return sql`(${bookings.bookingStatus} IN ('PENDING', 'DRAFT', 'APPROVED', 'CONFIRMED', 'COMPLETED')
     OR (${bookings.bookingStatus} = 'CANCELLED' AND COALESCE(${bookingPricing.totalAmountCents}, 0) > 0))`;
 }
 
@@ -210,8 +215,6 @@ export class BookingService {
             // crewRequired boats force a captain; otherwise the customer's
             // stored preference survives the upgrade untouched.
             ...(boat.crewRequired ? { needsCaptain: true } : {}),
-            // A priced deal is no longer a parked lead.
-            coldAt: null,
             updatedAt: now,
           })
           .where(
@@ -413,10 +416,28 @@ export class BookingService {
       // Idempotent: a retried submit or a mixed-status group must not blow
       // up — rows already past DRAFT are kept as-is.
       if (b.bookingStatus === "DRAFT") {
-        await bookingStatusService.acceptDraft(b.id, {
-          acceptedAt: now,
-          acceptedCustomerNote: input.customerNote ?? null,
-        });
+        // The proposal may have been out for days — re-check the slot at the
+        // moment of acceptance, since APPROVED starts blocking the calendar.
+        if (b.boatId && b.startDateTime && b.endDateTime) {
+          await availabilityService.assertSlotAvailable(
+            b.boatId,
+            b.startDateTime,
+            b.endDateTime,
+            b.id
+          );
+        }
+        try {
+          await bookingStatusService.acceptDraft(b.id, {
+            acceptedAt: now,
+            acceptedCustomerNote: input.customerNote ?? null,
+          });
+        } catch (error) {
+          // Race loser: the overlap constraint rejected the APPROVED flip.
+          if (isOverlapConstraintError(error)) {
+            throw new SlotUnavailableError([]);
+          }
+          throw error;
+        }
       }
       bookingIds.push(b.id);
     }
@@ -546,6 +567,13 @@ export class BookingService {
       totalPriceCents: number;
       depositAmountCents?: number;
     };
+    /**
+     * The paid-but-conflicting escape hatch: the customer's money is already
+     * captured but the slot is taken, so the booking lands as PENDING (which
+     * does NOT block the calendar and cannot violate the overlap constraint)
+     * flagged for manual resolution — refund, move, or rebook.
+     */
+    holdForReview?: { reason: string };
   }): Promise<Booking> {
     const { boat, tier } = await fetchBoatAndTier(input.boatId, input.pricingTierId);
 
@@ -584,7 +612,10 @@ export class BookingService {
       .insert(bookings)
       .values({
         bookingType: "INSTANT_BOOK",
-        bookingStatus: "CONFIRMED",
+        bookingStatus: input.holdForReview ? "PENDING" : "CONFIRMED",
+        adminNotes: input.holdForReview
+          ? `⚠ OVERLAP — paid instant booking held for manual resolution: ${input.holdForReview.reason}`
+          : null,
         source: "WEBSITE" as BookingSource,
         userId: input.userId ?? null,
         boatOwnerId: boat.ownerId,
@@ -621,9 +652,11 @@ export class BookingService {
     // Create status history
     await bookingStatusService.createInitialHistory(
       newBooking.id,
-      "CONFIRMED",
+      input.holdForReview ? "PENDING" : "CONFIRMED",
       input.userId,
-      "Instant booking - payment received"
+      input.holdForReview
+        ? "Instant booking — PAID but slot conflict, held for manual resolution"
+        : "Instant booking - payment received"
     );
 
     // Create payment record
@@ -851,7 +884,6 @@ export class BookingService {
       estimatedValueCents: bookings.estimatedValueCents,
       smsConsent: bookings.smsConsent,
       firstContactedAt: bookings.firstContactedAt,
-      coldAt: bookings.coldAt,
       archivedAt: bookings.archivedAt,
       boatId: bookings.boatId,
       pricingTierId: bookings.pricingTierId,
@@ -1071,7 +1103,6 @@ export class BookingService {
         estimatedValueCents: bookings.estimatedValueCents,
         smsConsent: bookings.smsConsent,
         firstContactedAt: bookings.firstContactedAt,
-        coldAt: bookings.coldAt,
         archivedAt: bookings.archivedAt,
         // stripePaymentLinkId removed - stored in payments table
         // Pricing from booking_pricing (in cents)

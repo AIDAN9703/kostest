@@ -7,6 +7,7 @@
 import { revalidatePath } from "next/cache";
 
 import { getAdminSession } from "@/shared/lib/utils/auth-utils";
+import { availabilityService } from "@/features/availability/services/availability.service";
 import { createCheckoutSessionForBooking } from "@/features/bookings/actions/stripe-checkout";
 
 import { bookingService } from "@/features/bookings/services/booking.service";
@@ -31,6 +32,24 @@ export async function approveBookingRequest(bookingId: string) {
     }
     if (booking.bookingStatus !== "PENDING") {
       return { success: false, error: `Booking is already ${booking.bookingStatus.toLowerCase()}` };
+    }
+
+    // Approval is when this request starts blocking the calendar — the
+    // request may be days old, so the slot must be re-checked NOW.
+    if (booking.boatId && booking.startDateTime && booking.endDateTime) {
+      const availability = await availabilityService.checkTimeSlotAvailability(
+        booking.boatId,
+        booking.startDateTime,
+        booking.endDateTime,
+        bookingId
+      );
+      if (!availability.isAvailable) {
+        const reason = availability.conflicts[0]?.reason ?? "another booking holds this slot";
+        return {
+          success: false,
+          error: `Can't approve — the slot is no longer free (${reason}). Deny this request or move its dates first.`,
+        };
+      }
     }
 
     const paymentLink = await createCheckoutSessionForBooking(bookingId);

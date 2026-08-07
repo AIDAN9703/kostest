@@ -1,16 +1,33 @@
 import { db } from "@/database/db";
-import { bookings, boatBlocking, boatExternalCalendarEvents } from "@/database/schema";
-import { eq, and, or, lte, gte, ne, inArray } from "drizzle-orm";
+import { boats, bookings, boatBlocking, boatExternalCalendarEvents } from "@/database/schema";
+import { eq, and, ne, lt, gt, inArray } from "drizzle-orm";
+
+/**
+ * Availability — ONE definition of "is this slot free", used by every
+ * surface (boat page calendar, instant checkout, request intake, admin
+ * approve, proposal accept, webhook fulfillment).
+ *
+ * All intervals are half-open [start, end): back-to-back charters that share
+ * an exact boundary do not conflict. The same rule is enforced at the
+ * database layer by the `booking_no_overlap` exclusion constraint
+ * (migration 0056) — these checks exist to give humans friendly errors
+ * BEFORE money moves; the constraint exists so a race can never win.
+ */
+
+/** Booking statuses that hold the calendar. Must match migration 0056. */
+const CALENDAR_BLOCKING_STATUSES = ["APPROVED", "CONFIRMED"] as const;
+
+export interface AvailabilityConflict {
+  type: "booking" | "blocking" | "external" | "validation";
+  id: string;
+  startTime: Date;
+  endTime: Date;
+  reason: string;
+}
 
 export interface AvailabilityResult {
   isAvailable: boolean;
-  conflicts: Array<{
-    type: "booking" | "blocking" | "external" | "validation";
-    id: string;
-    startTime: Date;
-    endTime: Date;
-    reason: string;
-  }>;
+  conflicts: AvailabilityConflict[];
 }
 
 export interface CalendarDay {
@@ -19,76 +36,30 @@ export interface CalendarDay {
   conflictCount: number;
 }
 
-export class AvailabilityService {
-  /**
-   * Get calendar availability for a month
-   */
-  async getMonthAvailability(boatId: string, month: Date): Promise<CalendarDay[]> {
-    const startOfMonth = new Date(month.getFullYear(), month.getMonth(), 1);
-    const endOfMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-
-    // Get today's date (start of day) for filtering past dates
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    // Get all conflicts for the month
-    const conflicts = await this.getConflicts(boatId, startOfMonth, endOfMonth);
-
-    // Generate calendar days
-    const days: CalendarDay[] = [];
-    const currentDate = new Date(startOfMonth);
-
-    while (currentDate <= endOfMonth) {
-      // Skip past dates entirely - don't process or return them
-      if (currentDate < today) {
-        currentDate.setDate(currentDate.getDate() + 1);
-        continue;
-      }
-
-      const dayConflicts = conflicts.filter((conflict) => {
-        const conflictStart = new Date(conflict.startTime);
-        const conflictEnd = new Date(conflict.endTime);
-        const dayStart = new Date(currentDate);
-        dayStart.setHours(0, 0, 0, 0);
-        const dayEnd = new Date(currentDate);
-        dayEnd.setHours(23, 59, 59, 999);
-
-        return (
-          (conflictStart <= dayEnd && conflictEnd >= dayStart) ||
-          (dayStart <= conflictEnd && dayEnd >= conflictStart)
-        );
-      });
-
-      let status: CalendarDay["status"] = "available";
-      if (dayConflicts.length > 0) {
-        const hasFullDayConflict = dayConflicts.some((conflict) => {
-          const conflictStart = new Date(conflict.startTime);
-          const conflictEnd = new Date(conflict.endTime);
-          const dayStart = new Date(currentDate);
-          dayStart.setHours(0, 0, 0, 0);
-          const dayEnd = new Date(currentDate);
-          dayEnd.setHours(23, 59, 59, 999);
-
-          return conflictStart <= dayStart && conflictEnd >= dayEnd;
-        });
-
-        status = hasFullDayConflict ? "booked" : "partial";
-      }
-
-      days.push({
-        date: new Date(currentDate),
-        status,
-        conflictCount: dayConflicts.length,
-      });
-
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    return days;
+/** Thrown by assertSlotAvailable when the slot is taken. */
+export class SlotUnavailableError extends Error {
+  readonly conflicts: AvailabilityConflict[];
+  constructor(conflicts: AvailabilityConflict[]) {
+    super("This time slot is no longer available. Please choose a different time.");
+    this.name = "SlotUnavailableError";
+    this.conflicts = conflicts;
   }
+}
 
+/**
+ * True when a DB error is the `booking_no_overlap` exclusion constraint
+ * firing (Postgres error 23P01) — the race-loser signal.
+ */
+export function isOverlapConstraintError(error: unknown): boolean {
+  if (typeof error !== "object" || error === null) return false;
+  const e = error as { code?: string; message?: string };
+  return e.code === "23P01" || /booking_no_overlap/.test(e.message ?? "");
+}
+
+class AvailabilityService {
   /**
-   * Check if a specific time slot is available
+   * Check one time slot. `excludeBookingId` lets a booking's own row be
+   * ignored (re-checking while approving/editing that same booking).
    */
   async checkTimeSlotAvailability(
     boatId: string,
@@ -96,7 +67,6 @@ export class AvailabilityService {
     endTime: Date,
     excludeBookingId?: string
   ): Promise<AvailabilityResult> {
-    // Validate input parameters
     if (!startTime || !endTime || startTime >= endTime) {
       return {
         isAvailable: false,
@@ -112,89 +82,146 @@ export class AvailabilityService {
       };
     }
 
-    // Check for conflicts
     const conflicts = await this.getConflicts(boatId, startTime, endTime, excludeBookingId);
+    return { isAvailable: conflicts.length === 0, conflicts };
+  }
 
-    return {
-      isAvailable: conflicts.length === 0,
-      conflicts,
-    };
+  /** Same check, but throws SlotUnavailableError — for commit points. */
+  async assertSlotAvailable(
+    boatId: string,
+    startTime: Date,
+    endTime: Date,
+    excludeBookingId?: string
+  ): Promise<void> {
+    const result = await this.checkTimeSlotAvailability(
+      boatId,
+      startTime,
+      endTime,
+      excludeBookingId
+    );
+    if (!result.isAvailable) throw new SlotUnavailableError(result.conflicts);
+  }
+
+  /** Calendar month view for a boat (boat page + admin calendar). */
+  async getMonthAvailability(boatId: string, month: Date): Promise<CalendarDay[]> {
+    const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
+    const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 1);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const conflicts = await this.getConflicts(boatId, monthStart, monthEnd);
+
+    const days: CalendarDay[] = [];
+    const cursor = new Date(monthStart);
+    while (cursor < monthEnd) {
+      // Past days aren't bookable — skip them entirely.
+      if (cursor < today) {
+        cursor.setDate(cursor.getDate() + 1);
+        continue;
+      }
+
+      const dayStart = new Date(cursor);
+      const dayEnd = new Date(cursor);
+      dayEnd.setDate(dayEnd.getDate() + 1);
+
+      // Half-open on both sides: a conflict touches this day iff it starts
+      // before the day ends and ends after the day starts.
+      const dayConflicts = conflicts.filter(
+        (c) => c.startTime < dayEnd && c.endTime > dayStart
+      );
+      const fullyBooked = dayConflicts.some(
+        (c) => c.startTime <= dayStart && c.endTime >= dayEnd
+      );
+
+      days.push({
+        date: new Date(cursor),
+        status: dayConflicts.length === 0 ? "available" : fullyBooked ? "booked" : "partial",
+        conflictCount: dayConflicts.length,
+      });
+
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return days;
   }
 
   /**
-   * Get all conflicts for a time period
+   * Everything occupying [startTime, endTime) for a boat: calendar-blocking
+   * bookings, manual blocks, and imported external (iCal) events.
    */
   private async getConflicts(
     boatId: string,
     startTime: Date,
     endTime: Date,
     excludeBookingId?: string
-  ) {
-    // Get blocking bookings
-    const blockingBookings = await db
-      .select({
-        id: bookings.id,
-        startDateTime: bookings.startDateTime,
-        endDateTime: bookings.endDateTime,
-        customerName: bookings.customerName,
-      })
-      .from(bookings)
-      .where(
-        and(
-          eq(bookings.boatId, boatId),
-          inArray(bookings.bookingStatus, ["CONFIRMED", "APPROVED"]),
-          excludeBookingId ? ne(bookings.id, excludeBookingId) : undefined,
-          or(
-            and(lte(bookings.startDateTime, startTime), gte(bookings.endDateTime, startTime)),
-            and(lte(bookings.startDateTime, endTime), gte(bookings.endDateTime, endTime)),
-            and(gte(bookings.startDateTime, startTime), lte(bookings.endDateTime, endTime))
-          )
-        )
-      );
+  ): Promise<AvailabilityConflict[]> {
+    // Turnaround: every occupied window (booking, block, external event)
+    // effectively runs [start − t, end + t] — cleaning, refuel, crew change.
+    // Applied once: the SQL window is widened so buffered neighbors are
+    // found, and the returned intervals carry the padding so slot pickers
+    // and calendars gray out the turnaround too.
+    const [boatRow] = await db
+      .select({ turnaroundMinutes: boats.turnaroundMinutes })
+      .from(boats)
+      .where(eq(boats.id, boatId))
+      .limit(1);
+    const bufferMs = (boatRow?.turnaroundMinutes ?? 0) * 60_000;
+    const windowStart = new Date(startTime.getTime() - bufferMs);
+    const windowEnd = new Date(endTime.getTime() + bufferMs);
+    const pad = (start: Date, end: Date) => ({
+      startTime: new Date(start.getTime() - bufferMs),
+      endTime: new Date(end.getTime() + bufferMs),
+    });
+    const turnaroundNote =
+      bufferMs > 0 ? ` (incl. ${boatRow!.turnaroundMinutes}m turnaround)` : "";
 
-    // Get blocking periods
-    const blockingPeriods = await db
-      .select()
-      .from(boatBlocking)
-      .where(
-        and(
-          eq(boatBlocking.boatId, boatId),
-          or(
-            and(lte(boatBlocking.startTime, startTime), gte(boatBlocking.endTime, startTime)),
-            and(lte(boatBlocking.startTime, endTime), gte(boatBlocking.endTime, endTime)),
-            and(gte(boatBlocking.startTime, startTime), lte(boatBlocking.endTime, endTime))
+    const [blockingBookings, blockingPeriods, externalEvents] = await Promise.all([
+      db
+        .select({
+          id: bookings.id,
+          startDateTime: bookings.startDateTime,
+          endDateTime: bookings.endDateTime,
+          customerName: bookings.customerName,
+        })
+        .from(bookings)
+        .where(
+          and(
+            eq(bookings.boatId, boatId),
+            inArray(bookings.bookingStatus, [...CALENDAR_BLOCKING_STATUSES]),
+            excludeBookingId ? ne(bookings.id, excludeBookingId) : undefined,
+            // Half-open overlap against the turnaround-widened window:
+            // existing.start < window.end AND existing.end > window.start
+            lt(bookings.startDateTime, windowEnd),
+            gt(bookings.endDateTime, windowStart)
           )
-        )
-      );
-
-    // Get imported external (iCal) calendar events — owner's Google Calendar etc.
-    const externalEvents = await db
-      .select()
-      .from(boatExternalCalendarEvents)
-      .where(
-        and(
-          eq(boatExternalCalendarEvents.boatId, boatId),
-          or(
-            and(
-              lte(boatExternalCalendarEvents.startTime, startTime),
-              gte(boatExternalCalendarEvents.endTime, startTime)
-            ),
-            and(
-              lte(boatExternalCalendarEvents.startTime, endTime),
-              gte(boatExternalCalendarEvents.endTime, endTime)
-            ),
-            and(
-              gte(boatExternalCalendarEvents.startTime, startTime),
-              lte(boatExternalCalendarEvents.endTime, endTime)
-            )
+        ),
+      db
+        .select()
+        .from(boatBlocking)
+        .where(
+          and(
+            eq(boatBlocking.boatId, boatId),
+            lt(boatBlocking.startTime, windowEnd),
+            gt(boatBlocking.endTime, windowStart)
           )
-        )
-      );
+        ),
+      db
+        .select()
+        .from(boatExternalCalendarEvents)
+        .where(
+          and(
+            eq(boatExternalCalendarEvents.boatId, boatId),
+            lt(boatExternalCalendarEvents.startTime, windowEnd),
+            gt(boatExternalCalendarEvents.endTime, windowStart)
+          )
+        ),
+    ]);
 
     return [
       ...blockingBookings
-        // Calendar-blocking statuses always carry dates; the type-level nulls
-        // exist for INQUIRY-phase deals, which this query never matches.
+        // Blocking statuses always carry dates; the type-level nulls exist
+        // for INQUIRY-phase deals, which this query never matches.
         .filter(
           (b): b is typeof b & { startDateTime: Date; endDateTime: Date } =>
             b.startDateTime != null && b.endDateTime != null
@@ -202,24 +229,23 @@ export class AvailabilityService {
         .map((b) => ({
           type: "booking" as const,
           id: b.id,
-          startTime: b.startDateTime,
-          endTime: b.endDateTime,
-          reason: `Booked by ${b.customerName}`,
+          ...pad(b.startDateTime, b.endDateTime),
+          reason: `Booked by ${b.customerName}${turnaroundNote}`,
         })),
       ...blockingPeriods.map((b) => ({
         type: "blocking" as const,
         id: b.id,
-        startTime: b.startTime,
-        endTime: b.endTime,
+        ...pad(b.startTime, b.endTime),
         reason: b.reason || `${b.blockingType}`,
       })),
       ...externalEvents.map((e) => ({
         type: "external" as const,
         id: e.id,
-        startTime: e.startTime,
-        endTime: e.endTime,
-        reason: e.summary || "External calendar",
+        ...pad(e.startTime, e.endTime),
+        reason: `${e.summary || "External calendar"}${turnaroundNote}`,
       })),
     ];
   }
 }
+
+export const availabilityService = new AvailabilityService();

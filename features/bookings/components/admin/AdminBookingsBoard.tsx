@@ -19,7 +19,6 @@ import {
   Plus,
   RotateCcw,
   Ship,
-  Snowflake,
   Trash2,
   UserCheck,
   XCircle,
@@ -427,7 +426,7 @@ function BookingRow({
   }
 
   // Status emblems — payment once an invoice could exist (or money moved),
-  // captain/contract once the deal is locked in, cold for quiet leads.
+  // captain/contract once the deal is locked in.
   const paymentEmblem =
     (PRICED_STATUSES.has(booking.bookingStatus) ||
       booking.totalPaidCents > 0 ||
@@ -498,7 +497,7 @@ function BookingRow({
                 </span>
               ) : null}
             </div>
-            {paymentEmblem || showCaptain || showContract || booking.coldAt ? (
+            {paymentEmblem || showCaptain || showContract ? (
               <div className="mt-1.5 flex items-center gap-1">
                 {paymentEmblem ? <StatusEmblem {...paymentEmblem} /> : null}
                 {showCaptain ? (
@@ -513,13 +512,6 @@ function BookingRow({
                     label={preTripLabel("Contract", booking.opsContractSigned ? "signed" : "unsigned", !booking.opsContractSigned && tripImminent)}
                     className={preTripTone(Boolean(booking.opsContractSigned), tripImminent)}
                     Icon={booking.opsContractSigned ? FileCheck2 : FileX2}
-                  />
-                ) : null}
-                {booking.coldAt ? (
-                  <StatusEmblem
-                    label="Gone cold — no recent activity"
-                    className="bg-sky-500/10 text-sky-600 dark:text-sky-400"
-                    Icon={Snowflake}
                   />
                 ) : null}
               </div>

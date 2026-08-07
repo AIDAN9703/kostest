@@ -1,4 +1,4 @@
-import { Check, Snowflake } from "lucide-react";
+import { Check } from "lucide-react";
 
 import type { DealStatus } from "@/features/bookings/deal-status";
 import { cn } from "@/shared/lib/utils/general-utils";
@@ -7,7 +7,7 @@ import { cn } from "@/shared/lib/utils/general-utils";
  * THE deal lifecycle bar — one pipeline for every deal, read-only because
  * every step is derived: Contacted from firstContactedAt, Invoice sent from
  * DRAFT/APPROVED, the money steps from the payments ledger, Completed from
- * status. Actions that move the deal live in the quick-actions menu.
+ * status. Actions that move the deal live in the header and section cards.
  */
 const DEAL_STEPS = [
   "Inquiry",
@@ -39,11 +39,9 @@ interface DealPipelineBarProps {
   dealStatus: DealStatus;
   /** firstContactedAt set — lights the Contacted step for INQUIRY deals. */
   contacted?: boolean;
-  /** coldAt set — shows the cold chip alongside the bar. */
-  cold?: boolean;
 }
 
-export function DealPipelineBar({ dealStatus, contacted = false, cold = false }: DealPipelineBarProps) {
+export function DealPipelineBar({ dealStatus, contacted = false }: DealPipelineBarProps) {
   const terminal =
     dealStatus === "CANCELLED" ? "Cancelled" : dealStatus === "ARCHIVED" ? "Archived" : null;
 
@@ -62,11 +60,11 @@ export function DealPipelineBar({ dealStatus, contacted = false, cold = false }:
     );
   }
 
-  const currentIndex = cold ? -1 : stepIndex(dealStatus, contacted);
+  const currentIndex = stepIndex(dealStatus, contacted);
 
   return (
-    <div className="flex items-center gap-3 overflow-x-auto">
-      <ol className="flex min-w-0 flex-1 items-center">
+    <div className="overflow-x-auto">
+      <ol className="flex min-w-0 items-center">
         {DEAL_STEPS.map((label, i) => {
           const isDone = currentIndex > i;
           const isCurrent = currentIndex === i;
@@ -113,13 +111,6 @@ export function DealPipelineBar({ dealStatus, contacted = false, cold = false }:
           );
         })}
       </ol>
-
-      {cold ? (
-        <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-sky-500/10 px-2.5 py-1 text-xs font-medium text-sky-700 dark:text-sky-400">
-          <Snowflake className="h-3 w-3" />
-          Cold
-        </span>
-      ) : null}
     </div>
   );
 }

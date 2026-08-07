@@ -1,0 +1,239 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Archive,
+  CheckCircle2,
+  Loader2,
+  MoreHorizontal,
+  UserCheck,
+  XCircle,
+} from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/shared/components/ui/dropdown-menu";
+import { Label } from "@/shared/components/ui/label";
+import { Textarea } from "@/shared/components/ui/textarea";
+import { useToast } from "@/shared/lib/hooks/use-toast";
+import {
+  assignAdminToBooking,
+  cancelBooking,
+  markBookingCompleted,
+} from "@/features/bookings/actions/admin-booking.actions";
+import { markDealLost, toggleDealArchived } from "@/features/bookings/actions/deal.actions";
+
+export interface DealAdminOption {
+  id: string;
+  name: string;
+}
+
+interface DealActionsMenuProps {
+  bookingId: string;
+  bookingStatus: string;
+  isArchived?: boolean;
+  assignedAdminId?: string | null;
+  admins?: DealAdminOption[];
+  /** Current admin's user id — powers "Assign to me". */
+  currentUserId?: string | null;
+}
+
+/**
+ * The quiet header overflow (⋯) — ownership and lifecycle verbs that don't
+ * deserve their own button: assign, complete, archive, lost/cancel. The
+ * everyday verbs live on the cards they belong to (Activity, Payments).
+ */
+export function DealActionsMenu({
+  bookingId,
+  bookingStatus,
+  isArchived = false,
+  assignedAdminId = null,
+  admins = [],
+  currentUserId = null,
+}: DealActionsMenuProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
+  const [openDialog, setOpenDialog] = useState<"lost" | "cancel" | null>(null);
+  const [dialogText, setDialogText] = useState("");
+
+  const isInquiry = bookingStatus === "INQUIRY";
+  const isSettled = bookingStatus === "COMPLETED" || bookingStatus === "CANCELLED";
+
+  function run(action: () => Promise<{ success: boolean; error?: string; message?: string }>) {
+    startTransition(async () => {
+      const result = await action();
+      if (result.success) {
+        setOpenDialog(null);
+        setDialogText("");
+        if (result.message) toast({ title: result.message });
+        router.refresh();
+      } else {
+        toast({ title: "Action failed", description: result.error, variant: "destructive" });
+      }
+    });
+  }
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label="More actions"
+            // Toolbar pill: same fill as the other header buttons.
+            className="h-8 w-8 shrink-0 rounded-full border-0 bg-foreground/10 p-0 text-primary-strong hover:bg-foreground/15 hover:text-primary-strong"
+            disabled={isPending}
+          >
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <MoreHorizontal className="h-4 w-4" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-60">
+          {!isSettled ? (
+            <>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="gap-2">
+                  <UserCheck className="h-4 w-4" />
+                  Assign
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {currentUserId && assignedAdminId !== currentUserId ? (
+                    <>
+                      <DropdownMenuItem
+                        onClick={() => run(() => assignAdminToBooking(bookingId, currentUserId))}
+                        className="cursor-pointer"
+                      >
+                        Assign to me
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  ) : null}
+                  {admins.length === 0 ? (
+                    <DropdownMenuItem disabled>No admins available</DropdownMenuItem>
+                  ) : (
+                    admins.map((admin) => (
+                      <DropdownMenuItem
+                        key={admin.id}
+                        disabled={admin.id === assignedAdminId}
+                        onClick={() => run(() => assignAdminToBooking(bookingId, admin.id))}
+                        className="cursor-pointer"
+                      >
+                        {admin.name}
+                        {admin.id === assignedAdminId ? (
+                          <CheckCircle2 className="ml-auto h-4 w-4 text-success" />
+                        ) : null}
+                      </DropdownMenuItem>
+                    ))
+                  )}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+            </>
+          ) : null}
+
+          {bookingStatus === "CONFIRMED" ? (
+            <DropdownMenuItem
+              onClick={() => run(() => markBookingCompleted(bookingId))}
+              className="cursor-pointer gap-2"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Mark charter completed
+            </DropdownMenuItem>
+          ) : null}
+
+          <DropdownMenuItem
+            onClick={() => run(() => toggleDealArchived(bookingId))}
+            className="cursor-pointer gap-2"
+          >
+            <Archive className="h-4 w-4" />
+            {isArchived ? "Restore from archive" : "Archive"}
+          </DropdownMenuItem>
+          {isInquiry ? (
+            <DropdownMenuItem
+              onClick={() => setOpenDialog("lost")}
+              className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+            >
+              <XCircle className="h-4 w-4" />
+              Mark lost
+            </DropdownMenuItem>
+          ) : bookingStatus !== "CANCELLED" ? (
+            <DropdownMenuItem
+              onClick={() => setOpenDialog("cancel")}
+              className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+            >
+              <XCircle className="h-4 w-4" />
+              Cancel booking
+            </DropdownMenuItem>
+          ) : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Mark lost / cancel — same dialog shape, different verb */}
+      <Dialog
+        open={openDialog === "lost" || openDialog === "cancel"}
+        onOpenChange={(o) => !o && setOpenDialog(null)}
+      >
+        <DialogContent className="rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>{openDialog === "lost" ? "Mark deal lost" : "Cancel booking"}</DialogTitle>
+            <DialogDescription>
+              {openDialog === "lost"
+                ? "Closes the deal as lost — it moves to the archive bucket."
+                : "Closes the booking and frees the calendar. Refunds are handled on the payments card."}
+            </DialogDescription>
+          </DialogHeader>
+          <div>
+            <Label>Reason</Label>
+            <Textarea
+              value={dialogText}
+              onChange={(e) => setDialogText(e.target.value)}
+              placeholder={openDialog === "lost" ? "Why was it lost?" : "Why is it cancelled?"}
+              rows={2}
+              className="mt-2 resize-none rounded-xl"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenDialog(null)} className="rounded-xl">
+              Keep deal
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() =>
+                run(() =>
+                  openDialog === "lost"
+                    ? markDealLost(bookingId, dialogText)
+                    : cancelBooking(bookingId, dialogText)
+                )
+              }
+              disabled={isPending || !dialogText.trim()}
+              className="rounded-xl gap-2"
+            >
+              {isPending ? "Working…" : openDialog === "lost" ? "Mark lost" : "Cancel booking"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

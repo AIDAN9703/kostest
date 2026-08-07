@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AvailabilityService } from '@/features/availability/services/availability.service';
+import { availabilityService } from '@/features/availability/services/availability.service';
 
 export async function GET(
   request: NextRequest,
@@ -19,7 +19,6 @@ export async function GET(
     const [year, month] = monthParam.split('-').map(Number);
     const monthDate = new Date(year, month - 1, 1); // month is 0-indexed
     
-    const availabilityService = new AvailabilityService();
     const calendarDays = await availabilityService.getMonthAvailability(boatId, monthDate);
 
     return NextResponse.json({ 

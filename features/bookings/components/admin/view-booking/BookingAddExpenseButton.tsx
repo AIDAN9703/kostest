@@ -27,8 +27,15 @@ export function BookingAddExpenseButton({
 
   return (
     <>
-      <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => setOpen(true)}>
-        <Plus className="h-4 w-4" />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        // Header-pill style: soft fill, no border, gold text — same as Edit page.
+        className="shrink-0 gap-1.5 rounded-full border-0 bg-foreground/10 px-4 text-primary-strong hover:bg-foreground/15 hover:text-primary-strong"
+        onClick={() => setOpen(true)}
+      >
+        <Plus className="h-3.5 w-3.5" />
         Add expense
       </Button>
       <BookingExpensesModal

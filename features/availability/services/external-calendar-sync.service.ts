@@ -2,12 +2,15 @@ import "server-only";
 
 import type { VEvent, ParameterValue } from "node-ical";
 import { eq } from "drizzle-orm";
+import { fromZonedTime } from "date-fns-tz";
 
 import { db } from "@/database/db";
 import {
+  boats,
   boatExternalCalendars,
   boatExternalCalendarEvents,
 } from "@/database/schema";
+import { getBoatTimezone } from "@/shared/lib/utils/date-helpers";
 
 /**
  * External (iCal) calendar import.
@@ -66,6 +69,34 @@ function clampEnd(start: Date, end: Date | undefined): Date {
   return end;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * All-day iCal events (VALUE=DATE) carry no time or timezone — node-ical
+ * hands back midnight in the SERVER's zone, which on a UTC host would start
+ * an "all day Saturday" block at 8pm Friday Miami time and leave Saturday
+ * evening unprotected. Rebuild the block from the event's calendar date in
+ * the BOAT's timezone instead: local midnight → local midnight.
+ * (iCal DTEND on all-day events is exclusive — the morning after.)
+ */
+function allDayBounds(
+  start: Date,
+  end: Date | undefined,
+  timezone: string
+): { start: Date; end: Date } {
+  const dayStr = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate()
+    ).padStart(2, "0")}`;
+  const startUTC = fromZonedTime(`${dayStr(start)} 00:00:00`, timezone);
+  const endBase = end ?? new Date(start.getTime() + DAY_MS);
+  const endUTC = fromZonedTime(`${dayStr(endBase)} 00:00:00`, timezone);
+  return {
+    start: startUTC,
+    end: endUTC.getTime() <= startUTC.getTime() ? new Date(startUTC.getTime() + DAY_MS) : endUTC,
+  };
+}
+
 /**
  * Parse raw iCal text into concrete busy events within `window`.
  * Recurring events are expanded into individual occurrences (RRULE + EXDATE +
@@ -73,7 +104,8 @@ function clampEnd(start: Date, end: Date | undefined): Date {
  */
 async function parseIcsBusyEvents(
   icsText: string,
-  window: { start: Date; end: Date }
+  window: { start: Date; end: Date },
+  boatTimezone: string
 ): Promise<ParsedBusyEvent[]> {
   const ical = await import("node-ical");
   const data = ical.parseICS(icsText);
@@ -102,8 +134,11 @@ async function parseIcsBusyEvents(
       }
       for (const instance of instances) {
         if (!instance.start) continue;
-        const start = instance.start as Date;
-        const end = clampEnd(start, instance.end as Date | undefined);
+        let start = instance.start as Date;
+        let end = clampEnd(start, instance.end as Date | undefined);
+        if (event.datetype === "date") {
+          ({ start, end } = allDayBounds(start, instance.end as Date | undefined, boatTimezone));
+        }
         out.push({
           uid: event.uid ?? null,
           summary: paramValueToString(instance.summary) ?? summary,
@@ -116,8 +151,11 @@ async function parseIcsBusyEvents(
     }
 
     // Single occurrence — include only if it overlaps the window.
-    const start = event.start as Date;
-    const end = clampEnd(start, event.end as Date | undefined);
+    let start = event.start as Date;
+    let end = clampEnd(start, event.end as Date | undefined);
+    if (event.datetype === "date") {
+      ({ start, end } = allDayBounds(start, event.end as Date | undefined, boatTimezone));
+    }
     if (end < window.start || start > window.end) continue;
 
     out.push({ uid: event.uid ?? null, summary, start, end });
@@ -169,8 +207,16 @@ export async function syncExternalCalendar(calendarId: string): Promise<SyncResu
   const now = new Date();
 
   try {
+    // All-day events are rebuilt around the boat's local midnight.
+    const [boat] = await db
+      .select({ timezone: boats.timezone })
+      .from(boats)
+      .where(eq(boats.id, calendar.boatId))
+      .limit(1);
+    const boatTimezone = getBoatTimezone({ timezone: boat?.timezone ?? null });
+
     const text = await fetchIcsText(calendar.icalUrl);
-    const parsed = await parseIcsBusyEvents(text, syncWindow(now));
+    const parsed = await parseIcsBusyEvents(text, syncWindow(now), boatTimezone);
 
     // Replace this calendar's events. neon-http has no interactive
     // transactions, so we delete then bulk-insert; the insert is a single

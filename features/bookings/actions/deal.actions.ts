@@ -2,7 +2,7 @@
 
 /**
  * Lead-phase deal actions on the unified booking hub — logging contact,
- * notes, cold/archive marks, and losing a deal. Everything writes to the
+ * notes, archiving, and losing a deal. Everything writes to the
  * one activity feed (booking_event) and derives the one pipeline
  * (docs/UNIFIED_BOOKINGS_PLAN.md).
  */
@@ -33,7 +33,6 @@ async function getDeal(bookingId: string) {
       id: bookings.id,
       bookingStatus: bookings.bookingStatus,
       firstContactedAt: bookings.firstContactedAt,
-      coldAt: bookings.coldAt,
       archivedAt: bookings.archivedAt,
       assignedAdminId: bookings.assignedAdminId,
     })
@@ -150,42 +149,6 @@ export async function addDealNote(bookingId: string, content: string): Promise<D
   } catch (error) {
     console.error("Error adding deal note:", error);
     return { success: false, error: "Failed to add note" };
-  }
-}
-
-/** Toggle the cold mark on an INQUIRY-status deal (cold ⇄ revived). */
-export async function toggleDealCold(bookingId: string): Promise<DealActionResult> {
-  try {
-    const adminAuth = await getAdminSession();
-    if (adminAuth.error !== undefined) return { success: false, error: adminAuth.error };
-    const session = adminAuth.session;
-
-    const deal = await getDeal(bookingId);
-    if (!deal) return { success: false, error: "Deal not found" };
-    if (deal.bookingStatus !== "INQUIRY") {
-      return { success: false, error: "Only inquiry-stage deals can be marked cold" };
-    }
-
-    const makingCold = deal.coldAt == null;
-    await db
-      .update(bookings)
-      .set({ coldAt: makingCold ? new Date() : null, updatedAt: new Date() })
-      .where(eq(bookings.id, bookingId));
-
-    await bookingEventsService.logEvent({
-      bookingId,
-      eventType: makingCold ? "lead.marked_cold" : "lead.revived",
-      actorType: "admin",
-      actorId: session.user.id,
-      channel: "admin_portal",
-      displayMessage: makingCold ? "Marked cold" : "Revived from cold",
-    });
-
-    revalidateDeal(bookingId);
-    return { success: true, message: makingCold ? "Marked cold" : "Revived" };
-  } catch (error) {
-    console.error("Error toggling deal cold:", error);
-    return { success: false, error: "Failed to update deal" };
   }
 }
 

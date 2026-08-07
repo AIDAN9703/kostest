@@ -372,6 +372,17 @@ export function CaptainToggle({
 /*  Price breakdown                                                            */
 /* -------------------------------------------------------------------------- */
 
+/** One label/amount row in the price breakdown. Hoisted to module scope —
+ *  defining it inside PriceBreakdown remade the component every render. */
+function Line({ label, amount }: { label: string; amount: string }) {
+  return (
+    <div className="flex justify-between text-sm">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground">{amount}</span>
+    </div>
+  );
+}
+
 export function PriceBreakdown({
   tier,
   cleaningFee,
@@ -386,13 +397,6 @@ export function PriceBreakdown({
 }) {
   const b = calculateBookingPrice(tier.price, cleaningFee || 0, 0, serviceFeeRate);
   const fmt = (n: number) => formatCurrency(n, currency, { showCents: true });
-
-  const Line = ({ label, amount }: { label: string; amount: string }) => (
-    <div className="flex justify-between text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground">{amount}</span>
-    </div>
-  );
 
   return (
     <div className="space-y-2 rounded-2xl bg-muted/40 p-4">

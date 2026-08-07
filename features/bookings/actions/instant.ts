@@ -11,7 +11,7 @@ import { calculateBookingPriceCents } from "@/shared/lib/utils/pricing-utils";
 import { getAppSettings } from "@/features/app-settings/app-settings.service";
 import { centsToDollars, dollarsToCents } from "@/shared/lib/utils/money-utils";
 import { addOnService } from "@/features/add-ons/add-on.service";
-import { AvailabilityService } from "@/features/availability/services/availability.service";
+import { availabilityService } from "@/features/availability/services/availability.service";
 import { getBaseUrl } from "@/shared/lib/utils/base-url";
 import { getStripe } from "@/shared/lib/services/stripe.service";
 
@@ -89,7 +89,7 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
     // Never let a customer pay for a slot that's already taken — check
     // availability before creating the checkout session. (The webhook
     // re-checks after payment to narrow the race window.)
-    const availability = await new AvailabilityService().checkTimeSlotAvailability(
+    const availability = await availabilityService.checkTimeSlotAvailability(
       data.boatId,
       startDateTime,
       endDateTime
@@ -184,7 +184,7 @@ export async function createInstantBooking(data: BookingRequest & { boatId: stri
       allow_promotion_codes: true, // ✨ Enable Stripe's built-in coupon input
       success_url: `${getBaseUrl()}/bookings/payment-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${getBaseUrl()}/boats/${boat.id}?canceled=true`,
-    } as any);
+    });
     
     // No pending booking creation - webhook handles everything
     return { 

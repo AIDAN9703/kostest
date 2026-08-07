@@ -286,7 +286,6 @@ export interface BookingListItem {
   estimatedValueCents: number | null;
   smsConsent: boolean;
   firstContactedAt: Date | null;
-  coldAt: Date | null;
   archivedAt: Date | null;
 
   // Joined boat info

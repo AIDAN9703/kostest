@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   createDateTimeISO,
   getBoatDayBoundsUTC,
@@ -39,19 +40,13 @@ export function useBoatTimeSlots({
   boat: { id: string; timezone?: string | null };
   durationHours: number;
 }) {
-  const [conflicts, setConflicts] = useState<ApiConflict[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
+  const boatTimezone = boat.timezone ?? null;
 
-  const dateKey = useMemo(
-    () =>
-      date
-        ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
-            date.getDate()
-          ).padStart(2, "0")}`
-        : "",
-    [date]
-  );
+  const dateKey = date
+    ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+        date.getDate()
+      ).padStart(2, "0")}`
+    : "";
 
   const baseTimes = useMemo(() => {
     const times: string[] = [];
@@ -64,37 +59,29 @@ export function useBoatTimeSlots({
     return times;
   }, []);
 
-  useEffect(() => {
-    if (!date || !boat.id) {
-      setConflicts([]);
-      return;
-    }
-    let active = true;
-    setLoading(true);
-    setError(false);
-    const { startUTC, endUTC } = getBoatDayBoundsUTC(date, boat);
-    fetch(
-      `/api/boats/${boat.id}/availability?startDate=${startUTC.toISOString()}&endDate=${endUTC.toISOString()}`
-    )
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("availability fetch failed"))))
-      .then((data) => {
-        if (active) setConflicts(data.conflicts ?? []);
-      })
-      .catch(() => {
-        if (active) {
-          setConflicts([]);
-          setError(true);
-        }
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+  // react-query handles caching (flipping between days is instant), request
+  // dedupe, and race-safety — no manual active-flag effect needed.
+  const conflictsQuery = useQuery({
+    queryKey: ["boat-availability", boat.id, dateKey, boatTimezone],
+    enabled: !!date && !!boat.id,
+    staleTime: 30_000,
+    queryFn: async () => {
+      const { startUTC, endUTC } = getBoatDayBoundsUTC(date as Date, {
+        timezone: boatTimezone,
       });
-    return () => {
-      active = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateKey, boat.id]);
+      const res = await fetch(
+        `/api/boats/${boat.id}/availability?startDate=${startUTC.toISOString()}&endDate=${endUTC.toISOString()}`
+      );
+      if (!res.ok) throw new Error("availability fetch failed");
+      const data: { conflicts?: ApiConflict[] } = await res.json();
+      return data.conflicts ?? [];
+    },
+  });
 
+  const conflicts = useMemo(() => conflictsQuery.data ?? [], [conflictsQuery.data]);
+
+  // Depend on the boat's primitives, not the object — a fresh `boat` object
+  // per render would otherwise recompute every slot on every render.
   const slots = useMemo<BoatTimeSlot[]>(() => {
     if (!date) return [];
     const now = new Date();
@@ -104,7 +91,7 @@ export function useBoatTimeSlots({
     }));
 
     return baseTimes.map((time) => {
-      const startUTC = new Date(createDateTimeISO(date, time, boat));
+      const startUTC = new Date(createDateTimeISO(date, time, { timezone: boatTimezone }));
       const endUTC = new Date(startUTC.getTime() + durationHours * 60 * 60 * 1000);
       const isPast = startUTC < now;
       const hasConflict = parsedConflicts.some(
@@ -112,7 +99,9 @@ export function useBoatTimeSlots({
       );
       return { time, isAvailable: !isPast && !hasConflict };
     });
-  }, [baseTimes, conflicts, date, boat, durationHours]);
+  }, [baseTimes, conflicts, date, boatTimezone, durationHours]);
 
-  return { slots, loading, error };
+  // isLoading = pending AND actually fetching, so a disabled query (no date
+  // picked yet) never reads as loading.
+  return { slots, loading: conflictsQuery.isLoading, error: conflictsQuery.isError };
 }

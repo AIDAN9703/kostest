@@ -51,7 +51,6 @@ export default async function BoatCalendarPage({ params }: BoatCalendarPageProps
 
       <BoatCalendarView
         boatId={boatId}
-        boatName={boat.name}
         timezone={boat.timezone ?? undefined}
         externalCalendars={externalCalendars}
         icalFeedUrl={icalFeedUrl}

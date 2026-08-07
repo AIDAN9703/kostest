@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { format, startOfDay, startOfMonth } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
@@ -12,6 +13,9 @@ interface ApiCalendarDay {
   date: string;
   status: DayStatus;
 }
+
+/** Stable empty map so a loading month doesn't churn downstream memos. */
+const EMPTY_STATUS_MAP = new Map<string, DayStatus>();
 
 /**
  * Self-contained month calendar built directly on react-day-picker v9.
@@ -33,35 +37,25 @@ export function BookingCalendar({
 }) {
   const today = useMemo(() => startOfDay(new Date()), []);
   const [month, setMonth] = useState<Date>(startOfMonth(selected ?? today));
-  const [statusByDay, setStatusByDay] = useState<Map<string, DayStatus>>(new Map());
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError(false);
-    fetch(`/api/boats/${boatId}/calendar?month=${format(month, "yyyy-MM")}`)
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("calendar fetch failed"))))
-      .then((data: { days?: ApiCalendarDay[] }) => {
-        if (!active) return;
-        const map = new Map<string, DayStatus>();
-        for (const d of data.days ?? []) map.set(d.date.split("T")[0], d.status);
-        setStatusByDay(map);
-      })
-      .catch(() => {
-        if (active) {
-          setStatusByDay(new Map());
-          setError(true);
-        }
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [boatId, month]);
+  // react-query: month flips hit the cache instantly, requests dedupe, and
+  // there's no manual cancelled-effect bookkeeping.
+  const monthKey = format(month, "yyyy-MM");
+  const calendarQuery = useQuery({
+    queryKey: ["boat-calendar", boatId, monthKey],
+    staleTime: 30_000,
+    queryFn: async () => {
+      const res = await fetch(`/api/boats/${boatId}/calendar?month=${monthKey}`);
+      if (!res.ok) throw new Error("calendar fetch failed");
+      const data: { days?: ApiCalendarDay[] } = await res.json();
+      const map = new Map<string, DayStatus>();
+      for (const d of data.days ?? []) map.set(d.date.split("T")[0], d.status);
+      return map;
+    },
+  });
+  const statusByDay = calendarQuery.data ?? EMPTY_STATUS_MAP;
+  const loading = calendarQuery.isFetching;
+  const error = calendarQuery.isError;
 
   const { disabledDays, partialDays } = useMemo(() => {
     const disabled: Date[] = [];
@@ -112,7 +106,7 @@ export function BookingCalendar({
             ) : (
               <ChevronRight className="size-4" />
             ),
-          DayButton: ({ day, modifiers, children, ...props }) => (
+          DayButton: ({ day, modifiers, ...props }) => (
             <button
               {...props}
               className={cn(

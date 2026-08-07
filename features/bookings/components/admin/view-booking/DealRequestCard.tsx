@@ -14,7 +14,14 @@ export function DealRequestCard({ deal }: { deal: BookingDetails }) {
   return (
     <Card className="rounded-2xl border-border/60">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg">Request</CardTitle>
+        {/* Same title as BookingTripCard so both stages open with an
+            identical-looking card; the chip carries the stage nuance. */}
+        <CardTitle className="flex items-center gap-2 text-lg">
+          Trip details
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Requested
+          </span>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">

@@ -47,10 +47,9 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
     const pricingTier = pricingTierResults[0];
 
     // Check availability before creating booking
-    const { AvailabilityService } = await import(
+    const { availabilityService } = await import(
       "@/features/availability/services/availability.service"
     );
-    const availabilityService = new AvailabilityService();
 
     const startDateTime = new Date(validatedData.startDateTime);
     const endDateTime = calculateEndDateTime(startDateTime, pricingTier.hours);
@@ -159,12 +158,12 @@ export async function createBookingRequest(data: BookingRequest & { boatId: stri
  * Calculates pricing from tier and boat data
  */
 async function sendGHLWebhookForBookingRequest(
-  booking: any,
-  boat: any,
-  pricingTier: any,
+  booking: { id: string; numberOfPassengers: number | null; needsCaptain: boolean | null },
+  boat: { id: string; name: string; cleaningFee: number | null },
+  pricingTier: { price: number; hours: number | null },
   startDateTime: Date,
   endDateTime: Date,
-  user: any
+  user: { name?: string | null; email?: string | null; phoneNumber?: string | null }
 ) {
   try {
     // Calculate pricing from source data (use shared util for consistency)

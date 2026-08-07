@@ -121,12 +121,14 @@ export function AdminBookingMakePaymentButton({
     <>
       <Button
         type="button"
-        variant="secondary"
-        className="h-11 shrink-0 gap-2 rounded-xl border-success/30 bg-success-soft text-success hover:bg-success/15"
+        variant="outline"
+        size="sm"
+        // Header-pill style (soft fill, no border), kept green — money in.
+        className="shrink-0 gap-1.5 rounded-full border-0 bg-success/10 px-4 text-success hover:bg-success/15 hover:text-success"
         disabled={disabled}
         onClick={() => setOpen(true)}
       >
-        Make payment
+        Manual payment
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>

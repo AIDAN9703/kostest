@@ -9,9 +9,15 @@ import {
 } from "@/features/_validation/validations";
 import { Boat, PricingTier } from "@/shared/lib/types/types";
 import { createDateTimeISO } from "@/shared/lib/utils/date-helpers";
-import { getActivePricingTiers } from "../hooks/usePriceCalculation";
 
 export type BookingBoat = Boat & { pricingTiers?: PricingTier[] | null };
+
+/** Bookable tiers, cheapest-duration first. */
+function getActivePricingTiers(boat: BookingBoat): PricingTier[] {
+  return (
+    boat.pricingTiers?.filter((t) => t.isActive).sort((a, b) => a.hours - b.hours) ?? []
+  );
+}
 
 /**
  * Booking form state, kept deliberately small.

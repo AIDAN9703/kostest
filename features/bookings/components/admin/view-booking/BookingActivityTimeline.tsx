@@ -2,6 +2,7 @@
 
 import React from "react";
 import {
+  AlertTriangle,
   Anchor,
   Archive,
   ArrowRight,
@@ -95,6 +96,13 @@ const EVENT_STYLES: Record<string, EventStyle> = {
   [BOOKING_EVENT_TYPES.ASSIGNED_CAPTAIN_CHANGED]: { Icon: Anchor, bubble: PEOPLE },
   [BOOKING_EVENT_TYPES.CREW_MEMBER_ADDED]: { Icon: Users, bubble: PEOPLE },
   [BOOKING_EVENT_TYPES.CREW_MEMBER_REMOVED]: { Icon: Users, bubble: PEOPLE },
+  // Overlap hold — a paid booking that landed on a taken slot. Loudest
+  // thing the timeline can show.
+  "booking.overlap_hold": {
+    Icon: AlertTriangle,
+    bubble: "border-destructive/70 text-destructive",
+    major: true,
+  },
   // Housekeeping / audit — quiet, routine
   "deal.archived": { Icon: Archive, bubble: QUIET },
   [BOOKING_EVENT_TYPES.UPDATED]: { Icon: Pencil, bubble: QUIET },
@@ -375,10 +383,13 @@ function dayLabel(date: Date): string {
 export function BookingActivityTimeline({
   events,
   className,
+  actions,
 }: {
   events: BookingActivityEventEntry[];
   /** e.g. sticky rail on booking detail: lg:sticky lg:top-20 … */
   className?: string;
+  /** Header controls (Log contact / Add note) — top right of the card. */
+  actions?: React.ReactNode;
 }) {
   // Drop stage-change lines that repeat an adjacent human event.
   const visibleEvents = events.filter((e) => !isRedundantStageChange(e, events));
@@ -404,11 +415,13 @@ export function BookingActivityTimeline({
         className
       )}
     >
-      <CardHeader className="shrink-0 px-6">
+      {/* Base CardHeader is a grid — force a flex row for title + actions. */}
+      <CardHeader className="flex shrink-0 flex-row items-center justify-between space-y-0 px-6">
         <CardTitle className="flex items-center gap-2 text-base">
           <History className="h-4 w-4 text-muted-foreground" />
           Activity
         </CardTitle>
+        {actions ?? null}
       </CardHeader>
       <CardContent className="min-h-0 flex-1 overflow-y-auto px-6 pb-2 [-ms-overflow-style:none] [scrollbar-gutter:stable]">
         {visibleEvents.length === 0 ? (

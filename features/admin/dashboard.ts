@@ -1,15 +1,8 @@
 "use server";
 
 import { db } from "@/database/db";
-import {
-  boats,
-  bookingEvents,
-  bookingOps,
-  bookingPricing,
-  bookings,
-  users,
-} from "@/database/schema";
-import { and, count, desc, eq, gte, isNull, lte, ne, notInArray, sql } from "drizzle-orm";
+import { bookingEvents, bookingOps, bookingPricing, bookings } from "@/database/schema";
+import { and, desc, eq, gte, isNull, lte, notInArray, sql } from "drizzle-orm";
 import { cache } from "react";
 import {
   startOfDay,
@@ -41,16 +34,22 @@ export interface DashboardHeadlineMetrics {
   kosCommissionMtdCents: number;
   /** Non-cancelled trips starting this month. */
   tripsThisMonth: number;
-  /** Active boats in the fleet. */
-  activeBoats: number;
-  /** Boats added to the fleet this month. */
-  boatsAddedThisMonth: number;
-  /** New user accounts created this month. */
-  newUsersThisMonth: number;
-  /** Live INQUIRY-status deals across the pipeline. */
-  openInquiries: number;
-  /** Live inquiries with no admin assigned yet. */
-  unassignedLeads: number;
+}
+
+/** The deal funnel, live: how many sit at each stage and what they're worth. */
+export interface PipelineSnapshot {
+  /** Live leads (INQUIRY, not archived/cold). */
+  leads: number;
+  leadsValueCents: number;
+  /** Published proposals awaiting a customer decision. */
+  proposalsOut: number;
+  proposalsValueCents: number;
+  /** APPROVED — payment link in the customer's hands. */
+  awaitingPayment: number;
+  awaitingPaymentValueCents: number;
+  /** CONFIRMED trips still ahead. */
+  bookedUpcoming: number;
+  bookedUpcomingValueCents: number;
 }
 
 export interface DashboardActivityItem {
@@ -102,9 +101,7 @@ export const getUnassignedLeads = cache(async (limit = 8): Promise<DashboardLead
       and(
         eq(bookings.bookingStatus, "INQUIRY"),
         isNull(bookings.assignedAdminId),
-        isNull(bookings.archivedAt),
-        // Cold = deliberately parked; it doesn't belong in "needs attention".
-        isNull(bookings.coldAt)
+        isNull(bookings.archivedAt)
       )
     )
     .orderBy(desc(bookings.createdAt))
@@ -126,18 +123,55 @@ export const getUnassignedLeads = cache(async (limit = 8): Promise<DashboardLead
   }));
 });
 
-/** Today through the next 6 days. */
-export const getWeeksBookings = cache(async (): Promise<BookingListItem[]> => {
-  await assertAdmin();
-  const now = new Date();
-  const result = await bookingService.getAllBookings({
-    dateFrom: startOfDay(now).toISOString(),
-    dateTo: endOfDay(addDays(now, 6)).toISOString(),
-    limit: 20,
-  });
-  // Boat inquiries carry requested dates but aren't trips yet.
-  return result.bookings.filter((b) => b.bookingStatus !== "INQUIRY");
-});
+/**
+ * Real, dated trips from today forward — the operational spine of the
+ * dashboard. One query feeds both the departures board and the money-owed
+ * list, so "what's sailing" and "who still owes" can never disagree.
+ * Reuses the board's own query, so payment/captain/ops fields come joined.
+ */
+export const getUpcomingTrips = cache(
+  async (daysAhead = 30): Promise<BookingListItem[]> => {
+    await assertAdmin();
+    const now = new Date();
+    const result = await bookingService.getAllBookings({
+      dateFrom: startOfDay(now).toISOString(),
+      dateTo: endOfDay(addDays(now, daysAhead)).toISOString(),
+      archivedView: false,
+      limit: 100,
+    });
+    return result.bookings
+      // Inquiries carry *requested* dates — they aren't trips yet.
+      .filter((b) => b.bookingStatus !== "INQUIRY" && b.startDateTime != null)
+      .sort(
+        (a, b) =>
+          new Date(a.startDateTime as Date).getTime() -
+          new Date(b.startDateTime as Date).getTime()
+      );
+  }
+);
+
+/**
+ * The signed-in admin's own live deals — their desk. Excludes completed work
+ * and anything archived; sorted by how long it's been sitting untouched so
+ * the stalest deal is always on top.
+ */
+export const getMyOpenDeals = cache(
+  async (adminId: string, limit = 6): Promise<BookingListItem[]> => {
+    await assertAdmin();
+    const result = await bookingService.getAllBookings({
+      assignedAdminId: adminId,
+      archivedView: false,
+      limit: 50,
+    });
+    // "Last touch" = when we last spoke to them, else when it landed.
+    const lastTouch = (b: BookingListItem) =>
+      new Date(b.firstContactedAt ?? b.createdAt).getTime();
+    return result.bookings
+      .filter((b) => b.bookingStatus !== "COMPLETED")
+      .sort((a, b) => lastTouch(a) - lastTouch(b))
+      .slice(0, limit);
+  }
+);
 
 /**
  * Headline finance + fleet metrics for the dashboard cards.
@@ -152,55 +186,68 @@ export const getDashboardHeadlineMetrics = cache(
     const from = startOfMonth(now);
     const to = endOfMonth(now);
 
-    const [[mtdRow], boatCount, [leadCounts], boatsAddedRes, newUsersRes] =
-      await Promise.all([
-      db
-        .select({
-          gmvMtdCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.gmvCents}, ${bookingPricing.totalAmountCents})), 0)`,
-          kosCommissionMtdCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.commissionKosCents}, 0)), 0)`,
-          tripsThisMonth: sql<number>`COUNT(${bookings.id})::int`,
-        })
-        .from(bookings)
-        .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
-        .leftJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
-        .where(
-          and(
-            gte(bookings.startDateTime, from),
-            lte(bookings.startDateTime, to),
-            // Real trips only — INQUIRY deals aren't booked, CANCELLED aren't happening.
-            notInArray(bookings.bookingStatus, ["CANCELLED", "INQUIRY"])
-          )
-        ),
-      db.select({ value: count() }).from(boats).where(eq(boats.active, true)),
-      db
-        .select({
-          open: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'INQUIRY' AND ${bookings.archivedAt} IS NULL AND ${bookings.coldAt} IS NULL)::int`,
-          unassigned: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'INQUIRY' AND ${bookings.archivedAt} IS NULL AND ${bookings.coldAt} IS NULL AND ${bookings.assignedAdminId} IS NULL)::int`,
-        })
-        .from(bookings),
-      db
-        .select({ value: count() })
-        .from(boats)
-        .where(and(gte(boats.createdAt, from), lte(boats.createdAt, to))),
-      db
-        .select({ value: count() })
-        .from(users)
-        .where(and(gte(users.createdAt, from), lte(users.createdAt, to))),
-    ]);
+    const [mtdRow] = await db
+      .select({
+        gmvMtdCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.gmvCents}, ${bookingPricing.totalAmountCents})), 0)`,
+        kosCommissionMtdCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.commissionKosCents}, 0)), 0)`,
+        tripsThisMonth: sql<number>`COUNT(${bookings.id})::int`,
+      })
+      .from(bookings)
+      .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
+      .leftJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
+      .where(
+        and(
+          gte(bookings.startDateTime, from),
+          lte(bookings.startDateTime, to),
+          // Real trips only — INQUIRY deals aren't booked, CANCELLED aren't happening.
+          notInArray(bookings.bookingStatus, ["CANCELLED", "INQUIRY"])
+        )
+      );
 
     return {
       monthLabel: format(now, "MMMM"),
       gmvMtdCents: Number(mtdRow?.gmvMtdCents ?? 0),
       kosCommissionMtdCents: Number(mtdRow?.kosCommissionMtdCents ?? 0),
       tripsThisMonth: Number(mtdRow?.tripsThisMonth ?? 0),
-      activeBoats: Number(boatCount[0]?.value ?? 0),
-      boatsAddedThisMonth: Number(boatsAddedRes[0]?.value ?? 0),
-      newUsersThisMonth: Number(newUsersRes[0]?.value ?? 0),
-      openInquiries: Number(leadCounts?.open ?? 0),
-      unassignedLeads: Number(leadCounts?.unassigned ?? 0),
     };
   }
 );
+
+/** Live stage filter fragments shared by the pipeline snapshot. */
+const LIVE = sql`${bookings.archivedAt} IS NULL`;
+
+/**
+ * One query, one row: the whole funnel with counts and value at each stage.
+ * Value = quoted total (booking_pricing); leads use their estimate/budget.
+ */
+export const getPipelineSnapshot = cache(async (): Promise<PipelineSnapshot> => {
+  await assertAdmin();
+
+  const [row] = await db
+    .select({
+      leads: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'INQUIRY' AND ${LIVE})::int`,
+      leadsValueCents: sql<number>`COALESCE(SUM(COALESCE(${bookings.estimatedValueCents}, ${bookings.budgetCents})) FILTER (WHERE ${bookings.bookingStatus} = 'INQUIRY' AND ${LIVE}), 0)`,
+      proposalsOut: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'DRAFT' AND ${bookings.publishedAt} IS NOT NULL AND ${LIVE})::int`,
+      proposalsValueCents: sql<number>`COALESCE(SUM(${bookingPricing.totalAmountCents}) FILTER (WHERE ${bookings.bookingStatus} = 'DRAFT' AND ${bookings.publishedAt} IS NOT NULL AND ${LIVE}), 0)`,
+      awaitingPayment: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'APPROVED' AND ${LIVE})::int`,
+      awaitingPaymentValueCents: sql<number>`COALESCE(SUM(${bookingPricing.totalAmountCents}) FILTER (WHERE ${bookings.bookingStatus} = 'APPROVED' AND ${LIVE}), 0)`,
+      bookedUpcoming: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'CONFIRMED' AND ${bookings.startDateTime} >= NOW())::int`,
+      bookedUpcomingValueCents: sql<number>`COALESCE(SUM(${bookingPricing.totalAmountCents}) FILTER (WHERE ${bookings.bookingStatus} = 'CONFIRMED' AND ${bookings.startDateTime} >= NOW()), 0)`,
+    })
+    .from(bookings)
+    .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId));
+
+  return {
+    leads: Number(row?.leads ?? 0),
+    leadsValueCents: Number(row?.leadsValueCents ?? 0),
+    proposalsOut: Number(row?.proposalsOut ?? 0),
+    proposalsValueCents: Number(row?.proposalsValueCents ?? 0),
+    awaitingPayment: Number(row?.awaitingPayment ?? 0),
+    awaitingPaymentValueCents: Number(row?.awaitingPaymentValueCents ?? 0),
+    bookedUpcoming: Number(row?.bookedUpcoming ?? 0),
+    bookedUpcomingValueCents: Number(row?.bookedUpcomingValueCents ?? 0),
+  };
+});
 
 /** Recent activity from the one deal timeline (booking_event). */
 export const getRecentDashboardActivity = cache(
