@@ -66,13 +66,7 @@ export interface DashboardActivityItem {
 export interface DashboardLead {
   id: string;
   name: string;
-  email: string | null;
-  phone: string | null;
-  bookingType: string;
   source: string | null;
-  /** Best-known trip start: exact request, else preferred date. */
-  tripStart: Date | null;
-  guests: number | null;
   budgetCents: number | null;
   estimatedValueCents: number | null;
   createdAt: Date;
@@ -85,13 +79,7 @@ export const getUnassignedLeads = cache(async (limit = 8): Promise<DashboardLead
     .select({
       id: bookings.id,
       name: bookings.customerName,
-      email: bookings.customerEmail,
-      phone: bookings.customerPhone,
-      bookingType: bookings.bookingType,
       source: bookings.source,
-      startDateTime: bookings.startDateTime,
-      preferredDate: bookings.preferredDate,
-      guests: bookings.numberOfPassengers,
       budgetCents: bookings.budgetCents,
       estimatedValueCents: bookings.estimatedValueCents,
       createdAt: bookings.createdAt,
@@ -110,13 +98,7 @@ export const getUnassignedLeads = cache(async (limit = 8): Promise<DashboardLead
   return rows.map((r) => ({
     id: r.id,
     name: r.name,
-    email: r.email,
-    phone: r.phone,
-    bookingType: r.bookingType,
     source: r.source,
-    tripStart:
-      r.startDateTime ?? (r.preferredDate ? new Date(`${r.preferredDate}T00:00:00`) : null),
-    guests: r.guests,
     budgetCents: r.budgetCents != null ? Number(r.budgetCents) : null,
     estimatedValueCents: r.estimatedValueCents != null ? Number(r.estimatedValueCents) : null,
     createdAt: r.createdAt,

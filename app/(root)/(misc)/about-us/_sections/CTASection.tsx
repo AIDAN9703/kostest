@@ -1,72 +1,50 @@
-import React from 'react'
-import Link from 'next/link'
-import { Button } from '@/shared/components/ui/button'
-import { Mail, Phone, ArrowRight } from 'lucide-react'
-import Image from 'next/image'
+import React from "react";
+import Link from "next/link";
+import { Button } from "@/shared/components/ui/button";
 
 export default function CTASection() {
   return (
-    <section className="relative py-16 overflow-hidden">
-      {/* Background decorative elements */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-1/2 right-1/4 w-48 h-48 bg-primary/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-10 left-1/3 w-32 h-32 bg-primary/10 rounded-full blur-3xl"></div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Text content - left aligned */}
-          <div className="space-y-8 order-2 lg:order-1">
-            <div className="space-y-6">
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary">
-                Ready to write your story?
-              </h2>
-              <p className="text-lg sm:text-xl text-gray-600 leading-relaxed">
-                Let's create the yacht experience of your dreams. Our team is here to turn your vision into reality. Expect exciting ventures, new locations, and initiatives, including the latest updates and an exclusive online store.
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Link href="/boats/search">
-                <Button className="w-full sm:w-auto bg-primary text-white hover:bg-primary/90 px-8 py-4 text-lg font-medium">
-                  Explore Our Fleet
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/contact">
-                <Button variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary hover:text-white px-8 py-4 text-lg font-medium">
-                  Contact Our Team
-                </Button>
-              </Link>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 text-gray-500 pt-8 border-t border-gray-200">
-              <div className="flex items-center">
-                <Mail className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-primary" />
-                <span className="text-sm sm:text-base">contact@kosyachts.com</span>
-              </div>
-              <div className="flex items-center">
-                <Phone className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-primary" />
-                <span className="text-sm sm:text-base">+1 (305) 521-8877</span>
-              </div>
-            </div>
+    /* Horizontal closing bar — statement left, actions right, one hairline. */
+    <section className="py-10 sm:py-16">
+      <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-8">
+        <div className="flex flex-col gap-8 border-t border-border pt-10 md:flex-row md:items-center md:justify-between md:gap-12 sm:pt-14">
+          <div className="max-w-xl">
+            {/* Same statement style as the page's opening headline. */}
+            <h2 className="text-4xl font-black leading-[1.08] tracking-tight text-primary sm:text-5xl">
+              Ready to write your story?
+            </h2>
+            <p className="mt-3 text-[15px] leading-7 text-slate-600 sm:text-base">
+              Our team turns the day you&apos;re imagining into a charter on the calendar.
+            </p>
+            <p className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm text-gray-500">
+              <a
+                href="mailto:contact@kosyachts.com"
+                className="transition-colors hover:text-primary"
+              >
+                contact@kosyachts.com
+              </a>
+              <a href="tel:+13055218877" className="transition-colors hover:text-primary">
+                (305) 521-8877
+              </a>
+            </p>
           </div>
 
-          {/* Creative image layout - right side */}
-          <div className="relative order-1 lg:order-2">
-            <div className="relative">
-              <Image
-                src="/images/herooption15.jpeg"
-                alt="Ready for adventure"
-                width={600}
-                height={400}
-                className="w-full h-auto rounded-2xl shadow-xl"
-              />
-            
-            </div>
+          <div className="flex shrink-0 flex-col gap-3 sm:flex-row">
+            <Button asChild size="lg" className="h-11 rounded-full px-7">
+              <Link href="/boats/search">Explore the fleet</Link>
+            </Button>
+            {/* Borderless pill — soft grey fill, the site's quiet-button style. */}
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="h-11 rounded-full border-0 bg-foreground/10 px-7 text-primary hover:bg-foreground/15 hover:text-primary"
+            >
+              <Link href="/contact">Contact our team</Link>
+            </Button>
           </div>
         </div>
       </div>
     </section>
-  )
-} 
+  );
+}

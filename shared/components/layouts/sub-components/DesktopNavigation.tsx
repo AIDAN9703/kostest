@@ -48,39 +48,49 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
                     {item.label}
                   </NavigationMenuTrigger>
                   <NavigationMenuContent className="right-0 left-auto">
+                    {/* Same structural language as the rest of the site:
+                        rounded-2xl surface, small-caps column labels, hairline
+                        dividers between columns, quiet hover rows. */}
                     <div
-                      style={{ width: 800, maxWidth: "95vw" }}
-                      className="p-5 bg-white rounded-xl shadow-xl border border-border/60 grid grid-cols-4 gap-x-2 gap-y-4"
+                      style={{ width: 780, maxWidth: "95vw" }}
+                      className="grid grid-cols-4 rounded-2xl border border-border/60 bg-white p-6 shadow-xl"
                     >
                       {item.sections?.map((section, sectionIndex) => (
-                        <div key={`section-${sectionIndex}`} className="flex flex-col min-w-0">
-                          <h3 className="text-sm font-semibold text-primary mb-2 leading-snug sm:text-base">
+                        <div
+                          key={section.title}
+                          className={cn(
+                            "min-w-0 px-5 first:pl-0 last:pr-0",
+                            sectionIndex > 0 && "border-l border-border/50"
+                          )}
+                        >
+                          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                             {section.title}
                           </h3>
-                          <div className="flex flex-col space-y-0.5">
+                          <ul className="mt-3 space-y-0.5">
                             {section.items.map((subItem) => (
-                              <Link
-                                key={subItem.href}
-                                href={subItem.href}
-                                target={subItem.href.startsWith("http") ? "_blank" : undefined}
-                                rel={
-                                  subItem.href.startsWith("http")
-                                    ? "noopener noreferrer"
-                                    : undefined
-                                }
-                                className="block py-2 px-2 text-sm leading-snug font-normal text-muted-foreground hover:text-primary hover:bg-muted/75 rounded-lg transition-colors whitespace-nowrap sm:text-[15px] sm:leading-5"
-                              >
-                                {subItem.label}
-                              </Link>
+                              <li key={subItem.href}>
+                                <Link
+                                  href={subItem.href}
+                                  target={subItem.href.startsWith("http") ? "_blank" : undefined}
+                                  rel={
+                                    subItem.href.startsWith("http")
+                                      ? "noopener noreferrer"
+                                      : undefined
+                                  }
+                                  className="-mx-2 block whitespace-nowrap rounded-lg px-2 py-1.5 text-sm text-slate-600 transition-colors hover:bg-muted/60 hover:text-primary"
+                                >
+                                  {subItem.label}
+                                </Link>
+                              </li>
                             ))}
-                          </div>
+                          </ul>
                         </div>
                       ))}
                       {item.items?.map((subItem) => (
                         <Link
                           key={subItem.href}
                           href={subItem.href}
-                          className="block py-2 px-2 -mx-2 text-sm leading-snug font-normal text-muted-foreground hover:text-primary hover:bg-muted/30 rounded-lg transition-colors whitespace-nowrap sm:text-[15px] sm:leading-5"
+                          className="-mx-2 block whitespace-nowrap rounded-lg px-2 py-1.5 text-sm text-slate-600 transition-colors hover:bg-muted/60 hover:text-primary"
                         >
                           {subItem.label}
                         </Link>

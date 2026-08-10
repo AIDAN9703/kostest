@@ -1,22 +1,14 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DollarSign, Users, ArrowRight } from "lucide-react";
 import { createGeneralLead } from "@/features/bookings/actions/lead-intake.actions";
 import { toast } from "@/shared/lib/hooks/use-toast";
 import { requestToBookSchema, type RequestToBookFormData } from "@/shared/lib/validation/inquiry";
 
 //UI Imports
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/shared/components/ui/card";
 import {
   Form,
   FormControl,
@@ -37,8 +29,19 @@ import {
   SelectValue,
 } from "@/shared/components/ui/select";
 
+/* Admin-portal input language, tuned for the navy band: translucent fill,
+   no visible border until focus, then a quiet gold ring. */
 const inputClass =
-  "h-11 rounded-xl border-border bg-muted/10 focus-visible:ring-2 focus-visible:ring-ring";
+  "h-11 rounded-xl border-white/10 bg-white/5 text-white placeholder:text-white/35 shadow-none " +
+  "transition-colors hover:bg-white/[0.08] " +
+  "focus-visible:border-gold/50 focus-visible:bg-white/10 focus-visible:ring-2 focus-visible:ring-gold/25";
+
+const labelClass = "text-[13px] font-medium text-white/70";
+
+/* Checkboxes need their own dark treatment — the default navy fill vanishes
+   on this background; checked state goes gold like the admin's primary. */
+const checkboxClass =
+  "border-white/30 data-[state=checked]:border-gold data-[state=checked]:bg-gold data-[state=checked]:text-dark-bg";
 
 const TIME_OF_DAY_OPTIONS = [
   { value: "MORNING", label: "Morning" },
@@ -52,6 +55,12 @@ interface RequestToBookProps {
   source?: "HOME_PAGE" | "CONTACT_PAGE";
 }
 
+/**
+ * The landing page's closing section: one flat navy band, no card. The form
+ * sits directly on the section — soft translucent fields, a single vertical
+ * hairline for structure, and one gold CTA. Same surface language as the
+ * admin portal.
+ */
 export default function RequestToBook({ source = "HOME_PAGE" }: RequestToBookProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<RequestToBookFormData>({
@@ -70,304 +79,286 @@ export default function RequestToBook({ source = "HOME_PAGE" }: RequestToBookPro
     },
   });
 
-  const onSubmit = useCallback(
-    async (values: RequestToBookFormData) => {
-      try {
-        setIsSubmitting(true);
+  async function onSubmit(values: RequestToBookFormData) {
+    try {
+      setIsSubmitting(true);
 
-        const result = await createGeneralLead({
-          name: values.name,
-          email: values.email,
-          phone: values.phone,
-          date: values.date || undefined,
-          timeOfDay: values.timeOfDay || undefined,
-          budget: values.budget || undefined,
-          guests: values.guests || undefined,
-          message: values.message || undefined,
-          termsAgreed: values.termsAgreed,
-          smsConsent: values.smsConsent,
-          source,
+      const result = await createGeneralLead({
+        name: values.name,
+        email: values.email,
+        phone: values.phone,
+        date: values.date || undefined,
+        timeOfDay: values.timeOfDay || undefined,
+        budget: values.budget || undefined,
+        guests: values.guests || undefined,
+        message: values.message || undefined,
+        termsAgreed: values.termsAgreed,
+        smsConsent: values.smsConsent,
+        source,
+      });
+
+      if (result.success) {
+        // CRM sync happens server-side inside createGeneralLead.
+        toast({
+          title: "Request Submitted",
+          description: result.message ?? "We'll contact you soon!",
         });
-
-        if (result.success) {
-          // CRM sync happens server-side inside createGeneralLead.
-          toast({
-            title: "Request Submitted",
-            description: result.message ?? "We'll contact you soon!",
-          });
-          form.reset();
-        } else {
-          toast({
-            title: "Error",
-            description: result.error ?? "Please try again.",
-            variant: "destructive",
-          });
-        }
-      } catch {
+        form.reset();
+      } else {
         toast({
           title: "Error",
-          description: "Something went wrong. Please try again.",
+          description: result.error ?? "Please try again.",
           variant: "destructive",
         });
-      } finally {
-        setIsSubmitting(false);
       }
-    },
-    [form, source, toast]
-  );
+    } catch {
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
-    <section className="w-full py-10 sm:py-16 md:py-20">
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-left sm:text-center mb-6 sm:mb-12">
-          <h2 className="text-primary text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
-            Ready for your next adventure?
-          </h2>
-          <p className="hidden lg:block text-gray-500 text-sm sm:text-base max-w-2xl mx-auto mt-2">
-            Let us help you plan your perfect day on the water
-          </p>
-        </div>
-
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 lg:gap-12">
-          <div className="w-full min-w-0 lg:col-span-7">
-            <Card className="w-full max-w-none rounded-none border-0 bg-transparent p-0 shadow-none lg:max-w-none lg:rounded-2xl lg:border lg:bg-card lg:shadow-sm">
-              <CardHeader className="space-y-1.5 px-0 pb-4 pt-0 sm:pb-5 lg:p-6 lg:pb-4">
-                <CardTitle className="text-primary text-xl sm:text-2xl font-bold">
-                  Request a Quote
-                </CardTitle>
-                <CardDescription>
-                  Share your details and we&apos;ll get back within 24 hours
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-0 pb-0 lg:p-6 lg:pt-0">
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 ">
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                              <Input className={inputClass} placeholder="John Smith" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input
-                                className={inputClass}
-                                type="email"
-                                placeholder="you@example.com"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="phone"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Phone</FormLabel>
-                          <FormControl>
-                            <Input
-                              className={inputClass}
-                              placeholder="+1 (555) 000-0000"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 ">
-                      <FormField
-                        control={form.control}
-                        name="date"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Preferred Date</FormLabel>
-                            <FormControl>
-                              <Input type="date" className={inputClass} {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="timeOfDay"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Preferred Time</FormLabel>
-                            <FormControl>
-                              <Select onValueChange={field.onChange} value={field.value ?? ""}>
-                                <SelectTrigger className={`${inputClass} [&>span]:line-clamp-1`}>
-                                  <SelectValue placeholder="Morning, afternoon..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {TIME_OF_DAY_OPTIONS.map((opt) => (
-                                    <SelectItem key={opt.value} value={opt.value}>
-                                      {opt.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 ">
-                      <FormField
-                        control={form.control}
-                        name="budget"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Budget</FormLabel>
-                            <div className="relative">
-                              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                              <FormControl>
-                                <Input
-                                  className={`${inputClass} pl-10`}
-                                  placeholder="e.g. 5000"
-                                  {...field}
-                                />
-                              </FormControl>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="guests"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Guests</FormLabel>
-                            <div className="relative">
-                              <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  min={1}
-                                  className={`${inputClass} pl-10`}
-                                  placeholder="4"
-                                  {...field}
-                                />
-                              </FormControl>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={form.control}
-                      name="message"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Message</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              className={`${inputClass} min-h-[100px] resize-none`}
-                              placeholder="Tell us about your plans..."
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="termsAgreed"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start gap-3">
-                          <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                          <FormLabel className="text-sm font-normal cursor-pointer text-foreground">
-                            I agree to the{" "}
-                            <Link href="/terms-of-service" className="text-primary hover:underline">
-                              Terms of Service
-                            </Link>{" "}
-                            and{" "}
-                            <Link href="/privacy" className="text-primary hover:underline">
-                              Privacy Policy
-                            </Link>
-                          </FormLabel>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="smsConsent"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start gap-3">
-                          <FormControl>
-                            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
-                          </FormControl>
-                          <FormLabel className="text-sm font-normal cursor-pointer text-foreground">
-                            I agree to receive SMS updates. Message & data rates may apply.
-                          </FormLabel>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="w-full h-12 rounded-xl"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Sending..." : "Send Request"}
-                    </Button>
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="relative flex items-center lg:flex-col">
-            <div className="flex-1 h-px lg:h-full lg:w-px bg-border" />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-background px-4 text-sm text-muted-foreground lg:bg-card">
-              or
-            </span>
-          </div>
-
-          <div className="lg:col-span-4 flex flex-col items-center justify-center text-center">
-            <h3 className="text-primary text-xl font-bold mb-2">Book Instantly Online</h3>
-            <p className="text-muted-foreground text-sm mb-6">
-              Browse our fleet and book directly. Real-time availability, instant confirmation.
+    /* py-16 matches the other navy band (Testimonials); the inner container
+       mirrors the page shell (max-w-[1400px] px-4 sm:px-8) so content edges
+       line up section to section. [color-scheme:dark] keeps native widgets
+       (date picker glyph) legible on navy. */
+    <section className="w-full bg-primary py-16 [color-scheme:dark]">
+      <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-8">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:items-center lg:gap-0">
+          {/* ── The pitch ── */}
+          <div className="lg:col-span-5 lg:pr-16">
+            {/* Same scale as every other landing-section heading. */}
+            <h2 className="text-3xl font-bold leading-tight text-white sm:text-4xl md:text-5xl">
+              Ready for your next adventure?
+            </h2>
+            <p className="mt-5 max-w-md text-sm font-light leading-relaxed text-white/70 sm:text-base">
+              Tell us the date, group size, and budget — we&apos;ll reply within 24 hours with the
+              right boat, captain, and route. No payment until you approve the plan.
             </p>
-            <Link href="/boats/search" className="w-full">
-              <Button variant="default" size="lg" className="w-full h-12 rounded-xl group">
-                Explore Available Yachts
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </Link>
+            <p className="mt-8 text-sm text-white/60">
+              Rather browse and book instantly?{" "}
+              <Link
+                href="/boats/search"
+                className="font-medium text-white underline decoration-gold/60 underline-offset-4 transition-colors hover:decoration-gold"
+              >
+                Explore the fleet
+              </Link>
+            </p>
+          </div>
+
+          {/* ── The form, directly on the band ── */}
+          <div className="lg:col-span-7 lg:border-l lg:border-white/10 lg:pl-16">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={labelClass}>Full name</FormLabel>
+                        <FormControl>
+                          <Input className={inputClass} placeholder="John Smith" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={labelClass}>Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            className={inputClass}
+                            type="email"
+                            placeholder="you@example.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={labelClass}>Phone</FormLabel>
+                        <FormControl>
+                          <Input className={inputClass} placeholder="+1 (555) 000-0000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="guests"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={labelClass}>Guests</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            className={inputClass}
+                            placeholder="4"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+                  <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={labelClass}>Preferred date</FormLabel>
+                        <FormControl>
+                          <Input type="date" className={inputClass} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="timeOfDay"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={labelClass}>Time</FormLabel>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value ?? ""}>
+                            <SelectTrigger
+                              className={`${inputClass} w-full data-[placeholder]:text-white/35 [&>span]:line-clamp-1`}
+                            >
+                              <SelectValue placeholder="Flexible" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {TIME_OF_DAY_OPTIONS.map((opt) => (
+                                <SelectItem key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="budget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className={labelClass}>Budget (USD)</FormLabel>
+                        <FormControl>
+                          <Input className={inputClass} placeholder="5,000" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={form.control}
+                  name="message"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={labelClass}>Anything else?</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          className={`${inputClass} min-h-[88px] resize-none pt-3`}
+                          placeholder="Occasion, destination, special requests…"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="space-y-2.5 border-t border-white/10 pt-5">
+                  <FormField
+                    control={form.control}
+                    name="termsAgreed"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start gap-2.5">
+                        <FormControl>
+                          <Checkbox
+                            className={checkboxClass}
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className="cursor-pointer text-xs font-normal leading-relaxed text-white/60">
+                          I agree to the{" "}
+                          <Link
+                            href="/terms-of-service"
+                            className="font-medium text-white hover:underline"
+                          >
+                            Terms of Service
+                          </Link>{" "}
+                          and{" "}
+                          <Link href="/privacy" className="font-medium text-white hover:underline">
+                            Privacy Policy
+                          </Link>
+                        </FormLabel>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="smsConsent"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start gap-2.5">
+                        <FormControl>
+                          <Checkbox
+                            className={checkboxClass}
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <FormLabel className="cursor-pointer text-xs font-normal leading-relaxed text-white/60">
+                          I agree to receive SMS updates. Message &amp; data rates may apply.
+                        </FormLabel>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* The band's one strong accent — gold, like the admin's main CTA */}
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="h-11 w-full rounded-xl bg-gold text-[15px] font-semibold text-dark-bg hover:bg-gold-glow"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Sending…" : "Send request"}
+                </Button>
+              </form>
+            </Form>
           </div>
         </div>
       </div>

@@ -2,80 +2,77 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/shared/components/ui/button";
-import { Mail, ArrowRight } from "lucide-react";
 
 // Force static generation - this coming soon page has no dynamic content
 export const dynamic = "force-static";
 
+/* Members-club teaser as a full-screen COVER: the fleet photo under a deep
+   navy wash, the hero's hairline-caps-hairline eyebrow, one statement, one
+   gold CTA. A different skeleton from careers (photo hero + sections) and
+   the about page (light editorial) — same brand voice. */
 export default function KOSYachtClubPage() {
   return (
-    <div className="relative w-full h-screen overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/images/koshero.jpg"
-          alt="KOS Yacht Club"
-          fill
-          className="object-cover"
-          priority
-          quality={90}
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-black/20" />
-      </div>
+    <section className="relative flex min-h-[calc(100svh-var(--header-h))] w-full items-center overflow-hidden">
+      <Image
+        src="/images/koshero.jpg"
+        alt="The KOS fleet"
+        fill
+        priority
+        quality={90}
+        sizes="100vw"
+        className="object-cover"
+      />
+      {/* Navy wash — keeps the photo present but the page unmistakably dark */}
+      <div aria-hidden className="absolute inset-0 bg-dark-bg/60" />
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-linear-to-t from-dark-bg/90 via-dark-bg/30 to-dark-bg/40"
+      />
 
-      {/* Content */}
-      <div className="relative z-10 h-full flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 text-center">
-        <div className="max-w-2xl mx-auto text-white">
-          {/* Logo */}
-          <div className="mb-8">
-            <Image
-              src="/icons/transparent-white-logo.webp"
-              alt="KOS Logo"
-              width={120}
-              height={120}
-              className="mx-auto object-contain"
-              quality={90}
-            />
+      <div className="relative mx-auto w-full max-w-[1400px] px-4 py-24 sm:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          {/* The hero's signature eyebrow — hairline · caps · hairline */}
+          <div className="flex items-center justify-center gap-3 sm:gap-4">
+            <span aria-hidden className="h-px w-8 bg-linear-to-r from-transparent to-gold sm:w-12" />
+            <p className="whitespace-nowrap text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-gold-glow sm:text-xs">
+              Members only · Coming soon
+            </p>
+            <span aria-hidden className="h-px w-8 bg-linear-to-l from-transparent to-gold sm:w-12" />
           </div>
 
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-medium mb-6 leading-tight">
-            KOS Yacht Club
+          <h1 className="mt-6 text-4xl font-black leading-[1.05] tracking-tight text-white [text-shadow:0_2px_12px_rgba(0,0,0,0.45)] sm:text-6xl">
+            The KOS Yacht Club.
           </h1>
-
-          <h2 className="text-2xl md:text-3xl font-light mb-6 text-white/90">
-            Coming Soon
-          </h2>
-
-          <p className="text-lg md:text-xl leading-relaxed font-light text-white/80 mb-12 max-w-lg mx-auto">
-            An exclusive members-only experience featuring the finest luxury
-            yacht charters, premium amenities, and unparalleled service.
+          <p className="mx-auto mt-6 max-w-lg text-[15px] font-light leading-relaxed text-white/80 sm:text-lg">
+            An exclusive members-only experience featuring the finest luxury yacht charters,
+            premium amenities, and unparalleled service.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/contact">
-              <Button
-                size="lg"
-                className="bg-primary text-white hover:bg-primary/90 px-8 py-4 font-medium"
-              >
-                Get Notified
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-
-            <Link href="mailto:contact@kosyachts.com">
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-white border-white/40 hover:bg-white/10 px-8 py-4 font-medium"
-              >
-                <Mail className="mr-2 h-5 w-5" />
-                Contact Us
-              </Button>
-            </Link>
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button
+              asChild
+              size="lg"
+              className="h-11 rounded-full bg-gold px-7 text-[15px] font-semibold text-dark-bg hover:bg-gold-glow"
+            >
+              <Link href="/contact">Get notified</Link>
+            </Button>
+            {/* Borderless pill — the site's quiet-button style, dark-surface flavor. */}
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="h-11 rounded-full border-0 bg-white/10 px-7 text-[15px] font-medium text-white backdrop-blur-sm hover:bg-white/15 hover:text-white"
+            >
+              <a href="mailto:contact@kosyachts.com">Contact us</a>
+            </Button>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Cover-page footer line */}
+      <p className="absolute inset-x-0 bottom-6 text-center text-[10px] font-semibold uppercase tracking-[0.22em] text-white/40">
+        Kings of the Sea · Miami, Florida
+      </p>
+    </section>
   );
 }

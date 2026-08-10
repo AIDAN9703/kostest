@@ -49,7 +49,7 @@ export const bookingSearchParams = {
   archived: parseAsBoolean,
   /** Layout for the bookings page — "table" (default) or "calendar". */
   view: parseAsStringEnum(["table", "calendar"] as const).withDefault("table"),
-  /** Opens the new booking modal when true (e.g. from dashboard or quick actions). */
+  /** Opens the new booking modal when true (e.g. from the dashboard CTA). */
   newBooking: parseAsBoolean,
   page: parseAsInteger.withDefault(1),
   limit: parseAsInteger.withDefault(ADMIN_LIST_DEFAULT_PAGE_SIZE),
