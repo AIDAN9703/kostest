@@ -5,7 +5,6 @@ import {
   getDashboardHeadlineMetrics,
   getMyOpenDeals,
   getPipelineSnapshot,
-  getRecentDashboardActivity,
   getUnassignedLeads,
   getUpcomingTrips,
 } from "@/features/admin/dashboard";
@@ -21,7 +20,6 @@ export default async function AdminDashboardPage() {
     upcomingTrips,
     myDeals,
     pipeline,
-    recentActivity,
     pricingTiers,
     metrics,
     admins,
@@ -30,7 +28,6 @@ export default async function AdminDashboardPage() {
     getUpcomingTrips(30),
     adminId ? getMyOpenDeals(adminId, 6) : Promise.resolve([]),
     getPipelineSnapshot(),
-    getRecentDashboardActivity(8),
     boatService.getAllActivePricingTiers(),
     getDashboardHeadlineMetrics(),
     userService.getAdmins(),
@@ -44,7 +41,6 @@ export default async function AdminDashboardPage() {
       upcomingTrips={upcomingTrips}
       myDeals={myDeals}
       pipeline={pipeline}
-      recentActivity={recentActivity}
       metrics={metrics}
       admins={admins}
     />

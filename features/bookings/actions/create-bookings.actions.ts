@@ -13,6 +13,9 @@ import { sendDraftBookingEmail } from "@/shared/lib/services/email.service";
 import { sendSms } from "@/shared/lib/services/twilio.service";
 import { getBaseUrl } from "@/shared/lib/utils/base-url";
 import { ActionResponse } from "@/shared/lib/types/types";
+import { db } from "@/database/db";
+import { boats } from "@/database/schema";
+import { eq } from "drizzle-orm";
 
 function formatZodError(error: ZodError): string {
   const first = error.errors[0];
@@ -112,10 +115,26 @@ export async function createBookingsAction(
       const isGroup = payload.bookings.length > 1;
 
       if (sendProposalEmail) {
+        // Single-boat proposals name the yacht in the email; groups stay generic
+        // rather than naming only the first vessel.
+        let boatName: string | undefined;
+        if (!isGroup && first.boatId) {
+          try {
+            const [row] = await db
+              .select({ name: boats.name })
+              .from(boats)
+              .where(eq(boats.id, first.boatId))
+              .limit(1);
+            boatName = row?.name ?? undefined;
+          } catch {
+            boatName = undefined;
+          }
+        }
         sendDraftBookingEmail({
           customerName: first.customerName,
           customerEmail: first.customerEmail,
           draftLink,
+          boatName,
           isGroup,
         }).catch((err) => console.error("Draft email failed:", err));
       }

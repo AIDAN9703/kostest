@@ -20,6 +20,8 @@ export const BOOKING_EVENT_TYPES = {
   CREW_MEMBER_REMOVED: "booking.crew_member_removed",
   /** Shareable draft link published */
   DRAFT_PUBLISHED: "booking.draft_published",
+  /** Customer asked for changes from the public proposal page */
+  CHANGE_REQUESTED: "booking.change_requested",
 } as const;
 
 export type BookingEventType =

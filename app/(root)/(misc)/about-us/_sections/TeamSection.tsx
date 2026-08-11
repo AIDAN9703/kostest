@@ -99,7 +99,7 @@ function TierLabel({ children }: { children: React.ReactNode }) {
 export default function TeamSection() {
   return (
     <section className="py-10 sm:py-16">
-      <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-8">
+      <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-8">
         {/* Same statement style as the page's opening headline. */}
         <h2 className="text-4xl font-black leading-[1.08] tracking-tight text-primary sm:text-5xl">
           The people at the helm.

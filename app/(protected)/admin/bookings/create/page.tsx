@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { ProposalForm } from "@/features/bookings/components/admin/booking-forms/ProposalForm";
 import { SingleBookingForm } from "@/features/bookings/components/admin/booking-forms/SingleBookingForm";
 import { boatService } from "@/features/boats/boat.service";
 import { bookingService } from "@/features/bookings/services/booking.service";
@@ -43,11 +44,13 @@ export default async function AdminBookingCreatePage({ searchParams }: Props) {
             : "Create a draft booking, optionally sending it to the customer as a proposal."}
         </p>
       </header>
-      <SingleBookingForm
-        pricingTiers={pricingTiers}
-        dealPrefill={dealPrefill}
-        datePrefill={datePrefill}
-      />
+      {dealPrefill ? (
+        /* Same tailored form the deal page's modal hosts — one proposal
+           experience everywhere. */
+        <ProposalForm pricingTiers={pricingTiers} dealPrefill={dealPrefill} />
+      ) : (
+        <SingleBookingForm pricingTiers={pricingTiers} datePrefill={datePrefill} />
+      )}
     </div>
   );
 }

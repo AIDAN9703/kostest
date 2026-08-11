@@ -29,40 +29,38 @@ export default function BrandsCarousel() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section className="py-8 sm:py-16 bg-white">
+    /* Extra bottom padding so the marquee doesn't butt straight into the
+       navy inquiry band that follows. */
+    <section className="pt-8 pb-16 sm:pt-16 sm:pb-24">
       <div className="w-full">
-        {/* Section Header */}
+        {/* Header — right-aligned to alternate with Explore Destinations */}
         <motion.div
           initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-4"
+          className="mb-8 text-right"
         >
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary">
+          <h2 className="text-3xl sm:text-4xl font-bold text-primary leading-tight">
             Brands Who Trust Us
           </h2>
-          <p className=" text-foreground mt-2 text-sm sm:text-base font-light max-w-lg mx-auto">
-            Partnering with the some of the finest names across all industries
+          <p className="ml-auto max-w-md text-foreground text-sm sm:text-base font-light">
+            Partnering with the finest names across all industries
           </p>
         </motion.div>
 
-        {/* Marquee Container */}
+        {/* Two counter-scrolling rows — bare full-color logos, no boxes */}
         <div className="relative">
-          {/* Gradient Fades */}
-          <div className="absolute left-0 top-0 bottom-0 w-16 sm:w-24 bg-linear-to-r from-white to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-16 sm:w-24 bg-linear-to-l from-white to-transparent z-10 pointer-events-none" />
+          <div className="pointer-events-none absolute bottom-0 left-0 top-0 z-10 w-16 bg-linear-to-r from-white to-transparent sm:w-24" />
+          <div className="pointer-events-none absolute bottom-0 right-0 top-0 z-10 w-16 bg-linear-to-l from-white to-transparent sm:w-24" />
 
-          <div className="overflow-hidden space-y-4">
-            {/* Row 1 */}
-            <div className="flex animate-marquee whitespace-nowrap py-2">
+          <div className="space-y-6 overflow-hidden">
+            <div className="flex animate-marquee items-center whitespace-nowrap py-1">
               {[...brands, ...brands].map((brand, index) => (
                 <BrandLogo key={`${brand.name}-${index}`} brand={brand} />
               ))}
             </div>
-
-            {/* Row 2 */}
-            <div className="flex animate-marquee-reverse whitespace-nowrap py-2">
+            <div className="flex animate-marquee-reverse items-center whitespace-nowrap py-1">
               {[...reversedBrands, ...reversedBrands].map((brand, index) => (
                 <BrandLogo key={`${brand.name}-reverse-${index}`} brand={brand} />
               ))}
@@ -76,14 +74,14 @@ export default function BrandsCarousel() {
 
 function BrandLogo({ brand }: { brand: Brand }) {
   return (
-    <div className="inline-flex items-center justify-center px-3 sm:px-5 md:px-6">
-      <div className="relative w-24 h-20 sm:w-32 sm:h-24 md:w-40 md:h-28 bg-white rounded-xl p-3 flex items-center justify-center border border-gray-100 hover:border-gold/30 shadow-sm hover:shadow-md transition-all duration-300">
+    <div className="inline-flex items-center justify-center px-5 sm:px-7 md:px-8">
+      <div className="relative h-12 w-24 sm:h-14 sm:w-32">
         <Image
           src={brand.logo}
           alt={brand.name}
           fill
-          className="object-contain p-2.5"
-          sizes="(max-width: 640px) 96px, (max-width: 768px) 128px, 160px"
+          className="object-contain"
+          sizes="(max-width: 640px) 96px, 128px"
         />
       </div>
     </div>

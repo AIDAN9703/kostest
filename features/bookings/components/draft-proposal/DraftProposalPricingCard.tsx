@@ -1,6 +1,5 @@
 "use client";
 
-import { Plus } from "lucide-react";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { dollarsToCents } from "@/shared/lib/utils/money-utils";
 import type { DraftProposalBooking } from "@/features/bookings/lib/draft-proposal.types";
@@ -22,62 +21,53 @@ export function DraftProposalPricingCard({ bookings }: DraftProposalPricingCardP
 
   return (
     <div className="space-y-3">
-        {bookings.map((booking) => {
-          return (
-            <div key={booking.id} className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-700">{booking.boatName}</span>
-                <span className="font-medium text-gray-900">
-                  {formatCentsAsCurrency(booking.basePriceCents)}
-                </span>
-              </div>
-              {booking.cleaningFeeCents > 0 && (
-                <div className="flex justify-between pl-3 text-sm text-gray-600">
-                  <span className="flex items-center gap-1">
-                    <Plus className="h-3 w-3" />
-                    Cleaning fee
-                  </span>
-                  <span>{formatCentsAsCurrency(booking.cleaningFeeCents)}</span>
-                </div>
-              )}
-              {(booking.addOns ?? []).map((addOn, i) => (
-                <div
-                  key={i}
-                  className="flex justify-between pl-3 text-sm text-gray-600"
-                >
-                  <span className="flex items-center gap-1">
-                    <Plus className="h-3 w-3" />
-                    {addOn.name}
-                    {addOn.quantity > 1 ? ` × ${addOn.quantity}` : ""}
-                  </span>
-                  <span>{formatCentsAsCurrency(dollarsToCents(addOn.total))}</span>
-                </div>
-              ))}
+      {bookings.map((booking) => {
+        return (
+          <div key={booking.id} className="space-y-1">
+            <div className="flex justify-between text-sm">
+              <span className="text-slate-600">{booking.boatName}</span>
+              <span className="font-medium text-primary">
+                {formatCentsAsCurrency(booking.basePriceCents)}
+              </span>
             </div>
-          );
-        })}
-        <div className="border-t border-gray-100 pt-4 space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Subtotal</span>
-            <span className="font-medium text-gray-900">
-              {formatCentsAsCurrency(subtotalCents)}
-            </span>
+            {booking.cleaningFeeCents > 0 && (
+              <div className="flex justify-between pl-3 text-sm text-slate-500">
+                <span>Cleaning fee</span>
+                <span>{formatCentsAsCurrency(booking.cleaningFeeCents)}</span>
+              </div>
+            )}
+            {(booking.addOns ?? []).map((addOn, i) => (
+              <div key={i} className="flex justify-between pl-3 text-sm text-slate-500">
+                <span>
+                  {addOn.name}
+                  {addOn.quantity > 1 ? ` × ${addOn.quantity}` : ""}
+                </span>
+                <span>{formatCentsAsCurrency(dollarsToCents(addOn.total))}</span>
+              </div>
+            ))}
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">
-              Card processing fee{feePercentLabel}
-            </span>
-            <span className="font-medium text-gray-900">
-              {formatCentsAsCurrency(totalServiceFeeCents)}
-            </span>
-          </div>
-          <div className="flex justify-between pt-2">
-            <span className="font-semibold text-gray-900">Total</span>
-            <span className="text-lg font-bold text-primary">
-              {formatCentsAsCurrency(grandTotalCents)}
-            </span>
-          </div>
+        );
+      })}
+      <div className="space-y-2 border-t border-border/60 pt-4">
+        <div className="flex justify-between text-sm">
+          <span className="text-slate-600">Subtotal</span>
+          <span className="font-medium text-primary">
+            {formatCentsAsCurrency(subtotalCents)}
+          </span>
+        </div>
+        <div className="flex justify-between text-sm">
+          <span className="text-slate-600">Card processing fee{feePercentLabel}</span>
+          <span className="font-medium text-primary">
+            {formatCentsAsCurrency(totalServiceFeeCents)}
+          </span>
+        </div>
+        <div className="flex items-baseline justify-between pt-2">
+          <span className="text-sm font-semibold text-primary">Total</span>
+          <span className="text-lg font-bold text-primary">
+            {formatCentsAsCurrency(grandTotalCents)}
+          </span>
         </div>
       </div>
+    </div>
   );
 }

@@ -52,8 +52,10 @@ function locationHref(l: (typeof QUICK_LOCATIONS)[number]) {
 
 export default function HeroSection() {
   return (
+    /* Full-bleed hero, Boatsetter-scale height — well under a viewport so the
+       content below peeks in. */
     <section
-      className="relative w-full min-h-[640px] h-[88vh] overflow-hidden"
+      className="relative h-[74vh] min-h-[560px] w-full overflow-hidden"
       aria-label="Hero Section"
     >
       {/* Layer 1 — background photo (bright, no dark overlays) */}
@@ -74,7 +76,8 @@ export default function HeroSection() {
 
       {/* Layer 2 (z-10) — Eyebrow + Headline, centered & lifted. Behind the boat. */}
       <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-6">
-        <div className="-translate-y-[23vh] text-center sm:-translate-y-[18vh]">
+        {/* Lift the headline clear of the boat cutout mid-frame */}
+        <div className="-translate-y-[18vh] text-center sm:-translate-y-[16vh]">
           {/* Gold eyebrow */}
           <div className="animate-fade-in-up mb-5 flex items-center justify-center gap-3">
             <span className="h-px w-8 bg-linear-to-r from-transparent to-gold sm:w-12" />
@@ -88,7 +91,7 @@ export default function HeroSection() {
             Find Your Perfect
             <br />
             <span className="mt-2 inline-block min-h-[1.1em] align-top">
-              <span className="animate-[gradient-flow_5s_ease-in-out_infinite] bg-linear-to-r from-[#ffeab0] via-[#fff6d8] to-[#e7c878] bg-[length:200%_auto] bg-clip-text text-transparent">
+              <span className="text-white">
                 <TypeAnimation
                   sequence={TYPE_SEQUENCE}
                   wrapper="span"
@@ -120,7 +123,7 @@ export default function HeroSection() {
 
       {/* Layer 4 (z-30) — search + quick locations, lifted into the lower-middle. */}
       <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center px-6">
-        <div className="pointer-events-auto w-full max-w-2xl translate-y-[23vh] sm:translate-y-[15vh]">
+        <div className="pointer-events-auto w-full max-w-2xl translate-y-[16vh] sm:translate-y-[12vh]">
           {/* relative z-20 keeps the search + its dropdown above the chips below */}
           <div className="relative z-20 animate-fade-in-up [animation-delay:400ms]">
             <SearchBar />

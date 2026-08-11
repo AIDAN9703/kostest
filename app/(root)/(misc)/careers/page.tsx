@@ -57,7 +57,7 @@ export default function CareersPage() {
           className="absolute inset-0 bg-linear-to-t from-black/70 via-black/25 to-black/10"
         />
         <div className="absolute inset-x-0 bottom-0">
-          <div className="mx-auto w-full max-w-[1400px] px-4 pb-10 sm:px-8 sm:pb-14">
+          <div className="mx-auto w-full max-w-[1200px] px-4 pb-10 sm:px-8 sm:pb-14">
             <div className="flex items-center gap-3">
               <span aria-hidden className="h-px w-10 bg-linear-to-r from-gold to-transparent" />
               <p className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.6)] sm:text-xs">
@@ -73,7 +73,7 @@ export default function CareersPage() {
 
       {/* ── Asymmetric editorial body ── */}
       <section className="py-8 sm:py-16">
-        <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-8">
+        <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-8">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-16">
             <div className="lg:col-span-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
@@ -114,7 +114,7 @@ export default function CareersPage() {
 
       {/* ── The ask — navy bar, statement left, gold CTA right ── */}
       <section className="w-full bg-primary py-14 sm:py-16">
-        <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-8">
+        <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-8">
           <div className="flex flex-col gap-8 md:flex-row md:items-center md:justify-between md:gap-12">
             <div className="max-w-xl">
               <h2 className="text-3xl font-black leading-[1.08] tracking-tight text-white sm:text-4xl">

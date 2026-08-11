@@ -51,11 +51,12 @@ export function DraftOptionsSidebar({
 }: DraftOptionsSidebarProps) {
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader className="pb-3">
+      {/* gap-3/py-5 tighten the base Card's gap-6/py-6 around the title */}
+      <Card className="gap-3 py-5">
+        <CardHeader>
           <CardTitle className="text-lg">Summary</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 text-sm pt-0">
+        <CardContent className="space-y-4 text-sm">
           {preview.map((p, index) => (
             <div key={index} className="rounded-lg border bg-muted/30 p-3">
               <p className="font-semibold">{p.name}</p>
@@ -133,7 +134,12 @@ export function DraftOptionsSidebar({
         </CardContent>
       </Card>
 
-      <Button type="submit" size="lg" disabled={isPending} className="w-full">
+      <Button
+        type="submit"
+        size="lg"
+        disabled={isPending}
+        className="h-11 w-full rounded-full text-[15px] font-semibold"
+      >
         {isPending ? "Creating..." : submitLabel}
       </Button>
       {error && <p className="text-sm text-destructive">{error}</p>}

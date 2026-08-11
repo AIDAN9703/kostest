@@ -63,7 +63,7 @@ const DesktopNavigation: React.FC<DesktopNavigationProps> = ({
                             sectionIndex > 0 && "border-l border-border/50"
                           )}
                         >
-                          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                          <h3 className="text-xs font-semibold uppercase tracking-wider text-primary">
                             {section.title}
                           </h3>
                           <ul className="mt-3 space-y-0.5">

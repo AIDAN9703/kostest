@@ -56,36 +56,6 @@ const proposalEmailStyles = `
       box-shadow: 0 4px 24px rgba(39, 68, 92, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
       border: 1px solid rgba(178, 163, 122, 0.25);
     }
-    .proposal-header {
-      background: linear-gradient(165deg, #1a3042 0%, ${BRAND_NAVY} 48%, #223e54 100%);
-      padding: 36px 28px 32px;
-      text-align: center;
-      border-bottom: 3px solid ${BRAND_GOLD};
-    }
-    .proposal-eyebrow {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: ${BRAND_GOLD};
-      margin: 0 0 14px;
-    }
-    .proposal-headline {
-      font-family: Georgia, 'Times New Roman', Times, serif;
-      font-size: 26px;
-      font-weight: 400;
-      color: #ffffff;
-      line-height: 1.25;
-      margin: 0;
-      letter-spacing: -0.02em;
-    }
-    .proposal-subhead {
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.82);
-      margin: 12px 0 0;
-      line-height: 1.5;
-      font-weight: 400;
-    }
     .proposal-content {
       padding: 36px 32px 40px;
     }
@@ -184,9 +154,6 @@ const proposalEmailStyles = `
     @media only screen and (max-width: 600px) {
       .proposal-content {
         padding: 28px 22px 32px;
-      }
-      .proposal-headline {
-        font-size: 22px;
       }
     }
   </style>
@@ -420,40 +387,16 @@ export async function sendDraftBookingEmail(params: {
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: customerEmail,
       subject,
-      html: `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <meta http-equiv="X-UA-Compatible" content="IE=edge">
-          ${baseEmailStyles}
-          ${proposalEmailStyles}
-        </head>
-        <body class="proposal-body">
-          <!-- Preview snippet for inbox clients -->
-          <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
-            Your charter proposal is ready — open to review pricing and accept when you're ready.
-          </div>
-
-          <div class="proposal-shell">
-            <div class="proposal-header">
-              <p class="proposal-eyebrow">Private charter · Proposal</p>
-              <h1 class="proposal-headline">Your charter is ready to review</h1>
-              <p class="proposal-subhead">
-                Review dates, pricing, and options — then accept securely online.${
-                  isGroup ? ' This proposal may include multiple vessels.' : ''
-                }
-              </p>
-            </div>
-
-            <div class="proposal-content">
+      html: buildBrandEmailHtml({
+        previewText:
+          "Your charter proposal is ready — open to review pricing and accept when you're ready.",
+        contentHtml: `
               <p class="proposal-greeting">Hi ${safeName},</p>
 
               <p class="proposal-lead">
                 We've prepared a personalized proposal for your upcoming experience on the water${
                   safeBoat ? `. Take a look at what's lined up for <strong>${safeBoat}</strong>.` : '.'
-                }
+                }${isGroup ? ' This proposal may include multiple vessels.' : ''}
               </p>
 
               ${
@@ -491,20 +434,8 @@ export async function sendDraftBookingEmail(params: {
               <p class="proposal-signoff">
                 Warm regards,<br>
                 <span class="company-name" style="display:inline-block;margin-top:8px;">Kings Of The Sea Yachts</span>
-              </p>
-            </div>
-
-            <div class="proposal-footer">
-              <p class="proposal-footer-muted">
-                Questions? Reply directly to this message or write to<br>
-                <a href="mailto:${FROM_EMAIL}" style="color:${BRAND_NAVY};font-weight:600;text-decoration:none;">${FROM_EMAIL}</a>
-              </p>
-              <p class="proposal-brand">Kings Of The Sea Yachts</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `,
+              </p>`,
+      }),
     });
 
     if (error) {
@@ -515,6 +446,174 @@ export async function sendDraftBookingEmail(params: {
     return true;
   } catch (error) {
     console.error('Error sending draft proposal email:', error);
+    return false;
+  }
+}
+
+/**
+ * Inquiry acknowledgment — the instant "we got it" email for public lead
+ * forms (replaces the old GoHighLevel automation email). Logo-first header,
+ * white background, one photo — quiet and branded.
+ */
+
+/** Absolute asset URLs — email clients can't load relative paths. */
+const EMAIL_ASSET_BASE = process.env.NEXT_PUBLIC_APP_URL || 'https://kosyachts.com';
+const EMAIL_LOGO_URL = `${EMAIL_ASSET_BASE}/icons/transparent-logo.png`;
+const EMAIL_BG_URL = `${EMAIL_ASSET_BASE}/images/koshero.jpg`;
+const EMAIL_CONTACT = 'contact@kosyachts.com';
+
+/**
+ * Shared shell for all customer-facing emails: logo-first white header with a
+ * gold rule, photo backdrop (white fallback), contact footer. No headline, no
+ * subhead — the approved house style. Content goes straight below the logo.
+ */
+function buildBrandEmailHtml(params: { previewText: string; contentHtml: string }): string {
+  return `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta http-equiv="X-UA-Compatible" content="IE=edge">
+          ${baseEmailStyles}
+          ${proposalEmailStyles}
+          <style>
+            .ack-body {
+              background-color: #ffffff;
+              background-image: url('${EMAIL_BG_URL}');
+              background-size: cover;
+              background-position: center;
+              padding: 40px 16px 56px;
+            }
+            .ack-header {
+              background-color: #ffffff;
+              padding: 30px 28px 22px;
+              text-align: center;
+              border-bottom: 3px solid ${BRAND_GOLD};
+            }
+          </style>
+        </head>
+        <body class="proposal-body ack-body">
+          <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
+            ${params.previewText}
+          </div>
+
+          <div class="proposal-shell">
+            <div class="ack-header">
+              <img src="${EMAIL_LOGO_URL}" alt="Kings Of The Sea Yachts" width="72" height="72"
+                style="display:inline-block;width:72px;height:72px;border-radius:50%;" />
+            </div>
+
+            <div class="proposal-content">
+${params.contentHtml}
+            </div>
+
+            <div class="proposal-footer">
+              <p class="proposal-footer-muted">
+                Questions? Reply directly to this message or write to<br>
+                <a href="mailto:${EMAIL_CONTACT}" style="color:${BRAND_NAVY};font-weight:600;text-decoration:none;">${EMAIL_CONTACT}</a>
+              </p>
+              <p class="proposal-brand">Kings Of The Sea Yachts</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+}
+
+interface InquiryAckEmailParams {
+  customerName: string;
+  customerEmail: string;
+  /** "Term charter" reads differently than a day charter in the copy. */
+  inquiryType?: 'CHARTER' | 'TERM_CHARTER';
+  /** Optional "what you told us" rows, e.g. [{ label: 'Date', value: 'Aug 20' }]. */
+  details?: { label: string; value: string }[];
+}
+
+function buildInquiryAcknowledgmentHtml(params: InquiryAckEmailParams): string {
+  const { customerName, inquiryType = 'CHARTER', details = [] } = params;
+  const isTerm = inquiryType === 'TERM_CHARTER';
+  const safeName = escapeHtml((customerName || 'there').trim() || 'there');
+  const safeDetails = details
+    .filter((d) => d.value?.trim())
+    .map((d) => ({ label: escapeHtml(d.label), value: escapeHtml(d.value) }));
+
+  const detailsBlock =
+    safeDetails.length > 0
+      ? `
+              <div class="proposal-boat-card">
+                <div class="proposal-boat-label">Your request</div>
+                ${safeDetails
+                  .map(
+                    (d) => `
+                <p style="margin:6px 0 0;font-size:14px;color:${BRAND_NAVY};">
+                  <span style="color:#6b7b8b;">${d.label}:</span>
+                  <strong style="font-weight:600;">&nbsp;${d.value}</strong>
+                </p>`
+                  )
+                  .join('')}
+              </div>`
+      : '';
+
+  return buildBrandEmailHtml({
+    previewText: 'Your inquiry is with our team — a charter specialist will reach out shortly.',
+    contentHtml: `
+              <p class="proposal-greeting">Hi ${safeName},</p>
+
+              <p class="proposal-lead">
+                Thanks for reaching out to Kings Of The Sea. A charter specialist is reviewing
+                your request and will get back to you with ${isTerm ? 'itinerary options' : 'boat options'}
+                and pricing.
+              </p>
+              ${detailsBlock}
+
+              <div class="proposal-next">
+                <p class="proposal-next-title">What happens next</p>
+                <ul>
+                  <li>A charter specialist reviews your request.</li>
+                  <li>We reply within 24 hours with options and pricing.</li>
+                  <li>Need us sooner? Call or text <strong>(305) 521-8877</strong>.</li>
+                </ul>
+              </div>
+
+              <p class="proposal-signoff">
+                Warm regards,<br>
+                <span class="company-name" style="display:inline-block;margin-top:8px;">Kings Of The Sea Yachts</span>
+              </p>`,
+  });
+}
+
+export async function sendInquiryAcknowledgmentEmail(
+  params: InquiryAckEmailParams
+): Promise<boolean> {
+  if (!resend) {
+    console.warn('Resend not configured. Inquiry acknowledgment not sent.');
+    return false;
+  }
+  if (!params.customerEmail) {
+    console.error('No email address for inquiry acknowledgment');
+    return false;
+  }
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      to: params.customerEmail,
+      subject:
+        params.inquiryType === 'TERM_CHARTER'
+          ? 'We received your term charter inquiry — Kings Of The Sea'
+          : 'We received your charter inquiry — Kings Of The Sea',
+      html: buildInquiryAcknowledgmentHtml(params),
+    });
+
+    if (error) {
+      console.error('Failed to send inquiry acknowledgment email:', error);
+      return false;
+    }
+    console.log('Inquiry acknowledgment email sent:', data?.id);
+    return true;
+  } catch (error) {
+    console.error('Error sending inquiry acknowledgment email:', error);
     return false;
   }
 }
@@ -770,80 +869,60 @@ export async function sendBookingConfirmationEmail(
     const { data, error } = await resend.emails.send({
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: customerEmail,
-      subject: `Booking Confirmed - ${booking.boatName || 'Your Yacht Charter'}`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          ${baseEmailStyles}
-        </head>
-        <body>
-          <div class="email-container">
-            <div class="email-header">
-              <h1>Booking Confirmed</h1>
-            </div>
-            
-            <div class="email-content">
-              <p class="greeting">Hi ${customerName},</p>
-              
-              <p class="message">
-                Your booking has been confirmed and payment received. We're excited to welcome you aboard 
-                <strong>${booking.boatName || 'your yacht'}</strong> for an unforgettable experience on the water.
+      subject: `Booking confirmed — ${booking.boatName || 'your yacht charter'}`,
+      html: buildBrandEmailHtml({
+        previewText: 'Payment received — your charter is locked in. See you on the water.',
+        contentHtml: `
+              <p class="proposal-greeting">Hi ${escapeHtml(customerName)},</p>
+
+              <p class="proposal-lead">
+                Your payment went through and your charter is confirmed. We can't wait to
+                welcome you aboard <strong>${escapeHtml(booking.boatName || 'your yacht')}</strong>.
               </p>
-              
-              <div class="booking-details">
-                <div class="booking-details-title">Booking Confirmation</div>
-                <div class="detail-item">
-                  <span class="detail-label">Booking ID</span>
-                  <span class="detail-value">${booking.id.substring(0, 8).toUpperCase()}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">Yacht</span>
-                  <span class="detail-value">${booking.boatName || 'N/A'}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">Date & Time</span>
-                  <span class="detail-value">${formattedDate}</span>
-                </div>
-                ${booking.numberOfPassengers ? `
-                <div class="detail-item">
-                  <span class="detail-label">Passengers</span>
-                  <span class="detail-value">${booking.numberOfPassengers}</span>
-                </div>
-                ` : ''}
-                <div class="detail-item">
-                  <span class="detail-label">Total Paid</span>
-                  <span class="detail-value total">${formatCentsAsCurrency(booking.totalAmountCents || 0)}</span>
-                </div>
+
+              <div class="proposal-boat-card">
+                <div class="proposal-boat-label">Your booking</div>
+                <p style="margin:6px 0 0;font-size:14px;color:${BRAND_NAVY};">
+                  <span style="color:#6b7b8b;">Booking ref:</span>
+                  <strong style="font-weight:600;">&nbsp;#${booking.id.substring(0, 6).toUpperCase()}</strong>
+                </p>
+                <p style="margin:6px 0 0;font-size:14px;color:${BRAND_NAVY};">
+                  <span style="color:#6b7b8b;">Yacht:</span>
+                  <strong style="font-weight:600;">&nbsp;${escapeHtml(booking.boatName || '—')}</strong>
+                </p>
+                <p style="margin:6px 0 0;font-size:14px;color:${BRAND_NAVY};">
+                  <span style="color:#6b7b8b;">Date &amp; time:</span>
+                  <strong style="font-weight:600;">&nbsp;${formattedDate}</strong>
+                </p>
+                ${
+                  booking.numberOfPassengers
+                    ? `
+                <p style="margin:6px 0 0;font-size:14px;color:${BRAND_NAVY};">
+                  <span style="color:#6b7b8b;">Guests:</span>
+                  <strong style="font-weight:600;">&nbsp;${booking.numberOfPassengers}</strong>
+                </p>`
+                    : ''
+                }
+                <p style="margin:6px 0 0;font-size:14px;color:${BRAND_NAVY};">
+                  <span style="color:#6b7b8b;">Total:</span>
+                  <strong style="font-weight:600;">&nbsp;${formatCentsAsCurrency(booking.totalAmountCents || 0)}</strong>
+                </p>
               </div>
-              
-              <div class="info-box">
-                <div class="info-box-title">What's Next?</div>
-                <div class="info-box-text">
-                  We'll send you a reminder closer to your booking date with additional details, 
-                  preparation instructions, and contact information for your captain. 
-                  If you have any questions or special requests, please don't hesitate to reach out.
-                </div>
+
+              <div class="proposal-next">
+                <p class="proposal-next-title">What happens next</p>
+                <ul>
+                  <li>We'll follow up before your trip with arrival instructions and your captain's details.</li>
+                  <li>Questions or special requests? Reply to this email.</li>
+                  <li>Need us sooner? Call or text <strong>(305) 521-8877</strong>.</li>
+                </ul>
               </div>
-              
-              <p class="signature">
-                We look forward to welcoming you aboard!<br><br>
-                <span class="company-name">Kings Of The Sea Yachts</span>
-              </p>
-            </div>
-            
-            <div class="email-footer">
-              <p class="email-footer-text">
-                Questions? Reply to this email or contact us at ${FROM_EMAIL}
-              </p>
-              <p class="company-name">Kings Of The Sea Yachts</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `,
+
+              <p class="proposal-signoff">
+                See you on the water,<br>
+                <span class="company-name" style="display:inline-block;margin-top:8px;">Kings Of The Sea Yachts</span>
+              </p>`,
+      }),
     });
 
     if (error) {

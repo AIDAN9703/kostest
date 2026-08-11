@@ -7,7 +7,7 @@ import Image from "next/image";
 export default function StorySection() {
   return (
     <section className="py-10 sm:py-16">
-      <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-8">
+      <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-8">
         {/* One tight row: dateline, headline, and lede stacked left; square
             photo right. */}
         {/* The whole opener is one centered 1200px unit — text column sized

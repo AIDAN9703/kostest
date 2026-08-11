@@ -6,7 +6,7 @@ export default function CTASection() {
   return (
     /* Horizontal closing bar — statement left, actions right, one hairline. */
     <section className="py-10 sm:py-16">
-      <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-8">
+      <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-8">
         <div className="flex flex-col gap-8 border-t border-border pt-10 md:flex-row md:items-center md:justify-between md:gap-12 sm:pt-14">
           <div className="max-w-xl">
             {/* Same statement style as the page's opening headline. */}

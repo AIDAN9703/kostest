@@ -35,7 +35,7 @@ export default function FeaturedFleet({ boats }: FeaturedFleetProps) {
           className="flex items-end justify-between mb-2"
         >
           <div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold text-primary leading-tight">
               The Featured Fleet
             </h2>
             <p className="text-foreground text-sm sm:text-base font-light max-w-md">
@@ -47,17 +47,17 @@ export default function FeaturedFleet({ boats }: FeaturedFleetProps) {
             <div className="hidden sm:flex items-center gap-2">
               <button
                 onClick={scrollPrev}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-md hover:shadow-lg border border-slate-200 transition-all hover:scale-105"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-light-main transition-colors hover:bg-slate-200"
                 aria-label="Previous boats"
               >
-                <ChevronLeft className="w-5 h-5 text-primary" />
+                <ChevronLeft className="h-4 w-4 text-primary" />
               </button>
               <button
                 onClick={scrollNext}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-md hover:shadow-lg border border-slate-200 transition-all hover:scale-105"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-light-main transition-colors hover:bg-slate-200"
                 aria-label="Next boats"
               >
-                <ChevronRight className="w-5 h-5 text-primary" />
+                <ChevronRight className="h-4 w-4 text-primary" />
               </button>
             </div>
           )}

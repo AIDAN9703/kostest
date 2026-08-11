@@ -14,13 +14,13 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/database/db";
 import { bookings, boats, boatPricingTiers } from "@/database/schema";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
-import { emailSchema, phoneRequiredSchema } from "@/shared/lib/validation/common";
 import {
   boatInquirySchema,
   requestToBookSchema,
   termCharterInquirySchema,
 } from "@/shared/lib/validation/inquiry";
 import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
+import { sendInquiryAcknowledgmentEmail } from "@/shared/lib/services/email.service";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { calculateBookingPriceFromDollars } from "@/shared/lib/utils/pricing-utils";
 import { getAppSettings } from "@/features/app-settings/app-settings.service";
@@ -122,6 +122,18 @@ export async function createGeneralLead(data: GeneralLeadInput) {
 
     if (deal) {
       await logLeadCreated(deal.id, null);
+      // Branded "we got it" email — ours (Resend), not GHL's. Fire-and-forget.
+      void sendInquiryAcknowledgmentEmail({
+        customerName: validated.name,
+        customerEmail: validated.email,
+        inquiryType: "CHARTER",
+        details: [
+          { label: "Date", value: validated.date || "" },
+          { label: "Time", value: validated.timeOfDay || "" },
+          { label: "Guests", value: validated.guests || "" },
+          { label: "Budget", value: validated.budget || "" },
+        ],
+      });
       // CRM sync is server-side, fire-and-forget: a closed tab can't lose the
       // record and the webhook URL never ships in the client bundle.
       void ghlWebhookService.sendInquiry({
@@ -215,6 +227,19 @@ export async function createTermCharterLead(data: TermCharterLeadInput) {
 
     if (deal) {
       await logLeadCreated(deal.id, null);
+      // Branded "we got it" email — ours (Resend), not GHL's. Fire-and-forget.
+      void sendInquiryAcknowledgmentEmail({
+        customerName: validated.name,
+        customerEmail: validated.email,
+        inquiryType: "TERM_CHARTER",
+        details: [
+          { label: "Start date", value: validated.startDate || "" },
+          { label: "Duration", value: validated.duration || "" },
+          { label: "Destination", value: validated.destination || "" },
+          { label: "Guests", value: validated.guests || "" },
+          { label: "Budget", value: validated.budget || "" },
+        ],
+      });
       void ghlWebhookService.sendInquiry({
         name: validated.name,
         email: validated.email,

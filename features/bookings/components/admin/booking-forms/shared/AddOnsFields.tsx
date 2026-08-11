@@ -41,8 +41,15 @@ export function AddOnsFields({ lineItems, onChange, variant = "default" }: AddOn
     <div>
       <div className="flex items-center justify-between mb-3">
         <Label>{LABELS[variant]}</Label>
-        <Button type="button" variant="outline" size="sm" onClick={addItem}>
-          <Plus className="h-4 w-4 mr-1" />
+        {/* Header-pill style: soft fill, no border, gold text. */}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1.5 rounded-full border-0 bg-foreground/10 px-4 text-primary-strong hover:bg-foreground/15 hover:text-primary-strong"
+          onClick={addItem}
+        >
+          <Plus className="h-3.5 w-3.5" />
           Add
         </Button>
       </div>

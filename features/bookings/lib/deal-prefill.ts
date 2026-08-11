@@ -14,12 +14,15 @@ export type DealPrefill = {
   customerEmail: string;
   customerPhone: string;
   numberOfPassengers: number;
-  customerType: "guest" | "existing_user";
   startDateTime: string;
   endDateTime: string;
   adminNotes: string;
   /** TCPA: lead opted into SMS — safe to default the SMS send toggle on. */
   smsConsent: boolean;
+  /** Boat-page inquiries carry the boat — prefill it so tier/pricing start filled. */
+  boatId: string;
+  /** Display fallback for the pricing summary before the boat object loads. */
+  boatName: string | null;
 };
 
 function addHoursToIso(iso: string, hours: number): string {
@@ -72,10 +75,11 @@ export function buildDealPrefillForBookingForm(deal: BookingDetails): DealPrefil
     customerEmail: deal.customerEmail ?? "",
     customerPhone: deal.customerPhone?.trim() ?? "",
     numberOfPassengers: Math.max(1, deal.numberOfPassengers ?? 6),
-    customerType: "guest",
     startDateTime,
     endDateTime,
     adminNotes: noteParts.join("\n\n"),
     smsConsent: deal.smsConsent,
+    boatId: deal.boatId ?? "",
+    boatName: deal.boatName ?? null,
   };
 }

@@ -37,8 +37,9 @@ export interface DraftProposalData {
   pickupLocation: string | null;
   dropoffLocation: string | null;
   allowPayment: boolean;
-  paymentType: string | null;
+  paymentType: "DEPOSIT_ONLY" | "FULL_PAYMENT" | null;
   acceptedAt: Date | null;
+  totalPaidCents: number;
   depositAmountCents: number | null;
   totalAmountCents: number;
   bookings: DraftProposalBooking[];

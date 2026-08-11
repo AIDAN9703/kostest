@@ -18,6 +18,7 @@ import { CustomerFields } from "./shared/CustomerFields";
 import { AddOnsFields } from "./shared/AddOnsFields";
 import { BookingSectionFields } from "./shared/BookingSectionFields";
 import { DraftOptionsSidebar } from "./shared/DraftOptionsSidebar";
+import { buildSectionPreview, groupTiersByBoat } from "./shared/pricing";
 import { createEmptyGroupSection, type GroupSectionData, type PricingTierOption } from "./types";
 import type { BookingAddOnInput } from "@/features/bookings/booking.types";
 
@@ -78,15 +79,7 @@ export function GroupBookingForm({ pricingTiers }: GroupBookingFormProps) {
     }
   }, [customerType, selectedUser, selectedUserId]);
 
-  const tiersByBoat = useMemo(
-    () =>
-      pricingTiers.reduce<Record<string, PricingTierOption[]>>((acc, tier) => {
-        if (!acc[tier.boatId]) acc[tier.boatId] = [];
-        acc[tier.boatId].push(tier);
-        return acc;
-      }, {}),
-    [pricingTiers]
-  );
+  const tiersByBoat = useMemo(() => groupTiersByBoat(pricingTiers), [pricingTiers]);
 
   const firstSection = sections[0];
   const sharedStart = firstSection?.startDateTime ?? "";
@@ -135,30 +128,14 @@ export function GroupBookingForm({ pricingTiers }: GroupBookingFormProps) {
     sharedEnd,
   ]);
 
-  const preview = useMemo(() => {
-    return sections.map((section, idx) => {
-      const boat = section.boat;
-      const tier = section.pricingTierId
-        ? pricingTiers.find((t) => t.id === section.pricingTierId)
-        : null;
-      const basePrice = section.basePrice > 0 ? section.basePrice : (tier?.price ?? 0);
-      const cleaningFee = boat?.cleaningFee ?? 0;
-      const addOnsTotal =
-        idx === 0 ? lineItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0) : 0;
-      const depositAmount =
-        section.depositAmount != null && section.depositAmount >= 0
-          ? section.depositAmount
-          : (boat?.depositAmount ?? null);
-      return {
-        name: boat?.name ?? "Boat",
-        basePrice,
-        cleaningFee,
-        addOnsTotal,
-        total: basePrice + cleaningFee + addOnsTotal,
-        depositAmount,
-      };
-    });
-  }, [sections, lineItems, pricingTiers]);
+  const preview = useMemo(
+    // Shared add-ons ride on the first section only.
+    () =>
+      sections.map((section, idx) =>
+        buildSectionPreview(section, idx === 0 ? lineItems : [], pricingTiers)
+      ),
+    [sections, lineItems, pricingTiers]
+  );
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {

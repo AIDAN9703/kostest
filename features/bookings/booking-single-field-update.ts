@@ -36,13 +36,15 @@ export const bookingSingleFieldUpdateSchema = z.discriminatedUnion("field", [
     field: z.literal("dropoffLocation"),
     value: z.union([z.string(), z.null()]),
   }),
+  // The trip window travels as ONE value — start and end can never be
+  // saved separately (a split save briefly stores end-before-start and the
+  // DB's booking_time_range_valid CHECK rightly rejects it).
   z.object({
-    field: z.literal("startDateTime"),
-    value: z.string().datetime({ offset: true }),
-  }),
-  z.object({
-    field: z.literal("endDateTime"),
-    value: z.union([z.string().datetime({ offset: true }), z.null()]),
+    field: z.literal("tripWindow"),
+    value: z.object({
+      startDateTime: z.string().datetime({ offset: true }),
+      endDateTime: z.union([z.string().datetime({ offset: true }), z.null()]),
+    }),
   }),
   z.object({
     field: z.literal("boatId"),
@@ -82,15 +84,16 @@ export function bookingRowPatchFromSingleFieldUpdate(
         typeof update.value === "string" ? update.value.trim() || null : update.value;
       return { dropoffLocation: v };
     }
-    case "startDateTime": {
-      const d = toDateOrNull(update.value);
-      if (!d) throw new Error("Invalid start date/time");
-      return { startDateTime: d };
+    case "tripWindow": {
+      const start = toDateOrNull(update.value.startDateTime);
+      if (!start) throw new Error("Invalid start date/time");
+      const end =
+        update.value.endDateTime === null ? null : toDateOrNull(update.value.endDateTime);
+      if (end && end.getTime() <= start.getTime()) {
+        throw new Error("End time must be after the start time.");
+      }
+      return { startDateTime: start, endDateTime: end };
     }
-    case "endDateTime":
-      return {
-        endDateTime: update.value === null ? null : toDateOrNull(update.value),
-      };
   }
 }
 
@@ -113,16 +116,21 @@ export function auditSnapshotForBookingField(
       return booking.pickupLocation;
     case "dropoffLocation":
       return booking.dropoffLocation;
-    case "startDateTime":
-      return booking.startDateTime instanceof Date
-        ? booking.startDateTime.toISOString()
-        : String(booking.startDateTime);
-    case "endDateTime":
-      return booking.endDateTime == null
-        ? null
-        : booking.endDateTime instanceof Date
-          ? booking.endDateTime.toISOString()
-          : String(booking.endDateTime);
+    case "tripWindow":
+      return {
+        startDateTime:
+          booking.startDateTime == null
+            ? null
+            : booking.startDateTime instanceof Date
+              ? booking.startDateTime.toISOString()
+              : String(booking.startDateTime),
+        endDateTime:
+          booking.endDateTime == null
+            ? null
+            : booking.endDateTime instanceof Date
+              ? booking.endDateTime.toISOString()
+              : String(booking.endDateTime),
+      };
     case "boatId":
       return {
         boatId: booking.boatId,

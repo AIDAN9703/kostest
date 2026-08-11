@@ -48,19 +48,12 @@ export default function ContactPage() {
     <div className="w-full">
       {/* ── Opener + ways to reach us ── */}
       <section className="py-10 sm:py-16">
-        <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-8">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground sm:text-[11px]">
-            Kings of the Sea · Contact
-          </p>
-          <h1 className="mt-6 text-4xl font-black leading-[1.08] tracking-tight text-primary sm:text-5xl">
-            Talk to a real person.
+        <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-8">
+          <h1 className="text-4xl font-black leading-[1.08] tracking-tight text-primary sm:text-5xl">
+            Contact
           </h1>
-          <p className="mt-4 max-w-xl text-[15px] leading-7 text-slate-600 sm:text-base">
-            Questions, quotes, or a boat you can&apos;t stop thinking about — reach us any way
-            you like. We reply within 24 hours.
-          </p>
 
-          <div className="mt-10 grid grid-cols-1 gap-y-8 sm:mt-14 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-4">
+          <div className="mt-10 grid grid-cols-1 gap-y-8 sm:mt-12 sm:grid-cols-2 sm:gap-x-10 lg:grid-cols-4">
             {CONTACT_METHODS.map((method) => (
               <div key={method.label} className="border-l border-border pl-5">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
@@ -83,7 +76,7 @@ export default function ContactPage() {
 
       {/* ── Visit us ── */}
       <section className="border-t border-border py-8 sm:py-16">
-        <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-8">
+        <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-8">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-16">
             <div className="lg:col-span-4">
               <h2 className="text-3xl font-black leading-[1.08] tracking-tight text-primary sm:text-4xl">

@@ -2,9 +2,8 @@ import { notFound } from "next/navigation";
 
 import Link from "next/link";
 import { format, formatDistanceToNowStrict } from "date-fns";
-import { CalendarPlus, Ship } from "lucide-react";
+import { Ship } from "lucide-react";
 import { auth } from "@/auth";
-import { Button } from "@/shared/components/ui/button";
 import { DealHeaderCard } from "@/features/bookings/components/admin/view-booking/DealHeaderCard";
 import { DealRequestCard } from "@/features/bookings/components/admin/view-booking/DealRequestCard";
 import {
@@ -27,7 +26,10 @@ import {
 } from "@/features/bookings/components/admin/view-booking/BookingEditMode";
 import { BookingPaymentsFinancialsCard } from "@/features/bookings/components/admin/view-booking/BookingPaymentsFinancialsCard";
 import { DealActionsMenu } from "@/features/bookings/components/admin/view-booking/DealActionsMenu";
+import { CreateProposalModal } from "@/features/bookings/components/admin/view-booking/CreateProposalModal";
 import { ActivityComposer } from "@/features/bookings/components/admin/view-booking/ActivityComposer";
+import { buildDealPrefillForBookingForm } from "@/features/bookings/lib/deal-prefill";
+import { boatService } from "@/features/boats/boat.service";
 import { BookingActivityTimeline } from "@/features/bookings/components/admin/view-booking/BookingActivityTimeline";
 
 import { bookingService } from "@/features/bookings/services/booking.service";
@@ -63,6 +65,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     crewPool,
     admins,
     session,
+    pricingTiers,
   ] = await Promise.all([
     bookingOpsService.getByBookingId(id),
     bookingExpenseLineService.getLines(id),
@@ -73,6 +76,10 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     crewProfileService.getCrewForAssignment(),
     userService.getAdmins(),
     auth(),
+    // Only inquiries can be priced into a proposal — skip the fetch otherwise.
+    booking.bookingStatus === "INQUIRY"
+      ? boatService.getAllActivePricingTiers()
+      : Promise.resolve([]),
   ]);
 
   // ONE activity feed per deal — migrated lead history lives natively in
@@ -227,12 +234,12 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
           // editing the page.
           <div className="flex shrink-0 items-center gap-2">
             {isInquiry ? (
-              <Button asChild size="sm" className="shrink-0 gap-1.5 rounded-full px-4">
-                <Link href={`/admin/bookings/create?dealId=${id}`}>
-                  <CalendarPlus className="h-3.5 w-3.5" />
-                  Create proposal
-                </Link>
-              </Button>
+              /* Same form as /admin/bookings/create?dealId=… — hosted in a
+                 modal so the admin never leaves the deal. */
+              <CreateProposalModal
+                pricingTiers={pricingTiers}
+                dealPrefill={buildDealPrefillForBookingForm(booking)}
+              />
             ) : (
               <BookingPageEditButton />
             )}

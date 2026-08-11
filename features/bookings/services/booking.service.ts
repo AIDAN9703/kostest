@@ -75,6 +75,7 @@ import { bookingGroupService } from "@/features/booking-groups/booking-group.ser
 import { bookingPricingService } from "@/features/bookings/services/booking-pricing.service";
 import { bookingStatusService } from "@/features/bookings/services/booking-status.service";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
+import { BOOKING_EVENT_TYPES } from "@/features/bookings/booking-events.constants";
 import { fetchBoatAndTier, fetchBoatsAndTiersBulk } from "@/features/bookings/booking-helpers";
 import { getAppSettings } from "@/features/app-settings/app-settings.service";
 import {
@@ -321,6 +322,26 @@ export class BookingService {
       (sum, b) => sum + Number(pricingByBooking.get(b.id)?.totalAmountCents ?? 0),
       0
     );
+
+    // Paid so far across the group — drives the public page's state
+    // (unpaid → pay buttons, paid → confirmation).
+    const [paidRow] = await db
+      .select({
+        paid: sql<number>`COALESCE(SUM(${payments.amountCents}), 0)`,
+      })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.payableType, "BOOKING"),
+          inArray(
+            payments.payableId,
+            draftBookings.map((b) => b.id)
+          ),
+          eq(payments.status, "SUCCEEDED"),
+          ne(payments.paymentType, "REFUND")
+        )
+      );
+
     return {
       id: first.id,
       customerName: first.customerName,
@@ -333,6 +354,7 @@ export class BookingService {
       allowPayment: first.allowPayment,
       paymentType: first.paymentType,
       acceptedAt: first.acceptedAt,
+      totalPaidCents: Number(paidRow?.paid ?? 0),
       depositAmountCents: firstPricing?.depositAmountCents
         ? Number(firstPricing.depositAmountCents)
         : null,
@@ -378,7 +400,9 @@ export class BookingService {
       .limit(1);
 
     if (!first) return null;
-    if (first.bookingStatus !== "DRAFT" && first.bookingStatus !== "APPROVED") return null;
+    // DRAFT = open proposal, APPROVED = accepted, CONFIRMED = paid — the link
+    // stays a living booking page through the whole journey.
+    if (!["DRAFT", "APPROVED", "CONFIRMED"].includes(first.bookingStatus)) return null;
     // Unsent proposals are private: the token only works once the draft has
     // actually been published (emailed/SMS'd or link explicitly shared).
     if (!first.publishedAt) return null;
@@ -457,6 +481,28 @@ export class BookingService {
     }
 
     return { bookingIds, checkoutUrl };
+  }
+
+  /**
+   * Customer asked for changes from the public proposal page — lands on the
+   * deal timeline (loud amber marker) so the admin sees it and edits the trip.
+   */
+  async requestProposalChanges(publicToken: string, message: string): Promise<void> {
+    const draftBookings = await this.getDraftBookingsByPublicToken(publicToken);
+    if (!draftBookings || draftBookings.length === 0) {
+      throw new Error("Proposal not found");
+    }
+
+    for (const b of draftBookings) {
+      await bookingEventsService.logEvent({
+        bookingId: b.id,
+        eventType: BOOKING_EVENT_TYPES.CHANGE_REQUESTED,
+        actorType: "user",
+        channel: "web",
+        displayMessage: "Customer requested changes",
+        content: message,
+      });
+    }
   }
 
   /**
@@ -1581,10 +1627,38 @@ export class BookingService {
       await this.applyBoatIdChange(id, update.value, current);
     } else {
       const rowPatch = bookingRowPatchFromSingleFieldUpdate(update);
-      await db
-        .update(bookings)
-        .set({ ...rowPatch, updatedAt: new Date() })
-        .where(eq(bookings.id, id));
+
+      // The trip window arrives as an atomic pair (end-after-start already
+      // validated in the patch builder). APPROVED/CONFIRMED hold the
+      // calendar, so recheck the new window — friendly refusal instead of a
+      // constraint blast.
+      if (
+        update.field === "tripWindow" &&
+        (current.bookingStatus === "APPROVED" || current.bookingStatus === "CONFIRMED") &&
+        current.boatId &&
+        rowPatch.startDateTime &&
+        rowPatch.endDateTime
+      ) {
+        await availabilityService.assertSlotAvailable(
+          current.boatId,
+          rowPatch.startDateTime as Date,
+          rowPatch.endDateTime as Date,
+          id
+        );
+      }
+
+      try {
+        await db
+          .update(bookings)
+          .set({ ...rowPatch, updatedAt: new Date() })
+          .where(eq(bookings.id, id));
+      } catch (error) {
+        // Race loser on the no-overlap exclusion constraint.
+        if (isOverlapConstraintError(error)) {
+          throw new SlotUnavailableError([]);
+        }
+        throw error;
+      }
     }
 
     const next = await this.getBookingById(id);

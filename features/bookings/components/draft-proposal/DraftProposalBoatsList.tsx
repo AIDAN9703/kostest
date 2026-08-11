@@ -11,17 +11,18 @@ interface DraftProposalBoatsListProps {
 
 const DEFAULT_IMAGE = "/images/herooption22.jpg";
 
+/** Flat boat rows — hairlines come from the page's divide-y container. */
 export function DraftProposalBoatsList({ bookings }: DraftProposalBoatsListProps) {
   return (
-    <div className="space-y-3">
+    <>
       {bookings.map((booking) => (
         <Link
           key={booking.id}
           href={`/boats/${booking.boatId}`}
-          className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 px-4 py-3 transition-colors hover:border-primary/20 hover:bg-primary/5"
+          className="group flex items-center justify-between gap-4 py-3"
         >
           <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg">
+            <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-lg bg-light-main">
               <Image
                 src={booking.boatMainImage ?? DEFAULT_IMAGE}
                 alt={booking.boatName}
@@ -31,15 +32,17 @@ export function DraftProposalBoatsList({ bookings }: DraftProposalBoatsListProps
               />
             </div>
             <div className="min-w-0">
-              <p className="font-medium text-gray-900">{booking.boatName}</p>
-              <p className="text-xs text-gray-500">Base charter</p>
+              <p className="truncate text-sm font-medium text-primary group-hover:underline">
+                {booking.boatName}
+              </p>
+              <p className="text-xs text-slate-500">Base charter</p>
             </div>
           </div>
-          <span className="shrink-0 font-semibold text-primary">
+          <span className="shrink-0 text-sm font-medium text-primary">
             {formatCentsAsCurrency(booking.basePriceCents)}
           </span>
         </Link>
       ))}
-    </div>
+    </>
   );
 }

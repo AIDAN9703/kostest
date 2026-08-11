@@ -5,37 +5,24 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/shared/components/ui/button";
-import {
-  CheckCircle,
-  Calendar,
-  Home,
-  Ship,
-} from "lucide-react";
 import Link from "next/link";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import confetti from "canvas-confetti";
 
-const BRAND_COLORS = [
-  "#10B981",
-  "#3B82F6",
-  "#0EA5E9",
-  "#06B6D4",
-  "#F59E0B",
-  "#8B5CF6",
-];
+/* Brand confetti — navy + golds, not the rainbow. */
+const BRAND_COLORS = ["#27445c", "#b2a37a", "#d4c590", "#3a5a7a"];
 
 function fireConfetti() {
-  const bigBoat = confetti.shapeFromText({ text: "\u{1F6E5}\uFE0F", scalar: 5 });
-  const bigSailboat = confetti.shapeFromText({ text: "\u26F5", scalar: 5 });
-  const bigParty = confetti.shapeFromText({ text: "\u{1F389}", scalar: 5 });
+  const bigBoat = confetti.shapeFromText({ text: "\u{1F6E5}️", scalar: 5 });
+  const bigSailboat = confetti.shapeFromText({ text: "⛵", scalar: 5 });
   const bigWave = confetti.shapeFromText({ text: "\u{1F30A}", scalar: 4 });
 
   confetti({
-    particleCount: 60,
+    particleCount: 50,
     spread: 100,
     origin: { y: 1.0, x: 0.5 },
     colors: BRAND_COLORS,
-    shapes: [bigBoat, bigSailboat, bigParty],
+    shapes: [bigBoat, bigSailboat],
     scalar: 2,
     gravity: 0.6,
     startVelocity: 60,
@@ -45,7 +32,7 @@ function fireConfetti() {
 
   setTimeout(() => {
     confetti({
-      particleCount: 40,
+      particleCount: 35,
       angle: 45,
       spread: 80,
       origin: { x: -0.2, y: 1.0 },
@@ -58,22 +45,6 @@ function fireConfetti() {
       disableForReducedMotion: true,
     });
   }, 400);
-
-  setTimeout(() => {
-    confetti({
-      particleCount: 40,
-      angle: 135,
-      spread: 80,
-      origin: { x: 1.2, y: 1.0 },
-      colors: BRAND_COLORS,
-      shapes: [bigWave, bigBoat],
-      scalar: 2,
-      gravity: 0.7,
-      startVelocity: 50,
-      ticks: 400,
-      disableForReducedMotion: true,
-    });
-  }, 600);
 }
 
 interface BookingSummary {
@@ -96,6 +67,16 @@ interface BookingSummary {
 
 type VerifyState = "loading" | "verified" | "processing" | "error";
 
+/** Hairline fact row — the site's flat detail grammar. */
+function FactRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-baseline justify-between gap-6 py-3">
+      <span className="text-sm text-slate-600">{label}</span>
+      <span className="text-right text-sm font-medium text-primary">{value}</span>
+    </div>
+  );
+}
+
 export default function PaymentSuccessClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -108,10 +89,7 @@ export default function PaymentSuccessClient() {
   const [retryCount, setRetryCount] = useState(0);
 
   const verify = useCallback(async () => {
-    if (!sessionId) {
-      setState("error");
-      return;
-    }
+    if (!sessionId) return; // rendered as an error state directly
 
     try {
       const res = await fetch(`/api/stripe/verify?session_id=${sessionId}`);
@@ -137,8 +115,9 @@ export default function PaymentSuccessClient() {
   }, [sessionId, retryCount]);
 
   useEffect(() => {
+    // Guests don't have a profile — home is the only safe landing.
     if (cancelled) {
-      router.push("/profile/bookings");
+      router.push("/");
       return;
     }
     verify();
@@ -153,33 +132,31 @@ export default function PaymentSuccessClient() {
     }
   }, [state]);
 
-  // Redirect on persistent error
   useEffect(() => {
-    if (state === "error") {
-      const timer = setTimeout(() => router.push("/profile/bookings"), 5000);
+    if (state === "error" || !sessionId) {
+      const timer = setTimeout(() => router.push("/"), 6000);
       return () => clearTimeout(timer);
     }
-  }, [state, router]);
+  }, [state, sessionId, router]);
 
-  if (state === "error") {
+  if (state === "error" || !sessionId) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white to-gold/10">
-        <div className="mx-auto max-w-md px-6">
-          <div className="rounded-2xl bg-white p-8 text-center shadow-xl">
-            <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-50 ring-1 ring-red-100">
-              <CheckCircle className="h-10 w-10 text-red-600" />
-            </div>
-            <h1 className="mb-3 text-2xl font-semibold text-gray-900">
-              Verification Failed
-            </h1>
-            <p className="mb-6 text-gray-600">
-              We couldn&apos;t verify your payment. You&apos;ll be redirected to
-              your bookings shortly.
-            </p>
-            <Button onClick={() => router.push("/profile/bookings")}>
-              Go to My Bookings
-            </Button>
-          </div>
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <div className="mx-auto max-w-md px-6 text-center">
+          <h1 className="text-3xl font-black leading-tight tracking-tight text-primary">
+            We couldn&apos;t verify your payment.
+          </h1>
+          <p className="mt-4 text-[15px] leading-7 text-slate-600">
+            If you completed checkout, don&apos;t worry — your payment is safe and our team will
+            confirm it shortly. Call or text{" "}
+            <a href="tel:+13055218877" className="font-medium text-primary">
+              (305) 521-8877
+            </a>{" "}
+            if you&apos;d like a hand.
+          </p>
+          <Button asChild size="lg" className="mt-8 h-11 rounded-full px-7">
+            <Link href="/">Back to home</Link>
+          </Button>
         </div>
       </div>
     );
@@ -187,13 +164,11 @@ export default function PaymentSuccessClient() {
 
   if (state === "loading" || state === "processing") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-white to-gold/10">
+      <div className="flex min-h-[70vh] items-center justify-center">
         <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary" />
-          <p className="text-gray-600">
-            {state === "processing"
-              ? "Finalizing your booking..."
-              : "Confirming your payment..."}
+          <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-b-2 border-primary" />
+          <p className="text-sm text-slate-600">
+            {state === "processing" ? "Finalizing your booking…" : "Confirming your payment…"}
           </p>
         </div>
       </div>
@@ -209,199 +184,121 @@ export default function PaymentSuccessClient() {
       ? Math.round(
           (new Date(booking.endDateTime).getTime() -
             new Date(booking.startDateTime).getTime()) /
-            (1000 * 60 * 60),
+            (1000 * 60 * 60)
         )
       : null;
 
+  const priceRows: { label: string; cents: number }[] = [
+    { label: "Base price", cents: booking?.basePriceCents ?? 0 },
+    { label: "Cleaning fee", cents: booking?.cleaningFeeCents ?? 0 },
+    { label: "Captain fee", cents: booking?.captainFeeCents ?? 0 },
+    { label: "Card processing fee", cents: booking?.serviceFeeCents ?? 0 },
+  ].filter((r) => r.cents > 0);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gold/10">
-      <div
-        className={`mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8 transition-all duration-700 ${
-          showAnimation ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        {/* Success Header */}
-        <div className="mb-8 overflow-hidden rounded-2xl bg-white shadow-lg">
-          <div className="bg-gradient-to-r from-green-50 to-blue-50 px-6 py-10 text-center sm:px-8">
-            <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-full bg-green-500 ring-4 ring-green-200">
-              <CheckCircle className="h-12 w-12 text-white" />
-            </div>
-            <h1 className="mb-2 text-3xl font-bold text-gray-900">
-              Booking Confirmed!
-            </h1>
-            <p className="text-lg text-gray-700">
-              Your payment was successful and a confirmation email is on its
-              way.
-            </p>
-          </div>
+    <div
+      className={`mx-auto w-full max-w-2xl px-4 py-12 transition-all duration-700 sm:px-6 sm:py-16 ${
+        showAnimation ? "opacity-100" : "opacity-0"
+      }`}
+    >
+      {/* ── Statement header ── */}
+      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground sm:text-[11px]">
+        Kings of the Sea · Booking confirmed
+      </p>
+      <h1 className="mt-4 text-4xl font-black leading-[1.08] tracking-tight text-primary sm:text-5xl">
+        See you on the water.
+      </h1>
+      <p className="mt-4 text-[15px] leading-7 text-slate-600 sm:text-base">
+        Your payment went through and your charter is locked in. A confirmation email is on its
+        way{booking?.customerName ? `, ${booking.customerName.split(" ")[0]}` : ""}.
+      </p>
 
-          <div className="p-6 sm:p-8">
-            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2">
-              {/* Boat Image */}
-              {booking?.boatMainImage && (
-                <div className="relative h-48 overflow-hidden rounded-lg">
-                  <Image
-                    src={booking.boatMainImage}
-                    alt={booking.boatName || "Boat"}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              )}
-
-              {/* Booking Info */}
-              <div className="space-y-4">
-                {booking?.boatName && (
-                  <div>
-                    <div className="mb-1 flex items-center gap-2 text-sm text-gray-500">
-                      <Ship className="h-4 w-4" />
-                      Boat
-                    </div>
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      {booking.boatName}
-                    </h2>
-                    {booking.boatCategory && (
-                      <p className="text-sm text-gray-600">
-                        {booking.boatCategory}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {bookingDate && (
-                  <div>
-                    <div className="mb-1 flex items-center gap-2 text-sm text-gray-500">
-                      <Calendar className="h-4 w-4" />
-                      Date & Time
-                    </div>
-                    <p className="font-medium text-gray-900">
-                      {bookingDate}
-                      {duration ? ` \u2022 ${duration} hours` : ""}
-                    </p>
-                  </div>
-                )}
-
-                {booking?.id && (
-                  <div>
-                    <div className="mb-1 text-sm text-gray-500">Booking ID</div>
-                    <p className="font-mono text-sm text-gray-900">
-                      {booking.id}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Price Summary */}
-            {booking?.totalAmountCents && (
-              <div className="mb-6 rounded-lg bg-gray-50 p-4">
-                <div className="space-y-2 text-sm">
-                  {booking.basePriceCents != null &&
-                    booking.basePriceCents > 0 && (
-                      <div className="flex justify-between text-gray-700">
-                        <span>Base price</span>
-                        <span>
-                          {formatCentsAsCurrency(booking.basePriceCents)}
-                        </span>
-                      </div>
-                    )}
-                  {booking.cleaningFeeCents != null &&
-                    booking.cleaningFeeCents > 0 && (
-                      <div className="flex justify-between text-gray-700">
-                        <span>Cleaning fee</span>
-                        <span>
-                          {formatCentsAsCurrency(booking.cleaningFeeCents)}
-                        </span>
-                      </div>
-                    )}
-                  {booking.captainFeeCents != null &&
-                    booking.captainFeeCents > 0 && (
-                      <div className="flex justify-between text-gray-700">
-                        <span>Captain fee</span>
-                        <span>
-                          {formatCentsAsCurrency(booking.captainFeeCents)}
-                        </span>
-                      </div>
-                    )}
-                  {booking.serviceFeeCents != null &&
-                    booking.serviceFeeCents > 0 && (
-                      <div className="flex justify-between text-gray-700">
-                        <span>Card processing fee</span>
-                        <span>
-                          {formatCentsAsCurrency(booking.serviceFeeCents)}
-                        </span>
-                      </div>
-                    )}
-                  <div className="flex justify-between border-t pt-2 text-base font-bold text-gray-900">
-                    <span>Total Paid</span>
-                    <span className="text-green-600">
-                      {formatCentsAsCurrency(booking.totalAmountCents)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Status Badges */}
-            <div className="mb-6 flex flex-wrap gap-2">
-              <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
-                <CheckCircle className="mr-1 h-4 w-4" />
-                Confirmed
-              </span>
-              <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
-                Payment Received
-              </span>
-            </div>
-
-            {/* Next Steps */}
-            <div className="mb-6 rounded-lg bg-blue-50 p-4">
-              <h3 className="mb-2 font-semibold text-gray-900">
-                What&apos;s Next?
-              </h3>
-              <ul className="space-y-1 text-sm text-gray-700">
-                <li>&bull; Check your email for the booking confirmation</li>
-                <li>&bull; Review trip details and arrival instructions</li>
-                <li>&bull; Prepare valid IDs for all passengers</li>
-                <li>&bull; Contact us if you have any questions</li>
-              </ul>
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Button asChild className="flex-1">
-                <Link href="/profile/bookings">
-                  <Calendar className="mr-2 h-4 w-4" />
-                  View My Bookings
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="flex-1">
-                <Link href="/boats/search">
-                  <Ship className="mr-2 h-4 w-4" />
-                  Browse More Boats
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="flex-1">
-                <Link href="/">
-                  <Home className="mr-2 h-4 w-4" />
-                  Back to Home
-                </Link>
-              </Button>
-            </div>
-          </div>
+      {/* ── Boat photo ── */}
+      {booking?.boatMainImage ? (
+        <div className="relative mt-8 aspect-[16/9] overflow-hidden rounded-2xl bg-light-main">
+          <Image
+            src={booking.boatMainImage}
+            alt={booking.boatName || "Your charter"}
+            fill
+            sizes="(max-width: 672px) 100vw, 640px"
+            className="object-cover"
+          />
         </div>
+      ) : null}
 
-        {/* Customer Support */}
-        <div className="rounded-lg bg-white p-6 text-center shadow">
-          <p className="text-sm text-gray-600">
-            Need help? Contact us at{" "}
-            <a
-              href="mailto:bookings@kossailing.com"
-              className="text-primary hover:underline"
-            >
-              bookings@kossailing.com
+      {/* ── Trip facts — flat hairline rows ── */}
+      <div className="mt-8 divide-y divide-border/60 border-y border-border/60">
+        {booking?.boatName ? (
+          <FactRow
+            label="Boat"
+            value={
+              <>
+                {booking.boatName}
+                {booking.boatCategory ? (
+                  <span className="ml-1.5 text-xs font-normal text-slate-500">
+                    {booking.boatCategory}
+                  </span>
+                ) : null}
+              </>
+            }
+          />
+        ) : null}
+        {bookingDate ? (
+          <FactRow
+            label="Date & time"
+            value={`${bookingDate}${duration ? ` · ${duration}h` : ""}`}
+          />
+        ) : null}
+        {booking?.numberOfPassengers ? (
+          <FactRow label="Guests" value={booking.numberOfPassengers} />
+        ) : null}
+        {booking?.id ? (
+          <FactRow label="Booking ref" value={`#${booking.id.slice(0, 6).toUpperCase()}`} />
+        ) : null}
+        {priceRows.map((row) => (
+          <FactRow key={row.label} label={row.label} value={formatCentsAsCurrency(row.cents)} />
+        ))}
+        {booking?.totalAmountCents ? (
+          <div className="flex items-baseline justify-between gap-6 py-3">
+            <span className="text-sm font-semibold text-primary">Total paid</span>
+            <span className="text-base font-bold text-success">
+              {formatCentsAsCurrency(booking.totalAmountCents)}
+            </span>
+          </div>
+        ) : null}
+      </div>
+
+      {/* ── What happens next ── */}
+      <div className="mt-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          What happens next
+        </p>
+        <ul className="mt-3 space-y-2 text-[15px] leading-7 text-slate-600">
+          <li>Your confirmation email has the full trip details.</li>
+          <li>We&apos;ll follow up before your trip with arrival instructions.</li>
+          <li>
+            Questions in the meantime? Call or text{" "}
+            <a href="tel:+13055218877" className="font-medium text-primary">
+              (305) 521-8877
             </a>
-          </p>
-        </div>
+            .
+          </li>
+        </ul>
+      </div>
+
+      {/* ── Actions ── */}
+      <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+        <Button asChild size="lg" className="h-11 rounded-full px-7">
+          <Link href="/">Back to home</Link>
+        </Button>
+        <Button
+          asChild
+          variant="outline"
+          size="lg"
+          className="h-11 rounded-full border-0 bg-foreground/10 px-7 text-primary hover:bg-foreground/15 hover:text-primary"
+        >
+          <Link href="/boats/search">Browse the fleet</Link>
+        </Button>
       </div>
     </div>
   );

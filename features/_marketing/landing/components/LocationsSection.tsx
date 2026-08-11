@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   Carousel,
@@ -16,43 +16,36 @@ const locations = [
   {
     name: "Miami",
     image: "/images/locations/miami.jpg",
-    boatCount: 83,
     href: "/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=25.85578602396197&ne_lng=-80.13217904641093&sw_lat=25.7090419531335&sw_lng=-80.31860792381018&zoom_level=13",
   },
   {
     name: "Fort Lauderdale",
     image: "/images/locations/fort-lauderdale.png",
-    boatCount: 27,
     href: "/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=26.342075651857815&ne_lng=-79.94274801289657&sw_lat=25.85493658661458&sw_lng=-80.27851766621689&zoom_level=13&page=1",
   },
   {
     name: "Naples",
     image: "/images/locations/naples.jpg",
-    boatCount: 4,
     href: "/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=26.78162320580448&ne_lng=-81.53055713088251&sw_lat=25.80900322954124&sw_lng=-82.20209643752314&zoom_level=13&page=1",
   },
   {
     name: "West Palm Beach",
     image: "/images/locations/west-palm.jpg",
-    boatCount: 6,
     href: "/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=27.20361325071068&ne_lng=-79.67871662569503&sw_lat=26.234574624628717&sw_lng=-80.35025593233566&zoom_level=13&page=1",
   },
   {
     name: "Connecticut",
     image: "/images/locations/conneticut.jpg",
-    boatCount: 4,
     href: "/boats/search?near=Miami%2C+FL%2C+USA&ne_lat=42.52785484619885&ne_lng=-71.37854485044119&sw_lat=39.24828154025446&sw_lng=-74.06470207700369&zoom_level=13&page=1",
   },
   {
     name: "Bahamas",
     image: "/images/locations/bahamas.jpg",
-    boatCount: 6,
     href: "/boats/search?near=The+Bahamas&ne_lat=26.590274469914576&ne_lng=-76.65761869261429&sw_lat=22.560024925745196&sw_lng=-79.35476224730179&zoom_level=8&center_lat=24.591364629076335&center_lng=-78.00619046995804&page=1",
   },
   {
     name: "Dominican Republic",
     image: "/images/locations/dominican-republic.jpg",
-    boatCount: 4,
     href: "/boats/search?near=Dominican+Republic&ne_lat=27.00077435235987&ne_lng=-65.31237564053237&sw_lat=10.272085808139986&sw_lng=-76.10094985928237&zoom_level=6&center_lat=18.844302328127366&center_lng=-70.70666274990737&page=1",
   },
 ];
@@ -76,7 +69,7 @@ export default function LocationsSection() {
           className="flex items-end justify-between mb-4"
         >
           <div>
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-primary leading-tight">
+            <h2 className="text-3xl sm:text-4xl font-bold text-primary leading-tight">
               Explore Destinations
             </h2>
             <p className="text-foreground text-sm sm:text-base font-light max-w-md">
@@ -87,17 +80,17 @@ export default function LocationsSection() {
           <div className="hidden sm:flex items-center gap-2">
             <button
               onClick={prevSlide}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-md hover:shadow-lg border border-slate-200 transition-all hover:scale-105"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-light-main transition-colors hover:bg-slate-200"
               aria-label="Previous locations"
             >
-              <ChevronLeft className="w-5 h-5 text-primary" />
+              <ChevronLeft className="h-4 w-4 text-primary" />
             </button>
             <button
               onClick={nextSlide}
-              className="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-md hover:shadow-lg border border-slate-200 transition-all hover:scale-105"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-light-main transition-colors hover:bg-slate-200"
               aria-label="Next locations"
             >
-              <ChevronRight className="w-5 h-5 text-primary" />
+              <ChevronRight className="h-4 w-4 text-primary" />
             </button>
           </div>
         </motion.div>
@@ -113,7 +106,7 @@ export default function LocationsSection() {
             {locations.map((location, index) => (
               <CarouselItem
                 key={location.name}
-                className="pl-3 sm:pl-4 basis-[260px] sm:basis-[300px] md:basis-[320px] max-w-[260px] sm:max-w-[300px] md:max-w-[320px]"
+                className="max-w-[200px] basis-[200px] pl-3 sm:max-w-[230px] sm:basis-[230px] sm:pl-4 md:max-w-[250px] md:basis-[250px]"
               >
                 <motion.div
                   initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
@@ -121,31 +114,23 @@ export default function LocationsSection() {
                   viewport={{ once: true }}
                   transition={{ delay: Math.min(index * 0.08, 0.4), duration: 0.5 }}
                 >
-                  <Link
-                    href={location.href}
-                    className="block group rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500"
-                  >
-                    <div className="relative aspect-[1/1]">
+                  {/* Same card grammar as BoatListingCard: rounded image,
+                      text below — no overlay. */}
+                  <Link href={location.href} className="group block">
+                    {/* 3:2 like BoatListingCard (and Boatsetter's destination
+                        tiles) — shorter than the old squares. */}
+                    <div className="relative mb-3 aspect-[3/2] overflow-hidden rounded-xl bg-slate-100">
                       <Image
                         src={location.image}
                         alt={location.name}
                         fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        sizes="(max-width: 640px) 260px, 320px"
+                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        sizes="(max-width: 640px) 200px, 250px"
                         priority={index < 3}
                         loading={index >= 3 ? "lazy" : undefined}
                       />
-                      <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/10 to-transparent" />
-
-                      {/* Content */}
-                      <div className="absolute bottom-0 left-0 w-full p-5">
-                        <h3 className="text-2xl font-bold text-white">{location.name}</h3>
-                        <div className="flex items-center gap-1.5 text-white/70 text-sm">
-                          <MapPin className="w-3.5 h-3.5" />
-                          <span>{location.boatCount} yachts available</span>
-                        </div>
-                      </div>
                     </div>
+                    <h3 className="text-[15px] font-semibold text-primary">{location.name}</h3>
                   </Link>
                 </motion.div>
               </CarouselItem>

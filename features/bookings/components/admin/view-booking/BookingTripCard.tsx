@@ -127,16 +127,20 @@ export function BookingTripCard({
   function handleSave() {
     startTransition(async () => {
       const updates: Array<{ field: string; value: unknown }> = [];
-      if (start !== toLocalInputValue(trip.startDateTime)) {
-        const iso = fromLocalInputValue(start);
-        if (!iso) {
+      // Dates save as ONE atomic window — sending start and end separately
+      // let the DB see end-before-start mid-save and reject the edit.
+      const startChanged = start !== toLocalInputValue(trip.startDateTime);
+      const endChanged = end !== toLocalInputValue(trip.endDateTime);
+      if (startChanged || endChanged) {
+        const isoStart = fromLocalInputValue(start);
+        if (!isoStart) {
           toast({ title: "Invalid start date", variant: "destructive" });
           return;
         }
-        updates.push({ field: "startDateTime", value: iso });
-      }
-      if (end !== toLocalInputValue(trip.endDateTime)) {
-        updates.push({ field: "endDateTime", value: fromLocalInputValue(end) });
+        updates.push({
+          field: "tripWindow",
+          value: { startDateTime: isoStart, endDateTime: fromLocalInputValue(end) },
+        });
       }
       if (passengers !== trip.numberOfPassengers) {
         updates.push({ field: "numberOfPassengers", value: passengers });

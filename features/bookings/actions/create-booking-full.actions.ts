@@ -15,6 +15,24 @@ import { sendDraftBookingEmail } from "@/shared/lib/services/email.service";
 import { sendSms } from "@/shared/lib/services/twilio.service";
 import { getBaseUrl } from "@/shared/lib/utils/base-url";
 import type { ActionResponse } from "@/shared/lib/types/types";
+import { db } from "@/database/db";
+import { boats } from "@/database/schema";
+import { eq } from "drizzle-orm";
+
+/** Boat name for the proposal email's yacht card — best-effort, never blocks the send. */
+async function getBoatName(boatId: string | undefined | null): Promise<string | undefined> {
+  if (!boatId) return undefined;
+  try {
+    const [row] = await db
+      .select({ name: boats.name })
+      .from(boats)
+      .where(eq(boats.id, boatId))
+      .limit(1);
+    return row?.name ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 function formatZodError(error: ZodError): string {
   const first = error.errors[0];
@@ -141,10 +159,12 @@ export async function createBookingFull(
     if (draftLink && publishNow) {
       const b = input.booking;
       if (sendProposalEmail) {
+        const boatName = await getBoatName(input.booking.boatId);
         sendDraftBookingEmail({
           customerName: b.customerName,
           customerEmail: b.customerEmail,
           draftLink,
+          boatName,
           isGroup: false,
         }).catch((err) => console.error("Draft email failed:", err));
       }

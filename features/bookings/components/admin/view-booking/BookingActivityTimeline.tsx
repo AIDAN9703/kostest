@@ -96,6 +96,13 @@ const EVENT_STYLES: Record<string, EventStyle> = {
   [BOOKING_EVENT_TYPES.ASSIGNED_CAPTAIN_CHANGED]: { Icon: Anchor, bubble: PEOPLE },
   [BOOKING_EVENT_TYPES.CREW_MEMBER_ADDED]: { Icon: Users, bubble: PEOPLE },
   [BOOKING_EVENT_TYPES.CREW_MEMBER_REMOVED]: { Icon: Users, bubble: PEOPLE },
+  // Customer asked for changes from the proposal page — needs an admin's
+  // eyes, so it gets a loud amber major marker.
+  [BOOKING_EVENT_TYPES.CHANGE_REQUESTED]: {
+    Icon: FileText,
+    bubble: "border-amber-500/70 text-amber-400",
+    major: true,
+  },
   // Overlap hold — a paid booking that landed on a taken slot. Loudest
   // thing the timeline can show.
   "booking.overlap_hold": {

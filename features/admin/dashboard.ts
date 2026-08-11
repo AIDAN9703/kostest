@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/database/db";
-import { bookingEvents, bookingOps, bookingPricing, bookings } from "@/database/schema";
+import { bookingOps, bookingPricing, bookings } from "@/database/schema";
 import { and, desc, eq, gte, isNull, lte, notInArray, sql } from "drizzle-orm";
 import { cache } from "react";
 import {
@@ -13,10 +13,8 @@ import {
   format,
 } from "date-fns";
 import { bookingService } from "@/features/bookings/services/booking.service";
-import { BOOKING_EVENT_TYPES } from "@/features/bookings/booking-events.constants";
 import { getAdminSession } from "@/shared/lib/utils/auth-utils";
 import type { BookingListItem } from "@/features/bookings/booking.types";
-import { formatBookingActivityMessage } from "@/features/admin/dashboard/dashboard-utils";
 
 async function assertAdmin(): Promise<void> {
   const { error } = await getAdminSession();
@@ -50,16 +48,6 @@ export interface PipelineSnapshot {
   /** CONFIRMED trips still ahead. */
   bookedUpcoming: number;
   bookedUpcomingValueCents: number;
-}
-
-export interface DashboardActivityItem {
-  id: string;
-  kind: "booking" | "inquiry";
-  subjectId: string;
-  subjectLabel: string;
-  message: string;
-  createdAt: Date;
-  href: string;
 }
 
 /** Lean lead row for the dashboard queue — INQUIRY-status booking rows. */
@@ -231,44 +219,3 @@ export const getPipelineSnapshot = cache(async (): Promise<PipelineSnapshot> => 
   };
 });
 
-/** Recent activity from the one deal timeline (booking_event). */
-export const getRecentDashboardActivity = cache(
-  async (limit = 12): Promise<DashboardActivityItem[]> => {
-    await assertAdmin();
-
-    const rows = await db
-      .select({
-        id: bookingEvents.id,
-        bookingId: bookingEvents.bookingId,
-        customerName: bookings.customerName,
-        bookingStatus: bookings.bookingStatus,
-        eventType: bookingEvents.eventType,
-        displayMessage: bookingEvents.displayMessage,
-        content: bookingEvents.content,
-        createdAt: bookingEvents.createdAt,
-      })
-      .from(bookingEvents)
-      .innerJoin(bookings, eq(bookingEvents.bookingId, bookings.id))
-      // Basics only — internal notes and logged contact attempts stay off the board.
-      .where(
-        notInArray(bookingEvents.eventType, [
-          BOOKING_EVENT_TYPES.NOTE_ADDED,
-          BOOKING_EVENT_TYPES.CONTACT_LOGGED,
-          "lead.note",
-          "lead.contact_attempt",
-        ])
-      )
-      .orderBy(desc(bookingEvents.createdAt))
-      .limit(limit);
-
-    return rows.map((row) => ({
-      id: row.id,
-      kind: row.bookingStatus === "INQUIRY" ? ("inquiry" as const) : ("booking" as const),
-      subjectId: row.bookingId,
-      subjectLabel: row.customerName,
-      message: formatBookingActivityMessage(row),
-      createdAt: row.createdAt,
-      href: `/admin/bookings/${row.bookingId}`,
-    }));
-  }
-);

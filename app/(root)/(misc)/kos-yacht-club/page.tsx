@@ -29,7 +29,7 @@ export default function KOSYachtClubPage() {
         className="absolute inset-0 bg-linear-to-t from-dark-bg/90 via-dark-bg/30 to-dark-bg/40"
       />
 
-      <div className="relative mx-auto w-full max-w-[1400px] px-4 py-24 sm:px-8">
+      <div className="relative mx-auto w-full max-w-[1200px] px-4 py-24 sm:px-8">
         <div className="mx-auto max-w-2xl text-center">
           {/* The hero's signature eyebrow — hairline · caps · hairline */}
           <div className="flex items-center justify-center gap-3 sm:gap-4">

@@ -20,7 +20,7 @@ export default function MissionSection() {
         />
       </div>
 
-      <div className="relative mx-auto w-full max-w-[1400px] px-4 sm:px-8">
+      <div className="relative mx-auto w-full max-w-[1200px] px-4 sm:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-sm font-bold uppercase tracking-[0.22em] text-gold-glow">
             What drives us

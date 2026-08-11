@@ -14,13 +14,12 @@ import {
   isTomorrow,
   startOfDay,
 } from "date-fns";
-import { ChevronRight, Clock, DollarSign, History } from "lucide-react";
+import { ChevronRight, Clock, DollarSign } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { NewBookingModal } from "@/features/bookings/components/admin/new-booking-modal";
 import type { PricingTierOption } from "@/features/bookings/components/admin/booking-forms/types";
 import type {
-  DashboardActivityItem,
   DashboardHeadlineMetrics,
   DashboardLead,
   PipelineSnapshot,
@@ -43,7 +42,6 @@ interface AdminDashboardViewProps {
   upcomingTrips: BookingListItem[];
   myDeals: BookingListItem[];
   pipeline: PipelineSnapshot;
-  recentActivity: DashboardActivityItem[];
   metrics: DashboardHeadlineMetrics;
   admins: AdminOption[];
 }
@@ -119,7 +117,6 @@ export function AdminDashboardView({
   upcomingTrips,
   myDeals,
   pipeline,
-  recentActivity,
   metrics,
   admins,
 }: AdminDashboardViewProps) {
@@ -252,7 +249,7 @@ export function AdminDashboardView({
                 key={day.toISOString()}
                 className={cn(
                   "min-h-[6.5rem] rounded-xl p-2",
-                  today ? "bg-primary-soft/40 ring-1 ring-primary/30" : "bg-muted/30"
+                  today ? "bg-primary-soft" : "bg-muted/30"
                 )}
               >
                 <p
@@ -310,7 +307,7 @@ export function AdminDashboardView({
         </div>
       </section>
 
-      {/* ── Your move · Recent activity ── */}
+      {/* ── Your move ── */}
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
         <Card className="rounded-2xl border-border/60">
           <CardHeader className="pb-3">
@@ -342,37 +339,6 @@ export function AdminDashboardView({
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border-border/60">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <History className="h-4 w-4 text-muted-foreground" />
-              Recent activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {recentActivity.length === 0 ? (
-              <p className="py-4 text-sm text-muted-foreground">All quiet.</p>
-            ) : (
-              <ul className="flex flex-col gap-2.5">
-                {recentActivity.slice(0, 6).map((item) => (
-                  <li key={item.id}>
-                    <Link
-                      href={item.href}
-                      className="block rounded-xl border border-border/50 bg-secondary/60 px-4 py-3 transition-colors hover:border-border hover:bg-secondary"
-                    >
-                      <p className="line-clamp-2 text-sm leading-snug text-foreground/90">
-                        {item.message}
-                      </p>
-                      <p className="mt-1 text-xs tabular-nums text-muted-foreground/70">
-                        {formatDistanceToNowStrict(new Date(item.createdAt))} ago
-                      </p>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

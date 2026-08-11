@@ -124,16 +124,16 @@ export default function RequestToBook({ source = "HOME_PAGE" }: RequestToBookPro
 
   return (
     /* py-16 matches the other navy band (Testimonials); the inner container
-       mirrors the page shell (max-w-[1400px] px-4 sm:px-8) so content edges
+       mirrors the page shell (max-w-[1200px] px-4 sm:px-8) so content edges
        line up section to section. [color-scheme:dark] keeps native widgets
        (date picker glyph) legible on navy. */
     <section className="w-full bg-primary py-16 [color-scheme:dark]">
-      <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-8">
+      <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-8">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:items-center lg:gap-0">
           {/* ── The pitch ── */}
           <div className="lg:col-span-5 lg:pr-16">
             {/* Same scale as every other landing-section heading. */}
-            <h2 className="text-3xl font-bold leading-tight text-white sm:text-4xl md:text-5xl">
+            <h2 className="text-3xl font-bold leading-tight text-white sm:text-4xl">
               Ready for your next adventure?
             </h2>
             <p className="mt-5 max-w-md text-sm font-light leading-relaxed text-white/70 sm:text-base">

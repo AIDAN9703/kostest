@@ -17,6 +17,10 @@ import { CustomerFields } from "@/features/bookings/components/admin/booking-for
 import { AddOnsFields } from "@/features/bookings/components/admin/booking-forms/shared/AddOnsFields";
 import { BookingSectionFields } from "@/features/bookings/components/admin/booking-forms/shared/BookingSectionFields";
 import { DraftOptionsSidebar } from "@/features/bookings/components/admin/booking-forms/shared/DraftOptionsSidebar";
+import {
+  buildSectionPreview,
+  groupTiersByBoat,
+} from "@/features/bookings/components/admin/booking-forms/shared/pricing";
 import { useUser } from "@/features/users/hooks/useUsers";
 
 import {
@@ -25,13 +29,10 @@ import {
   type PricingTierOption,
 } from "./types";
 import type { BookingAddOnInput } from "@/features/bookings/booking.types";
-import type { DealPrefill } from "@/features/bookings/lib/deal-prefill";
 import type { BookingDatePrefill } from "@/features/bookings/lib/booking-create-date-prefill";
 
 interface SingleBookingFormProps {
   pricingTiers: PricingTierOption[];
-  /** When pricing an INQUIRY deal into a proposal (`?dealId=`) — upgrades that row. */
-  dealPrefill?: DealPrefill | null;
   /** When opening from admin calendar (`?date=YYYY-MM-DD`) */
   datePrefill?: BookingDatePrefill | null;
 }
@@ -43,11 +44,7 @@ const INITIAL_STATE: ActionResponse<{
   proposalSent?: boolean;
 }> = { success: false };
 
-export function SingleBookingForm({
-  pricingTiers,
-  dealPrefill = null,
-  datePrefill = null,
-}: SingleBookingFormProps) {
+export function SingleBookingForm({ pricingTiers, datePrefill = null }: SingleBookingFormProps) {
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [actionState, setActionState] = useState<
@@ -79,41 +76,17 @@ export function SingleBookingForm({
 
   const { data: selectedUser } = useUser(selectedUserId || "");
 
-  const dealPrefillApplied = useRef(false);
   const datePrefillApplied = useRef(false);
 
   useEffect(() => {
-    if (!datePrefill || datePrefillApplied.current || dealPrefill) return;
+    if (!datePrefill || datePrefillApplied.current) return;
     datePrefillApplied.current = true;
     setSection((s) => ({
       ...s,
       startDateTime: datePrefill.startDateTime,
       endDateTime: datePrefill.endDateTime,
     }));
-  }, [datePrefill, dealPrefill]);
-
-  useEffect(() => {
-    if (!dealPrefill || dealPrefillApplied.current) return;
-    dealPrefillApplied.current = true;
-    setCustomerType(dealPrefill.customerType);
-    setSelectedUserId("");
-    setCustomerName(dealPrefill.customerName);
-    setCustomerEmail(dealPrefill.customerEmail);
-    setCustomerPhone(dealPrefill.customerPhone);
-    setNumberOfPassengers(dealPrefill.numberOfPassengers);
-    if (dealPrefill.adminNotes.trim()) {
-      setAdminNotes(dealPrefill.adminNotes);
-    }
-    setSection((s) => ({
-      ...s,
-      startDateTime: dealPrefill.startDateTime || s.startDateTime,
-      endDateTime: dealPrefill.endDateTime || s.endDateTime,
-    }));
-    // Coming from a lead, the point is to SEND the proposal — default the
-    // channels on (SMS only with consent) instead of silently saving a draft.
-    setSendProposalEmail(Boolean(dealPrefill.customerEmail));
-    setSendProposalSms(dealPrefill.smsConsent && Boolean(dealPrefill.customerPhone));
-  }, [dealPrefill]);
+  }, [datePrefill]);
 
   useEffect(() => {
     if (customerType === "existing_user" && selectedUser && selectedUserId) {
@@ -128,39 +101,12 @@ export function SingleBookingForm({
     }
   }, [customerType, selectedUser, selectedUserId]);
 
-  const tiersByBoat = useMemo(
-    () =>
-      pricingTiers.reduce<Record<string, PricingTierOption[]>>((acc, tier) => {
-        if (!acc[tier.boatId]) acc[tier.boatId] = [];
-        acc[tier.boatId].push(tier);
-        return acc;
-      }, {}),
-    [pricingTiers]
-  );
+  const tiersByBoat = useMemo(() => groupTiersByBoat(pricingTiers), [pricingTiers]);
 
-  const preview = useMemo(() => {
-    const boat = section.boat;
-    const tier = section.pricingTierId
-      ? pricingTiers.find((t) => t.id === section.pricingTierId)
-      : null;
-    const basePrice = section.basePrice > 0 ? section.basePrice : (tier?.price ?? 0);
-    const cleaningFee = boat?.cleaningFee ?? 0;
-    const addOnsTotal = lineItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-    const depositAmount =
-      section.depositAmount != null && section.depositAmount >= 0
-        ? section.depositAmount
-        : (boat?.depositAmount ?? null);
-    return [
-      {
-        name: boat?.name ?? "Boat",
-        basePrice,
-        cleaningFee,
-        addOnsTotal,
-        total: basePrice + cleaningFee + addOnsTotal,
-        depositAmount,
-      },
-    ];
-  }, [section, lineItems, pricingTiers]);
+  const preview = useMemo(
+    () => [buildSectionPreview(section, lineItems, pricingTiers)],
+    [section, lineItems, pricingTiers]
+  );
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -183,7 +129,6 @@ export function SingleBookingForm({
       ];
 
       const formData = new FormData();
-      formData.set("dealId", dealPrefill?.dealId ?? "");
       formData.set("bookings", JSON.stringify(payload));
       formData.set("lineItems", JSON.stringify(lineItems));
       formData.set("numberOfPassengers", String(numberOfPassengers));
@@ -244,21 +189,11 @@ export function SingleBookingForm({
       paymentType,
       sendProposalEmail,
       sendProposalSms,
-      dealPrefill,
     ]
   );
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {dealPrefill ? (
-        <div className="rounded-xl border border-success/30 bg-success-soft px-4 py-3 text-sm text-success">
-          <span className="font-medium">
-            Preparing a proposal for {dealPrefill.customerName || "this lead"}.
-          </span>{" "}
-          Customer and trip details are filled from the deal — choose a boat and pricing,
-          then send. The lead moves to Offer sent when the proposal goes out.
-        </div>
-      ) : null}
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-6">
           <Card>
@@ -344,13 +279,7 @@ export function SingleBookingForm({
           onSendProposalEmailChange={setSendProposalEmail}
           sendProposalSms={sendProposalSms}
           onSendProposalSmsChange={setSendProposalSms}
-          submitLabel={
-            dealPrefill
-              ? sendProposalEmail || sendProposalSms
-                ? "Create & send proposal"
-                : "Save draft proposal"
-              : "Create Booking"
-          }
+          submitLabel="Create Booking"
           isPending={pending}
           error={actionState.error}
         />

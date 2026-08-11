@@ -3,7 +3,9 @@ import { db } from "@/database/db";
 import { bookings, bookingStatusHistory, bookingPricing, payments, boats } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
 import { paymentService } from "@/features/payments/payment.service";
+import { bookingService } from "@/features/bookings/services/booking.service";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
+import { sendBookingConfirmationEmail } from "@/shared/lib/services/email.service";
 import type { BookingStatus } from "@/database/types";
 import { getStripe } from "@/shared/lib/services/stripe.service";
 import { fulfillInstantCheckoutSession } from "@/features/bookings/services/instant-checkout-fulfillment.service";
@@ -88,6 +90,17 @@ export async function GET(request: NextRequest) {
         if (fulfillment.status === "created" || fulfillment.status === "already_processed") {
           bookingId = fulfillment.bookingId;
         }
+
+        // "created" means WE did the fulfillment — the webhook will see the
+        // settled payment and skip, so the confirmation email is ours to send.
+        if (fulfillment.status === "created") {
+          const fullBooking = await bookingService.getBookingById(fulfillment.bookingId);
+          if (fullBooking) {
+            await sendBookingConfirmationEmail(fullBooking).catch((e) =>
+              console.warn("[Verify] Instant-book confirmation email failed:", e)
+            );
+          }
+        }
       }
 
       if (!bookingId) {
@@ -101,7 +114,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return buildVerifyResponse(bookingId, paymentIntentId);
+    return buildVerifyResponse(bookingId, paymentIntentId, sessionId);
   } catch (error) {
     console.error("Error verifying Stripe payment:", error);
     return NextResponse.json(
@@ -111,7 +124,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-async function buildVerifyResponse(bookingId: string, paymentIntentId?: string | null) {
+async function buildVerifyResponse(
+  bookingId: string,
+  paymentIntentId?: string | null,
+  sessionId?: string | null
+) {
   const [booking] = await db
     .select({
       id: bookings.id,
@@ -150,10 +167,36 @@ async function buildVerifyResponse(bookingId: string, paymentIntentId?: string |
     });
   }
 
-  if (paymentIntentId) {
+  // Settle the payment row. The webhook is the primary settler, but when it
+  // can't reach us (localhost, misconfigured endpoint) this is the only shot.
+  // The PENDING row is created at checkout time with only the checkout-session
+  // id — the payment intent doesn't exist until the customer pays — so the
+  // session lookup must come first; the intent lookup covers legacy link flows.
+  let settledPaymentId: string | null = null;
+  const sessionPayment = sessionId
+    ? await paymentService.getPaymentByStripeCheckoutSessionId(sessionId)
+    : null;
+  if (sessionPayment) {
+    if (sessionPayment.status !== "SUCCEEDED") {
+      await paymentService.markPaymentSucceeded(sessionPayment.id, paymentIntentId ?? undefined);
+      settledPaymentId = sessionPayment.id;
+    }
+  } else if (paymentIntentId) {
     const payment = await paymentService.getPaymentByStripeIntentId(paymentIntentId);
     if (payment && payment.status !== "SUCCEEDED") {
       await paymentService.markPaymentSucceeded(payment.id);
+      settledPaymentId = payment.id;
+    }
+  }
+
+  // If we did the settling, the webhook never ran — send the confirmation
+  // email here. When the webhook already settled, it also already sent it.
+  if (settledPaymentId) {
+    const fullBooking = await bookingService.getBookingById(bookingId);
+    if (fullBooking) {
+      await sendBookingConfirmationEmail(fullBooking).catch((e) =>
+        console.warn("[Verify] Confirmation email failed:", e)
+      );
     }
   }
 
