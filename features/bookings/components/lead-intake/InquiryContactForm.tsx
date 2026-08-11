@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -16,46 +16,56 @@ import {
 } from "@/shared/components/ui/form";
 import { Input } from "@/shared/components/ui/input";
 import { Textarea } from "@/shared/components/ui/textarea";
+import { phoneRequiredSchema } from "@/shared/lib/validation/common";
 import {
-  boatInquiryContactSchema,
-  type BoatInquiryContactFormData,
+  boatMemberInquiryContactSchema,
+  type BoatMemberInquiryContactFormData,
 } from "@/shared/lib/validation/inquiry";
 
 const inputClass =
   "h-11 rounded-xl border-border bg-muted/10 focus-visible:ring-2 focus-visible:ring-ring";
 
+export interface InquirySignedInUser {
+  firstName: string;
+  name: string;
+  email: string;
+  phone: string;
+}
+
 interface InquiryContactFormProps {
-  onSubmit: (values: BoatInquiryContactFormData) => void | Promise<void>;
+  currentUser: InquirySignedInUser;
+  onSubmit: (values: BoatMemberInquiryContactFormData) => void | Promise<void>;
   isSubmitting?: boolean;
   id?: string;
-  /** Signed-in visitor's account details — prefills the form when present. */
-  currentUser?: { name: string; email: string; phone: string } | null;
 }
 
 /**
- * Step 2 contact capture for boat inquiries. Signed-in users get their
- * account details prefilled (still editable — booking for someone else, or a
- * missing phone, are both real cases); guests get a sign-in shortcut that
- * returns here with the trip selection intact.
+ * Step 2 for SIGNED-IN users: identity comes from the account, so this only
+ * asks for what the account can't answer — a phone number when it's missing,
+ * optional trip notes, and terms. Guests never reach this form; they sign in
+ * or create an account via the auth modal first.
  */
 export default function InquiryContactForm({
+  currentUser,
   onSubmit,
   isSubmitting = false,
   id = "inquiry-contact-form",
-  currentUser = null,
 }: InquiryContactFormProps) {
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const signInHref = `/sign-in?callbackUrl=${encodeURIComponent(
-    `${pathname}${searchParams.size ? `?${searchParams.toString()}` : ""}`
-  )}`;
+  const needsPhone = !currentUser.phone.trim();
 
-  const form = useForm<BoatInquiryContactFormData>({
-    resolver: zodResolver(boatInquiryContactSchema),
+  // Phone is only enforced when the account doesn't already have one.
+  const formSchema = useMemo(
+    () =>
+      needsPhone
+        ? boatMemberInquiryContactSchema.extend({ phone: phoneRequiredSchema })
+        : boatMemberInquiryContactSchema,
+    [needsPhone]
+  );
+
+  const form = useForm<BoatMemberInquiryContactFormData>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      name: currentUser?.name ?? "",
-      email: currentUser?.email ?? "",
-      phone: currentUser?.phone ?? "",
+      phone: "",
       message: "",
       termsAgreed: false,
     },
@@ -65,32 +75,29 @@ export default function InquiryContactForm({
   return (
     <section className="space-y-4">
       <div>
-        <h3 className="text-sm font-medium text-foreground">Your details</h3>
+        <h3 className="text-sm font-medium text-foreground">
+          Welcome back{currentUser.firstName ? `, ${currentUser.firstName}` : ""}.
+        </h3>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          {currentUser ? (
-            <>Filled in from your account — edit anything that needs updating.</>
-          ) : (
+          This request will be linked to your account
+          {currentUser.email ? (
             <>
-              We&apos;ll use this to confirm availability and follow up about your charter.{" "}
-              <Link
-                href={signInHref}
-                className="font-medium text-primary-strong underline-offset-4 hover:underline"
-              >
-                Have an account? Sign in to autofill.
-              </Link>
+              {" "}
+              (<span className="text-foreground">{currentUser.email}</span>)
             </>
-          )}
+          ) : null}
+          .
         </p>
       </div>
 
       <Form {...form}>
         <form id={id} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="divide-y divide-border overflow-hidden rounded-xl border border-border">
+          {needsPhone && (
             <FormField
               control={form.control}
               name="phone"
               render={({ field }) => (
-                <FormItem className="px-4 py-3">
+                <FormItem className="overflow-hidden rounded-xl border border-border px-4 py-3">
                   <FormLabel className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Phone
                   </FormLabel>
@@ -103,52 +110,15 @@ export default function InquiryContactForm({
                       {...field}
                     />
                   </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Your account doesn&apos;t have a phone number yet — add one so our team can
+                    reach you.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem className="px-4 py-3">
-                  <FormLabel className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Name
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      className={inputClass}
-                      autoComplete="name"
-                      placeholder="Your name"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem className="px-4 py-3">
-                  <FormLabel className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Email
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      className={inputClass}
-                      type="email"
-                      autoComplete="email"
-                      placeholder="you@example.com"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          )}
 
           <FormField
             control={form.control}

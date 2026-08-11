@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryStates, parseAsString, parseAsInteger, parseAsBoolean } from "nuqs";
@@ -15,11 +16,18 @@ import { formatCurrency } from "@/shared/lib/utils/general-utils";
 import { calculateBookingPrice } from "@/shared/lib/utils/pricing-utils";
 import { toast } from "@/shared/lib/hooks/use-toast";
 import { createBoatLead } from "@/features/bookings/actions/lead-intake.actions";
-import type { BoatInquiryContactFormData } from "@/shared/lib/validation/inquiry";
+import type { BoatMemberInquiryContactFormData } from "@/shared/lib/validation/inquiry";
 import InquiryContactForm from "@/features/bookings/components/lead-intake/InquiryContactForm";
+import type { BookingAuthModalView } from "@/features/bookings/components/BookingAuthSection";
 
-/** Signed-in visitor's account details, prefilled into the contact step. */
+const BookingAuthSection = dynamic(
+  () => import("@/features/bookings/components/BookingAuthSection"),
+  { ssr: false }
+);
+
+/** Signed-in visitor's account details, resolved by the server page. */
 export interface InquiryCurrentUser {
+  firstName: string;
   name: string;
   email: string;
   phone: string;
@@ -37,6 +45,7 @@ export default function BoatInquiryDetailsClient({
   const boat = useBoat();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [authModal, setAuthModal] = useState<BookingAuthModalView>(null);
 
   const [inquiryState] = useQueryStates({
     startDateTime: parseAsString,
@@ -84,7 +93,7 @@ export default function BoatInquiryDetailsClient({
   }, [priceBreakdown, safeBoat.currency]);
 
   const handleContactSubmit = useCallback(
-    async (contact: BoatInquiryContactFormData) => {
+    async (contact: BoatMemberInquiryContactFormData) => {
       if (!isTripComplete || !selectedTier || !startDateTime) return;
 
       setIsSubmitting(true);
@@ -164,6 +173,25 @@ export default function BoatInquiryDetailsClient({
     );
   }
 
+  const requestButton = currentUser ? (
+    <Button
+      type="submit"
+      form="inquiry-contact-form"
+      disabled={isSubmitting}
+      className="h-12 w-full rounded-full bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90"
+    >
+      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Request availability"}
+    </Button>
+  ) : (
+    <Button
+      type="button"
+      onClick={() => setAuthModal("menu")}
+      className="h-12 w-full rounded-full bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90"
+    >
+      Sign in to request
+    </Button>
+  );
+
   return (
     <div className="min-h-screen bg-white pb-28 lg:pb-16">
       <div className="mx-auto max-w-5xl px-4 pt-10 pb-8 sm:px-6 sm:pt-12 sm:pb-10 lg:px-8 lg:pt-14 lg:pb-12">
@@ -188,11 +216,32 @@ export default function BoatInquiryDetailsClient({
             />
 
             <div className="mt-5 border-t border-gray-100 pt-5 sm:mt-6 sm:pt-6">
-              <InquiryContactForm
-                onSubmit={handleContactSubmit}
-                isSubmitting={isSubmitting}
-                currentUser={currentUser}
-              />
+              {currentUser ? (
+                <InquiryContactForm
+                  currentUser={currentUser}
+                  onSubmit={handleContactSubmit}
+                  isSubmitting={isSubmitting}
+                />
+              ) : (
+                <section className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-foreground">
+                      Sign in to send your request
+                    </h3>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      Continue with Google, email, or your phone — or create an account in
+                      seconds. Your trip details stay on this page.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={() => setAuthModal("menu")}
+                    className="h-12 w-full rounded-full bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90 sm:w-auto sm:px-8"
+                  >
+                    Sign in or create account
+                  </Button>
+                </section>
+              )}
             </div>
 
             <div className="mt-8 space-y-6 border-t border-gray-100 pt-5 sm:mt-9 sm:pt-6 lg:hidden">
@@ -213,24 +262,15 @@ export default function BoatInquiryDetailsClient({
                 selectedTier={selectedTier}
                 serviceFeeRate={serviceFeeRate}
               />
-              <Button
-                type="submit"
-                form="inquiry-contact-form"
-                disabled={isSubmitting}
-                className="h-12 w-full rounded-full bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Request availability"
-                )}
-              </Button>
+              {requestButton}
               <p className="px-1 text-center text-[11px] leading-relaxed text-muted-foreground">
                 No payment required. Our team will confirm availability and follow up.
               </p>
             </div>
           </aside>
         </div>
+
+        <BookingAuthSection authModal={authModal} onAuthModalChange={setAuthModal} />
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur-sm supports-[backdrop-filter]:bg-white/90 lg:hidden safe-area-pb">
@@ -241,14 +281,26 @@ export default function BoatInquiryDetailsClient({
             </p>
             <p className="text-sm text-muted-foreground">Estimated total</p>
           </div>
-          <Button
-            type="submit"
-            form="inquiry-contact-form"
-            disabled={isSubmitting}
-            className="h-11 shrink-0 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
-          >
-            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Request"}
-          </Button>
+          <div className="shrink-0">
+            {currentUser ? (
+              <Button
+                type="submit"
+                form="inquiry-contact-form"
+                disabled={isSubmitting}
+                className="h-11 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Request"}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={() => setAuthModal("menu")}
+                className="h-11 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                Sign in
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

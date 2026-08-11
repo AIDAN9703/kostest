@@ -13,10 +13,11 @@ import { and, eq } from "drizzle-orm";
 
 import { auth } from "@/auth";
 import { db } from "@/database/db";
-import { bookings, boats, boatPricingTiers } from "@/database/schema";
+import { bookings, boats, boatPricingTiers, users } from "@/database/schema";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
 import {
   boatInquirySchema,
+  boatMemberInquirySchema,
   requestToBookSchema,
   termCharterInquirySchema,
 } from "@/shared/lib/validation/inquiry";
@@ -282,7 +283,10 @@ export async function createTermCharterLead(data: TermCharterLeadInput) {
 // Boat inquiry (public boat page, non-instant boats)
 // ============================================================================
 
-export type BoatLeadInput = z.input<typeof boatInquirySchema> & { boatId: string };
+export type BoatLeadInput = (
+  | z.input<typeof boatInquirySchema>
+  | z.input<typeof boatMemberInquirySchema>
+) & { boatId: string };
 
 /**
  * Boat-specific lead: the customer already chose a boat, tier, and exact
@@ -292,7 +296,48 @@ export type BoatLeadInput = z.input<typeof boatInquirySchema> & { boatId: string
  */
 export async function createBoatLead(data: BoatLeadInput) {
   try {
-    const validated = boatInquirySchema.parse(data);
+    // Trip fields validate identically either way; the contact snapshot's
+    // source depends on who's asking. Signed-in users are the account — their
+    // name/email come from it (never the payload) and the lead links to them.
+    // Guests supply the full contact block.
+    const session = await auth();
+
+    let validated: z.infer<typeof boatMemberInquirySchema>;
+    let contact: { name: string; email: string; phone: string };
+    let userId: string | null = null;
+
+    if (session?.user?.id) {
+      const parsed = boatMemberInquirySchema.parse(data);
+      const [account] = await db
+        .select({
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email,
+          phoneNumber: users.phoneNumber,
+        })
+        .from(users)
+        .where(eq(users.id, session.user.id))
+        .limit(1);
+      if (!account) {
+        return { success: false, error: "We couldn't load your account. Please sign in again." };
+      }
+      const phone = account.phoneNumber?.trim() || parsed.phone?.trim() || "";
+      if (!phone) {
+        return { success: false, error: "Add a phone number so our team can reach you." };
+      }
+      validated = parsed;
+      contact = {
+        name: [account.firstName, account.lastName].filter(Boolean).join(" ") || account.email,
+        email: account.email,
+        phone,
+      };
+      userId = session.user.id;
+    } else {
+      const parsed = boatInquirySchema.parse(data);
+      validated = parsed;
+      contact = { name: parsed.name, email: parsed.email, phone: parsed.phone };
+    }
+
     const { boatId } = data;
 
     const [boat] = await db
@@ -332,22 +377,18 @@ export async function createBoatLead(data: BoatLeadInput) {
       serviceFeeRate
     );
 
-    // Contact details stay a snapshot either way, but a signed-in user's
-    // inquiry is linked to their account so it shows up in their profile.
-    const session = await auth();
-
     const [deal] = await db
       .insert(bookings)
       .values({
         bookingType: "BOAT_REQUEST",
         bookingStatus: "INQUIRY",
         source: "BOAT_PAGE",
-        userId: session?.user?.id ?? null,
+        userId,
         boatId,
         pricingTierId: validated.pricingTierId,
-        customerName: validated.name,
-        customerEmail: validated.email,
-        customerPhone: validated.phone,
+        customerName: contact.name,
+        customerEmail: contact.email,
+        customerPhone: contact.phone,
         customerMessage: validated.message || null,
         numberOfPassengers: validated.numberOfPassengers,
         startDateTime,
@@ -362,9 +403,9 @@ export async function createBoatLead(data: BoatLeadInput) {
     if (deal) {
       await logLeadCreated(deal.id, null);
       void ghlWebhookService.sendInquiry({
-        name: validated.name,
-        email: validated.email,
-        phone: validated.phone,
+        name: contact.name,
+        email: contact.email,
+        phone: contact.phone,
         date: validated.startDateTime,
         guests: String(validated.numberOfPassengers),
         message: validated.message || "",

@@ -63,7 +63,26 @@ export const boatInquiryContactSchema = baseContactSchema.extend({
 /** Boat page inquiry — trip picker fields + contact (server action). */
 export const boatInquirySchema = bookingRequestSchema.merge(boatInquiryContactSchema);
 
+/**
+ * Contact step for SIGNED-IN users: identity comes from the account, so the
+ * form only carries notes + terms — and a phone number when the account
+ * doesn't have one (e.g. Google sign-ups).
+ */
+export const boatMemberInquiryContactSchema = z.object({
+  phone: z.union([phoneRequiredSchema, z.literal("")]).optional(),
+  message: z.string().max(2000).optional(),
+  termsAgreed: z.boolean().refine((val) => val === true, {
+    message: "You must agree to the terms and conditions",
+  }),
+});
+
+/** Signed-in boat inquiry — trip fields + the slim member contact step. */
+export const boatMemberInquirySchema = bookingRequestSchema.merge(
+  boatMemberInquiryContactSchema
+);
+
 export type RequestToBookFormData = z.infer<typeof requestToBookSchema>;
 export type TermCharterFormData = z.infer<typeof termCharterInquirySchema>;
 export type BoatInquiryContactFormData = z.infer<typeof boatInquiryContactSchema>;
 export type BoatInquiryFormData = z.infer<typeof boatInquirySchema>;
+export type BoatMemberInquiryContactFormData = z.infer<typeof boatMemberInquiryContactSchema>;
