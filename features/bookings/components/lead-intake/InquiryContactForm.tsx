@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -27,23 +28,34 @@ interface InquiryContactFormProps {
   onSubmit: (values: BoatInquiryContactFormData) => void | Promise<void>;
   isSubmitting?: boolean;
   id?: string;
+  /** Signed-in visitor's account details — prefills the form when present. */
+  currentUser?: { name: string; email: string; phone: string } | null;
 }
 
 /**
- * Step 2 contact capture for boat inquiries.
- * Phone-first soft onboarding will replace/extend this flow later.
+ * Step 2 contact capture for boat inquiries. Signed-in users get their
+ * account details prefilled (still editable — booking for someone else, or a
+ * missing phone, are both real cases); guests get a sign-in shortcut that
+ * returns here with the trip selection intact.
  */
 export default function InquiryContactForm({
   onSubmit,
   isSubmitting = false,
   id = "inquiry-contact-form",
+  currentUser = null,
 }: InquiryContactFormProps) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const signInHref = `/sign-in?callbackUrl=${encodeURIComponent(
+    `${pathname}${searchParams.size ? `?${searchParams.toString()}` : ""}`
+  )}`;
+
   const form = useForm<BoatInquiryContactFormData>({
     resolver: zodResolver(boatInquiryContactSchema),
     defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
+      name: currentUser?.name ?? "",
+      email: currentUser?.email ?? "",
+      phone: currentUser?.phone ?? "",
       message: "",
       termsAgreed: false,
     },
@@ -55,7 +67,19 @@ export default function InquiryContactForm({
       <div>
         <h3 className="text-sm font-medium text-foreground">Your details</h3>
         <p className="mt-0.5 text-sm text-muted-foreground">
-          We&apos;ll use this to confirm availability and follow up about your charter.
+          {currentUser ? (
+            <>Filled in from your account — edit anything that needs updating.</>
+          ) : (
+            <>
+              We&apos;ll use this to confirm availability and follow up about your charter.{" "}
+              <Link
+                href={signInHref}
+                className="font-medium text-primary-strong underline-offset-4 hover:underline"
+              >
+                Have an account? Sign in to autofill.
+              </Link>
+            </>
+          )}
         </p>
       </div>
 

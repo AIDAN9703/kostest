@@ -18,11 +18,20 @@ import { createBoatLead } from "@/features/bookings/actions/lead-intake.actions"
 import type { BoatInquiryContactFormData } from "@/shared/lib/validation/inquiry";
 import InquiryContactForm from "@/features/bookings/components/lead-intake/InquiryContactForm";
 
+/** Signed-in visitor's account details, prefilled into the contact step. */
+export interface InquiryCurrentUser {
+  name: string;
+  email: string;
+  phone: string;
+}
+
 export default function BoatInquiryDetailsClient({
   serviceFeeRate,
+  currentUser,
 }: {
   /** Decimal service fee rate (e.g. 0.035) from app settings. */
   serviceFeeRate: number;
+  currentUser: InquiryCurrentUser | null;
 }) {
   const router = useRouter();
   const boat = useBoat();
@@ -182,6 +191,7 @@ export default function BoatInquiryDetailsClient({
               <InquiryContactForm
                 onSubmit={handleContactSubmit}
                 isSubmitting={isSubmitting}
+                currentUser={currentUser}
               />
             </div>
 

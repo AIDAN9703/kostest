@@ -11,6 +11,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 
+import { auth } from "@/auth";
 import { db } from "@/database/db";
 import { bookings, boats, boatPricingTiers } from "@/database/schema";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
@@ -331,12 +332,17 @@ export async function createBoatLead(data: BoatLeadInput) {
       serviceFeeRate
     );
 
+    // Contact details stay a snapshot either way, but a signed-in user's
+    // inquiry is linked to their account so it shows up in their profile.
+    const session = await auth();
+
     const [deal] = await db
       .insert(bookings)
       .values({
         bookingType: "BOAT_REQUEST",
         bookingStatus: "INQUIRY",
         source: "BOAT_PAGE",
+        userId: session?.user?.id ?? null,
         boatId,
         pricingTierId: validated.pricingTierId,
         customerName: validated.name,
