@@ -51,7 +51,6 @@ export function CustomPlacesAutocomplete({
 
   // Check if Google Maps API is loaded
   useEffect(() => {
-    let intervalId: ReturnType<typeof setInterval>;
     let attempts = 0;
     const maxAttempts = 50;
 
@@ -79,7 +78,7 @@ export function CustomPlacesAutocomplete({
       }
     };
 
-    intervalId = setInterval(() => {
+    const intervalId = setInterval(() => {
       if (attempts > maxAttempts) {
         clearInterval(intervalId);
         if (onError)
@@ -329,7 +328,7 @@ export function CustomPlacesAutocomplete({
             {predictions.map((prediction) => (
               <li
                 key={prediction.place_id}
-                className="px-4 py-2 text-left cursor-pointer hover:bg-gray-100 text-sm text-gray-900"
+                className="px-4 py-2 text-left cursor-pointer hover:bg-light-main text-sm text-gray-900"
                 onMouseDown={() => handlePredictionSelect(prediction)}
               >
                 {prediction.description}

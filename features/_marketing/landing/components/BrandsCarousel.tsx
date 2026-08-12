@@ -31,7 +31,7 @@ export default function BrandsCarousel() {
   return (
     /* Extra bottom padding so the marquee doesn't butt straight into the
        navy inquiry band that follows. */
-    <section className="pt-8 pb-16 sm:pt-16 sm:pb-24">
+    <section className="pt-6 pb-10 sm:pt-16 sm:pb-24">
       <div className="w-full">
         {/* Header — right-aligned to alternate with Explore Destinations */}
         <motion.div
@@ -41,7 +41,7 @@ export default function BrandsCarousel() {
           transition={{ duration: 0.5 }}
           className="mb-8 text-right"
         >
-          <h2 className="text-3xl sm:text-4xl font-bold text-primary leading-tight">
+          <h2 className="text-2xl sm:text-4xl font-bold text-primary leading-tight">
             Brands Who Trust Us
           </h2>
           <p className="ml-auto max-w-md text-foreground text-sm sm:text-base font-light">

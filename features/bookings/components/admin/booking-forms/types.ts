@@ -29,12 +29,6 @@ export interface BookingSectionData {
   endDateTime: string;
 }
 
-/** Group form: section 0 uses main customer; section i>0 can use same customer/dates */
-export interface GroupSectionData extends BookingSectionData {
-  sameUserAsAbove: boolean;
-  sameAsFirstBooking: boolean;
-}
-
 export const createEmptyBookingSection = (): BookingSectionData => ({
   boatId: "",
   usePricingTier: true,
@@ -50,10 +44,3 @@ export const createEmptyBookingSection = (): BookingSectionData => ({
   endDateTime: "",
 });
 
-export function createEmptyGroupSection(): GroupSectionData {
-  return {
-    ...createEmptyBookingSection(),
-    sameUserAsAbove: false,
-    sameAsFirstBooking: false,
-  };
-}

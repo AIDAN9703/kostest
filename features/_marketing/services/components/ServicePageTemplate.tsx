@@ -233,7 +233,7 @@ const ServicePageTemplate: React.FC<ServicePageProps> = ({
               The KOS Advantage
             </h2>
             <p className="text-gray-600 max-w-3xl mx-auto text-lg font-light">
-              When you choose our {title} services, you're choosing excellence
+              When you choose our {title} services, you&apos;re choosing excellence
               at every step.
             </p>
           </div>

@@ -133,7 +133,7 @@ export default function RequestToBook({ source = "HOME_PAGE" }: RequestToBookPro
           {/* ── The pitch ── */}
           <div className="lg:col-span-5 lg:pr-16">
             {/* Same scale as every other landing-section heading. */}
-            <h2 className="text-3xl font-bold leading-tight text-white sm:text-4xl">
+            <h2 className="text-2xl font-bold leading-tight text-white sm:text-4xl">
               Ready for your next adventure?
             </h2>
             <p className="mt-5 max-w-md text-sm font-light leading-relaxed text-white/70 sm:text-base">

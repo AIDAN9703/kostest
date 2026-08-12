@@ -9,6 +9,7 @@ import {
   TestimonialsSection,
   RequestToBook,
 } from "@/features/_marketing/landing/components";
+import HeroSearchDock from "@/features/_marketing/landing/components/HeroSearchDock";
 import { getFeaturedBoats, getTestimonials } from "@/features/_marketing/landing/actions";
 
 async function HomeContent() {
@@ -39,8 +40,10 @@ async function HomeContent() {
   return (
     <>
       <HeroSection />
+      <HeroSearchDock />
 
-      <div className="w-full max-w-[1200px] mx-auto px-4 sm:px-8">
+      {/* pt separates the first section from the hero's chip row. */}
+      <div className="w-full max-w-[1200px] mx-auto px-4 pt-10 sm:px-8">
         {boatsResponse.success && boatsResponse.data && boatsResponse.data.length > 0 && (
           <FeaturedFleet boats={boatsResponse.data} />
         )}
@@ -49,9 +52,11 @@ async function HomeContent() {
         <LocationsSection />
         <BrandsCarousel />
 
-        {reviewsResponse.success && reviewsResponse.data && reviewsResponse.data.length > 0 && (
-          <TestimonialsSection reviews={reviewsResponse.data} />
-        )}
+        {reviewsResponse.success &&
+          reviewsResponse.data &&
+          reviewsResponse.data.reviews.length > 0 && (
+            <TestimonialsSection reviews={reviewsResponse.data.reviews} />
+          )}
       </div>
 
       <RequestToBook />

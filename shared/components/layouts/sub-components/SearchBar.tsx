@@ -13,9 +13,12 @@ import { cn } from "@/shared/lib/utils/general-utils";
 
 interface SearchBarProps {
   variant?: "default" | "compact";
+  /** "slim" tightens the default variant (docked navbar state) — heights
+      animate, so flipping size mid-scroll reads as a smooth shrink. */
+  size?: "default" | "slim";
 }
 
-export default function SearchBar({ variant = "default" }: SearchBarProps) {
+export default function SearchBar({ variant = "default", size = "default" }: SearchBarProps) {
   const [isFocused, setIsFocused] = useState(false);
   const searchParams = useSearchParams();
 
@@ -84,6 +87,7 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
   };
 
   const isCompact = variant === "compact";
+  const isSlim = size === "slim" && !isCompact;
 
   return (
     <div
@@ -94,12 +98,12 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
       <form
         className={cn(
           "relative flex items-center rounded-full border border-gray-200",
-          isCompact ? "bg-gray-50" : "bg-white shadow-md"
+          isCompact ? "bg-gray-50" : isSlim ? "border-gray-300 bg-white" : "bg-white shadow-md"
         )}
         onSubmit={handleSubmit}
       >
         <div className="flex-shrink-0 pl-3.5">
-          <MapPin size={isCompact ? 18 : 22} className="text-slate-400" />
+          <MapPin size={isCompact ? 18 : 22} className="text-slate-500" />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -108,10 +112,12 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
             onError={handleLocationError}
             placeholder={isCompact ? "Search location..." : "Where can we take you?"}
             className={cn(
-              "w-full border-0 bg-transparent px-2 font-normal text-black shadow-none outline-none ring-0 ring-offset-0 focus:border-0 focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0",
+              "w-full border-0 bg-transparent px-2 font-normal text-black placeholder:text-slate-500 shadow-none outline-none ring-0 ring-offset-0 focus:border-0 focus:outline-none focus:ring-0 focus-visible:border-0 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0",
               isCompact
                 ? "h-10 min-h-10 text-sm leading-normal"
-                : "h-12 text-base sm:h-14 md:text-lg"
+                : isSlim
+                  ? "h-12 text-base transition-[height] duration-300"
+                  : "h-11 text-base transition-none sm:h-14 md:text-lg"
             )}
             containerClassName="w-full"
             defaultValue={currentLocation}
@@ -125,11 +131,16 @@ export default function SearchBar({ variant = "default" }: SearchBarProps) {
           type="submit"
           className={cn(
             "flex flex-shrink-0 items-center justify-center rounded-full bg-primary text-white transition-colors hover:bg-primary/90",
-            isCompact ? "m-1.5 h-8 w-8" : "m-2 h-12 w-12 sm:h-14 sm:w-14"
+            isCompact
+              ? "m-1.5 h-8 w-8"
+              : isSlim
+                ? "m-1.5 h-10 gap-1.5 px-4 text-sm font-semibold transition-all duration-300 sm:px-5"
+                : "m-2 h-11 gap-2 px-5 text-sm font-semibold transition-none sm:h-14 sm:px-7 sm:text-base"
           )}
           aria-label="Search"
         >
-          <Search size={isCompact ? 18 : 22} />
+          <Search size={isCompact ? 18 : 20} />
+          {!isCompact && <span className="hidden sm:inline">Search</span>}
         </button>
       </form>
     </div>

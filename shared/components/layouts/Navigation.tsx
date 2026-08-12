@@ -17,10 +17,15 @@ const Navigation = () => {
   const pathname = usePathname();
   const user = session?.user;
   const isAdmin = user?.isAdmin === true;
-  const showNavSearch = pathname !== "/";
+  const isHome = pathname === "/";
+  const showNavSearch = !isHome;
 
   return (
-    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
+    // On home the navbar scrolls away so the hero search can dock into a
+    // logo+search bar (Boatsetter pattern); everywhere else it stays sticky.
+    <header
+      className={`${isHome ? "relative" : "sticky top-0"} z-50 border-b border-gray-200 bg-white`}
+    >
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <nav
           className="flex min-h-[var(--header-h)] items-center justify-between gap-3 py-2"

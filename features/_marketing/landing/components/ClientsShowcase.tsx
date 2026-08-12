@@ -19,7 +19,7 @@ export default function ClientsShowcase() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section className="py-8 sm:py-16 relative overflow-hidden">
+    <section className="py-6 sm:py-16 relative overflow-hidden">
       <div className="w-full">
         {/* Header */}
         <motion.div
@@ -29,7 +29,7 @@ export default function ClientsShowcase() {
           transition={{ duration: 0.5 }}
           className="text-right mb-4"
         >
-          <h2 className="text-3xl sm:text-4xl font-bold text-primary leading-tight">
+          <h2 className="text-2xl sm:text-4xl font-bold text-primary leading-tight">
             Real People. Real Adventures.
           </h2>
           <p className="text-foreground text-sm sm:text-base font-light max-w-md ml-auto">

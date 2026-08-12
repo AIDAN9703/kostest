@@ -58,13 +58,7 @@ export const bookingRequestSchema = z.object({
   startDateTime: z.string({ required_error: "Start date and time are required" })
     .datetime({ message: "Invalid date and time format" }), // Zod's .datetime() validates ISO 8601 strings
 
-  // You might also need endDateTime, depending on your UI/business logic.
-  // If endDateTime is derived from pricingTierId + startDateTime on the backend,
-  // then you might not need it here directly.
-  // If your UI allows custom end times, you would add:
-  // endDateTime: z.string().datetime({ message: "Invalid end date and time format" }).optional(),
-
-
+  // endDateTime is derived server-side from pricingTierId + startDateTime.
   pricingTierId: z.string().min(1, "Please select a duration option"),
   numberOfPassengers: z.number().min(1, "At least one passenger is required"),
   needsCaptain: z.boolean(),
