@@ -9,11 +9,46 @@ import { cn } from "@/shared/lib/utils/general-utils";
 // Quick-pick destinations — mirror the params SearchBar pushes so each chip
 // behaves like a real location search.
 const QUICK_LOCATIONS = [
-  { label: "Miami", near: "Miami, FL, USA", ne_lat: 25.8557, ne_lng: -80.13, sw_lat: 25.709, sw_lng: -80.3 },
-  { label: "Miami Beach", near: "Miami Beach, FL, USA", ne_lat: 25.87, ne_lng: -80.12, sw_lat: 25.77, sw_lng: -80.14 },
-  { label: "Fort Lauderdale", near: "Fort Lauderdale, FL, USA", ne_lat: 26.21, ne_lng: -80.09, sw_lat: 26.06, sw_lng: -80.21 },
-  { label: "Key West", near: "Key West, FL, USA", ne_lat: 24.5905, ne_lng: -81.7261, sw_lat: 24.521, sw_lng: -81.8113 },
-  { label: "Bahamas", near: "Nassau, The Bahamas", ne_lat: 25.089, ne_lng: -77.28, sw_lat: 25.0, sw_lng: -77.506 },
+  {
+    label: "Miami",
+    near: "Miami, FL, USA",
+    ne_lat: 25.8557,
+    ne_lng: -80.13,
+    sw_lat: 25.709,
+    sw_lng: -80.3,
+  },
+  {
+    label: "Miami Beach",
+    near: "Miami Beach, FL, USA",
+    ne_lat: 25.87,
+    ne_lng: -80.12,
+    sw_lat: 25.77,
+    sw_lng: -80.14,
+  },
+  {
+    label: "Fort Lauderdale",
+    near: "Fort Lauderdale, FL, USA",
+    ne_lat: 26.21,
+    ne_lng: -80.09,
+    sw_lat: 26.06,
+    sw_lng: -80.21,
+  },
+  {
+    label: "Key West",
+    near: "Key West, FL, USA",
+    ne_lat: 24.5905,
+    ne_lng: -81.7261,
+    sw_lat: 24.521,
+    sw_lng: -81.8113,
+  },
+  {
+    label: "Bahamas",
+    near: "Nassau, The Bahamas",
+    ne_lat: 25.089,
+    ne_lng: -77.28,
+    sw_lat: 25.0,
+    sw_lng: -77.506,
+  },
 ] as const;
 
 function locationHref(l: (typeof QUICK_LOCATIONS)[number]) {
@@ -47,10 +82,9 @@ export default function HeroSearchDock() {
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof IntersectionObserver === "undefined") return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setDocked(entry.intersectionRatio < 1),
-      { threshold: [1] }
-    );
+    const observer = new IntersectionObserver(([entry]) => setDocked(entry.intersectionRatio < 1), {
+      threshold: [1],
+    });
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
@@ -103,9 +137,7 @@ export default function HeroSearchDock() {
           <div
             className={cn(
               "min-w-0 flex-1 animate-fade-in-up [animation-delay:400ms]",
-              docked
-                ? "mx-auto max-w-3xl transition-all delay-100 duration-300"
-                : "transition-none"
+              docked ? "mx-auto max-w-3xl transition-all delay-100 duration-300" : "transition-none"
             )}
           >
             <SearchBar size={docked ? "slim" : "default"} />

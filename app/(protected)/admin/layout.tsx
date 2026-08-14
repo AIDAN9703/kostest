@@ -5,7 +5,7 @@ import AdminHeader from "@/shared/admin/components/AdminHeader";
 import { QueryProvider } from "@/shared/lib/providers/QueryProvider";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import KBar from "@/shared/admin/components/kbar";
-import { ThemeProvider } from "next-themes";
+import { AdminDarkMode } from "@/shared/lib/providers/AdminDarkMode";
 import { cookies } from "next/headers";
 import "./admin-theme.css";
 import "@/shared/admin/admin-fullcalendar.css";
@@ -17,10 +17,9 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
   return (
-    // The admin is dark-only (light mode removed 2026-07-21). This provider is
-    // NOT dead code: forcedTheme stamps class="dark" on <html>, which every
-    // Tailwind dark: variant and portal (dialogs, dropdowns) depends on.
-    <ThemeProvider attribute="class" forcedTheme="dark" disableTransitionOnChange>
+    <>
+      {/* Dark-only admin: stamps class="dark" on <html> (see component docs). */}
+      <AdminDarkMode />
       <KBar>
         <SidebarProvider
           defaultOpen={defaultOpen}
@@ -38,6 +37,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
           </SidebarInset>
         </SidebarProvider>
       </KBar>
-    </ThemeProvider>
+    </>
   );
 }
