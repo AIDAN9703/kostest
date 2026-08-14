@@ -89,18 +89,18 @@ export const DEAL_SOURCE_LABELS: Record<string, string> = {
  * channels amber, our own site sky, marketplaces teal, brokers violet.
  */
 export const SOURCE_BADGE_CLASSES: Record<string, string> = {
-  ADMIN: "bg-slate-500/10 text-slate-600 dark:text-slate-300",
-  PHONE: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
-  INSTAGRAM: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
-  WHATSAPP: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
-  WEBSITE: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
-  HOME_PAGE: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
-  BOAT_PAGE: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
-  CONTACT_PAGE: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
-  TERM_CHARTER_PAGE: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
-  BOATSETTER: "bg-teal-500/10 text-teal-700 dark:text-teal-300",
-  GETMYBOAT: "bg-teal-500/10 text-teal-700 dark:text-teal-300",
-  BROKER: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+  ADMIN: "bg-slate-500/10 text-slate-300",
+  PHONE: "bg-amber-500/10 text-amber-300",
+  INSTAGRAM: "bg-amber-500/10 text-amber-300",
+  WHATSAPP: "bg-amber-500/10 text-amber-300",
+  WEBSITE: "bg-sky-500/10 text-sky-300",
+  HOME_PAGE: "bg-sky-500/10 text-sky-300",
+  BOAT_PAGE: "bg-sky-500/10 text-sky-300",
+  CONTACT_PAGE: "bg-sky-500/10 text-sky-300",
+  TERM_CHARTER_PAGE: "bg-sky-500/10 text-sky-300",
+  BOATSETTER: "bg-teal-500/10 text-teal-300",
+  GETMYBOAT: "bg-teal-500/10 text-teal-300",
+  BROKER: "bg-violet-500/10 text-violet-300",
   OTHER: "bg-muted text-muted-foreground",
 };
 

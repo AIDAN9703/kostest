@@ -3,7 +3,6 @@
 
 @plugin 'tailwindcss-animate';
 
-@custom-variant dark (&:is(.dark *));
 
 @theme {
   /* Montserrat: --font-montserrat is set on <body> via next/font in layout.tsx */
@@ -234,11 +233,10 @@
     --ring: 222.2 84% 4.9%;
   }
 
-  /* .dark block removed - main site doesn't use dark mode. The admin's
-     dark styling is scoped via admin-theme.css (.admin-theme) and never
-     affects main site variables. Without this block, html.dark (stamped by
-     the admin layout's forced dark theme) won't change --background etc.,
-     so the main site stays light when navigating from admin. */
+  /* No dark mode on the main site. The admin's dark styling is fully
+     scoped via admin-theme.css (.admin-theme tokens + html:has() root
+     rules); portaled admin surfaces re-stamp .admin-theme on their
+     content. There is no html.dark class anywhere. */
 }
 
 @layer utilities {

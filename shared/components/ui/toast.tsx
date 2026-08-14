@@ -33,7 +33,7 @@ const toastVariants = cva(
         destructive:
           "destructive group border-destructive bg-destructive text-destructive-foreground",
         success:
-          "success group border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-100",
+          "success group border-green-200 bg-green-50 text-green-800 [.admin-theme_&]:border-green-800 [.admin-theme_&]:bg-green-950 [.admin-theme_&]:text-green-100",
       },
     },
     defaultVariants: {
@@ -63,7 +63,7 @@ const ToastAction = React.forwardRef<
   <ToastPrimitives.Action
     ref={ref}
     className={cn(
-      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium transition-colors hover:bg-secondary focus:outline-hidden focus:ring-1 focus:ring-ring disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-muted/40 hover:group-[.destructive]:border-destructive/30 hover:group-[.destructive]:bg-destructive hover:group-[.destructive]:text-destructive-foreground focus:group-[.destructive]:ring-destructive group-[.success]:border-green-400 hover:group-[.success]:bg-green-100 hover:group-[.success]:text-green-900 focus:group-[.success]:ring-green-500 dark:group-[.success]:border-green-600 dark:hover:group-[.success]:bg-green-800 dark:hover:group-[.success]:text-green-100",
+      "inline-flex h-8 shrink-0 items-center justify-center rounded-md border bg-transparent px-3 text-sm font-medium transition-colors hover:bg-secondary focus:outline-hidden focus:ring-1 focus:ring-ring disabled:pointer-events-none disabled:opacity-50 group-[.destructive]:border-muted/40 hover:group-[.destructive]:border-destructive/30 hover:group-[.destructive]:bg-destructive hover:group-[.destructive]:text-destructive-foreground focus:group-[.destructive]:ring-destructive group-[.success]:border-green-400 hover:group-[.success]:bg-green-100 hover:group-[.success]:text-green-900 focus:group-[.success]:ring-green-500 [.admin-theme_&]:group-[.success]:border-green-600 [.admin-theme_&]:hover:group-[.success]:bg-green-800 [.admin-theme_&]:hover:group-[.success]:text-green-100",
       className
     )}
     {...props}

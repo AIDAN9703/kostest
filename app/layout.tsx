@@ -124,16 +124,8 @@ export const viewport: Viewport = {
 
 const RootLayout = async ({ children }: { children: ReactNode }) => {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <head>
-        {/* Admin is dark-only: stamp <html class="dark"> before first paint on
-            direct /admin loads so there's no light flash. SPA navigation in
-            and out is handled by <AdminDarkMode /> in the admin layout. */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `if(location.pathname.startsWith('/admin')){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark'}`,
-          }}
-        />
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
       </head>

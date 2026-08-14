@@ -5,7 +5,6 @@ import AdminHeader from "@/shared/admin/components/AdminHeader";
 import { QueryProvider } from "@/shared/lib/providers/QueryProvider";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import KBar from "@/shared/admin/components/kbar";
-import { AdminDarkMode } from "@/shared/lib/providers/AdminDarkMode";
 import { cookies } from "next/headers";
 import "./admin-theme.css";
 import "@/shared/admin/admin-fullcalendar.css";
@@ -18,8 +17,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   return (
     <>
-      {/* Dark-only admin: stamps class="dark" on <html> (see component docs). */}
-      <AdminDarkMode />
       <KBar>
         <SidebarProvider
           defaultOpen={defaultOpen}

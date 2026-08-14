@@ -234,9 +234,9 @@ const PAYMENT_EMBLEMS: Record<string, EmblemSpec> = {
   PAID: { label: "Payment: paid in full", className: "bg-success-soft text-success", Icon: DollarSign },
   DEPOSIT_PAID: { label: "Payment: partial", className: "bg-warning-soft text-warning", Icon: DollarSign },
   UNPAID: { label: "Payment: unpaid", className: "bg-destructive-soft text-destructive", Icon: DollarSign, slash: true },
-  PROCESSING: { label: "Payment: processing", className: "bg-sky-500/10 text-sky-600 dark:text-sky-400", Icon: Clock },
-  REFUNDED: { label: "Payment: refunded", className: "bg-orange-500/10 text-orange-600 dark:text-orange-400", Icon: RotateCcw },
-  CHARGEBACK: { label: "Payment: chargeback", className: "bg-orange-500/10 text-orange-600 dark:text-orange-400", Icon: AlertTriangle },
+  PROCESSING: { label: "Payment: processing", className: "bg-sky-500/10 text-sky-400", Icon: Clock },
+  REFUNDED: { label: "Payment: refunded", className: "bg-orange-500/10 text-orange-400", Icon: RotateCcw },
+  CHARGEBACK: { label: "Payment: chargeback", className: "bg-orange-500/10 text-orange-400", Icon: AlertTriangle },
   FAILED: { label: "Payment: failed", className: "bg-destructive-soft text-destructive", Icon: AlertTriangle },
 };
 

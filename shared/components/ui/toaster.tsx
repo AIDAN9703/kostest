@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useToast } from "@/shared/lib/hooks/use-toast";
 import {
   Toast,
@@ -12,6 +13,11 @@ import {
 
 export function Toaster() {
   const { toasts } = useToast();
+  // Toasts portal to <body>, outside the admin's token scope — stamping the
+  // viewport keeps them dark in the admin (same pattern as every other
+  // portaled admin surface) and light everywhere else.
+  const pathname = usePathname();
+  const inAdmin = pathname?.startsWith("/admin") ?? false;
 
   return (
     <ToastProvider>
@@ -29,7 +35,7 @@ export function Toaster() {
           </Toast>
         );
       })}
-      <ToastViewport />
+      <ToastViewport className={inAdmin ? "admin-theme" : undefined} />
     </ToastProvider>
   );
 }

@@ -7,8 +7,7 @@
    Light mode was removed 2026-07-21 (owners' call — admin ships
    dark only). If it ever comes back: restore the light token
    block from git history (pre-removal admin-theme.css) and the
-   kbar theme-switching actions, and drop forcedTheme from the
-   admin layout's ThemeProvider.
+   kbar theme-switching actions.
 
    Layering (lighter = closer): root dark-main → canvas dark-bg
    → cards dark-card. Gold is the primary/action color (buttons,
@@ -17,15 +16,20 @@
    (text on fill) / primary-soft (tint) / primary-strong
    (readable gold text).
 
-   NOTE: the admin layout still stamps `class="dark"` on <html>
-   (via next-themes forcedTheme) — Tailwind `dark:` variants all
-   over the admin depend on it. Do not remove that provider.
+   There is NO html-level dark class and no `dark:` variants in
+   the admin — everything reads these scoped tokens. Portaled
+   surfaces (dialogs, popovers, toasts) escape this subtree, so
+   they re-stamp `.admin-theme` on their content — keep doing
+   that for any new portal.
    ============================================================ */
 
 /* Root/overscroll backgrounds match the canvas, so rubber-band
    scrolling never flashes a foreign color. */
 html:has([data-admin-theme]) {
   background-color: var(--color-dark-bg);
+  /* Native scrollbars/inputs/pickers render dark — this replaces the
+     colorScheme JS stamping the old forced-theme provider did. */
+  color-scheme: dark;
 }
 
 html:has([data-admin-theme]) body {
