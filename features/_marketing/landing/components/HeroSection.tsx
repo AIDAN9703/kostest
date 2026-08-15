@@ -29,7 +29,7 @@ export default function HeroSection() {
     /* Full-bleed hero, Boatsetter-scale height — well under a viewport so the
        content below peeks in. */
     <section
-      className="relative h-[440px] w-full overflow-hidden sm:h-[540px]"
+      className="relative h-[470px] w-full overflow-hidden sm:h-[620px]"
       aria-label="Hero Section"
     >
       {/* Background photo */}
