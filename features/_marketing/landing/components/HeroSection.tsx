@@ -29,7 +29,7 @@ export default function HeroSection() {
     /* Full-bleed hero, Boatsetter-scale height — well under a viewport so the
        content below peeks in. */
     <section
-      className="relative h-[50vh] min-h-[440px] sm:h-[60vh] sm:min-h-[480px] w-full overflow-hidden"
+      className="relative h-[440px] w-full overflow-hidden sm:h-[540px]"
       aria-label="Hero Section"
     >
       {/* Background photo */}
@@ -50,7 +50,7 @@ export default function HeroSection() {
 
       {/* Eyebrow + Headline, centered & lifted above the boat in the photo. */}
       <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-6">
-        <div className="-translate-y-[13vh] text-center sm:-translate-y-[16vh]">
+        <div className="-translate-y-26 text-center sm:-translate-y-36">
           {/* Gold eyebrow */}
           <div className="animate-fade-in-up mb-6 sm:mb-2 flex items-center justify-center gap-3">
             <span className="text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-white sm:text-xs [text-shadow:0_1px_3px_rgba(0,0,0,0.65),0_2px_14px_rgba(0,0,0,0.8)]">
