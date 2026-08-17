@@ -12,23 +12,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
-import { ProposalForm } from "@/features/bookings/components/admin/booking-forms/ProposalForm";
+import { BookingComposer } from "@/features/bookings/components/admin/booking-forms/BookingComposer";
 import type { PricingTierOption } from "@/features/bookings/components/admin/booking-forms/types";
 import type { DealPrefill } from "@/features/bookings/lib/deal-prefill";
+import type { AdminOption } from "@/shared/lib/utils/people-display";
 
 /**
  * "Create proposal" as a modal on the inquiry page — a purpose-built form
- * for pricing an inquiry (context strip of what was asked, boat/dates/
- * contact prefilled, no account picker), hosted in a dialog so the admin
- * never leaves the deal. Same createBookings upgrade action as the
- * /admin/bookings/create page. On success the deal row itself upgrades to
- * a priced DRAFT, so we just close and refresh this page.
+ * for pricing an inquiry (boat/dates/contact prefilled, guest-by-definition
+ * so no account picker), hosted in a dialog so the admin never leaves the
+ * deal. Hosts the same BookingComposer as every other creation door — add a
+ * second boat to propose a charter party. On success the deal row itself
+ * upgrades to a priced DRAFT, so we just close and refresh this page.
  */
 export function CreateProposalModal({
   pricingTiers,
+  admins,
   dealPrefill,
 }: {
   pricingTiers: PricingTierOption[];
+  admins: AdminOption[];
   dealPrefill: DealPrefill;
 }) {
   const [open, setOpen] = useState(false);
@@ -41,7 +44,7 @@ export function CreateProposalModal({
         Create proposal
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[92vh] overflow-y-auto rounded-2xl sm:max-w-5xl">
+        <DialogContent className="admin-theme max-h-[92vh] overflow-y-auto rounded-2xl sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle>
               New proposal for {dealPrefill.customerName || "this lead"}
@@ -51,8 +54,9 @@ export function CreateProposalModal({
               their link.
             </DialogDescription>
           </DialogHeader>
-          <ProposalForm
+          <BookingComposer
             pricingTiers={pricingTiers}
+            admins={admins}
             dealPrefill={dealPrefill}
             onSuccess={() => {
               setOpen(false);

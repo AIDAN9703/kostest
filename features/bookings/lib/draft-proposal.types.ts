@@ -16,6 +16,11 @@ export interface DraftProposalBooking {
   boatId: string;
   boatName: string;
   boatMainImage: string | null;
+  /** This boat's IANA zone — trip times always render boat-local. */
+  timezone: string | null;
+  /** Per-boat trip window — shown when it differs from the lead booking's. */
+  startDateTime: Date | null;
+  endDateTime: Date | null;
   /** Charter base price only (cents) */
   basePriceCents: number;
   /** Cleaning fee (cents) */
@@ -36,6 +41,8 @@ export interface DraftProposalData {
   numberOfPassengers: number;
   pickupLocation: string | null;
   dropoffLocation: string | null;
+  /** Lead boat's IANA zone — Trip Details renders boat-local, not viewer-local. */
+  timezone: string | null;
   allowPayment: boolean;
   paymentType: "DEPOSIT_ONLY" | "FULL_PAYMENT" | null;
   acceptedAt: Date | null;

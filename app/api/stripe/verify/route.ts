@@ -145,21 +145,44 @@ async function buildVerifyResponse(
     );
   }
 
-  if (booking.bookingStatus !== "CONFIRMED") {
+  // Confirm the booking AND its charter-party siblings — a group checkout
+  // sells every boat in the party, and the webhook may never reach us.
+  const [leadRow] = await db
+    .select({ bookingGroupId: bookings.bookingGroupId })
+    .from(bookings)
+    .where(eq(bookings.id, bookingId))
+    .limit(1);
+  const partyIds = new Set<string>([bookingId]);
+  if (leadRow?.bookingGroupId) {
+    const siblings = await db
+      .select({ id: bookings.id })
+      .from(bookings)
+      .where(eq(bookings.bookingGroupId, leadRow.bookingGroupId));
+    for (const sib of siblings) partyIds.add(sib.id);
+  }
+
+  for (const id of partyIds) {
+    const [row] = await db
+      .select({ id: bookings.id, bookingStatus: bookings.bookingStatus })
+      .from(bookings)
+      .where(eq(bookings.id, id))
+      .limit(1);
+    if (!row || row.bookingStatus === "CONFIRMED") continue;
+
     await db
       .update(bookings)
       .set({ bookingStatus: "CONFIRMED", updatedAt: new Date() })
-      .where(eq(bookings.id, bookingId));
+      .where(eq(bookings.id, id));
 
     await db.insert(bookingStatusHistory).values({
-      bookingId,
-      fromStatus: booking.bookingStatus as BookingStatus,
+      bookingId: id,
+      fromStatus: row.bookingStatus as BookingStatus,
       toStatus: "CONFIRMED",
       reason: "Payment verified",
     });
     await bookingEventsService.logStatusChange({
-      bookingId,
-      fromStatus: booking.bookingStatus as BookingStatus,
+      bookingId: id,
+      fromStatus: row.bookingStatus as BookingStatus,
       toStatus: "CONFIRMED",
       actorType: "system",
       reason: "Payment verified",
@@ -167,31 +190,32 @@ async function buildVerifyResponse(
     });
   }
 
-  // Settle the payment row. The webhook is the primary settler, but when it
+  // Settle the payment rows. The webhook is the primary settler, but when it
   // can't reach us (localhost, misconfigured endpoint) this is the only shot.
-  // The PENDING row is created at checkout time with only the checkout-session
-  // id — the payment intent doesn't exist until the customer pays — so the
-  // session lookup must come first; the intent lookup covers legacy link flows.
-  let settledPaymentId: string | null = null;
-  const sessionPayment = sessionId
-    ? await paymentService.getPaymentByStripeCheckoutSessionId(sessionId)
-    : null;
-  if (sessionPayment) {
-    if (sessionPayment.status !== "SUCCEEDED") {
-      await paymentService.markPaymentSucceeded(sessionPayment.id, paymentIntentId ?? undefined);
-      settledPaymentId = sessionPayment.id;
+  // A charter-party checkout writes one PENDING row per boat, all sharing the
+  // session id — settle every one and backfill the shared intent id.
+  let settledAny = false;
+  const sessionPayments = sessionId
+    ? await paymentService.getPaymentsByStripeCheckoutSessionId(sessionId)
+    : [];
+  if (sessionPayments.length > 0) {
+    for (const payment of sessionPayments) {
+      if (payment.status !== "SUCCEEDED") {
+        await paymentService.markPaymentSucceeded(payment.id, paymentIntentId ?? undefined);
+        settledAny = true;
+      }
     }
   } else if (paymentIntentId) {
     const payment = await paymentService.getPaymentByStripeIntentId(paymentIntentId);
     if (payment && payment.status !== "SUCCEEDED") {
       await paymentService.markPaymentSucceeded(payment.id);
-      settledPaymentId = payment.id;
+      settledAny = true;
     }
   }
 
   // If we did the settling, the webhook never ran — send the confirmation
   // email here. When the webhook already settled, it also already sent it.
-  if (settledPaymentId) {
+  if (settledAny) {
     const fullBooking = await bookingService.getBookingById(bookingId);
     if (fullBooking) {
       await sendBookingConfirmationEmail(fullBooking).catch((e) =>
@@ -211,6 +235,7 @@ async function buildVerifyResponse(
       boatName: boats.name,
       boatCategory: boats.category,
       boatMainImage: boats.mainImage,
+      boatTimezone: boats.timezone,
       totalAmountCents: bookingPricing.totalAmountCents,
       basePriceCents: bookingPricing.basePriceCents,
       cleaningFeeCents: bookingPricing.cleaningFeeCents,
@@ -239,6 +264,7 @@ async function buildVerifyResponse(
           boatName: details.boatName,
           boatCategory: details.boatCategory,
           boatMainImage: details.boatMainImage,
+          boatTimezone: details.boatTimezone,
           totalAmountCents: details.totalAmountCents ? Number(details.totalAmountCents) : null,
           basePriceCents: details.basePriceCents ? Number(details.basePriceCents) : null,
           cleaningFeeCents: details.cleaningFeeCents ? Number(details.cleaningFeeCents) : null,

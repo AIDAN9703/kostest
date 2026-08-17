@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
+import { formatBoatLocal } from "@/shared/lib/utils/date-helpers";
 import type { DraftProposalBooking } from "@/features/bookings/lib/draft-proposal.types";
 
 interface DraftProposalBoatsListProps {
@@ -11,11 +12,29 @@ interface DraftProposalBoatsListProps {
 
 const DEFAULT_IMAGE = "/images/herooption22.jpg";
 
+function formatWindow(start: Date | null, timezone: string | null): string | null {
+  if (!start) return null;
+  const label = formatBoatLocal(start, timezone, "EEE, MMM d · h:mm a zzz");
+  return label || null;
+}
+
 /** Flat boat rows — hairlines come from the page's divide-y container. */
 export function DraftProposalBoatsList({ bookings }: DraftProposalBoatsListProps) {
+  // Charter parties can sail different windows per boat — call out any boat
+  // whose start differs from the lead's (the one in Trip Details above).
+  const leadStart = bookings[0]?.startDateTime
+    ? new Date(bookings[0].startDateTime).getTime()
+    : null;
+
   return (
     <>
-      {bookings.map((booking) => (
+      {bookings.map((booking) => {
+        const ownStart = booking.startDateTime
+          ? new Date(booking.startDateTime).getTime()
+          : null;
+        const differsFromLead =
+          leadStart != null && ownStart != null && ownStart !== leadStart;
+        return (
         <Link
           key={booking.id}
           href={`/boats/${booking.boatId}`}
@@ -35,14 +54,17 @@ export function DraftProposalBoatsList({ bookings }: DraftProposalBoatsListProps
               <p className="truncate text-sm font-medium text-primary group-hover:underline">
                 {booking.boatName}
               </p>
-              <p className="text-xs text-slate-500">Base charter</p>
+              <p className="text-xs text-slate-500">
+                {differsFromLead ? formatWindow(booking.startDateTime, booking.timezone) : "Base charter"}
+              </p>
             </div>
           </div>
           <span className="shrink-0 text-sm font-medium text-primary">
             {formatCentsAsCurrency(booking.basePriceCents)}
           </span>
         </Link>
-      ))}
+        );
+      })}
     </>
   );
 }

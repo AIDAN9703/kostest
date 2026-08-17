@@ -19,38 +19,6 @@ export const FIELD_TYPES = {
 };
 
 
-export const sorts = [
-  {
-    value: "oldest",
-    label: "Oldest",
-  },
-  {
-    value: "newest",
-    label: "Newest",
-  },
-  {
-    value: "available",
-    label: "Available",
-  },
-  {
-    value: "highestRated",
-    label: "Highest Rated",
-  },
-];
-
-
-
-export const TIME_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-export const RESPONSE_MESSAGES = {
-  success: "Operation completed successfully",
-  error: "An error occurred. Please try again.",
-  unauthorized: "You are not authorized to perform this action",
-  notFound: "The requested resource was not found",
-  validation: "Please check your input and try again"
-};
-
-
 // Re-export fee constants for backward compatibility
 export * from './navigation-data';
 export * from './map-constants';

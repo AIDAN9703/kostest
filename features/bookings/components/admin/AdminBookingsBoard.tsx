@@ -408,15 +408,19 @@ function BookingRow({
     booking.bookingType === "REQUEST" && booking.bookingStatus === "PENDING";
   const isLive = !booking.archivedAt && !SETTLED_STATUSES.has(booking.bookingStatus);
   const isNew = differenceInHours(new Date(), new Date(booking.createdAt)) < 48;
+  // One boat of a multi-boat charter party.
+  const isParty = !!booking.bookingGroupId && (booking.bookingGroupSize ?? 0) > 1;
   const currency = booking.currency ?? "USD";
 
   // Trip / requested date
   let dateLine: string | null = null;
   let timeLine = "";
   if (booking.startDateTime) {
-    const { date: sd, time: st } = parseDateTimeInBoatTimezone(booking.startDateTime);
+    // Boat-local — a Nassau/Chicago boat must not read as New York.
+    const boatTz = { timezone: booking.boatTimezone };
+    const { date: sd, time: st } = parseDateTimeInBoatTimezone(booking.startDateTime, boatTz);
     const { time: et } = booking.endDateTime
-      ? parseDateTimeInBoatTimezone(booking.endDateTime)
+      ? parseDateTimeInBoatTimezone(booking.endDateTime, boatTz)
       : { time: "" };
     dateLine = sd ? format(sd, "EEE, MMM d, yyyy") : "—";
     timeLine = `${st ? formatTime12Hour(st) : ""}${et ? ` – ${formatTime12Hour(et)}` : ""}`;
@@ -483,20 +487,13 @@ function BookingRow({
             <KindIcon className="h-4.5 w-4.5" />
           </span>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <Link
-                href={`/admin/bookings/${booking.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="truncate text-sm font-semibold text-foreground"
-              >
-                {kind.label}
-              </Link>
-              {isNew ? (
-                <span className="rounded-full bg-primary-soft px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-primary-strong">
-                  New
-                </span>
-              ) : null}
-            </div>
+            <Link
+              href={`/admin/bookings/${booking.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="block truncate text-sm font-semibold text-foreground"
+            >
+              {kind.label}
+            </Link>
             {paymentEmblem || showCaptain || showContract ? (
               <div className="mt-1.5 flex items-center gap-1">
                 {paymentEmblem ? <StatusEmblem {...paymentEmblem} /> : null}
@@ -513,6 +510,25 @@ function BookingRow({
                     className={preTripTone(Boolean(booking.opsContractSigned), tripImminent)}
                     Icon={booking.opsContractSigned ? FileCheck2 : FileX2}
                   />
+                ) : null}
+              </div>
+            ) : null}
+            {/* Badges sit under the emblems: freshness, then charter party. */}
+            {isNew || isParty ? (
+              <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                {isNew ? (
+                  <span className="rounded-full bg-primary-soft px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-primary-strong">
+                    New
+                  </span>
+                ) : null}
+                {isParty ? (
+                  <span
+                    className="inline-flex items-center gap-1 rounded-full bg-violet-500/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-violet-300"
+                    title={booking.bookingGroupName ?? "Charter party"}
+                  >
+                    <Ship className="h-2.5 w-2.5" />
+                    ×{booking.bookingGroupSize} party
+                  </span>
                 ) : null}
               </div>
             ) : null}

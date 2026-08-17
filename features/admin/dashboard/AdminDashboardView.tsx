@@ -193,6 +193,7 @@ export function AdminDashboardView({
         </div>
         <NewBookingModal
           pricingTiers={pricingTiers}
+          admins={admins}
           triggerLabel="New booking"
           triggerClassName="gap-1.5 rounded-full px-5 shadow-sm"
         />

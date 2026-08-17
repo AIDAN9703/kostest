@@ -62,7 +62,7 @@ import {
   type BookingWithRelations,
   type BookingAddOn,
 } from "@/features/bookings/booking.types";
-import { type Booking, type BookingSource } from "@/database/types";
+import { type Booking, type BookingSource, type BookingType } from "@/database/types";
 import {
   calculateBookingPriceFromDollars,
   calculateBookingPriceCents,
@@ -129,6 +129,7 @@ export class BookingService {
 
     const publicToken = crypto.randomUUID();
     const bookingIds: string[] = [];
+    let leadBookingType: BookingType | null = null;
 
     for (let i = 0; i < input.bookings.length; i++) {
       const b = input.bookings[i];
@@ -150,7 +151,7 @@ export class BookingService {
           : null;
       if (!endDateTime) throw new Error("End date & time is required for custom pricing");
 
-      const addOnsForThisBooking = i === 0 ? (input.lineItems ?? []) : [];
+      const addOnsForThisBooking = b.addOns ?? [];
       const addOnsTotalDollars = addOnsForThisBooking.reduce(
         (sum, item) => sum + item.unitPrice * item.quantity,
         0
@@ -221,7 +222,7 @@ export class BookingService {
           .where(
             and(eq(bookings.id, upgradeDealId), eq(bookings.bookingStatus, "INQUIRY"))
           )
-          .returning({ id: bookings.id });
+          .returning({ id: bookings.id, bookingType: bookings.bookingType });
         if (!upgraded) {
           throw new Error(
             "This deal is no longer at the inquiry stage — it may have just been priced by another admin. Refresh to see the latest."
@@ -233,12 +234,15 @@ export class BookingService {
           changedByUserId: assignedAdminId ?? null,
           reason: "Priced into a proposal",
         });
+        leadBookingType = upgraded.bookingType;
         bookingId = upgraded.id;
       } else {
         const [created] = await db
           .insert(bookings)
           .values({
-            bookingType: "EXTERNAL_BOOKING",
+            // Party siblings inherit the lead's type; scratch creates stay
+            // EXTERNAL_BOOKING.
+            bookingType: leadBookingType ?? "EXTERNAL_BOOKING",
             bookingStatus: "DRAFT",
             source: "ADMIN" as BookingSource,
             needsCaptain: boat.crewRequired,
@@ -300,7 +304,12 @@ export class BookingService {
     const boatIds = [...new Set(draftBookings.map((b) => b.boatId))];
     const [boatsRows, pricingRows] = await Promise.all([
       db
-        .select({ id: boats.id, name: boats.name, mainImage: boats.mainImage })
+        .select({
+          id: boats.id,
+          name: boats.name,
+          mainImage: boats.mainImage,
+          timezone: boats.timezone,
+        })
         .from(boats)
         .where(inArray(boats.id, boatIds)),
       db
@@ -317,7 +326,6 @@ export class BookingService {
     const pricingByBooking = new Map(pricingRows.map((p) => [p.bookingId, p]));
 
     const first = draftBookings[0];
-    const firstPricing = pricingByBooking.get(first.id);
     const totalCents = draftBookings.reduce(
       (sum, b) => sum + Number(pricingByBooking.get(b.id)?.totalAmountCents ?? 0),
       0
@@ -351,13 +359,21 @@ export class BookingService {
       numberOfPassengers: first.numberOfPassengers,
       pickupLocation: first.pickupLocation,
       dropoffLocation: first.dropoffLocation,
+      // Charter times display in the BOAT's local time everywhere.
+      timezone: (first.boatId ? boatsById.get(first.boatId)?.timezone : null) ?? null,
       allowPayment: first.allowPayment,
       paymentType: first.paymentType,
       acceptedAt: first.acceptedAt,
       totalPaidCents: Number(paidRow?.paid ?? 0),
-      depositAmountCents: firstPricing?.depositAmountCents
-        ? Number(firstPricing.depositAmountCents)
-        : null,
+      // Deposit to secure the date = SUM of per-boat deposits across the
+      // party (checkout charges the same sum in deposit mode).
+      depositAmountCents: (() => {
+        const sum = draftBookings.reduce(
+          (acc, b) => acc + Number(pricingByBooking.get(b.id)?.depositAmountCents ?? 0),
+          0
+        );
+        return sum > 0 ? sum : null;
+      })(),
       totalAmountCents: totalCents,
       bookings: draftBookings.map((b) => {
         const boat = boatsById.get(b.boatId);
@@ -378,6 +394,9 @@ export class BookingService {
           boatId: b.boatId,
           boatName: boat?.name ?? "Charter",
           boatMainImage: boat?.mainImage ?? null,
+          timezone: boat?.timezone ?? null,
+          startDateTime: b.startDateTime,
+          endDateTime: b.endDateTime,
           basePriceCents,
           cleaningFeeCents,
           serviceFeeCents,
@@ -386,6 +405,55 @@ export class BookingService {
         };
       }),
     };
+  }
+
+  /**
+   * The chargeable charter party for a booking: the booking itself plus every
+   * group sibling, each with its boat and pricing. Lead booking (the one
+   * whose id was passed) comes first. Single bookings return a party of one —
+   * checkout treats both identically.
+   */
+  async getChargeableParty(bookingId: string) {
+    const [lead] = await db.select().from(bookings).where(eq(bookings.id, bookingId)).limit(1);
+    if (!lead) return null;
+
+    const partyRows = lead.bookingGroupId
+      ? await db
+          .select()
+          .from(bookings)
+          .where(eq(bookings.bookingGroupId, lead.bookingGroupId))
+          .orderBy(bookings.startDateTime)
+      : [lead];
+
+    // Lead first — Stripe metadata and the confirmation email key off it.
+    partyRows.sort((a, b) => (a.id === bookingId ? -1 : b.id === bookingId ? 1 : 0));
+
+    const boatIds = [...new Set(partyRows.map((b) => b.boatId).filter((id): id is string => !!id))];
+    const [boatsRows, pricingRows] = await Promise.all([
+      boatIds.length
+        ? db
+            .select({ id: boats.id, name: boats.name, mainImage: boats.mainImage })
+            .from(boats)
+            .where(inArray(boats.id, boatIds))
+        : Promise.resolve([]),
+      db
+        .select()
+        .from(bookingPricing)
+        .where(
+          inArray(
+            bookingPricing.bookingId,
+            partyRows.map((b) => b.id)
+          )
+        ),
+    ]);
+    const boatsById = new Map(boatsRows.map((b) => [b.id, b]));
+    const pricingByBooking = new Map(pricingRows.map((p) => [p.bookingId, p]));
+
+    return partyRows.map((b) => ({
+      booking: b,
+      boat: b.boatId ? (boatsById.get(b.boatId) ?? null) : null,
+      pricing: pricingByBooking.get(b.id) ?? null,
+    }));
   }
 
   /**
@@ -935,9 +1003,12 @@ export class BookingService {
       pricingTierId: bookings.pricingTierId,
       bookingGroupId: bookings.bookingGroupId,
       bookingGroupName: bookingGroups.name,
+      // Party size: how many boats sail under this booking's group (1 = solo).
+      bookingGroupSize: sql<number>`CASE WHEN ${bookings.bookingGroupId} IS NOT NULL THEN (SELECT COUNT(*)::int FROM ${bookings} AS party WHERE party.booking_group_id = ${bookings.bookingGroupId}) ELSE NULL END`,
       boatName: boats.name,
       boatCategory: boats.category,
       boatMainImage: boats.mainImage,
+      boatTimezone: boats.timezone,
       userId: bookings.userId,
       userFirstName: users.firstName,
       userLastName: users.lastName,

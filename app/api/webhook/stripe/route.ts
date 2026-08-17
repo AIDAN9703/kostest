@@ -4,6 +4,7 @@ import { db } from "@/database/db";
 import { bookings, boats, bookingStatusHistory, payments } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
 import config from "@/shared/lib/config";
+import type { BookingStatus } from "@/database/types";
 import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 import { getStripe, getInvoicePaymentIntentId } from "@/shared/lib/services/stripe.service";
 import { bookingService } from "@/features/bookings/services/booking.service";
@@ -118,19 +119,20 @@ function verifyWebhookSignature(body: string, signature: string): Stripe.Event |
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
   const metadata = session.metadata || {};
 
-  // --- Idempotency: check if we already have a SUCCEEDED payment for this session ---
-  const existingPayment = await paymentService.getPaymentByStripeCheckoutSessionId(session.id);
-  if (existingPayment?.status === "SUCCEEDED") {
+  // --- Idempotency: a charter-party checkout writes one payment row per
+  // booking against this session; skip only when EVERY row already settled ---
+  const existingPayments = await paymentService.getPaymentsByStripeCheckoutSessionId(session.id);
+  if (existingPayments.length > 0 && existingPayments.every((p) => p.status === "SUCCEEDED")) {
     console.log(`[Webhook] Session ${session.id} already processed — skipping`);
     return;
   }
 
   // --- Route by booking type ---
   if (metadata.bookingType === "INSTANT_BOOK") {
-    await handleInstantBooking(session, existingPayment);
+    await handleInstantBooking(session, existingPayments[0] ?? null);
   } else {
     // Request bookings, draft pay-now, or payment link flows
-    await handleBookingPayment(session, existingPayment);
+    await handleBookingPayment(session, existingPayments);
   }
 }
 
@@ -166,18 +168,18 @@ async function handleInstantBooking(
 
 async function handleBookingPayment(
   session: Stripe.Checkout.Session,
-  existingPayment: Awaited<ReturnType<typeof paymentService.getPaymentByStripeCheckoutSessionId>>
+  existingPayments: Awaited<ReturnType<typeof paymentService.getPaymentsByStripeCheckoutSessionId>>
 ) {
   try {
     const metadata = session.metadata || {};
     const paymentIntentId = session.payment_intent as string;
 
-    // Resolve booking ID from multiple sources
+    // Resolve the lead booking ID from multiple sources
     let bookingId: string | undefined = metadata.bookingId;
 
-    // Fallback: look up from existing payment record (matched by checkout session)
-    if (!bookingId && existingPayment) {
-      bookingId = existingPayment.payableId;
+    // Fallback: look up from existing payment records (matched by checkout session)
+    if (!bookingId && existingPayments.length > 0) {
+      bookingId = existingPayments[0].payableId;
     }
 
     // Fallback: look up by payment link ID (legacy Payment Link flows)
@@ -201,21 +203,19 @@ async function handleBookingPayment(
       return;
     }
 
-    // Confirm the booking
-    await ensureBookingConfirmed(bookingId, "Payment received");
-
-    // Update or backfill the payment record
-    if (existingPayment) {
-      if (existingPayment.status !== "SUCCEEDED") {
-        await paymentService.markPaymentSucceeded(existingPayment.id, paymentIntentId);
-      }
-      // Backfill checkout session ID if missing (e.g. legacy Payment Link records)
-      if (!existingPayment.stripeCheckoutSessionId) {
-        await paymentService.updatePayment(existingPayment.id, {
-          stripeCheckoutSessionId: session.id,
+    // Settle EVERY payment row on this session (a charter party has one per
+    // boat) and backfill the shared intent id for refund handling.
+    for (const payment of existingPayments) {
+      if (payment.status !== "SUCCEEDED") {
+        await paymentService.markPaymentSucceeded(payment.id, paymentIntentId);
+      } else if (!payment.stripePaymentIntentId && paymentIntentId) {
+        await paymentService.updatePayment(payment.id, {
+          stripePaymentIntentId: paymentIntentId,
         });
       }
-    } else {
+    }
+
+    if (existingPayments.length === 0) {
       // Legacy fallback: look up payment by payment link ID
       const paymentLinkId =
         typeof session.payment_link === "string" ? session.payment_link : session.payment_link?.id;
@@ -231,9 +231,34 @@ async function handleBookingPayment(
       }
     }
 
-    console.log(`[Webhook] Booking ${bookingId} confirmed via checkout`);
+    // Confirm the WHOLE party: the paid rows plus any group sibling (a boat
+    // with no deposit configured has no payment row in deposit mode, but its
+    // slot is just as sold).
+    const bookingIdsToConfirm = new Set<string>([
+      bookingId,
+      ...existingPayments.map((p) => p.payableId),
+    ]);
+    const [leadRow] = await db
+      .select({ bookingGroupId: bookings.bookingGroupId })
+      .from(bookings)
+      .where(eq(bookings.id, bookingId))
+      .limit(1);
+    if (leadRow?.bookingGroupId) {
+      const siblings = await db
+        .select({ id: bookings.id })
+        .from(bookings)
+        .where(eq(bookings.bookingGroupId, leadRow.bookingGroupId));
+      for (const s of siblings) bookingIdsToConfirm.add(s.id);
+    }
+    for (const id of bookingIdsToConfirm) {
+      await ensureBookingConfirmed(id, "Payment received");
+    }
 
-    // Send confirmation email
+    console.log(
+      `[Webhook] ${bookingIdsToConfirm.size} booking(s) confirmed via checkout ${session.id}`
+    );
+
+    // Send ONE confirmation email, for the lead booking
     const booking = await bookingService.getBookingById(bookingId);
     if (booking) {
       await sendBookingConfirmationEmail(booking).catch((e) =>
@@ -325,69 +350,94 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
       return;
     }
 
-    const payment = await paymentService.getPaymentByStripeIntentId(paymentIntentId);
-    if (!payment) {
+    // A charter-party checkout settles one payment row per boat, all sharing
+    // this intent — refunds must treat them as one unit.
+    const paymentRows = await paymentService.getPaymentsByStripeIntentId(paymentIntentId);
+    if (paymentRows.length === 0) {
       console.warn(`[Webhook] charge.refunded: no payment for intent ${paymentIntentId}`);
       return;
     }
 
     if (charge.refunded) {
-      // Full refund
-      await paymentService.markPaymentRefunded(payment.id);
+      // Full refund: every row refunded, every booking in the party cancelled.
+      for (const payment of paymentRows) {
+        await paymentService.markPaymentRefunded(payment.id);
+      }
 
-      // Update booking status to REFUNDED
-      if (payment.payableType === "BOOKING" && payment.payableId) {
-        const [booking] = await db
-          .select({
-            id: bookings.id,
-            bookingStatus: bookings.bookingStatus,
-          })
+      const bookingIds = new Set(
+        paymentRows.filter((p) => p.payableType === "BOOKING" && p.payableId).map((p) => p.payableId)
+      );
+      // Expand to group siblings (a no-deposit boat may have had no payment row).
+      for (const id of [...bookingIds]) {
+        const [row] = await db
+          .select({ bookingGroupId: bookings.bookingGroupId })
           .from(bookings)
-          .where(eq(bookings.id, payment.payableId))
+          .where(eq(bookings.id, id))
           .limit(1);
-
-        if (booking && booking.bookingStatus !== "CANCELLED") {
-          const reason = "Full refund processed via Stripe";
-          await db
-            .update(bookings)
-            .set({
-              bookingStatus: "CANCELLED",
-              cancellationReason: reason,
-              cancelledAt: new Date(),
-              updatedAt: new Date(),
-            })
-            .where(eq(bookings.id, booking.id));
-          await db.insert(bookingStatusHistory).values({
-            bookingId: booking.id,
-            fromStatus: booking.bookingStatus,
-            toStatus: "CANCELLED",
-            reason,
-          });
-          await bookingEventsService.logStatusChange({
-            bookingId: booking.id,
-            fromStatus: booking.bookingStatus as any,
-            toStatus: "CANCELLED",
-            actorType: "system",
-            reason,
-            channel: "stripe",
-          });
+        if (row?.bookingGroupId) {
+          const siblings = await db
+            .select({ id: bookings.id })
+            .from(bookings)
+            .where(eq(bookings.bookingGroupId, row.bookingGroupId));
+          for (const sib of siblings) bookingIds.add(sib.id);
         }
       }
 
-      console.log(`[Webhook] Full refund for payment ${payment.id}`);
+      const reason = "Full refund processed via Stripe";
+      for (const id of bookingIds) {
+        const [booking] = await db
+          .select({ id: bookings.id, bookingStatus: bookings.bookingStatus })
+          .from(bookings)
+          .where(eq(bookings.id, id))
+          .limit(1);
+        if (!booking || booking.bookingStatus === "CANCELLED") continue;
+
+        await db
+          .update(bookings)
+          .set({
+            bookingStatus: "CANCELLED",
+            cancellationReason: reason,
+            cancelledAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(bookings.id, booking.id));
+        await db.insert(bookingStatusHistory).values({
+          bookingId: booking.id,
+          fromStatus: booking.bookingStatus,
+          toStatus: "CANCELLED",
+          reason,
+        });
+        await bookingEventsService.logStatusChange({
+          bookingId: booking.id,
+          fromStatus: booking.bookingStatus as BookingStatus,
+          toStatus: "CANCELLED",
+          actorType: "system",
+          reason,
+          channel: "stripe",
+        });
+      }
+
+      console.log(
+        `[Webhook] Full refund: ${paymentRows.length} payment(s) refunded, ${bookingIds.size} booking(s) cancelled`
+      );
     } else {
-      // Partial refund
+      // Partial refund: Stripe doesn't say which boat it belongs to — record
+      // it against the lead payment's booking and leave statuses alone.
+      const lead = paymentRows[0];
       await paymentService.createRefund(
-        payment.payableType as "BOOKING",
-        payment.payableId,
+        lead.payableType as "BOOKING",
+        lead.payableId,
         charge.amount_refunded,
         {
           stripePaymentIntentId: paymentIntentId,
-          notes: "Partial refund synced from Stripe",
+          notes:
+            paymentRows.length > 1
+              ? "Partial refund synced from Stripe (charter party — recorded on lead booking)"
+              : "Partial refund synced from Stripe",
         }
       );
       console.log(
-        `[Webhook] Partial refund (${charge.amount_refunded} cents) for payment ${payment.id}`
+        `[Webhook] Partial refund (${charge.amount_refunded} cents) recorded on payment ${lead.id}`
       );
     }
   } catch (error) {
@@ -427,7 +477,7 @@ async function ensureBookingConfirmed(bookingId: string, reason: string) {
 
   await bookingEventsService.logStatusChange({
     bookingId,
-    fromStatus: booking.bookingStatus as any,
+    fromStatus: booking.bookingStatus as BookingStatus,
     toStatus: "CONFIRMED",
     actorType: "system",
     reason,

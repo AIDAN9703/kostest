@@ -70,16 +70,3 @@ export const PAYMENT_DISPLAY_LABELS: Record<PaymentDisplayStatus, string> = {
   REFUNDED: "Refunded",
   CHARGEBACK: "Chargeback",
 };
-
-export const PAYMENT_DISPLAY_DESCRIPTIONS: Record<
-  PaymentDisplayStatus,
-  string
-> = {
-  UNPAID: "No payment received yet.",
-  PROCESSING: "Payment is being processed.",
-  DEPOSIT_PAID: "Partial payment received; balance still due.",
-  PAID: "Full payment received.",
-  FAILED: "Payment attempt failed.",
-  REFUNDED: "Payment has been refunded.",
-  CHARGEBACK: "Customer disputed the charge.",
-};

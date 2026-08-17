@@ -310,16 +310,3 @@ export const ADMIN_NAV_ITEMS: AdminMainNavItem[] = [
     iconClassName: "h-5 w-5",
   },
 ];
-
-export const ADMIN_USER_MENU_ITEMS: AdminNavItem[] = [
-  {
-    label: "Your Profile",
-    href: "/profile",
-    iconClassName: "h-4 w-4",
-  },
-  {
-    label: "Settings",
-    href: "/profile/settings",
-    iconClassName: "h-4 w-4",
-  },
-];

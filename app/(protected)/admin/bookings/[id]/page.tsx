@@ -31,6 +31,10 @@ import { ActivityComposer } from "@/features/bookings/components/admin/view-book
 import { buildDealPrefillForBookingForm } from "@/features/bookings/lib/deal-prefill";
 import { boatService } from "@/features/boats/boat.service";
 import { BookingActivityTimeline } from "@/features/bookings/components/admin/view-booking/BookingActivityTimeline";
+import {
+  CharterPartyCard,
+  type CharterPartyMember,
+} from "@/features/bookings/components/admin/view-booking/CharterPartyCard";
 
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { bookingExpenseLineService } from "@/features/bookings/services/booking-expense-line.service";
@@ -66,6 +70,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     admins,
     session,
     pricingTiers,
+    party,
   ] = await Promise.all([
     bookingOpsService.getByBookingId(id),
     bookingExpenseLineService.getLines(id),
@@ -80,7 +85,20 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     booking.bookingStatus === "INQUIRY"
       ? boatService.getAllActivePricingTiers()
       : Promise.resolve([]),
+    // Charter party: sibling boats sailing under the same group.
+    booking.bookingGroupId ? bookingService.getChargeableParty(id) : Promise.resolve(null),
   ]);
+
+  const partyMembers: CharterPartyMember[] =
+    party && party.length > 1
+      ? party.map((m) => ({
+          id: m.booking.id,
+          boatName: m.boat?.name ?? null,
+          bookingStatus: m.booking.bookingStatus,
+          startDateTime: m.booking.startDateTime,
+          totalAmountCents: m.pricing ? Number(m.pricing.totalAmountCents) : null,
+        }))
+      : [];
 
   // ONE activity feed per deal — migrated lead history lives natively in
   // booking_event (lead.* event types), so no merging is needed.
@@ -238,6 +256,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
                  modal so the admin never leaves the deal. */
               <CreateProposalModal
                 pricingTiers={pricingTiers}
+                admins={admins}
                 dealPrefill={buildDealPrefillForBookingForm(booking)}
               />
             ) : (
@@ -292,6 +311,14 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
                 bookingCrew={bookingCrew}
                 crewOptions={crewOptions}
               />
+
+              {partyMembers.length > 1 ? (
+                <CharterPartyCard
+                  members={partyMembers}
+                  currentBookingId={id}
+                  groupName={booking.bookingGroupName ?? null}
+                />
+              ) : null}
 
               <BookingPaymentsFinancialsCard
                 bookingId={id}

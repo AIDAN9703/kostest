@@ -98,6 +98,23 @@ export function parseDateTimeInBoatTimezone(
 }
 
 /**
+ * Format an instant in the BOAT's local time — the only correct clock for a
+ * charter, since the boat leaves a physical dock. Never renders in the
+ * viewer's timezone, so a customer in Chicago and the captain in Miami read
+ * the same departure hour. Include "zzz" in the pattern for the zone label.
+ */
+export function formatBoatLocal(
+  dateTime: Date | string | null | undefined,
+  boatTimezone: SupportedTimezones | string | null | undefined,
+  pattern: string
+): string {
+  if (!dateTime) return "";
+  const d = dateTime instanceof Date ? dateTime : new Date(dateTime);
+  if (isNaN(d.getTime())) return "";
+  return formatInTimeZone(d, getBoatTimezone({ timezone: boatTimezone ?? undefined }), pattern);
+}
+
+/**
  * Get the UTC instants for the start and end of a calendar day in the boat's
  * timezone. Use this to fetch a day's availability so the window matches the
  * boat's local day regardless of the viewer's browser timezone.
@@ -124,7 +141,14 @@ export function calculateEndDateTime(startDateTime: Date, hours: number): Date {
   return end;
 }
 
-/** Value for `<input type="datetime-local" />` representing an instant in the boat's timezone. */
+/**
+ * NOT YET WIRED — these two are the conversion pair for the pending
+ * boat-local INPUT fix (see task: charter times boat-local everywhere).
+ * BookingTripCard's datetime-local inputs currently read/write browser-local,
+ * which stores the wrong instant when an admin edits from another timezone.
+ *
+ * Value for `<input type="datetime-local" />` representing an instant in the boat's timezone.
+ */
 export function bookingInstantToDatetimeLocalInput(
   dateTime: Date | string | null | undefined,
   boatTimezone: SupportedTimezones | string | null | undefined

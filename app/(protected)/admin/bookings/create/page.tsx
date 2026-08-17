@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 
-import { ProposalForm } from "@/features/bookings/components/admin/booking-forms/ProposalForm";
-import { SingleBookingForm } from "@/features/bookings/components/admin/booking-forms/SingleBookingForm";
+import { BookingComposer } from "@/features/bookings/components/admin/booking-forms/BookingComposer";
 import { boatService } from "@/features/boats/boat.service";
 import { bookingService } from "@/features/bookings/services/booking.service";
+import { userService } from "@/features/users/user.service";
 import { buildDealPrefillForBookingForm } from "@/features/bookings/lib/deal-prefill";
 import { buildDatePrefillForBookingForm } from "@/features/bookings/lib/booking-create-date-prefill";
 
@@ -17,8 +17,9 @@ export default async function AdminBookingCreatePage({ searchParams }: Props) {
   const { dealId, inquiryId, date } = await searchParams;
   const targetDealId = (dealId ?? inquiryId)?.trim();
 
-  const [pricingTiers, deal] = await Promise.all([
+  const [pricingTiers, admins, deal] = await Promise.all([
     boatService.getAllActivePricingTiers(),
+    userService.getAdmins(),
     targetDealId ? bookingService.getBookingById(targetDealId) : Promise.resolve(null),
   ]);
 
@@ -44,13 +45,14 @@ export default async function AdminBookingCreatePage({ searchParams }: Props) {
             : "Create a draft booking, optionally sending it to the customer as a proposal."}
         </p>
       </header>
-      {dealPrefill ? (
-        /* Same tailored form the deal page's modal hosts — one proposal
-           experience everywhere. */
-        <ProposalForm pricingTiers={pricingTiers} dealPrefill={dealPrefill} />
-      ) : (
-        <SingleBookingForm pricingTiers={pricingTiers} datePrefill={datePrefill} />
-      )}
+      {/* One composer for every mode — deal upgrade, calendar-date scratch,
+          plain scratch. Add a second boat to create a charter party. */}
+      <BookingComposer
+        pricingTiers={pricingTiers}
+        admins={admins}
+        dealPrefill={dealPrefill}
+        datePrefill={datePrefill}
+      />
     </div>
   );
 }

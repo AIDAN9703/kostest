@@ -30,14 +30,6 @@ export function centsToDollars(cents: number): number {
   return cents / 100;
 }
 
-/**
- * Convert cents to dollars, returning null if input is null/undefined
- */
-export function centsToDollarsOrNull(cents: number | null | undefined): number | null {
-  if (cents === null || cents === undefined) return null;
-  return centsToDollars(cents);
-}
-
 // ============================================================================
 // FORMATTING FUNCTIONS
 // ============================================================================
@@ -80,33 +72,9 @@ export function formatCentsAsWholeDollars(cents: number): string {
 // ARITHMETIC FUNCTIONS (all in cents)
 // ============================================================================
 
-/**
- * Sum an array of cent values, treating null/undefined as 0
- */
-export function sumCents(...values: (number | null | undefined)[]): number {
-  return values.reduce<number>((sum, val) => sum + (val ?? 0), 0);
-}
-
-/**
- * Calculate percentage of a cent amount
- * Returns rounded cents
- */
-export function percentOfCents(cents: number, percentage: number): number {
-  return Math.round(cents * percentage);
-}
-
 // ============================================================================
 // VALIDATION FUNCTIONS
 // ============================================================================
-
-/**
- * Check if a value is a valid cent amount (non-negative integer)
- */
-export function isValidCentAmount(value: unknown): value is number {
-  return typeof value === 'number' && 
-         Number.isInteger(value) && 
-         value >= 0;
-}
 
 /**
  * Parse a dollar string input to cents

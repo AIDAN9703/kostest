@@ -293,9 +293,14 @@ export interface BookingListItem {
   pricingTierId: string | null;
   bookingGroupId: string | null;
   bookingGroupName: string | null;
+  /** Boats sailing under this booking's group (null when not grouped;
+      populated by the board query only). */
+  bookingGroupSize?: number | null;
   boatName: string | null;
   boatCategory: string | null;
   boatMainImage: string | null;
+  /** Boat's IANA zone — every charter time renders boat-local. */
+  boatTimezone: string | null;
 
   // Joined user info (customer)
   userId: string | null;

@@ -16,18 +16,6 @@ import type { Session } from "next-auth";
  */
 
 /**
- * Get the current session
- *
- * Use this in layouts/pages when you just need the session object.
- * No checks or redirects - middleware already handles route protection.
- *
- * @returns Session object or null if not authenticated
- */
-export async function getSession(): Promise<Session | null> {
-  return await auth();
-}
-
-/**
  * Require authentication and return the session
  *
  * Use this in pages when you need guaranteed authentication.
@@ -144,22 +132,4 @@ export async function getAuthenticatedUserId(): Promise<
   }
 
   return { userId: session.user.id };
-}
-
-/**
- * Get authenticated user ID or throw
- *
- * Use this in server actions when you want to throw an error instead of returning it.
- *
- * @returns User ID string
- * @throws Error if not authenticated
- */
-export async function requireAuthenticatedUserId(): Promise<string | undefined> {
-  const result = await getAuthenticatedUserId();
-
-  if (result.error) {
-    throw new Error(result.error);
-  }
-
-  return result.userId;
 }

@@ -1,14 +1,11 @@
 "use client";
 
 import { CalendarDays, Clock, MapPin, MapPinned, Users } from "lucide-react";
+import { formatBoatLocal } from "@/shared/lib/utils/date-helpers";
 import type { DraftProposalData } from "@/features/bookings/lib/draft-proposal.types";
 
 interface DraftProposalTripDetailsProps {
   data: DraftProposalData;
-}
-
-function formatTime(d: Date) {
-  return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 }
 
 function Detail({
@@ -34,15 +31,14 @@ function Detail({
 }
 
 export function DraftProposalTripDetails({ data }: DraftProposalTripDetailsProps) {
-  const start = new Date(data.startDateTime);
-  const end = data.endDateTime ? new Date(data.endDateTime) : null;
-
-  const dateLabel = start.toLocaleDateString(undefined, {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  // Boat-local, always: the charter leaves a physical dock, so every viewer
+  // sees the same departure hour no matter where they're reading from.
+  const tz = data.timezone;
+  const dateLabel = formatBoatLocal(data.startDateTime, tz, "EEE, MMM d, yyyy");
+  const startLabel = formatBoatLocal(data.startDateTime, tz, "h:mm a zzz");
+  const endLabel = data.endDateTime
+    ? formatBoatLocal(data.endDateTime, tz, "h:mm a zzz")
+    : "—";
 
   return (
     <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
@@ -52,8 +48,8 @@ export function DraftProposalTripDetails({ data }: DraftProposalTripDetailsProps
         label="Guests"
         value={`${data.numberOfPassengers} ${data.numberOfPassengers === 1 ? "guest" : "guests"}`}
       />
-      <Detail icon={Clock} label="Start" value={formatTime(start)} />
-      <Detail icon={Clock} label="End" value={end ? formatTime(end) : "—"} />
+      <Detail icon={Clock} label="Start" value={startLabel} />
+      <Detail icon={Clock} label="End" value={endLabel} />
       <Detail icon={MapPin} label="Pickup" value={data.pickupLocation || "To be confirmed"} />
       <Detail icon={MapPinned} label="Dropoff" value={data.dropoffLocation || "—"} />
     </div>

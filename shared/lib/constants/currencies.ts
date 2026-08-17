@@ -38,13 +38,6 @@ export function getCurrencySymbol(currency: string | null | undefined): string {
   return CURRENCY_SYMBOLS[upper] ?? upper;
 }
 
-export function isSupportedCurrency(value: unknown): value is SupportedCurrency {
-  return (
-    typeof value === "string" &&
-    (SUPPORTED_CURRENCIES as readonly string[]).includes(value.toUpperCase())
-  );
-}
-
 /**
  * Normalize a free-form currency string to a supported currency code or the
  * default. Used at boundaries where the value might be missing or lowercase.

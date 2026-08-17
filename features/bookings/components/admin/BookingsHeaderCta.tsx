@@ -5,13 +5,20 @@ import { useQueryStates } from "nuqs";
 import { bookingSearchParams } from "@/features/bookings/searchParams";
 import { NewBookingModal } from "@/features/bookings/components/admin/new-booking-modal";
 import type { PricingTierOption } from "@/features/bookings/components/admin/booking-forms/types";
+import type { AdminOption } from "@/shared/lib/utils/people-display";
 
 /**
  * "Add booking" CTA for the page header — same slot as the inquiries page's
  * New lead button. Honors the ?newBooking=true deep link (dashboard/quick
  * actions) and clears it when the modal closes.
  */
-export function BookingsHeaderCta({ pricingTiers }: { pricingTiers: PricingTierOption[] }) {
+export function BookingsHeaderCta({
+  pricingTiers,
+  admins,
+}: {
+  pricingTiers: PricingTierOption[];
+  admins: AdminOption[];
+}) {
   const [filters, setFilters] = useQueryStates(bookingSearchParams, {
     clearOnDefault: true,
     shallow: false,
@@ -20,6 +27,7 @@ export function BookingsHeaderCta({ pricingTiers }: { pricingTiers: PricingTierO
   return (
     <NewBookingModal
       pricingTiers={pricingTiers}
+      admins={admins}
       triggerLabel="Add booking"
       triggerClassName="gap-1.5 rounded-full px-5 shadow-sm"
       defaultOpen={filters.newBooking === true}

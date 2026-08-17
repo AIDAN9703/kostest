@@ -159,6 +159,28 @@ export class PaymentService {
   }
 
   /**
+   * All payments sharing a checkout session — a charter party (multi-boat
+   * group) checkout writes one PENDING row per booking against one session.
+   */
+  async getPaymentsByStripeCheckoutSessionId(checkoutSessionId: string): Promise<Payment[]> {
+    return db
+      .select()
+      .from(payments)
+      .where(eq(payments.stripeCheckoutSessionId, checkoutSessionId));
+  }
+
+  /**
+   * All payments sharing a payment intent — group rows settled from one
+   * checkout all carry the same intent (used by refund handling).
+   */
+  async getPaymentsByStripeIntentId(stripePaymentIntentId: string): Promise<Payment[]> {
+    return db
+      .select()
+      .from(payments)
+      .where(eq(payments.stripePaymentIntentId, stripePaymentIntentId));
+  }
+
+  /**
    * Mark a payment as succeeded
    */
   async markPaymentSucceeded(id: string, stripePaymentIntentId?: string): Promise<Payment> {

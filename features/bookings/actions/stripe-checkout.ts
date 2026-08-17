@@ -25,29 +25,48 @@ function toAbsoluteImageUrl(url: string | null, baseUrl: string): string | undef
 }
 
 /**
- * Create a Stripe Checkout Session for a booking.
- * Respects the booking's paymentType — if DEPOSIT_ONLY and a deposit amount
- * is configured, the session charges the deposit; otherwise the full amount.
- * Pass chargeType to override: "deposit" charges deposit only, "full" charges full amount.
+ * Create a Stripe Checkout Session for a booking — or its whole charter
+ * party. If the booking belongs to a group, the session charges EVERY boat
+ * in the party (per-boat line items) and writes one PENDING payment row per
+ * booking, all sharing the session id, so per-boat financials stay correct
+ * and the webhook/verify can settle and confirm the entire party.
  *
- * For full payment: line items show charter base, add-ons, cleaning fee, and card processing fee.
+ * Respects the lead booking's paymentType — if DEPOSIT_ONLY and deposits are
+ * configured, the session charges the SUM of per-boat deposits; otherwise
+ * the party total. Pass chargeType to override.
  */
 export async function createCheckoutSessionForBooking(
   bookingId: string,
   options?: { chargeType?: "deposit" | "full" }
 ): Promise<string> {
-  const booking = await bookingService.getBookingWithRelations(bookingId);
-  if (!booking) throw new Error(`Booking not found: ${bookingId}`);
+  const party = await bookingService.getChargeableParty(bookingId);
+  if (!party || party.length === 0) throw new Error(`Booking not found: ${bookingId}`);
 
-  const totalCents = booking.pricing?.totalAmountCents;
-  if (!totalCents || totalCents <= 0) {
-    throw new Error(`Invalid booking amount: ${totalCents}`);
+  const lead = party[0];
+
+  // Checkout is only reachable for priced proposals/requests — an undated
+  // INQUIRY row can never be charged.
+  if (!lead.booking.startDateTime) {
+    throw new Error("This deal has no trip date yet — price and schedule it before charging.");
+  }
+  for (const member of party) {
+    const total = Number(member.pricing?.totalAmountCents ?? 0);
+    if (total <= 0) {
+      throw new Error(
+        `"${member.boat?.name ?? "A boat"}" in this party has no pricing yet — price every boat before charging.`
+      );
+    }
   }
 
-  const hasDeposit = !!(
-    booking.pricing?.depositAmountCents &&
-    Number(booking.pricing.depositAmountCents) > 0
+  const partyTotalCents = party.reduce(
+    (sum, m) => sum + Number(m.pricing!.totalAmountCents),
+    0
   );
+  const partyDepositCents = party.reduce(
+    (sum, m) => sum + Number(m.pricing?.depositAmountCents ?? 0),
+    0
+  );
+  const hasDeposit = partyDepositCents > 0;
 
   let isDeposit: boolean;
   if (options?.chargeType === "deposit") {
@@ -55,46 +74,39 @@ export async function createCheckoutSessionForBooking(
   } else if (options?.chargeType === "full") {
     isDeposit = false;
   } else {
-    isDeposit = booking.paymentType === "DEPOSIT_ONLY" && hasDeposit;
+    isDeposit = lead.booking.paymentType === "DEPOSIT_ONLY" && hasDeposit;
   }
 
-  const chargeCents = isDeposit ? Number(booking.pricing!.depositAmountCents!) : totalCents;
-
+  const chargeCents = isDeposit ? partyDepositCents : partyTotalCents;
   const paymentRecordType: PaymentType = isDeposit ? "DEPOSIT" : "FULL_PAYMENT";
 
-  const currency = booking.pricing?.currency?.toLowerCase() ?? "usd";
+  const currency = lead.pricing?.currency?.toLowerCase() ?? "usd";
   const baseUrl = getBaseUrl();
   const stripe = getStripe();
 
-  // Checkout is only reachable for priced proposals/requests — an undated
-  // INQUIRY row can never be charged.
-  if (!booking.startDateTime) {
-    throw new Error("This deal has no trip date yet — price and schedule it before charging.");
-  }
-  const bookingDate = booking.startDateTime.toLocaleDateString("en-US", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const formatTripDate = (d: Date) =>
+    d.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
 
-  const boatName = booking.boat?.name || "Boat Rental";
-  const boatImageUrl = toAbsoluteImageUrl(booking.boat?.mainImage ?? null, baseUrl);
-  const passengerCount = booking.numberOfPassengers ?? 1;
-  const descriptionParts = [
-    `Date: ${bookingDate}`,
+  const passengerCount = lead.booking.numberOfPassengers ?? 1;
+  const leadDescriptionParts = [
+    `Date: ${formatTripDate(lead.booking.startDateTime)}`,
     `${passengerCount} passenger${passengerCount !== 1 ? "s" : ""}`,
   ];
-  if (booking.pickupLocation) {
-    descriptionParts.push(`Pickup: ${booking.pickupLocation}`);
+  if (lead.booking.pickupLocation) {
+    leadDescriptionParts.push(`Pickup: ${lead.booking.pickupLocation}`);
   }
-  const description = descriptionParts.join(" • ");
+  const leadDescription = leadDescriptionParts.join(" • ");
 
   // Pre-fill the customer email so Stripe doesn't ask for it
   const customerId = await getOrCreateStripeCustomer(
-    booking.customerEmail,
-    booking.customerName,
-    booking.userId ?? undefined
+    lead.booking.customerEmail,
+    lead.booking.customerName,
+    lead.booking.userId ?? undefined
   );
 
   const lineItems: Array<{
@@ -110,107 +122,140 @@ export async function createCheckoutSessionForBooking(
     quantity: number;
   }> = [];
 
-  if (isDeposit) {
-    lineItems.push({
-      price_data: {
-        currency,
-        product_data: {
-          name: `Deposit — ${boatName}`,
-          description,
-          images: boatImageUrl ? [boatImageUrl] : undefined,
+  if (party.length > 1) {
+    // ── Charter party: one line item per boat, totals per boat ──
+    for (const member of party) {
+      const memberName = member.boat?.name ?? "Charter";
+      const memberImage = toAbsoluteImageUrl(member.boat?.mainImage ?? null, baseUrl);
+      const memberAmount = isDeposit
+        ? Number(member.pricing?.depositAmountCents ?? 0)
+        : Number(member.pricing!.totalAmountCents);
+      if (memberAmount <= 0) continue; // deposit mode: boats without a deposit
+      const memberDescription = member.booking.startDateTime
+        ? `Date: ${formatTripDate(member.booking.startDateTime)}`
+        : undefined;
+      lineItems.push({
+        price_data: {
+          currency,
+          product_data: {
+            name: isDeposit ? `Deposit — ${memberName}` : `Charter: ${memberName}`,
+            description: memberDescription,
+            images: memberImage ? [memberImage] : undefined,
+          },
+          unit_amount: memberAmount,
         },
-        unit_amount: chargeCents,
-      },
-      quantity: 1,
-    });
+        quantity: 1,
+      });
+    }
   } else {
-    const basePriceCents = Number(booking.pricing?.basePriceCents ?? 0);
-    const cleaningFeeCents = Number(booking.pricing?.cleaningFeeCents ?? 0);
-    const serviceFeeCents = Number(booking.pricing?.serviceFeeCents ?? 0);
-    const addOns = (booking.addOns ?? []) as Array<{
-      name: string;
-      unitPrice: number;
-      quantity: number;
-      total: number;
-    }>;
+    // ── Single boat: detailed breakdown, unchanged from the classic flow ──
+    const booking = lead.booking;
+    const pricing = lead.pricing!;
+    const boatName = lead.boat?.name || "Boat Rental";
+    const boatImageUrl = toAbsoluteImageUrl(lead.boat?.mainImage ?? null, baseUrl);
 
-    if (basePriceCents > 0) {
+    if (isDeposit) {
       lineItems.push({
         price_data: {
           currency,
           product_data: {
-            name: `Charter: ${boatName}`,
-            description,
-            images: boatImageUrl ? [boatImageUrl] : undefined,
-          },
-          unit_amount: basePriceCents,
-        },
-        quantity: 1,
-      });
-    }
-    if (cleaningFeeCents > 0) {
-      lineItems.push({
-        price_data: {
-          currency,
-          product_data: {
-            name: "Cleaning fee",
-            description: `${boatName}`,
-          },
-          unit_amount: cleaningFeeCents,
-        },
-        quantity: 1,
-      });
-    }
-    for (const addOn of addOns) {
-      const addOnCents = dollarsToCents(addOn.total);
-      if (addOnCents > 0) {
-        lineItems.push({
-          price_data: {
-            currency,
-            product_data: {
-              name: addOn.quantity > 1 ? `${addOn.name} × ${addOn.quantity}` : addOn.name,
-              description: boatName,
-            },
-            unit_amount: addOnCents,
-          },
-          quantity: 1,
-        });
-      }
-    }
-    if (serviceFeeCents > 0) {
-      // Percent is derived from the booking's own pricing snapshot so the label
-      // always matches what was actually charged, even if settings changed since.
-      const feeBaseCents =
-        basePriceCents + cleaningFeeCents + addOns.reduce((sum, a) => sum + dollarsToCents(a.total), 0);
-      const feePercentLabel =
-        feeBaseCents > 0
-          ? ` (${String(Number(((serviceFeeCents / feeBaseCents) * 100).toFixed(2)))}%)`
-          : "";
-      lineItems.push({
-        price_data: {
-          currency,
-          product_data: {
-            name: `Card processing fee${feePercentLabel}`,
-            description: "Applied to subtotal",
-          },
-          unit_amount: serviceFeeCents,
-        },
-        quantity: 1,
-      });
-    }
-    if (lineItems.length === 0) {
-      lineItems.push({
-        price_data: {
-          currency,
-          product_data: {
-            name: `Charter: ${boatName}`,
-            description,
+            name: `Deposit — ${boatName}`,
+            description: leadDescription,
             images: boatImageUrl ? [boatImageUrl] : undefined,
           },
           unit_amount: chargeCents,
         },
         quantity: 1,
       });
+    } else {
+      const basePriceCents = Number(pricing.basePriceCents ?? 0);
+      const cleaningFeeCents = Number(pricing.cleaningFeeCents ?? 0);
+      const serviceFeeCents = Number(pricing.serviceFeeCents ?? 0);
+      const addOns = (booking.addOns ?? []) as Array<{
+        name: string;
+        unitPrice: number;
+        quantity: number;
+        total: number;
+      }>;
+
+      if (basePriceCents > 0) {
+        lineItems.push({
+          price_data: {
+            currency,
+            product_data: {
+              name: `Charter: ${boatName}`,
+              description: leadDescription,
+              images: boatImageUrl ? [boatImageUrl] : undefined,
+            },
+            unit_amount: basePriceCents,
+          },
+          quantity: 1,
+        });
+      }
+      if (cleaningFeeCents > 0) {
+        lineItems.push({
+          price_data: {
+            currency,
+            product_data: {
+              name: "Cleaning fee",
+              description: `${boatName}`,
+            },
+            unit_amount: cleaningFeeCents,
+          },
+          quantity: 1,
+        });
+      }
+      for (const addOn of addOns) {
+        const addOnCents = dollarsToCents(addOn.total);
+        if (addOnCents > 0) {
+          lineItems.push({
+            price_data: {
+              currency,
+              product_data: {
+                name: addOn.quantity > 1 ? `${addOn.name} × ${addOn.quantity}` : addOn.name,
+                description: boatName,
+              },
+              unit_amount: addOnCents,
+            },
+            quantity: 1,
+          });
+        }
+      }
+      if (serviceFeeCents > 0) {
+        // Percent is derived from the booking's own pricing snapshot so the label
+        // always matches what was actually charged, even if settings changed since.
+        const feeBaseCents =
+          basePriceCents + cleaningFeeCents + addOns.reduce((sum, a) => sum + dollarsToCents(a.total), 0);
+        const feePercentLabel =
+          feeBaseCents > 0
+            ? ` (${String(Number(((serviceFeeCents / feeBaseCents) * 100).toFixed(2)))}%)`
+            : "";
+        lineItems.push({
+          price_data: {
+            currency,
+            product_data: {
+              name: `Card processing fee${feePercentLabel}`,
+              description: "Applied to subtotal",
+            },
+            unit_amount: serviceFeeCents,
+          },
+          quantity: 1,
+        });
+      }
+      if (lineItems.length === 0) {
+        lineItems.push({
+          price_data: {
+            currency,
+            product_data: {
+              name: `Charter: ${boatName}`,
+              description: leadDescription,
+              images: boatImageUrl ? [boatImageUrl] : undefined,
+            },
+            unit_amount: chargeCents,
+          },
+          quantity: 1,
+        });
+      }
     }
   }
 
@@ -220,25 +265,33 @@ export async function createCheckoutSessionForBooking(
     line_items: lineItems,
     metadata: {
       bookingId,
-      bookingType: booking.bookingType,
+      bookingGroupId: lead.booking.bookingGroupId ?? "",
+      bookingType: lead.booking.bookingType,
       paymentRecordType,
     },
     success_url: `${baseUrl}/bookings/payment-success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/bookings/payment-success?session_id={CHECKOUT_SESSION_ID}&cancelled=true`,
   });
 
-  // Create a PENDING payment record linked to this checkout session
-  await paymentService.createPayment({
-    payableType: "BOOKING",
-    payableId: bookingId,
-    paymentType: paymentRecordType,
-    amountCents: chargeCents,
-    currency: currency.toUpperCase(),
-    status: "PENDING",
-    paymentMethodType: "STRIPE_CHECKOUT",
-    stripeCheckoutSessionId: session.id,
-    stripeCustomerId: customerId,
-  });
+  // One PENDING payment row PER booking (its own share), all sharing the
+  // session — per-boat financials stay per-row, settle-all keys off session.
+  for (const member of party) {
+    const memberAmount = isDeposit
+      ? Number(member.pricing?.depositAmountCents ?? 0)
+      : Number(member.pricing!.totalAmountCents);
+    if (memberAmount <= 0) continue;
+    await paymentService.createPayment({
+      payableType: "BOOKING",
+      payableId: member.booking.id,
+      paymentType: paymentRecordType,
+      amountCents: memberAmount,
+      currency: currency.toUpperCase(),
+      status: "PENDING",
+      paymentMethodType: "STRIPE_CHECKOUT",
+      stripeCheckoutSessionId: session.id,
+      stripeCustomerId: customerId,
+    });
+  }
 
   return session.url!;
 }

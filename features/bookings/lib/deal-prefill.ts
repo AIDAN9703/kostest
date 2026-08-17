@@ -2,7 +2,7 @@ import type { BookingDetails } from "@/features/bookings/booking.types";
 
 /**
  * Passed from the create/proposal page when `?dealId=` is present — maps an
- * INQUIRY-status deal into initial SingleBookingForm state so pricing it
+ * INQUIRY-status deal into initial BookingComposer state so pricing it
  * UPGRADES that same row into a DRAFT proposal (one table, one id, one
  * history — see docs/UNIFIED_BOOKINGS_PLAN.md).
  */

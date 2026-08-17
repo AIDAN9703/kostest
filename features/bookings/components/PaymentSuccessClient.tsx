@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { format } from "date-fns";
+import { formatBoatLocal } from "@/shared/lib/utils/date-helpers";
 import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/shared/components/ui/button";
 import Link from "next/link";
@@ -57,6 +57,7 @@ interface BookingSummary {
   boatName: string | null;
   boatCategory: string | null;
   boatMainImage: string | null;
+  boatTimezone: string | null;
   totalAmountCents: number | null;
   basePriceCents: number | null;
   cleaningFeeCents: number | null;
@@ -175,8 +176,14 @@ export default function PaymentSuccessClient() {
     );
   }
 
+  // Boat-local: the customer must read the same hour the captain expects them,
+  // wherever they're sitting when the confirmation loads.
   const bookingDate = booking?.startDateTime
-    ? format(new Date(booking.startDateTime), "EEEE, MMM d, yyyy 'at' h:mma")
+    ? formatBoatLocal(
+        booking.startDateTime,
+        booking.boatTimezone,
+        "EEEE, MMM d, yyyy 'at' h:mm a zzz"
+      )
     : null;
 
   const duration =

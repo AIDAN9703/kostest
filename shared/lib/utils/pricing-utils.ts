@@ -1,4 +1,4 @@
-import { Boat, PricingTier } from "../types/types";
+import { PricingTier } from "../types/types";
 import { formatCurrency } from "./general-utils";
 
 import { dollarsToCents, type Cents } from "./money-utils";
@@ -10,72 +10,6 @@ type BoatForPricing = {
   pricingTiers?: PricingTier[] | null;
   hourlyRate?: number | null;
 };
-
-/**
- * Gets the default or best pricing tier for a boat
- * Professional approach to handle pricing from a related table
- */
-export function getDefaultPricingTier(boat: BoatForPricing): PricingTier | null {
-  if (!boat.pricingTiers || boat.pricingTiers.length === 0) {
-    return null;
-  }
-
-  // Prefer only active tiers for any display logic
-  const activeTiers = boat.pricingTiers.filter((tier) => tier.isActive);
-  if (activeTiers.length === 0) {
-    return null;
-  }
-
-  // If any active tier is explicitly marked default, return the cheapest among them
-  const activeDefaultTiers = activeTiers.filter((tier) => tier.isDefault);
-  if (activeDefaultTiers.length > 0) {
-    return activeDefaultTiers.reduce((cheapest, tier) => {
-      if (tier.price < cheapest.price) return tier;
-      if (tier.price === cheapest.price) {
-        // Break ties by the shortest hours to represent a true "starting from"
-        if ((tier.hours ?? Infinity) < (cheapest.hours ?? Infinity)) return tier;
-      }
-      return cheapest;
-    }, activeDefaultTiers[0]);
-  }
-
-  // Otherwise, choose the overall cheapest active tier; tie-break by shortest hours
-  const cheapestActiveTier = activeTiers.reduce((cheapest, tier) => {
-    if (tier.price < cheapest.price) return tier;
-    if (tier.price === cheapest.price) {
-      if ((tier.hours ?? Infinity) < (cheapest.hours ?? Infinity)) return tier;
-    }
-    return cheapest;
-  }, activeTiers[0]);
-
-  return cheapestActiveTier ?? null;
-}
-
-/**
- * Gets the default price for a boat for display purposes only
- * This should only be used for showing a "starting from" price
- * Accepts partial boat objects - only needs pricingTiers and hourlyRate
- */
-export function getBoatDefaultPrice(boat: BoatForPricing): number {
-  // Try from pricing tiers first
-  const defaultTier = getDefaultPricingTier(boat);
-  if (defaultTier) return defaultTier.price;
-
-  // Fallback to deprecated hourlyRate if it exists
-  return boat.hourlyRate || 0;
-}
-
-/**
- * Gets the display hours for a boat's default pricing tier
- * This should only be used for showing a "starting from" duration
- * Accepts partial boat objects - only needs pricingTiers
- */
-export function getBoatDefaultHours(boat: BoatForPricing): string {
-  const defaultTier = getDefaultPricingTier(boat);
-  if (defaultTier) return `${defaultTier.hours}hr`;
-
-  return "hr";
-}
 
 /**
  * Compute the lowest price-per-hour across active tiers for "from $X+/hr" display

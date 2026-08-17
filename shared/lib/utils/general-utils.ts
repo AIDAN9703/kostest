@@ -164,18 +164,6 @@ export function formatPhoneNumberTelHref(phoneNumber: string): string {
 }
 
 /**
- * Converts first and last name to a full name string.
- * Returns null if both are empty/undefined.
- */
-export function formatFirstLastNameToFull(
-  firstName: string | null | undefined,
-  lastName: string | null | undefined
-): string | null {
-  const full = `${firstName ?? ""} ${lastName ?? ""}`.trim();
-  return full || null;
-}
-
-/**
  * Formats a date in a human-readable format
  * @param date The date to format
  * @returns A formatted date string
@@ -225,41 +213,4 @@ export function formatDateTime(date: Date | string | null | undefined): string {
     hour: '2-digit',
     minute: '2-digit',
   });
-}
-
-/** Date + time with seconds (e.g. audit timelines) */
-export function formatDateTimeWithSeconds(
-  date: Date | string | null | undefined
-): string {
-  if (!date) return "Not available";
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-  return dateObj.toLocaleString("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: true,
-  });
-}
-
-
-export function formatBytes(
-  bytes: number,
-  opts: {
-    decimals?: number;
-    sizeType?: 'accurate' | 'normal';
-  } = {}
-) {
-  const { decimals = 0, sizeType = 'normal' } = opts;
-
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-  const accurateSizes = ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB'];
-  if (bytes === 0) return '0 Byte';
-  const i = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / Math.pow(1024, i)).toFixed(decimals)} ${sizeType === 'accurate'
-    ? (accurateSizes[i] ?? 'Bytest')
-    : (sizes[i] ?? 'Bytes')
-    }`;
 }

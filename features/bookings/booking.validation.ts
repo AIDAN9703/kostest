@@ -67,6 +67,23 @@ export const bookingFilterSchema = z.object({
 // Inferred type from validation schema
 export type BookingFilterInput = z.infer<typeof bookingFilterSchema>;
 
+/** Typed expense line captured at booking creation (amounts in cents). */
+export const bookingExpenseLineInputSchema = z.object({
+  category: z.enum(bookingExpenseCategoryEnum.enumValues),
+  amountCents: z.number().int().min(0, "Expense must be 0 or greater"),
+  label: z.string().nullable().optional(),
+  sortOrder: z.number().int().optional(),
+  source: z.enum(bookingExpenseLineSourceEnum.enumValues).optional(),
+});
+
+/** Add-on input schema - matches BookingAddOnInput */
+export const bookingAddOnSchema = z.object({
+  name: z.string().min(1, "Add-on name is required"),
+  description: z.string().nullable().optional(),
+  unitPrice: z.number().min(0.01, "Unit price must be greater than 0"),
+  quantity: z.number().int().min(1),
+});
+
 /**
  * Single booking section - resolved on client (full data per booking)
  * Option C: pricingTierId optional. When null = custom pricing, basePrice + endDateTime required.
@@ -84,6 +101,11 @@ export const bookingSectionSchema = z
     userId: z.string().uuid().nullable().optional(),
     startDateTime: z.string().datetime("Please select start date and time"),
     endDateTime: z.string().datetime().nullable().optional(),
+    /** Per-boat add-ons — each section carries its own. */
+    addOns: z.array(bookingAddOnSchema).optional().default([]),
+    /** Per-boat expenses (owner payout, fuel, crew…) — each boat has its own
+     *  owner and costs, so these never pool onto the lead booking. */
+    expenseLines: z.array(bookingExpenseLineInputSchema).optional().default([]),
   })
   .refine(
     (data) => {
@@ -115,14 +137,6 @@ export const bookingSectionSchema = z
     { message: "Base price required for custom pricing", path: ["basePrice"] }
   );
 
-/** Add-on input schema - matches BookingAddOnInput */
-export const bookingAddOnSchema = z.object({
-  name: z.string().min(1, "Add-on name is required"),
-  description: z.string().nullable().optional(),
-  unitPrice: z.number().min(0.01, "Unit price must be greater than 0"),
-  quantity: z.number().int().min(1),
-});
-
 /**
  * Unified create bookings schema - one or more bookings in a group
  */
@@ -135,7 +149,6 @@ export const createBookingsSchema = z.object({
   dropoffLocation: z.string().nullable().optional(),
   adminNotes: z.string().nullable().optional(),
   bookings: z.array(bookingSectionSchema).min(1, "At least one booking is required"),
-  lineItems: z.array(bookingAddOnSchema).optional().default([]),
   groupName: z.string().nullable().optional(),
   allowPayment: z.boolean().optional().default(false),
   paymentType: z.enum(["DEPOSIT_ONLY", "FULL_PAYMENT"]).optional().default("FULL_PAYMENT"),
@@ -146,32 +159,26 @@ export const createBookingsSchema = z.object({
 
 export type CreateBookingsInput = z.infer<typeof createBookingsSchema>;
 
-/** Typed expense line captured at booking creation (amounts in cents). */
-export const bookingExpenseLineInputSchema = z.object({
-  category: z.enum(bookingExpenseCategoryEnum.enumValues),
-  amountCents: z.number().int().min(0, "Expense must be 0 or greater"),
-  label: z.string().nullable().optional(),
-  sortOrder: z.number().int().optional(),
-  source: z.enum(bookingExpenseLineSourceEnum.enumValues).optional(),
-});
-
 /**
- * Unified "new booking modal" schema — a single booking plus the financial/ops
- * data (owner payout + other expenses, GMV, source, sales agent) that the admin
- * flow used to capture only later on the booking detail page.
+ * THE booking-creation schema (used by every door: create page, deal-page
+ * proposal modal, dashboard/header modal). One or more boat sections — more
+ * than one makes a charter party — plus the financial/ops data (owner payout,
+ * other expenses, GMV, source, sales agent) captured up front.
  */
 export const createBookingFullSchema = z.object({
-  booking: bookingSectionSchema,
+  /** INQUIRY-status deal being priced — that row is UPGRADED to the DRAFT
+   *  proposal in place (same id, same history) instead of a new row. */
+  dealId: z.string().uuid().nullable().optional(),
+  bookings: z.array(bookingSectionSchema).min(1, "At least one boat is required"),
   numberOfPassengers: z.number().int().min(1, "Must have at least 1 passenger"),
   pickupLocation: z.string().nullable().optional(),
   dropoffLocation: z.string().nullable().optional(),
   adminNotes: z.string().nullable().optional(),
-  lineItems: z.array(bookingAddOnSchema).optional().default([]),
-  // Financial / ops (booking_ops + booking_expense_line)
-  gmvCents: z.number().int().min(0).nullable().optional(),
+  // Deal-level ops attribution (applied to every boat in the party).
+  // GMV is NOT accepted from the client — it's derived per boat from that
+  // boat's own pricing (charter gross = total − card fee).
   source: z.string().nullable().optional(),
   agentCode: z.string().nullable().optional(),
-  expenseLines: z.array(bookingExpenseLineInputSchema).optional().default([]),
   // Send options (only the Stripe proposal path is wired today)
   allowPayment: z.boolean().optional().default(false),
   paymentType: z.enum(["DEPOSIT_ONLY", "FULL_PAYMENT"]).optional().default("FULL_PAYMENT"),

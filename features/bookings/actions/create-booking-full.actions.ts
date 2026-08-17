@@ -16,8 +16,8 @@ import { sendSms } from "@/shared/lib/services/twilio.service";
 import { getBaseUrl } from "@/shared/lib/utils/base-url";
 import type { ActionResponse } from "@/shared/lib/types/types";
 import { db } from "@/database/db";
-import { boats } from "@/database/schema";
-import { eq } from "drizzle-orm";
+import { boats, bookingPricing } from "@/database/schema";
+import { eq, inArray } from "drizzle-orm";
 
 /** Boat name for the proposal email's yacht card — best-effort, never blocks the send. */
 async function getBoatName(boatId: string | undefined | null): Promise<string | undefined> {
@@ -49,14 +49,15 @@ type CreateBookingFullResult = {
 };
 
 /**
- * Unified "new booking modal" action.
+ * THE booking-creation action — every door (create page, deal-page proposal
+ * modal, dashboard/header modal) submits here via BookingComposer.
  *
- * Wraps the existing booking pipeline (createBookings → pricing → status history
- * → booking.created event) and additionally persists the financial/ops data the
- * admin captures up front: owner payout + other expense lines (booking_expense_line)
- * and GMV / source / sales agent (booking_ops). Always creates a SINGLE booking —
- * no booking group is involved. Reuses the same Stripe-link proposal email/SMS path
- * as createBookingsAction.
+ * Wraps the booking pipeline (createBookings → pricing → status history →
+ * booking.created event): one section = a single booking, multiple sections =
+ * a charter party (group container + one row per boat, one proposal link, one
+ * payment for the lot). Also persists the financial/ops data captured up
+ * front (owner payout + expense lines, GMV / source / sales agent) against
+ * the lead booking, and optionally emails/texts the proposal on create.
  */
 export async function createBookingFull(
   rawInput: CreateBookingFullInput
@@ -74,17 +75,21 @@ export async function createBookingFull(
     const sendProposalSms = input.sendProposalSms ?? false;
     const publishNow = sendProposalEmail || sendProposalSms;
 
-    // 1. Core booking (single element → no group). Reuses all existing
-    //    pricing + status-history + booking.created audit behavior.
+    // 1. Core booking(s). One section = classic single booking; multiple
+    //    sections = a charter party (group container + one row per boat).
+    //    Reuses all existing pricing + status-history + audit behavior.
+    const isParty = input.bookings.length > 1;
     const result = await bookingService.createBookings(
       {
+        dealId: input.dealId ?? null,
         numberOfPassengers: input.numberOfPassengers,
         pickupLocation: input.pickupLocation ?? null,
         dropoffLocation: input.dropoffLocation ?? null,
         adminNotes: input.adminNotes ?? null,
-        bookings: [input.booking],
-        lineItems: input.lineItems ?? [],
-        groupName: null,
+        bookings: input.bookings,
+        groupName: isParty
+          ? `${input.bookings[0].customerName}'s charter party`
+          : null,
         allowPayment: input.allowPayment ?? false,
         paymentType: input.paymentType ?? "FULL_PAYMENT",
         sendProposalEmail,
@@ -99,73 +104,115 @@ export async function createBookingFull(
       return { success: false, error: "Booking was not created" };
     }
 
-    // 2. Expense lines (owner payout + categorized others). saveLines also
-    //    aggregates OWNER_PAYOUT into booking_ops.expense_cents.
-    if (input.expenseLines.length > 0) {
-      await bookingExpenseLineService.saveLines(
-        bookingId,
-        input.expenseLines.map((line, index) => ({
-          category: line.category,
-          amountCents: line.amountCents,
-          label: line.label ?? null,
-          sortOrder: line.sortOrder ?? index,
-          source: line.source ?? "MANUAL",
-        }))
-      );
+    // 2-4. Per-boat financials. Every boat in a charter party has its own
+    //      owner, own costs, and own share of the gross — pooling them onto
+    //      the lead row double-counts GMV on the board and leaves siblings
+    //      blank. GMV is DERIVED from each boat's own pricing (charter gross
+    //      = total − card processing fee), never taken from the client.
+    const pricingRows = await db
+      .select({
+        bookingId: bookingPricing.bookingId,
+        totalAmountCents: bookingPricing.totalAmountCents,
+        serviceFeeCents: bookingPricing.serviceFeeCents,
+      })
+      .from(bookingPricing)
+      .where(inArray(bookingPricing.bookingId, result.bookingIds));
+    const pricingByBooking = new Map(pricingRows.map((r) => [r.bookingId, r]));
+
+    const sourceOverride = input.source?.trim() || null;
+    const agentCode = input.agentCode?.trim() || null;
+    let partyGmvCents = 0;
+    let partyOwnerPayoutCents = 0;
+
+    for (const [index, id] of result.bookingIds.entries()) {
+      const section = input.bookings[index];
+      const lines = section?.expenseLines ?? [];
+
+      // Expense lines first: saveLines aggregates OWNER_PAYOUT into
+      // booking_ops.expense_cents, which the ops upsert below folds into
+      // revenue.
+      if (lines.length > 0) {
+        await bookingExpenseLineService.saveLines(
+          id,
+          lines.map((line, i) => ({
+            category: line.category,
+            amountCents: line.amountCents,
+            label: line.label ?? null,
+            sortOrder: line.sortOrder ?? i,
+            source: line.source ?? "MANUAL",
+          }))
+        );
+        partyOwnerPayoutCents += lines
+          .filter((l) => l.category === "OWNER_PAYOUT")
+          .reduce((sum, l) => sum + l.amountCents, 0);
+      }
+
+      const pricing = pricingByBooking.get(id);
+      const gmvCents =
+        pricing != null
+          ? Number(pricing.totalAmountCents) - Number(pricing.serviceFeeCents ?? 0)
+          : null;
+      if (gmvCents != null) partyGmvCents += gmvCents;
+
+      if (gmvCents != null || sourceOverride || agentCode) {
+        await bookingOpsService.upsert(id, {
+          gmvCents,
+          sourceOverride,
+          agentCode,
+        });
+      }
     }
 
-    // 3. Ops fields (GMV, source, sales agent).
-    const hasOps =
-      input.gmvCents != null ||
-      (input.source?.trim() ?? "") !== "" ||
-      (input.agentCode?.trim() ?? "") !== "";
-    if (hasOps) {
-      await bookingOpsService.upsert(bookingId, {
-        gmvCents: input.gmvCents ?? null,
-        sourceOverride: input.source?.trim() || null,
-        agentCode: input.agentCode?.trim() || null,
-      });
-    }
-
-    // 4. Audit the financials capture (creation itself is already logged as
-    //    booking.created via createInitialHistory).
-    if (input.expenseLines.length > 0 || hasOps) {
-      const ownerPayoutCents = input.expenseLines
-        .filter((l) => l.category === "OWNER_PAYOUT")
-        .reduce((sum, l) => sum + l.amountCents, 0);
+    // Audit the financials capture once, on the lead (creation itself is
+    // already logged as booking.created via createInitialHistory).
+    const totalExpenseLines = input.bookings.reduce(
+      (sum, b) => sum + (b.expenseLines?.length ?? 0),
+      0
+    );
+    if (totalExpenseLines > 0 || sourceOverride || agentCode) {
       await bookingEventsService.logEvent({
         bookingId,
         eventType: BOOKING_EVENT_TYPES.UPDATED,
         actorType: "admin",
         actorId: adminId,
         channel: "admin_portal",
-        displayMessage: "Financials captured at booking creation",
+        displayMessage:
+          result.bookingIds.length > 1
+            ? `Financials captured for ${result.bookingIds.length}-boat charter party`
+            : "Financials captured at booking creation",
         newState: {
-          gmvCents: input.gmvCents ?? null,
-          ownerPayoutCents,
-          expenseLineCount: input.expenseLines.length,
-          source: input.source?.trim() || null,
-          agentCode: input.agentCode?.trim() || null,
+          boats: result.bookingIds.length,
+          partyGmvCents,
+          partyOwnerPayoutCents,
+          expenseLineCount: totalExpenseLines,
+          source: sourceOverride,
+          agentCode,
         },
       });
     }
 
-    // 5. Proposal send (only Stripe-link path is wired). Mirrors createBookingsAction.
+    // 5. Proposal send (only the Stripe-link path is wired).
     const baseUrl = getBaseUrl();
     const draftLink = result.publicToken
       ? `${baseUrl}/bookings/draft/${result.publicToken}`
       : null;
 
     if (draftLink && publishNow) {
-      const b = input.booking;
+      const b = input.bookings[0];
       if (sendProposalEmail) {
-        const boatName = await getBoatName(input.booking.boatId);
+        const leadBoatName = await getBoatName(b.boatId);
+        // Parties name the fleet honestly: "52ft Prestige + 1 more".
+        const boatName = isParty
+          ? leadBoatName
+            ? `${leadBoatName} + ${input.bookings.length - 1} more`
+            : undefined
+          : leadBoatName;
         sendDraftBookingEmail({
           customerName: b.customerName,
           customerEmail: b.customerEmail,
           draftLink,
           boatName,
-          isGroup: false,
+          isGroup: isParty,
         }).catch((err) => console.error("Draft email failed:", err));
       }
       if (sendProposalSms && b.customerPhone?.trim()) {
