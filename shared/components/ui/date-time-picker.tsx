@@ -3,6 +3,7 @@
 import * as React from "react";
 import { format } from "date-fns";
 import { ChevronDownIcon } from "lucide-react";
+import { convertBoatDateTimeToUTC, formatBoatLocal } from "@/shared/lib/utils/date-helpers";
 
 import { cn } from "@/shared/lib/utils/general-utils";
 import { Button } from "@/shared/components/ui/button";
@@ -43,6 +44,12 @@ export interface DateTimePickerProps {
   disabled?: boolean;
   className?: string;
   id?: string;
+  /**
+   * The BOAT's IANA zone. What the user types is that boat's wall-clock time —
+   * never the browser's — so an admin in another timezone books the hour the
+   * captain actually expects. Falls back to the fleet default when unset.
+   */
+  timeZone?: string | null;
 }
 
 export function DateTimePicker({
@@ -54,6 +61,7 @@ export function DateTimePicker({
   disabled,
   className,
   id,
+  timeZone,
 }: DateTimePickerProps) {
   const [open, setOpen] = React.useState(false);
   const [time, setTime] = React.useState("09:00");
@@ -66,40 +74,39 @@ export function DateTimePicker({
 
   const date = value ? new Date(value) : undefined;
   const isValid = date && !isNaN(date.getTime());
+  // Boat-local wall clock for the stored instant (e.g. "2026-08-17", "08:00").
+  const boatDateStr = isValid ? formatBoatLocal(date!, timeZone, "yyyy-MM-dd") : "";
+  const boatTimeStr = isValid ? formatBoatLocal(date!, timeZone, "HH:mm") : "";
+  const zoneLabel = formatBoatLocal(date ?? new Date(), timeZone, "zzz");
 
   React.useEffect(() => {
-    if (!value) return;
-    const d = new Date(value);
-    if (isNaN(d.getTime())) return;
-    const mins = d.getMinutes();
-    const snapped = Math.round(mins / 30) * 30;
-    const h = snapped === 60 ? d.getHours() + 1 : d.getHours();
+    if (!boatTimeStr) return;
+    const [hh, mm] = boatTimeStr.split(":").map(Number);
+    const snapped = Math.round(mm / 30) * 30;
+    const h = snapped === 60 ? hh + 1 : hh;
     const m = snapped === 60 ? 0 : snapped;
     setTime(`${String(h % 24).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
-  }, [value]);
+  }, [boatTimeStr]);
 
-  const apply = (d: Date, t: string) => {
-    const [h, m] = t.split(":").map(Number);
-    d.setHours(h, m, 0, 0);
-    // Use toISOString() so the client sends UTC. format() produced "yyyy-MM-dd'T'HH:mm"
-    // without timezone, which the server then parsed as its local time (UTC in prod),
-    // causing a 5-hour shift for EST users (9am → 4am).
-    onChange?.(d.toISOString());
+  /** dateStr is a plain calendar day; both are read as the BOAT's wall clock. */
+  const apply = (dateStr: string, t: string) => {
+    const iso = convertBoatDateTimeToUTC(dateStr, t, timeZone ?? null);
+    if (iso) onChange?.(iso);
   };
 
   const onDateSelect = (d: Date | undefined) => {
     if (!d) return;
-    apply(new Date(d), time);
+    // The calendar hands back local midnight — take its calendar fields as-is.
+    apply(format(d, "yyyy-MM-dd"), time);
   };
 
   const onTimeSelect = (t: string) => {
     setTime(t);
-    const base = isValid ? new Date(date!) : new Date();
-    apply(base, t);
+    apply(boatDateStr || format(new Date(), "yyyy-MM-dd"), t);
   };
 
   const display = isValid
-    ? `${format(date!, "MMM d, yyyy")} at ${to12Hour(time)}`
+    ? `${formatBoatLocal(date!, timeZone, "MMM d, yyyy")} at ${to12Hour(time)} ${zoneLabel}`
     : placeholder;
 
   return (
@@ -128,7 +135,7 @@ export function DateTimePicker({
           <Calendar
             mode="single"
             navLayout="around"
-            selected={isValid ? date! : undefined}
+            selected={boatDateStr ? new Date(`${boatDateStr}T00:00:00`) : undefined}
             onSelect={onDateSelect}
             initialFocus
           />

@@ -13,7 +13,26 @@ import {
 import { DateTimePicker } from "@/shared/components/ui/date-time-picker";
 import { BoatSelect } from "@/features/boats/components/BoatSelect";
 import { formatCurrency } from "@/shared/lib/utils/general-utils";
+import {
+  bookingInstantToDatetimeLocalInput,
+  datetimeLocalInputToUtcISO,
+} from "@/shared/lib/utils/date-helpers";
 import type { BookingSectionData, PricingTierOption } from "../types";
+
+/**
+ * Keep the WALL TIME when the boat (and so the timezone) changes: an admin who
+ * typed 8:00 for a Miami boat still means 8:00 after switching to a Chicago
+ * one — the instant moves, the clock reading doesn't.
+ */
+function reanchorWallTime(
+  iso: string,
+  fromTz: string | null,
+  toTz: string | null
+): string {
+  if (!iso || fromTz === toTz) return iso;
+  const wall = bookingInstantToDatetimeLocalInput(iso, fromTz);
+  return datetimeLocalInputToUtcISO(wall, toTz) ?? iso;
+}
 
 function getDuration(start: string, end: string): { text: string; isError: boolean } {
   const s = new Date(start);
@@ -84,6 +103,8 @@ export function BookingSectionFields({
 
   const tierOptions = tiersByBoat[section.boatId] || [];
   const hasTiers = section.boatId && tierOptions.length > 0;
+  // Trip times are entered in the BOAT's local time, never the browser's.
+  const boatTimeZone = section.boat?.timezone ?? null;
 
   return (
     <div className="space-y-4">
@@ -95,12 +116,26 @@ export function BookingSectionFields({
           onChange={(boatId, boat) => {
             const tiers = tiersByBoat[boatId] || [];
             const defaultTier = tiers.find((t) => t.isDefault) ?? tiers[0];
+            const nextTz = boat?.timezone ?? null;
             onChange({
               boatId,
               boat: boat ?? undefined,
               pricingTierId: section.usePricingTier ? (defaultTier?.id ?? "") : "",
               basePrice: section.usePricingTier ? (defaultTier?.price ?? 0) : section.basePrice,
               depositAmount: boat?.depositAmount ?? null,
+              // Dates already typed keep their wall time under the new zone.
+              ...(section.startDateTime
+                ? {
+                    startDateTime: reanchorWallTime(
+                      section.startDateTime,
+                      boatTimeZone,
+                      nextTz
+                    ),
+                  }
+                : {}),
+              ...(section.endDateTime
+                ? { endDateTime: reanchorWallTime(section.endDateTime, boatTimeZone, nextTz) }
+                : {}),
             });
           }}
         />
@@ -195,13 +230,21 @@ export function BookingSectionFields({
 
       {(!showSameDatesOption || !sameAsFirstBooking) && (
         <div className="space-y-2">
-          <Label>Date & Time</Label>
+          <Label>
+            Date &amp; Time
+            {section.boatId ? (
+              <span className="ml-2 font-normal text-muted-foreground">
+                boat local time
+              </span>
+            ) : null}
+          </Label>
           {section.usePricingTier ? (
             <div className="space-y-1">
               <DateTimePicker
                 value={startDateTime}
                 onChange={setStart}
                 placeholder="Select start"
+                timeZone={boatTimeZone}
                 required
               />
             </div>
@@ -213,12 +256,18 @@ export function BookingSectionFields({
                   value={startDateTime}
                   onChange={setStart}
                   placeholder="Select start"
+                  timeZone={boatTimeZone}
                   required
                 />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs font-normal">End *</Label>
-                <DateTimePicker value={endDateTime} onChange={setEnd} placeholder="Select end" />
+                <DateTimePicker
+                  value={endDateTime}
+                  onChange={setEnd}
+                  placeholder="Select end"
+                  timeZone={boatTimeZone}
+                />
               </div>
             </div>
           )}

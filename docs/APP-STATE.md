@@ -63,6 +63,11 @@ America/Santo_Domingo (4), **NULL (31 — these silently default to New York)**.
 - **Proposal → payment → confirmation** (verified end to end): price an inquiry →
   branded proposal email → public proposal page (accept / request changes) → Stripe
   Checkout → payment settles → confirmation email → branded success page.
+- **Boat-local charter times (input AND display)** — what an admin types is the boat's
+  wall clock, never the browser's, so booking a Miami charter from anywhere stores the
+  Miami hour; every surface (proposal page, emails, board, detail page) displays
+  boat-local with a zone label. Verified across New York / Chicago / Nassau /
+  Santo Domingo, including the no-DST Santo Domingo case.
 - **Charter parties (multi-boat)** — one group, a row per boat, one proposal link, one
   Stripe session with per-boat line items, one payment row per boat, webhook/verify
   confirm every boat, full refunds cancel the whole party. Board shows a violet
@@ -76,10 +81,11 @@ America/Santo_Domingo (4), **NULL (31 — these silently default to New York)**.
 
 ## What's broken or incomplete
 
-**🔴 Timezone INPUT.** Typed times are interpreted in the *browser's* timezone, not the
-boat's. Typing 8:00 AM from Costa Rica stores a 10:00 AM Miami charter. DISPLAY is fixed
-everywhere (boat-local + zone label); input is not. Workaround until fixed: type
-boat-local time, or set the machine clock to the boat's zone.
+**🔴 Boat timezone data gaps.** The `timezone` enum only contains Americas zones, so
+**24 Mykonos boats (need Europe/Athens) and 1 Singapore boat (need Asia/Singapore)
+cannot be set correctly** — they silently fall back to America/New_York, 7 and 12 hours
+off. Fixing needs an enum migration. Other NULL-timezone boats (Florida, CT, Punta Cana)
+can be backfilled now with `scripts/backfill-boat-timezones.sql`.
 
 **🟠 Boat-page inquiry sends no acknowledgment email.** Only general + term-charter do.
 
@@ -123,5 +129,5 @@ PaymentSuccessClient (set-state-in-effect), plus `any` types in a few services.
 2. Confirm the Stripe webhook is registered for the prod domain — **refunds only sync
    via webhook**; the verify fallback covers checkout only.
 3. Decide the SMS provider question.
-4. Fix the timezone input, or brief whoever creates bookings to type boat-local time.
-5. Set `timezone` on the 31 boats where it's NULL.
+4. Run `scripts/backfill-boat-timezones.sql`, then migrate the `timezone` enum to add
+   Europe/Athens and Asia/Singapore and set the Mykonos + Singapore boats.

@@ -12,7 +12,6 @@ import { NewBoat } from '@/database/types';
 //utils
 import { toDateOrNull } from '@/shared/lib/utils/date-helpers';
 import { resolveAdminListPagination } from '@/shared/admin/list-pagination';
-import { isValidUUID } from '@/shared/lib/utils/general-utils';
 
 
 // Custom type for our manipulation payload for boats
@@ -42,6 +41,7 @@ export class BoatService {
         cleaningFee: boats.cleaningFee,
         depositAmount: boats.depositAmount,
         crewRequired: boats.crewRequired,
+        timezone: boats.timezone,
       })
       .from(boats)
       .orderBy(desc(boats.lengthFt))
@@ -235,7 +235,7 @@ export class BoatService {
           locationCoordinates = { lat: parseFloat(lat), lng: parseFloat(lng) };
         }
       }
-    } catch (error) {
+    } catch {
       // Continue without coordinates if there's an error
     }
 

@@ -23,6 +23,10 @@ import {
 } from "@/features/bookings/components/admin/OpsCrewAssignment";
 import { useToast } from "@/shared/lib/hooks/use-toast";
 import { formatDate } from "@/shared/lib/utils/general-utils";
+import {
+  bookingInstantToDatetimeLocalInput,
+  datetimeLocalInputToUtcISO,
+} from "@/shared/lib/utils/date-helpers";
 
 export interface BookingTripDetailsSnapshot {
   /** Trip fields are null while the deal is an INQUIRY without a set trip. */
@@ -60,21 +64,6 @@ interface BookingTripCardProps {
   crewOptions: CrewAssignmentOption[];
 }
 
-/** ISO → value for <input type="datetime-local"> in the admin's local time. */
-function toLocalInputValue(iso: string | null): string {
-  if (!iso) return "";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-function fromLocalInputValue(value: string): string | null {
-  if (!value) return null;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
-}
-
 function formatTripDateTime(iso: string | null, timezone: string | null): string {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -109,16 +98,20 @@ export function BookingTripCard({
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
 
-  const [start, setStart] = useState(toLocalInputValue(trip.startDateTime));
-  const [end, setEnd] = useState(toLocalInputValue(trip.endDateTime));
+  // Edited in the BOAT's local time — an admin in another timezone must not
+  // silently shift the trip by their own offset.
+  const tz = trip.boatTimezone;
+  const toInput = (iso: string | null) => bookingInstantToDatetimeLocalInput(iso, tz);
+  const [start, setStart] = useState(() => toInput(trip.startDateTime));
+  const [end, setEnd] = useState(() => toInput(trip.endDateTime));
   const [passengers, setPassengers] = useState(trip.numberOfPassengers);
   const [needsCaptain, setNeedsCaptain] = useState(Boolean(trip.needsCaptain));
   const [pickup, setPickup] = useState(trip.pickupLocation ?? "");
   const [dropoff, setDropoff] = useState(trip.dropoffLocation ?? "");
 
   const dirty =
-    start !== toLocalInputValue(trip.startDateTime) ||
-    end !== toLocalInputValue(trip.endDateTime) ||
+    start !== toInput(trip.startDateTime) ||
+    end !== toInput(trip.endDateTime) ||
     passengers !== trip.numberOfPassengers ||
     needsCaptain !== Boolean(trip.needsCaptain) ||
     pickup !== (trip.pickupLocation ?? "") ||
@@ -129,17 +122,17 @@ export function BookingTripCard({
       const updates: Array<{ field: string; value: unknown }> = [];
       // Dates save as ONE atomic window — sending start and end separately
       // let the DB see end-before-start mid-save and reject the edit.
-      const startChanged = start !== toLocalInputValue(trip.startDateTime);
-      const endChanged = end !== toLocalInputValue(trip.endDateTime);
+      const startChanged = start !== toInput(trip.startDateTime);
+      const endChanged = end !== toInput(trip.endDateTime);
       if (startChanged || endChanged) {
-        const isoStart = fromLocalInputValue(start);
+        const isoStart = datetimeLocalInputToUtcISO(start, tz);
         if (!isoStart) {
           toast({ title: "Invalid start date", variant: "destructive" });
           return;
         }
         updates.push({
           field: "tripWindow",
-          value: { startDateTime: isoStart, endDateTime: fromLocalInputValue(end) },
+          value: { startDateTime: isoStart, endDateTime: datetimeLocalInputToUtcISO(end, tz) },
         });
       }
       if (passengers !== trip.numberOfPassengers) {
@@ -215,7 +208,7 @@ export function BookingTripCard({
           <div className="space-y-4 border-t border-border/50 pt-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label className="text-xs">From</Label>
+                <Label className="text-xs">From (boat local)</Label>
                 <Input
                   type="datetime-local"
                   value={start}
@@ -223,7 +216,7 @@ export function BookingTripCard({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">To</Label>
+                <Label className="text-xs">To (boat local)</Label>
                 <Input
                   type="datetime-local"
                   value={end}

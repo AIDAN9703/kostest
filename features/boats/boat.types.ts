@@ -38,6 +38,8 @@ export interface BoatForAdminSelect {
   cleaningFee: number | null;
   depositAmount: number | null;
   crewRequired: boolean | null;
+  /** Boat's IANA zone — trip times are entered and shown in the boat's local time. */
+  timezone: string | null;
 }
 
 /**
