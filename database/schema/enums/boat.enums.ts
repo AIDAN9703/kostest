@@ -31,6 +31,10 @@ export const timezoneEnum = pgEnum('timezone', [
   'America/Barbados',      // Eastern Caribbean
   'America/Cancun',        // Mexico Caribbean coast
   
+  // Europe & Asia — international fleet (Mykonos, Singapore)
+  'Europe/Athens',         // Greece (Mykonos)
+  'Asia/Singapore',        // Singapore
+
   // Canada Major Zones
   'America/Toronto',       // Eastern Canada
   'America/Vancouver',     // Pacific Canada

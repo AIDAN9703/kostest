@@ -51,14 +51,15 @@ search, blog, add-ons, auth, admin, booking-groups, app-settings, `_marketing`.
 | Zone | Prod | Dev |
 |---|---|---|
 | America/New_York | 215 | 192 |
+| Europe/Athens (Mykonos) | 24 | 0 |
 | America/Nassau | 8 | 8 |
 | America/Chicago | 7 | 7 |
 | America/Santo_Domingo | 5 | 5 |
-| **unset** | **37** | **11** |
+| Asia/Singapore | 1 | 1 |
+| **unset** | **12** | **10** |
 
-Unset boats fall back to America/New_York. Prod's 37 break down as: 24 Mykonos and
-1 Singapore (**blocked — the enum has no Europe/Asia values**), 2 La Coloma Marina
-(location ambiguous), 10 with no location label.
+Unset boats fall back to America/New_York. Prod's remaining 12: 2 at La Coloma Marina
+(location ambiguous) and 10 with no location label — both awaiting the owner's call.
 
 ---
 
@@ -92,11 +93,9 @@ Unset boats fall back to America/New_York. Prod's 37 break down as: 24 Mykonos a
 
 ## What's broken or incomplete
 
-**🔴 Boat timezone data gaps.** The `timezone` enum only contains Americas zones, so
-**24 Mykonos boats (need Europe/Athens) and 1 Singapore boat (need Asia/Singapore)
-cannot be set correctly** — they silently fall back to America/New_York, 7 and 12 hours
-off. Fixing needs an enum migration. Other NULL-timezone boats (Florida, CT, Punta Cana)
-can be backfilled now with `scripts/backfill-boat-timezones.sql`.
+**🟡 12 prod boats still have no timezone** (2 "La Coloma Marina", 10 with no location
+label) and so fall back to America/New_York. Needs the owner to say where they are;
+set them with `scripts/backfill-boat-timezones.sql` as a template.
 
 **🟠 Boat-page inquiry sends no acknowledgment email.** Only general + term-charter do.
 
@@ -140,5 +139,5 @@ PaymentSuccessClient (set-state-in-effect), plus `any` types in a few services.
 2. Confirm the Stripe webhook is registered for the prod domain — **refunds only sync
    via webhook**; the verify fallback covers checkout only.
 3. Decide the SMS provider question.
-4. Run `scripts/backfill-boat-timezones.sql`, then migrate the `timezone` enum to add
-   Europe/Athens and Asia/Singapore and set the Mykonos + Singapore boats.
+4. Set timezones on the last 12 boats (2 La Coloma, 10 unlabelled) once their
+   locations are known.
