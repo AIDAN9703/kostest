@@ -432,7 +432,12 @@ export class BookingService {
     const [boatsRows, pricingRows] = await Promise.all([
       boatIds.length
         ? db
-            .select({ id: boats.id, name: boats.name, mainImage: boats.mainImage })
+            .select({
+              id: boats.id,
+              name: boats.name,
+              mainImage: boats.mainImage,
+              timezone: boats.timezone,
+            })
             .from(boats)
             .where(inArray(boats.id, boatIds))
         : Promise.resolve([]),

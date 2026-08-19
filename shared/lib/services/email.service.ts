@@ -636,8 +636,11 @@ export async function sendBookingApprovalEmail(
     return false;
   }
 
-  // Parse dates for display
-  const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(booking.startDateTime);
+  // Boat-local: the customer must read the hour the captain expects them.
+  const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(
+    booking.startDateTime,
+    { timezone: booking.boatTimezone }
+  );
   
   const formattedDate = startDate && startTime
     ? `${format(startDate, 'MMMM d, yyyy')} at ${formatTime12Hour(startTime)}`
@@ -854,8 +857,11 @@ export async function sendBookingConfirmationEmail(
     return false;
   }
 
-  // Parse dates for display
-  const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(booking.startDateTime);
+  // Boat-local: the customer must read the hour the captain expects them.
+  const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(
+    booking.startDateTime,
+    { timezone: booking.boatTimezone }
+  );
   
   const formattedDate = startDate && startTime
     ? `${format(startDate, 'MMMM d, yyyy')} at ${formatTime12Hour(startTime)}`

@@ -3,7 +3,7 @@ import { Ship } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
-import { formatDate } from "@/shared/lib/utils/general-utils";
+import { formatBoatLocal } from "@/shared/lib/utils/date-helpers";
 import type { BookingStatus } from "@/database/types";
 
 export interface CharterPartyMember {
@@ -12,6 +12,8 @@ export interface CharterPartyMember {
   bookingStatus: BookingStatus;
   startDateTime: Date | null;
   totalAmountCents: number | null;
+  /** Party boats can sit in different zones — each renders in its own. */
+  boatTimezone: string | null;
 }
 
 const STATUS_BADGE: Partial<Record<BookingStatus, string>> = {
@@ -22,10 +24,9 @@ const STATUS_BADGE: Partial<Record<BookingStatus, string>> = {
   COMPLETED: "bg-muted text-muted-foreground",
 };
 
-function formatTripStart(d: Date | null): string {
+function formatTripStart(d: Date | null, timezone: string | null): string {
   if (!d) return "—";
-  const time = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-  return `${formatDate(d)} · ${time}`;
+  return formatBoatLocal(d, timezone, "MMM d, yyyy · h:mm a zzz") || "—";
 }
 
 /**
@@ -72,7 +73,7 @@ export function CharterPartyCard({
                     ) : null}
                   </p>
                   <p className="mt-0.5 text-xs tabular-nums text-muted-foreground">
-                    {formatTripStart(m.startDateTime)}
+                    {formatTripStart(m.startDateTime, m.boatTimezone)}
                   </p>
                 </div>
                 <span

@@ -91,10 +91,18 @@ function compactMoney(cents: number) {
 
 function tripTiming(trip: BookingListItem) {
   const start = new Date(trip.startDateTime as Date);
-  const parsed = parseDateTimeInBoatTimezone(start);
+  // Boat-local throughout: a Mykonos trip must not be labelled by the
+  // viewer's calendar day.
+  const boat = { timezone: trip.boatTimezone };
+  const parsed = parseDateTimeInBoatTimezone(start, boat);
+  const boatDay = parsed.date ?? start;
   return {
     start,
-    dayLabel: isToday(start) ? "today" : isTomorrow(start) ? "tomorrow" : format(start, "EEE, MMM d"),
+    dayLabel: isToday(boatDay)
+      ? "today"
+      : isTomorrow(boatDay)
+        ? "tomorrow"
+        : format(boatDay, "EEE, MMM d"),
     time: parsed.time ? formatTime12Hour(parsed.time) : "",
     imminent: differenceInHours(start, new Date()) <= PRETRIP_URGENT_HOURS,
   };

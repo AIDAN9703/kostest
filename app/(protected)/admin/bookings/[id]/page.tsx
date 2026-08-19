@@ -97,6 +97,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
           bookingStatus: m.booking.bookingStatus,
           startDateTime: m.booking.startDateTime,
           totalAmountCents: m.pricing ? Number(m.pricing.totalAmountCents) : null,
+          boatTimezone: m.boat?.timezone ?? null,
         }))
       : [];
 

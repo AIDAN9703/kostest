@@ -348,9 +348,10 @@ export function BoatCalendarView({
                     {new Date(selectedEvent.start).toLocaleTimeString([], {
                       hour: "numeric",
                       minute: "2-digit",
+                      ...(timezone ? { timeZone: timezone } : {}),
                     })}
                     {selectedEvent.end
-                      ? ` – ${new Date(selectedEvent.end).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+                      ? ` – ${new Date(selectedEvent.end).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", ...(timezone ? { timeZone: timezone } : {}) })}`
                       : ""}
                   </p>
                 </div>

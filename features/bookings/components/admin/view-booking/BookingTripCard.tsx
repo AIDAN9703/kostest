@@ -22,10 +22,10 @@ import {
   type CrewAssignmentOption,
 } from "@/features/bookings/components/admin/OpsCrewAssignment";
 import { useToast } from "@/shared/lib/hooks/use-toast";
-import { formatDate } from "@/shared/lib/utils/general-utils";
 import {
   bookingInstantToDatetimeLocalInput,
   datetimeLocalInputToUtcISO,
+  formatBoatLocal,
 } from "@/shared/lib/utils/date-helpers";
 
 export interface BookingTripDetailsSnapshot {
@@ -66,14 +66,9 @@ interface BookingTripCardProps {
 
 function formatTripDateTime(iso: string | null, timezone: string | null): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "—";
-  const time = d.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    ...(timezone ? { timeZone: timezone } : {}),
-  });
-  return `${formatDate(d)} · ${time}`;
+  // Date AND time in the boat's zone — formatting only the time left the date
+  // one day off for trips near midnight.
+  return formatBoatLocal(iso, timezone, "MMM d, yyyy · h:mm a zzz") || "—";
 }
 
 /**

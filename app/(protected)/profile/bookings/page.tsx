@@ -17,6 +17,7 @@ function transformBooking(dbBooking: {
   startDateTime: Date | string | null;
   endDateTime: Date | string | null;
   boatName: string | null;
+  boatTimezone: string | null;
   boatCategory: string | null;
   boatMainImage: string | null;
   bookingStatus: string;
@@ -25,11 +26,10 @@ function transformBooking(dbBooking: {
   totalAmountCents: number | null;
   pickupLocation: string | null;
 }): ProfileBooking {
-  // Parse dates in boat's timezone
-  const { date: startDate, time: startTime } = parseDateTimeInBoatTimezone(
-    dbBooking.startDateTime,
-  );
-  const { time: endTime } = parseDateTimeInBoatTimezone(dbBooking.endDateTime);
+  // Dates render in the boat's timezone, never the viewer's.
+  const { date: startDate } = parseDateTimeInBoatTimezone(dbBooking.startDateTime, {
+    timezone: dbBooking.boatTimezone,
+  });
 
   // Calculate duration
   const start =
@@ -146,6 +146,7 @@ export default async function BookingsPage() {
       boatName: boats.name,
       boatCategory: boats.category,
       boatMainImage: boats.mainImage,
+      boatTimezone: boats.timezone,
     })
     .from(bookings)
     .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))

@@ -5,7 +5,6 @@ import { bookings, boats, bookingPricing } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
 import { format } from "date-fns";
 import ProfileBookingDetail from "@/features/profile/components/ProfileBookingDetail";
@@ -34,6 +33,7 @@ export default async function ProfileBookingDetailPage({
       boatName: boats.name,
       boatCategory: boats.category,
       boatMainImage: boats.mainImage,
+      boatTimezone: boats.timezone,
       totalAmountCents: bookingPricing.totalAmountCents,
       depositAmountCents: bookingPricing.depositAmountCents,
     })
@@ -45,7 +45,9 @@ export default async function ProfileBookingDetailPage({
 
   if (!row) notFound();
 
-  const { date: startDate } = parseDateTimeInBoatTimezone(row.startDateTime);
+  const { date: startDate } = parseDateTimeInBoatTimezone(row.startDateTime, {
+    timezone: row.boatTimezone,
+  });
   const start =
     row.startDateTime instanceof Date
       ? row.startDateTime
