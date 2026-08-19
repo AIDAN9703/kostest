@@ -31,6 +31,7 @@ WHERE timezone IS NULL
     OR location_label ILIKE '%regal marina%'
     OR location_label ILIKE '%palm harbor%'
     OR location_label ILIKE '%bayside%'
+    OR location_label ILIKE '%bal harbo%'
     OR location_label ILIKE '%loggerhead%'
     OR location_label ILIKE '%hollywood, fl%'
     OR location_label ILIKE '%sarasota%'

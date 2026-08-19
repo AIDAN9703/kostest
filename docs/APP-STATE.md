@@ -46,8 +46,19 @@ search, blog, add-ons, auth, admin, booking-groups, app-settings, `_marketing`.
 | Succeeded payments | 5 | 10 |
 | Charter parties | 0 | test data only |
 
-Boat timezones in use: America/New_York (173), America/Nassau (8), America/Chicago (7),
-America/Santo_Domingo (4), **NULL (31 — these silently default to New York)**.
+**Boat timezones (after the 2026-08-14 backfill):**
+
+| Zone | Prod | Dev |
+|---|---|---|
+| America/New_York | 215 | 192 |
+| America/Nassau | 8 | 8 |
+| America/Chicago | 7 | 7 |
+| America/Santo_Domingo | 5 | 5 |
+| **unset** | **37** | **11** |
+
+Unset boats fall back to America/New_York. Prod's 37 break down as: 24 Mykonos and
+1 Singapore (**blocked — the enum has no Europe/Asia values**), 2 La Coloma Marina
+(location ambiguous), 10 with no location label.
 
 ---
 
