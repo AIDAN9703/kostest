@@ -116,8 +116,14 @@ auto-generated and not editable; partial refunds record against the lead booking
 owner-payout automation, customer-submitted reviews (the 577 `review` rows are seed data;
 real testimonials come from Google).
 
-**Tech debt:** pre-existing lint errors in AdminBookingsCalendar (refs during render),
-PaymentSuccessClient (set-state-in-effect), plus `any` types in a few services.
+**Tech debt:** repo-wide lint sits at 255 problems (136 errors / 119 warnings) — all
+pre-existing: refs-during-render in AdminBookingsCalendar, set-state-in-effect in
+PaymentSuccessClient, and `any` types across several services.
+
+**Dependencies:** `npm audit` is clean of high severities. 4 moderates remain, all in
+drizzle-kit / esbuild dev tooling; the only "fix" npm offers is a breaking downgrade to
+drizzle-kit@0.18.1, and the esbuild issue affects the local dev server only — not
+production. Leave them unless drizzle-kit is upgraded for other reasons.
 
 ---
 
