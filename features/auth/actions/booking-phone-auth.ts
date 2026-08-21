@@ -14,6 +14,16 @@ import { ActionResponse } from "@/shared/lib/types/types";
 import { formatPhoneNumberE164 } from "@/shared/lib/utils/general-utils";
 import { checkVerification } from "@/shared/lib/services/twilio.service";
 
+/** Next.js signals redirects by throwing — those must propagate. */
+function isNextRedirect(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "digest" in error &&
+    String((error as { digest?: unknown }).digest).startsWith("NEXT_REDIRECT")
+  );
+}
+
 export async function sendBookingPhoneCode(
   phoneNumber: string,
 ): Promise<ActionResponse<{ message: string }>> {
@@ -61,14 +71,20 @@ export async function verifyBookingPhoneCode(
     }
 
     const proof = createPhoneBookingProof(existing[0].id, formattedPhone);
-    const signInResult = await signIn("phone-booking", {
-      proof,
-      redirect: false,
-    });
-
-    if (signInResult && "error" in signInResult && signInResult.error) {
+    // NextAuth v5: signIn THROWS on failure and returns a redirect URL string
+    // on success — checking `"error" in result` was an 'in'-on-string crash.
+    try {
+      await signIn("phone-booking", { proof, redirect: false });
+    } catch (error) {
+      if (isNextRedirect(error)) throw error;
+      console.error("Phone sign-in failed:", error);
       return { success: false, error: "Could not sign you in. Try email instead." };
     }
+
+    // Freshly OTP-verified phone — adopt any guest bookings on this number.
+    claimGuestBookingsForUser(existing[0].id).catch((err) =>
+      console.error("Guest-booking claim failed:", err)
+    );
 
     return {
       success: true,
@@ -160,13 +176,15 @@ export async function completeBookingPhoneProfile(
     return { success: false, error: "Could not create your account" };
   }
 
-  const signInResult = await signIn("credentials", {
-    email,
-    password: generatedPassword,
-    redirect: false,
-  });
-
-  if (signInResult && "error" in signInResult && signInResult.error) {
+  try {
+    await signIn("credentials", {
+      email,
+      password: generatedPassword,
+      redirect: false,
+    });
+  } catch (error) {
+    if (isNextRedirect(error)) throw error;
+    console.error("Post-signup sign-in failed:", error);
     return { success: false, error: "Account created but sign-in failed. Try signing in." };
   }
 

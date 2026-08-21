@@ -2,14 +2,12 @@
 
 import type { ComponentType, ReactNode } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { Calendar, Clock, MapPin, Pencil, Users, Zap } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Zap } from "lucide-react";
 
 import type { SafeBoatData } from "@/features/bookings/booking.types";
 import { PricingTier } from "@/shared/lib/types/types";
 import { formatDate, formatTime12Hour } from "@/shared/lib/utils/general-utils";
 import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
-import { cn } from "@/shared/lib/utils/general-utils";
 
 interface BookingSummaryProps {
   boat: SafeBoatData;
@@ -93,16 +91,6 @@ export default function BookingSummary({
               </p>
             )}
           </div>
-          <Link
-            href={`/boats/${boat.id}`}
-            className={cn(
-              "inline-flex shrink-0 items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-sm font-medium text-foreground transition",
-              "hover:border-gray-300 hover:bg-gray-50",
-            )}
-          >
-            <Pencil className="h-3.5 w-3.5" />
-            Edit
-          </Link>
         </div>
 
         <div className="flex flex-wrap gap-2">

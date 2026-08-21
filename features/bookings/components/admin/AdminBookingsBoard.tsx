@@ -469,44 +469,50 @@ function BookingRow({
         <span className={cn("absolute inset-y-0 left-0 w-1", kind.rail)} aria-hidden />
         {/* No icon bubble — the colored rail on the cell edge carries the
             type code; the freed width goes to customer/boat columns. */}
-        {/* One inline row: label, then emblems and badges flowing to its
-            right — no stacked sub-rows eating vertical space. */}
-        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-          <Link
-            href={`/admin/bookings/${booking.id}`}
-            onClick={(e) => e.stopPropagation()}
-            className="truncate text-sm font-semibold text-foreground"
-          >
-            {kind.label}
-          </Link>
-          {paymentEmblem ? <StatusEmblem {...paymentEmblem} /> : null}
-          {showCaptain ? (
-            <StatusEmblem
-              label={preTripLabel("Captain", booking.captainUserId ? "assigned" : "needed", !booking.captainUserId && tripImminent)}
-              className={preTripTone(Boolean(booking.captainUserId), tripImminent)}
-              Icon={Anchor}
-            />
-          ) : null}
-          {showContract ? (
-            <StatusEmblem
-              label={preTripLabel("Contract", booking.opsContractSigned ? "signed" : "unsigned", !booking.opsContractSigned && tripImminent)}
-              className={preTripTone(Boolean(booking.opsContractSigned), tripImminent)}
-              Icon={booking.opsContractSigned ? FileCheck2 : FileX2}
-            />
-          ) : null}
-          {isNew ? (
-            <span className="rounded-full bg-primary-soft px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-primary-strong">
-              New
-            </span>
-          ) : null}
-          {isParty ? (
-            <span
-              className="inline-flex items-center gap-1 rounded-full bg-violet-500/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-violet-300"
-              title={booking.bookingGroupName ?? "Charter party"}
+        <div className="min-w-0">
+          {/* Row 1: type label with the New/party BADGES inline to its right. */}
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <Link
+              href={`/admin/bookings/${booking.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="truncate text-sm font-semibold text-foreground"
             >
-              <Ship className="h-2.5 w-2.5" />
-              ×{booking.bookingGroupSize} party
-            </span>
+              {kind.label}
+            </Link>
+            {isNew ? (
+              <span className="rounded-full bg-primary-soft px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-primary-strong">
+                New
+              </span>
+            ) : null}
+            {isParty ? (
+              <span
+                className="inline-flex items-center gap-1 rounded-full bg-violet-500/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-violet-300"
+                title={booking.bookingGroupName ?? "Charter party"}
+              >
+                <Ship className="h-2.5 w-2.5" />
+                ×{booking.bookingGroupSize} party
+              </span>
+            ) : null}
+          </div>
+          {/* Row 2: status EMBLEMS (payment / captain / contract) beneath. */}
+          {paymentEmblem || showCaptain || showContract ? (
+            <div className="mt-1.5 flex items-center gap-1">
+              {paymentEmblem ? <StatusEmblem {...paymentEmblem} /> : null}
+              {showCaptain ? (
+                <StatusEmblem
+                  label={preTripLabel("Captain", booking.captainUserId ? "assigned" : "needed", !booking.captainUserId && tripImminent)}
+                  className={preTripTone(Boolean(booking.captainUserId), tripImminent)}
+                  Icon={Anchor}
+                />
+              ) : null}
+              {showContract ? (
+                <StatusEmblem
+                  label={preTripLabel("Contract", booking.opsContractSigned ? "signed" : "unsigned", !booking.opsContractSigned && tripImminent)}
+                  className={preTripTone(Boolean(booking.opsContractSigned), tripImminent)}
+                  Icon={booking.opsContractSigned ? FileCheck2 : FileX2}
+                />
+              ) : null}
+            </div>
           ) : null}
         </div>
       </TableCell>
