@@ -35,6 +35,8 @@ import {
   CharterPartyCard,
   type CharterPartyMember,
 } from "@/features/bookings/components/admin/view-booking/CharterPartyCard";
+import { ProposalCard } from "@/features/bookings/components/admin/view-booking/ProposalCard";
+import { BOOKING_EVENT_TYPES } from "@/features/bookings/booking-events.constants";
 
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { bookingExpenseLineService } from "@/features/bookings/services/booking-expense-line.service";
@@ -100,6 +102,23 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
           boatTimezone: m.boat?.timezone ?? null,
         }))
       : [];
+
+  // Proposal freshness: when did the customer last get the link, and how
+  // many admin edits have landed since? Drives the ProposalCard nudge.
+  const SEND_EVENT_TYPES = new Set<string>([
+    BOOKING_EVENT_TYPES.DRAFT_PUBLISHED,
+    BOOKING_EVENT_TYPES.PROPOSAL_UPDATE_SENT,
+  ]);
+  // rawEvents are newest-first.
+  const lastSendEvent = rawEvents.find((e) => SEND_EVENT_TYPES.has(e.eventType));
+  const lastSentAt = lastSendEvent?.createdAt ?? booking.publishedAt ?? null;
+  const changesSinceLastSend = lastSentAt
+    ? rawEvents.filter(
+        (e) =>
+          e.eventType === BOOKING_EVENT_TYPES.UPDATED &&
+          new Date(e.createdAt) > new Date(lastSentAt)
+      ).length
+    : 0;
 
   // ONE activity feed per deal — migrated lead history lives natively in
   // booking_event (lead.* event types), so no merging is needed.
@@ -301,6 +320,30 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
             /* Priority order: the trip and the money are what admins open
                this page for. */
             <>
+              {booking.bookingStatus === "DRAFT" && booking.publicToken ? (
+                <ProposalCard
+                  bookingId={id}
+                  publicToken={booking.publicToken}
+                  publishedAt={lastSentAt}
+                  changesSinceLastSend={changesSinceLastSend}
+                  customerEmail={booking.customerEmail}
+                  customerPhone={booking.customerPhone}
+                  boatLabel={
+                    partyMembers.length > 1
+                      ? booking.bookingGroupName ?? `${partyMembers.length} boats`
+                      : booking.boatName ?? "Boat TBD"
+                  }
+                  tripStart={booking.startDateTime}
+                  boatTimezone={booking.boatTimezone}
+                  guests={booking.numberOfPassengers}
+                  totalAmountCents={
+                    partyMembers.length > 1
+                      ? partyMembers.reduce((sum, m) => sum + (m.totalAmountCents ?? 0), 0)
+                      : booking.totalAmountCents
+                  }
+                  currency={booking.currency ?? "USD"}
+                />
+              ) : null}
               <BookingTripCard
                 bookingId={id}
                 trip={tripSnapshot}

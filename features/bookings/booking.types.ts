@@ -381,6 +381,8 @@ export interface BookingDetails extends BookingListItem {
   expiresAt: Date | null;
   /** Draft-proposal share token — null once the booking is past the proposal stage or never had one. */
   publicToken: string | null;
+  /** When the proposal link first went to the customer; null = never sent. */
+  publishedAt: Date | null;
 
   // Extended boat info
   boatCapacity: number | null;

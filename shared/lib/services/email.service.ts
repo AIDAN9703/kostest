@@ -363,21 +363,25 @@ export async function sendDraftBookingEmail(params: {
   draftLink: string;
   boatName?: string;
   isGroup?: boolean;
+  /** Re-send after edits: same link, "updated" subject + lead copy. */
+  isUpdate?: boolean;
 }): Promise<boolean> {
   if (!resend) {
     console.warn('Resend not configured. Draft email not sent.');
     return false;
   }
 
-  const { customerName, customerEmail, draftLink, boatName, isGroup } = params;
+  const { customerName, customerEmail, draftLink, boatName, isGroup, isUpdate } = params;
   if (!customerEmail) {
     console.error('No email address for draft notification');
     return false;
   }
 
-  const subject = isGroup
-    ? `Your yacht charter proposal from Kings Of The Sea`
-    : `Your yacht charter proposal - ${boatName || 'KOS Yachts'}`;
+  const subject = isUpdate
+    ? `Your charter proposal has been updated${boatName && !isGroup ? ` - ${boatName}` : ''}`
+    : isGroup
+      ? `Your yacht charter proposal from Kings Of The Sea`
+      : `Your yacht charter proposal - ${boatName || 'KOS Yachts'}`;
 
   const safeName = escapeHtml((customerName || 'there').trim() || 'there');
   const safeBoat = boatName ? escapeHtml(boatName.trim()) : '';
@@ -388,15 +392,22 @@ export async function sendDraftBookingEmail(params: {
       to: customerEmail,
       subject,
       html: buildBrandEmailHtml({
-        previewText:
-          "Your charter proposal is ready — open to review pricing and accept when you're ready.",
+        previewText: isUpdate
+          ? "Your charter proposal has been updated — same link, latest details."
+          : "Your charter proposal is ready — open to review pricing and accept when you're ready.",
         contentHtml: `
               <p class="proposal-greeting">Hi ${safeName},</p>
 
               <p class="proposal-lead">
-                We've prepared a personalized proposal for your upcoming experience on the water${
-                  safeBoat ? `. Take a look at what's lined up for <strong>${safeBoat}</strong>.` : '.'
-                }${isGroup ? ' This proposal may include multiple vessels.' : ''}
+                ${
+                  isUpdate
+                    ? `We've updated your charter proposal${
+                        safeBoat ? ` for <strong>${safeBoat}</strong>` : ''
+                      } — the link below always shows the latest details.`
+                    : `We've prepared a personalized proposal for your upcoming experience on the water${
+                        safeBoat ? `. Take a look at what's lined up for <strong>${safeBoat}</strong>.` : '.'
+                      }${isGroup ? ' This proposal may include multiple vessels.' : ''}`
+                }
               </p>
 
               ${

@@ -354,6 +354,12 @@ export class BookingService {
       id: first.id,
       customerName: first.customerName,
       customerEmail: first.customerEmail,
+      // Freshness stamp for the public page — latest edit across the party.
+      updatedAt: draftBookings.reduce<Date | null>(
+        (latest, b) =>
+          b.updatedAt && (!latest || b.updatedAt > latest) ? b.updatedAt : latest,
+        null
+      ),
       startDateTime: first.startDateTime,
       endDateTime: first.endDateTime,
       numberOfPassengers: first.numberOfPassengers,
@@ -1217,6 +1223,7 @@ export class BookingService {
         pickupLocation: bookings.pickupLocation,
         dropoffLocation: bookings.dropoffLocation,
         publicToken: bookings.publicToken,
+        publishedAt: bookings.publishedAt,
         // Lead-phase fields (unified deal hub)
         customerMessage: bookings.customerMessage,
         preferredDate: bookings.preferredDate,

@@ -33,6 +33,8 @@ export interface DraftProposalBooking {
 }
 
 export interface DraftProposalData {
+  /** Latest admin edit across the party — the page's freshness stamp. */
+  updatedAt: Date | null;
   id: string;
   customerName: string;
   customerEmail: string;

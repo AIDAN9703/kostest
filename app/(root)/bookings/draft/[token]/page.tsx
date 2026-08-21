@@ -17,6 +17,7 @@ export default async function PublicDraftBookingPage({ params }: Props) {
 
   const data: DraftProposalData = {
     id: raw.id,
+    updatedAt: raw.updatedAt,
     customerName: raw.customerName,
     customerEmail: raw.customerEmail,
     startDateTime: raw.startDateTime,

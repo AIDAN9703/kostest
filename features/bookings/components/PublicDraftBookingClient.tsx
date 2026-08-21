@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { format } from "date-fns";
 import {
   DraftProposalTripDetails,
   DraftProposalBoatsList,
@@ -45,6 +46,12 @@ export default function PublicDraftBookingClient({
                 <h1 className="mt-1 text-2xl font-black tracking-tight text-white drop-shadow-md sm:text-3xl md:text-4xl">
                   {data.customerName}&rsquo;s Experience
                 </h1>
+                {data.updatedAt ? (
+                  <p className="mt-1.5 text-xs font-medium text-white/70">
+                    Updated {format(new Date(data.updatedAt), "MMMM d, yyyy")} — this link
+                    always shows the latest version
+                  </p>
+                ) : null}
               </div>
             </div>
           </div>
