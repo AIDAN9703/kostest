@@ -4,6 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { users, captainProfiles, crewProfiles, ownerProfiles } from "@/database/schema"
 import { eq } from "drizzle-orm"
 import { db } from "@/database/db"
+import { claimGuestBookingsForUser } from "@/features/users/claim-guest-bookings"
 import Google from "next-auth/providers/google"
 import { verifyPhoneBookingProof } from "@/shared/lib/auth/phone-booking-proof"
 
@@ -219,6 +220,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
               if (newUser?.id) {
                 token.id = newUser.id.toString();
+                // Google verified this email — adopt any guest bookings made
+                // with it (fire-and-forget; login must not block on it).
+                claimGuestBookingsForUser(newUser.id).catch((err) =>
+                  console.error("Guest-booking claim failed:", err)
+                );
               }
               // For new users, use the Google image directly
               token.profileImage = user.image || '';

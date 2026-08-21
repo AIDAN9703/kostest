@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { db } from "@/database/db";
+import { claimGuestBookingsForUser } from "@/features/users/claim-guest-bookings";
 import { verifications, verificationStatusEnum, users } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
 import { formatPhoneNumberE164 } from '@/shared/lib/utils/general-utils';
@@ -128,6 +129,10 @@ export async function POST(req: NextRequest) {
           updatedAt: new Date()
         })
         .where(eq(users.id, verification.userId));
+      // Newly verified phone — adopt matching guest bookings.
+      claimGuestBookingsForUser(verification.userId).catch((err) =>
+        console.error("Guest-booking claim failed:", err)
+      );
     }
     
     return NextResponse.json({ success: true });

@@ -1,5 +1,6 @@
 //drizzle
 import { db } from '@/database/db';
+import { claimGuestBookingsForUser } from '@/features/users/claim-guest-bookings';
 import {
   users,
   captainProfiles,
@@ -255,6 +256,12 @@ export class UserService {
         password: hashedPassword,
       })
       .returning();
+
+    // Admin vouches for the identity — adopt matching guest bookings even
+    // though nothing is verified yet.
+    claimGuestBookingsForUser(newUser.id, { adminAsserted: true }).catch((err) =>
+      console.error("Guest-booking claim failed:", err)
+    );
 
     return newUser;
   }

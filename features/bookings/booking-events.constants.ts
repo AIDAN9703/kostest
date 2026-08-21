@@ -24,6 +24,8 @@ export const BOOKING_EVENT_TYPES = {
   PROPOSAL_UPDATE_SENT: "booking.proposal_update_sent",
   /** Customer asked for changes from the public proposal page */
   CHANGE_REQUESTED: "booking.change_requested",
+  /** Guest booking matched to a newly created/verified account */
+  LINKED_TO_ACCOUNT: "booking.linked_to_account",
 } as const;
 
 export type BookingEventType =

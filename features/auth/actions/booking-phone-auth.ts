@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 
 import { signIn } from "@/auth";
 import { db } from "@/database/db";
+import { claimGuestBookingsForUser } from "@/features/users/claim-guest-bookings";
 import { users } from "@/database/schema";
 import { sendOtpToPhoneNumber, verifyGuestPhoneCode } from "@/features/auth/actions/verification";
 import { createPhoneBookingProof } from "@/shared/lib/auth/phone-booking-proof";
@@ -136,15 +137,24 @@ export async function completeBookingPhoneProfile(
   const username = `${email.split("@")[0]}_${Math.floor(Math.random() * 10000)}`;
 
   try {
-    await db.insert(users).values({
-      firstName,
-      lastName,
-      email,
-      username,
-      password: hashedPassword,
-      phoneNumber: formattedPhone,
-      phoneVerified: true,
-    });
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        firstName,
+        lastName,
+        email,
+        username,
+        password: hashedPassword,
+        phoneNumber: formattedPhone,
+        phoneVerified: true,
+      })
+      .returning({ id: users.id });
+    // Phone is OTP-verified — adopt any guest bookings made with this number.
+    if (newUser?.id) {
+      claimGuestBookingsForUser(newUser.id).catch((err) =>
+        console.error("Guest-booking claim failed:", err)
+      );
+    }
   } catch (error) {
     console.error("completeBookingPhoneProfile:", error);
     return { success: false, error: "Could not create your account" };
