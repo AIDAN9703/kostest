@@ -171,9 +171,13 @@ export function OpsCrewAssignment({
                 disabled={pending}
                 onClick={() => add(c.id)}
               >
-                <span className="block truncate font-medium">{formatCrewName(c)}</span>
-                <span className="block truncate text-xs font-normal text-muted-foreground">
-                  {c.email}
+                {/* Button lays children out as a flex ROW — without this column
+                    wrapper the email sits beside the name and starves it. */}
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <span className="truncate text-sm font-medium">{formatCrewName(c)}</span>
+                  <span className="truncate text-xs font-normal text-muted-foreground">
+                    {c.email}
+                  </span>
                 </span>
               </Button>
             ))}
