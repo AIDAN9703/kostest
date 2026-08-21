@@ -249,10 +249,7 @@ export function BookingTripCard({
               {partySize > 1 ? (
                 <div className="flex items-center gap-3 pt-1 sm:col-span-2">
                   <Switch checked={moveParty} onCheckedChange={setMoveParty} />
-                  <Label className="text-sm">
-                    Move the other {partySize - 1} {partySize - 1 === 1 ? "boat" : "boats"} in this
-                    party by the same amount
-                  </Label>
+                  <Label className="text-sm">Update other bookings in this party</Label>
                 </div>
               ) : null}
               <div className="space-y-1.5">
