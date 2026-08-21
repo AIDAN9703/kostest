@@ -240,12 +240,8 @@ export const ADMIN_QUICK_ACTIONS: AdminNavItem[] = [
   },
   {
     label: "Create Booking",
-    href: "/admin/bookings?newBooking=1",
-    iconClassName: "h-4 w-4 text-blue-400",
-  },
-  {
-    label: "Create Booking Group",
-    href: "/admin/bookings/create-group",
+    // nuqs parseAsBoolean only accepts true/false — "=1" silently no-ops.
+    href: "/admin/bookings?newBooking=true",
     iconClassName: "h-4 w-4 text-blue-400",
   },
   {
