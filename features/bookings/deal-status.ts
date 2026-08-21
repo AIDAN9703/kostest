@@ -1,17 +1,20 @@
 /**
  * The unified deal lifecycle — one status vocabulary for every row in the
- * master bookings list. Matches the pipeline the ops lead runs the business
- * on: Inquiry → Booking inquiry → Invoice sent → Partial payment → Payment
- * complete, with Dispute (orange) and Cancelled off to the side. Completed
- * (trip happened) and Archived are the two housekeeping states the sheet
- * tracked implicitly. Every stage is DERIVED — bookingStatus + the payments
- * ledger stay the source of truth; nothing here is stored.
+ * master bookings list: Inquiry → Booking inquiry → Proposal sent → Accepted
+ * → Partial payment → Payment complete, with Dispute (orange) and Cancelled
+ * off to the side. Completed (trip happened) and Archived are the two
+ * housekeeping states. Two approvals gate every deal — the admin's (sending
+ * the proposal they vetted) and the customer's (accepting it) — and the
+ * stages name exactly whose turn it is. Every stage is DERIVED —
+ * bookingStatus + the payments ledger stay the source of truth; nothing
+ * here is stored.
  */
 
 export type DealStatus =
   | "INQUIRY"
   | "BOOKING_INQUIRY"
-  | "INVOICE_SENT"
+  | "PROPOSAL_SENT"
+  | "ACCEPTED"
   | "PARTIAL_PAYMENT"
   | "PAYMENT_COMPLETE"
   | "DISPUTE"
@@ -39,9 +42,10 @@ export function computeDealStatusForBooking(input: {
   }
   if (paymentDisplayStatus === "PAID") return "PAYMENT_COMPLETE";
   if (paymentDisplayStatus === "DEPOSIT_PAID") return "PARTIAL_PAYMENT";
-  // APPROVED = the customer has the payment link/invoice; DRAFT = a priced
+  // APPROVED = the customer accepted and owes payment; DRAFT = a priced
   // proposal exists (sent or being finished — publishedAt isn't in list rows).
-  if (bookingStatus === "DRAFT" || bookingStatus === "APPROVED") return "INVOICE_SENT";
+  if (bookingStatus === "APPROVED") return "ACCEPTED";
+  if (bookingStatus === "DRAFT") return "PROPOSAL_SENT";
   // PENDING = a formal request to book (boat + date + price) awaiting review.
   if (bookingStatus === "PENDING") return "BOOKING_INQUIRY";
   // CONFIRMED normally resolves through paymentDisplayStatus above; if the
