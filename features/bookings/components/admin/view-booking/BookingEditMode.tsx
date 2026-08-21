@@ -166,7 +166,7 @@ export function ProposalResendButton() {
       onClick={openResend}
     >
       <Send className="h-3.5 w-3.5" />
-      {resend.stage === "proposal" ? "Resend proposal link" : "Resend payment link"}
+      {resend.stage === "proposal" ? "Resend proposal" : "Resend payment"}
     </Button>
   );
 }
