@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/database/db";
-import { bookingOps, bookingPricing, bookings } from "@/database/schema";
+import { boats, bookingOps, bookingPricing, bookings } from "@/database/schema";
 import { and, desc, eq, gte, isNull, lte, notInArray, sql } from "drizzle-orm";
 import { cache } from "react";
 import {
@@ -10,7 +10,9 @@ import {
   startOfMonth,
   endOfMonth,
   addDays,
+  eachMonthOfInterval,
   format,
+  subMonths,
 } from "date-fns";
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { getAdminSession } from "@/shared/lib/utils/auth-utils";
@@ -23,31 +25,26 @@ async function assertAdmin(): Promise<void> {
   }
 }
 
-export interface DashboardHeadlineMetrics {
-  /** e.g. "June" */
-  monthLabel: string;
-  /** Gross merchandise value for trips starting this month (cents). */
-  gmvMtdCents: number;
-  /** KOS commission earned on trips starting this month (cents). */
-  kosCommissionMtdCents: number;
-  /** Non-cancelled trips starting this month. */
-  tripsThisMonth: number;
+/** One month of charter volume — the last entry is the current month. */
+export interface RevenueMonth {
+  /** "2026-03" — stable key. */
+  key: string;
+  /** "Mar" — chart axis label. */
+  label: string;
+  /** "March" — headline label when this is the current month. */
+  monthName: string;
+  gmvCents: number;
+  commissionCents: number;
+  trips: number;
 }
 
-/** The deal funnel, live: how many sit at each stage and what they're worth. */
-export interface PipelineSnapshot {
-  /** Live leads (INQUIRY, not archived/cold). */
-  leads: number;
-  leadsValueCents: number;
-  /** Published proposals awaiting a customer decision. */
-  proposalsOut: number;
-  proposalsValueCents: number;
-  /** APPROVED — payment link in the customer's hands. */
-  awaitingPayment: number;
-  awaitingPaymentValueCents: number;
-  /** CONFIRMED trips still ahead. */
-  bookedUpcoming: number;
-  bookedUpcomingValueCents: number;
+/** A boat's standing in this month's GMV leaderboard. */
+export interface FleetLeader {
+  boatId: string;
+  name: string;
+  mainImage: string | null;
+  gmvCents: number;
+  trips: number;
 }
 
 /** Lean lead row for the dashboard queue — INQUIRY-status booking rows. */
@@ -143,79 +140,86 @@ export const getMyOpenDeals = cache(
   }
 );
 
-/**
- * Headline finance + fleet metrics for the dashboard cards.
- * GMV/commission cover non-cancelled trips that *start* in the current calendar month,
- * mirroring the ops sheet (ops override falls back to the booking quote total).
- */
-export const getDashboardHeadlineMetrics = cache(
-  async (): Promise<DashboardHeadlineMetrics> => {
-    await assertAdmin();
-
-    const now = new Date();
-    const from = startOfMonth(now);
-    const to = endOfMonth(now);
-
-    const [mtdRow] = await db
-      .select({
-        gmvMtdCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.gmvCents}, ${bookingPricing.totalAmountCents})), 0)`,
-        kosCommissionMtdCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.commissionKosCents}, 0)), 0)`,
-        tripsThisMonth: sql<number>`COUNT(${bookings.id})::int`,
-      })
-      .from(bookings)
-      .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
-      .leftJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
-      .where(
-        and(
-          gte(bookings.startDateTime, from),
-          lte(bookings.startDateTime, to),
-          // Real trips only — INQUIRY deals aren't booked, CANCELLED aren't happening.
-          notInArray(bookings.bookingStatus, ["CANCELLED", "INQUIRY"])
-        )
-      );
-
-    return {
-      monthLabel: format(now, "MMMM"),
-      gmvMtdCents: Number(mtdRow?.gmvMtdCents ?? 0),
-      kosCommissionMtdCents: Number(mtdRow?.kosCommissionMtdCents ?? 0),
-      tripsThisMonth: Number(mtdRow?.tripsThisMonth ?? 0),
-    };
-  }
-);
-
-/** Live stage filter fragments shared by the pipeline snapshot. */
-const LIVE = sql`${bookings.archivedAt} IS NULL`;
+/** GMV expression shared by trend + leaderboard: ops override, else quote
+ *  total minus the service fee — GMV is fee-exclusive everywhere. */
+const GMV = sql`COALESCE(SUM(COALESCE(${bookingOps.gmvCents}, ${bookingPricing.totalAmountCents} - COALESCE(${bookingPricing.serviceFeeCents}, 0))), 0)`;
+/** Real trips only — INQUIRY deals aren't booked, CANCELLED aren't happening. */
+const REAL_TRIPS = notInArray(bookings.bookingStatus, ["CANCELLED", "INQUIRY"]);
 
 /**
- * One query, one row: the whole funnel with counts and value at each stage.
- * Value = quoted total (booking_pricing); leads use their estimate/budget.
+ * Monthly charter volume for the trailing window, oldest first, current month
+ * last. Empty months are zero-filled so the chart never has holes, and the
+ * final entry doubles as the headline "this month" metrics.
  */
-export const getPipelineSnapshot = cache(async (): Promise<PipelineSnapshot> => {
+export const getRevenueTrend = cache(async (months = 6): Promise<RevenueMonth[]> => {
   await assertAdmin();
 
-  const [row] = await db
+  const now = new Date();
+  const from = startOfMonth(subMonths(now, months - 1));
+  const to = endOfMonth(now);
+  const monthExpr = sql`to_char(date_trunc('month', ${bookings.startDateTime}), 'YYYY-MM')`;
+
+  const rows = await db
     .select({
-      leads: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'INQUIRY' AND ${LIVE})::int`,
-      leadsValueCents: sql<number>`COALESCE(SUM(COALESCE(${bookings.estimatedValueCents}, ${bookings.budgetCents})) FILTER (WHERE ${bookings.bookingStatus} = 'INQUIRY' AND ${LIVE}), 0)`,
-      proposalsOut: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'DRAFT' AND ${bookings.publishedAt} IS NOT NULL AND ${LIVE})::int`,
-      proposalsValueCents: sql<number>`COALESCE(SUM(${bookingPricing.totalAmountCents}) FILTER (WHERE ${bookings.bookingStatus} = 'DRAFT' AND ${bookings.publishedAt} IS NOT NULL AND ${LIVE}), 0)`,
-      awaitingPayment: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'APPROVED' AND ${LIVE})::int`,
-      awaitingPaymentValueCents: sql<number>`COALESCE(SUM(${bookingPricing.totalAmountCents}) FILTER (WHERE ${bookings.bookingStatus} = 'APPROVED' AND ${LIVE}), 0)`,
-      bookedUpcoming: sql<number>`COUNT(*) FILTER (WHERE ${bookings.bookingStatus} = 'CONFIRMED' AND ${bookings.startDateTime} >= NOW())::int`,
-      bookedUpcomingValueCents: sql<number>`COALESCE(SUM(${bookingPricing.totalAmountCents}) FILTER (WHERE ${bookings.bookingStatus} = 'CONFIRMED' AND ${bookings.startDateTime} >= NOW()), 0)`,
+      key: sql<string>`${monthExpr}`,
+      gmvCents: sql<number>`${GMV}`,
+      commissionCents: sql<number>`COALESCE(SUM(COALESCE(${bookingOps.commissionKosCents}, 0)), 0)`,
+      trips: sql<number>`COUNT(${bookings.id})::int`,
     })
     .from(bookings)
-    .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId));
+    .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
+    .leftJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
+    .where(and(gte(bookings.startDateTime, from), lte(bookings.startDateTime, to), REAL_TRIPS))
+    .groupBy(monthExpr);
 
-  return {
-    leads: Number(row?.leads ?? 0),
-    leadsValueCents: Number(row?.leadsValueCents ?? 0),
-    proposalsOut: Number(row?.proposalsOut ?? 0),
-    proposalsValueCents: Number(row?.proposalsValueCents ?? 0),
-    awaitingPayment: Number(row?.awaitingPayment ?? 0),
-    awaitingPaymentValueCents: Number(row?.awaitingPaymentValueCents ?? 0),
-    bookedUpcoming: Number(row?.bookedUpcoming ?? 0),
-    bookedUpcomingValueCents: Number(row?.bookedUpcomingValueCents ?? 0),
-  };
+  const byKey = new Map(rows.map((r) => [r.key, r]));
+  return eachMonthOfInterval({ start: from, end: now }).map((month) => {
+    const key = format(month, "yyyy-MM");
+    const row = byKey.get(key);
+    return {
+      key,
+      label: format(month, "MMM"),
+      monthName: format(month, "MMMM"),
+      gmvCents: Number(row?.gmvCents ?? 0),
+      commissionCents: Number(row?.commissionCents ?? 0),
+      trips: Number(row?.trips ?? 0),
+    };
+  });
 });
 
+/** This month's GMV leaderboard by boat — who is actually earning the fleet's keep. */
+export const getFleetLeaders = cache(async (limit = 5): Promise<FleetLeader[]> => {
+  await assertAdmin();
+
+  const now = new Date();
+  const rows = await db
+    .select({
+      boatId: boats.id,
+      name: boats.name,
+      mainImage: boats.mainImage,
+      gmvCents: sql<number>`${GMV}`,
+      trips: sql<number>`COUNT(${bookings.id})::int`,
+    })
+    .from(bookings)
+    .innerJoin(boats, eq(bookings.boatId, boats.id))
+    .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
+    .leftJoin(bookingOps, eq(bookings.id, bookingOps.bookingId))
+    .where(
+      and(
+        gte(bookings.startDateTime, startOfMonth(now)),
+        lte(bookings.startDateTime, endOfMonth(now)),
+        REAL_TRIPS
+      )
+    )
+    .groupBy(boats.id, boats.name, boats.mainImage)
+    .orderBy(desc(sql`4`), desc(sql`5`)) // ordinals: gmvCents, trips
+    .limit(limit);
+
+  return rows.map((r) => ({
+    boatId: r.boatId,
+    name: r.name,
+    mainImage: r.mainImage,
+    gmvCents: Number(r.gmvCents),
+    trips: Number(r.trips),
+  }));
+});

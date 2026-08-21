@@ -129,13 +129,13 @@ export default function UserMenu({ user, navigationData }: UserMenuProps) {
     );
   }
 
+  // Signed out: flat text link, styled to match the main nav items.
   return (
-    <Button
-      variant="outline"
-      className="h-11 min-h-11 px-5 text-base font-semibold text-gray-700 hover:text-primary hover:border-primary transition-colors"
-      asChild
+    <Link
+      href="/sign-in"
+      className="text-base font-semibold text-primary transition-colors hover:opacity-80"
     >
-      <Link href="/sign-in">Sign In</Link>
-    </Button>
+      Sign In
+    </Link>
   );
 }

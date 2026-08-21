@@ -2,9 +2,9 @@ import { auth } from "@/auth";
 import { boatService } from "@/features/boats/boat.service";
 import { userService } from "@/features/users/user.service";
 import {
-  getDashboardHeadlineMetrics,
+  getFleetLeaders,
   getMyOpenDeals,
-  getPipelineSnapshot,
+  getRevenueTrend,
   getUnassignedLeads,
   getUpcomingTrips,
 } from "@/features/admin/dashboard";
@@ -19,17 +19,17 @@ export default async function AdminDashboardPage() {
     unassignedLeads,
     upcomingTrips,
     myDeals,
-    pipeline,
     pricingTiers,
-    metrics,
+    trend,
+    leaders,
     admins,
   ] = await Promise.all([
     getUnassignedLeads(6),
     getUpcomingTrips(30),
     adminId ? getMyOpenDeals(adminId, 6) : Promise.resolve([]),
-    getPipelineSnapshot(),
     boatService.getAllActivePricingTiers(),
-    getDashboardHeadlineMetrics(),
+    getRevenueTrend(12),
+    getFleetLeaders(5),
     userService.getAdmins(),
   ]);
 
@@ -40,8 +40,8 @@ export default async function AdminDashboardPage() {
       unassignedLeads={unassignedLeads}
       upcomingTrips={upcomingTrips}
       myDeals={myDeals}
-      pipeline={pipeline}
-      metrics={metrics}
+      trend={trend}
+      leaders={leaders}
       admins={admins}
     />
   );

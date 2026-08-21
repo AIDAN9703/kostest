@@ -52,6 +52,7 @@ interface ExtendedProps {
   bookingStatus: string;
   paymentDisplayStatus: string;
   totalAmountCents: number;
+  serviceFeeCents: number | null;
   currency: string | null;
   opsGmvCents: number | null;
   opsExpenseCents: number | null;
@@ -401,10 +402,16 @@ function BookingEventDialog({
       : null;
   const startDate = new Date(event.start);
   const endDate = event.end ? new Date(event.end) : null;
-  const gmvCents = computeEffectiveGmvCents(p.opsGmvCents, p.totalAmountCents) ?? 0;
+  const gmvCents =
+    computeEffectiveGmvCents(p.opsGmvCents, p.totalAmountCents, p.serviceFeeCents) ?? 0;
   const revenueCents =
     p.opsExpenseCents != null
-      ? computeOpsRevenueCents(p.opsGmvCents, p.totalAmountCents, p.opsExpenseCents)
+      ? computeOpsRevenueCents(
+          p.opsGmvCents,
+          p.totalAmountCents,
+          p.opsExpenseCents,
+          p.serviceFeeCents
+        )
       : null;
 
   return (

@@ -271,6 +271,8 @@ export interface BookingListItem {
 
   // Pricing in cents (from booking_pricing)
   totalAmountCents: number;
+  /** Fee on top of GMV — needed so GMV fallbacks stay fee-exclusive. */
+  serviceFeeCents: number | null;
   currency: string;
 
   needsCaptain: boolean | null;

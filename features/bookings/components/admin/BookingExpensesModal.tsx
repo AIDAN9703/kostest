@@ -88,6 +88,7 @@ export interface BookingExpensesModalProps {
   onOpenChange: (open: boolean) => void;
   bookingId: string;
   totalAmountCents?: number | null;
+  serviceFeeCents?: number | null;
   opsGmvCents?: number | null;
   /** ISO 4217 currency for this booking (from booking_pricing.currency / boat.currency). */
   currency?: string;
@@ -100,6 +101,7 @@ export function BookingExpensesModal({
   onOpenChange,
   bookingId,
   totalAmountCents,
+  serviceFeeCents,
   opsGmvCents,
   currency = "USD",
   initialLines,
@@ -198,13 +200,15 @@ export function BookingExpensesModal({
     [rows]
   );
 
+  const totalCostsCents = ownerPayoutCents + otherCostsCents;
   const revenuePreview = computeOpsRevenueCents(
     opsGmvCents,
     totalAmountCents,
-    ownerPayoutCents > 0 ? ownerPayoutCents : null
+    totalCostsCents > 0 ? totalCostsCents : null,
+    serviceFeeCents
   );
 
-  const effectiveGmv = computeEffectiveGmvCents(opsGmvCents, totalAmountCents);
+  const effectiveGmv = computeEffectiveGmvCents(opsGmvCents, totalAmountCents, serviceFeeCents);
 
   function updateRow(key: string, patch: Partial<BookingExpenseLineDraft>) {
     setRows((current) =>
@@ -254,7 +258,7 @@ export function BookingExpensesModal({
         <DialogHeader>
           <DialogTitle>Booking expenses</DialogTitle>
           <DialogDescription>
-            Owner payout drives REV and owner balance. Other categories are tracked for reference.
+            Every line deducts from REV; owner payout also drives the owner balance.
           </DialogDescription>
         </DialogHeader>
 

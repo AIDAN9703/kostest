@@ -96,7 +96,7 @@ export default function HeroSearchDock() {
           margin desyncs under browser zoom (zooming out shrinks px content
           but not vh) and the sections below climb up onto the hero. Px units
           keep the pull-up and the dock height in lockstep at any zoom. */}
-      <div ref={ref} className="sticky top-[-1px] z-40 -mt-40 sm:-mt-36">
+      <div ref={ref} className="sticky top-[-1px] z-40 -mt-42">
         {/* Nav chrome fades in FIRST (no delay)… */}
         <div
           aria-hidden

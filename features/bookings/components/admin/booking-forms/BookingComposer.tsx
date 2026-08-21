@@ -268,9 +268,9 @@ export function BookingComposer({
     [sections]
   );
 
-  // Matches the board/dashboard formula: revenue = GMV − owner payout. Other
-  // expense lines are tracked per boat but don't reduce KOS revenue.
-  const kosRevenue = charterTotal - ownerPayoutTotal;
+  // Matches the board/dashboard formula: revenue = GMV − all expenses
+  // (owner payouts and fuel/crew/dockage alike).
+  const kosRevenue = charterTotal - ownerPayoutTotal - otherExpenseTotal;
 
   // ── Send options ──
   const [allowPayment, setAllowPayment] = useState(false);
@@ -780,6 +780,12 @@ export function BookingComposer({
                 <span>Owner payouts</span>
                 <span className="tabular-nums">({formatCurrency(ownerPayoutTotal)})</span>
               </div>
+              {otherExpenseTotal > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Other expenses</span>
+                  <span className="tabular-nums">({formatCurrency(otherExpenseTotal)})</span>
+                </div>
+              )}
               <div className="flex justify-between border-t border-border pt-2 font-semibold">
                 <span>KOS revenue</span>
                 <span
@@ -791,12 +797,6 @@ export function BookingComposer({
                   {formatCurrency(kosRevenue)}
                 </span>
               </div>
-              {otherExpenseTotal > 0 && (
-                <p className="pt-1 text-xs text-muted-foreground">
-                  Plus {formatCurrency(otherExpenseTotal)} in other expenses — tracked per boat,
-                  not deducted from KOS revenue.
-                </p>
-              )}
             </div>
           </div>
 

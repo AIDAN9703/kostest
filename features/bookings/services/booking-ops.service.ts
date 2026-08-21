@@ -101,12 +101,17 @@ export const bookingOpsService = {
     } = input;
 
     const [pricingRow] = await db
-      .select({ total: bookingPricing.totalAmountCents })
+      .select({
+        total: bookingPricing.totalAmountCents,
+        serviceFee: bookingPricing.serviceFeeCents,
+      })
       .from(bookingPricing)
       .where(eq(bookingPricing.bookingId, bookingId))
       .limit(1);
     const totalAmountCents =
       pricingRow?.total != null ? Number(pricingRow.total) : null;
+    const serviceFeeCents =
+      pricingRow?.serviceFee != null ? Number(pricingRow.serviceFee) : null;
 
     const expenseForCalc =
       inputRest.expenseCents !== undefined
@@ -119,7 +124,8 @@ export const bookingOpsService = {
     const computedRevenueCents = computeOpsRevenueCents(
       mergedGmv,
       totalAmountCents,
-      expenseForCalc
+      expenseForCalc,
+      serviceFeeCents
     );
 
     const mergedExpense =

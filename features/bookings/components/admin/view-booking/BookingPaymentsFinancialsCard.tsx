@@ -23,7 +23,7 @@ interface BookingPaymentsFinancialsCardProps {
   bookingId: string;
   booking: Pick<
     BookingDetails,
-    "totalAmountCents" | "totalPaidCents" | "depositAmountCents" | "currency"
+    "totalAmountCents" | "totalPaidCents" | "depositAmountCents" | "currency" | "serviceFeeCents"
   >;
   payments: Payment[];
   opsGmvCents: number | null;
@@ -84,14 +84,24 @@ export function BookingPaymentsFinancialsCard({
   const bookingCurrency = booking.currency ?? "USD";
   const fmt = (cents: number) => formatCentsAsCurrency(cents, { currency: bookingCurrency });
 
-  const effectiveGmv = computeEffectiveGmvCents(opsGmvCents, booking.totalAmountCents);
-  const isOverride =
-    opsGmvCents != null &&
-    booking.totalAmountCents != null &&
-    opsGmvCents !== booking.totalAmountCents;
+  const effectiveGmv = computeEffectiveGmvCents(
+    opsGmvCents,
+    booking.totalAmountCents,
+    booking.serviceFeeCents
+  );
+  const quoteGmv =
+    booking.totalAmountCents != null
+      ? booking.totalAmountCents - (booking.serviceFeeCents ?? 0)
+      : null;
+  const isOverride = opsGmvCents != null && quoteGmv != null && opsGmvCents !== quoteGmv;
   const expenses = opsExpenseCents ?? 0;
   const commissions = (commissionAgentCents ?? 0) + (commissionKosCents ?? 0);
-  const revenue = computeOpsRevenueCents(opsGmvCents, booking.totalAmountCents, opsExpenseCents);
+  const revenue = computeOpsRevenueCents(
+    opsGmvCents,
+    booking.totalAmountCents,
+    opsExpenseCents,
+    booking.serviceFeeCents
+  );
 
   return (
     <Card className="rounded-2xl border-border/60">
@@ -107,6 +117,7 @@ export function BookingPaymentsFinancialsCard({
             <BookingAddExpenseButton
               bookingId={bookingId}
               totalAmountCents={booking.totalAmountCents ?? null}
+              serviceFeeCents={booking.serviceFeeCents ?? null}
               opsGmvCents={opsGmvCents}
               currency={bookingCurrency}
               initialLines={expenseLines}

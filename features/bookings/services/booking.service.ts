@@ -989,6 +989,7 @@ export class BookingService {
       numberOfPassengers: bookings.numberOfPassengers,
       // Pricing from booking_pricing table (in cents)
       totalAmountCents: bookingPricing.totalAmountCents,
+      serviceFeeCents: bookingPricing.serviceFeeCents,
       currency: bookingPricing.currency,
       // stripePaymentLinkId removed - stored in payments table
       needsCaptain: bookings.needsCaptain,
@@ -1081,6 +1082,7 @@ export class BookingService {
       return {
         ...b,
         totalAmountCents,
+        serviceFeeCents: b.serviceFeeCents != null ? Number(b.serviceFeeCents) : null,
         totalPaidCents,
         hasRefund,
         currency: b.currency ?? "USD",

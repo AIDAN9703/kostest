@@ -147,3 +147,9 @@ production. Leave them unless drizzle-kit is upgraded for other reasons.
 3. Decide the SMS provider question.
 4. Set timezones on the last 12 boats (2 La Coloma, 10 unlabelled) once their
    locations are known.
+
+**Money semantics (fixed 2026-08-19):** `booking_ops.expense_cents` aggregates
+ALL expense lines (owner payout + fuel/crew/dockage), so REV = GMV − every
+cost. Effective GMV falls back to quote total − service fee (fee-exclusive)
+on revenue/GMV surfaces; client-balance surfaces keep the fee-inclusive total
+because that's what the client owes. Backfill: scripts/backfill-expense-totals.sql.

@@ -10,6 +10,7 @@ import type { BookingExpenseLine } from "@/features/bookings/booking-expense.typ
 interface BookingAddExpenseButtonProps {
   bookingId: string;
   totalAmountCents: number | null;
+  serviceFeeCents: number | null;
   opsGmvCents: number | null;
   currency: string;
   initialLines: BookingExpenseLine[];
@@ -19,6 +20,7 @@ interface BookingAddExpenseButtonProps {
 export function BookingAddExpenseButton({
   bookingId,
   totalAmountCents,
+  serviceFeeCents,
   opsGmvCents,
   currency,
   initialLines,
@@ -43,6 +45,7 @@ export function BookingAddExpenseButton({
         onOpenChange={setOpen}
         bookingId={bookingId}
         totalAmountCents={totalAmountCents}
+        serviceFeeCents={serviceFeeCents}
         opsGmvCents={opsGmvCents}
         currency={currency}
         initialLines={initialLines}

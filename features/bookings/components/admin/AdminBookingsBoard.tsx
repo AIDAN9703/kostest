@@ -369,6 +369,7 @@ function ExpenseCell({ booking, currency }: { booking: BookingListItem; currency
               onOpenChange={setOpen}
               bookingId={booking.id}
               totalAmountCents={booking.totalAmountCents}
+              serviceFeeCents={booking.serviceFeeCents}
               opsGmvCents={booking.opsGmvCents ?? null}
               currency={currency}
             />

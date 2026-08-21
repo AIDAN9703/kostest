@@ -128,9 +128,9 @@ export async function createBookingFull(
       const section = input.bookings[index];
       const lines = section?.expenseLines ?? [];
 
-      // Expense lines first: saveLines aggregates OWNER_PAYOUT into
-      // booking_ops.expense_cents, which the ops upsert below folds into
-      // revenue.
+      // Expense lines first: saveLines aggregates every line (owner payout
+      // + other costs) into booking_ops.expense_cents, which the ops upsert
+      // below folds into revenue.
       if (lines.length > 0) {
         await bookingExpenseLineService.saveLines(
           id,

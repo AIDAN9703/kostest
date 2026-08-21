@@ -1,6 +1,8 @@
 /**
  * Booking Expense Line Service
- * Manages typed expense breakdown per booking; aggregates OWNER_PAYOUT into booking_ops.expense_cents.
+ * Manages typed expense breakdown per booking; aggregates ALL lines (owner
+ * payout + fuel/crew/dockage/…) into booking_ops.expense_cents, so ops
+ * revenue = GMV − every cost, not just the owner's cut.
  */
 
 import { db } from "@/database/db";
@@ -49,6 +51,8 @@ export const bookingExpenseLineService = {
       .where(eq(bookingOps.bookingId, bookingId))
       .limit(1);
 
+    // Legacy seed: bookings from before line tracking carry only the manual
+    // ops figure, which historically meant the owner payout.
     if (opsRow?.expenseCents != null) {
       return [
         {
@@ -104,9 +108,9 @@ export const bookingExpenseLineService = {
     lines: BookingExpenseLineInput[]
   ): Promise<BookingExpenseLine[]> {
     const now = new Date();
-    const ownerPayoutTotal = lines
-      .filter((line) => line.category === "OWNER_PAYOUT")
-      .reduce((sum, line) => sum + line.amountCents, 0);
+    // Every category counts against revenue — owner payout, fuel, crew,
+    // dockage alike. REV on the board means "GMV minus all costs".
+    const expenseTotal = lines.reduce((sum, line) => sum + line.amountCents, 0);
 
     // Sequential, not transactional: the neon-http driver has no transaction
     // support (db.transaction throws at runtime). Delete-then-insert leaves a
@@ -137,7 +141,7 @@ export const bookingExpenseLineService = {
     }
 
     await bookingOpsService.upsert(bookingId, {
-      expenseCents: ownerPayoutTotal > 0 ? ownerPayoutTotal : null,
+      expenseCents: expenseTotal > 0 ? expenseTotal : null,
     });
 
     return savedLines;
