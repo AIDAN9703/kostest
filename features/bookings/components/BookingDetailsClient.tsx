@@ -162,7 +162,7 @@ export default function BookingDetailsClient({
   }, [priceBreakdown, safeBoat.currency]);
 
   const handleBookingSubmit = useCallback(
-    async (paymentMethod: "request" | "instant") => {
+    async () => {
       if (!isFormComplete || !boat || !priceBreakdown) {
         return;
       }
@@ -183,33 +183,16 @@ export default function BookingDetailsClient({
           ...(selectedAddOns.length > 0 ? { addOns: selectedAddOns } : {}),
         };
 
-        if (paymentMethod === "instant") {
-          const { createInstantBooking } = await import("@/features/bookings/actions/instant");
-          const result = await createInstantBooking(payload);
+        const { createInstantBooking } = await import("@/features/bookings/actions/instant");
+        const result = await createInstantBooking(payload);
 
-          if (result?.success && "paymentUrl" in result && result.paymentUrl) {
-            window.location.href = result.paymentUrl;
-            return;
-          }
-
-          toast({
-            title: "Could not start checkout",
-            description: result?.error ?? "Please try again.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        const { createBookingRequest } = await import("@/features/bookings/actions/request");
-        const result = await createBookingRequest(payload);
-
-        if (result?.success && "booking" in result && result.booking) {
-          router.push(`/bookings/${boat.id}/success?bookingId=${result.booking.id}&type=request`);
+        if (result?.success && "paymentUrl" in result && result.paymentUrl) {
+          window.location.href = result.paymentUrl;
           return;
         }
 
         toast({
-          title: "Could not send request",
+          title: "Could not start checkout",
           description: result?.error ?? "Please try again.",
           variant: "destructive",
         });
@@ -233,7 +216,6 @@ export default function BookingDetailsClient({
       numberOfPassengers,
       needsCaptain,
       selectedAddOns,
-      router,
       priceBreakdown,
     ],
   );

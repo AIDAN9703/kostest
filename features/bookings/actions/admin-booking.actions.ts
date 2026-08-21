@@ -7,119 +7,12 @@
 import { revalidatePath } from "next/cache";
 
 import { getAdminSession } from "@/shared/lib/utils/auth-utils";
-import { availabilityService } from "@/features/availability/services/availability.service";
-import { createCheckoutSessionForBooking } from "@/features/bookings/actions/stripe-checkout";
 
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { bookingCrewService } from "@/features/bookings/services/booking-crew.service";
 import { bookingStatusService } from "@/features/bookings/services/booking-status.service";
 import {
-  sendBookingApprovalEmail,
-  sendBookingDenialEmail,
 } from "@/shared/lib/services/email.service";
-
-/** Approve a booking request - creates payment link and emails customer */
-export async function approveBookingRequest(bookingId: string) {
-  try {
-    const authResult = await getAdminSession();
-    if (authResult.error) return { success: false, error: authResult.error };
-    const session = authResult.session!;
-
-    const booking = await bookingService.getBookingById(bookingId);
-    if (!booking) return { success: false, error: "Booking not found" };
-    if (booking.bookingType !== "REQUEST") {
-      return { success: false, error: "Only request bookings can be approved" };
-    }
-    if (booking.bookingStatus !== "PENDING") {
-      return { success: false, error: `Booking is already ${booking.bookingStatus.toLowerCase()}` };
-    }
-
-    // Approval is when this request starts blocking the calendar — the
-    // request may be days old, so the slot must be re-checked NOW.
-    if (booking.boatId && booking.startDateTime && booking.endDateTime) {
-      const availability = await availabilityService.checkTimeSlotAvailability(
-        booking.boatId,
-        booking.startDateTime,
-        booking.endDateTime,
-        bookingId
-      );
-      if (!availability.isAvailable) {
-        const reason = availability.conflicts[0]?.reason ?? "another booking holds this slot";
-        return {
-          success: false,
-          error: `Can't approve — the slot is no longer free (${reason}). Deny this request or move its dates first.`,
-        };
-      }
-    }
-
-    const paymentLink = await createCheckoutSessionForBooking(bookingId);
-    await bookingStatusService.approve(bookingId, session.user.id!);
-
-    const emailSent = await sendBookingApprovalEmail(booking as any, paymentLink);
-
-    revalidatePath("/admin/bookings");
-    revalidatePath(`/admin/bookings/${bookingId}`);
-
-    return {
-      success: true,
-      paymentLink,
-      emailSent,
-      message: emailSent
-        ? "Booking approved successfully. Payment link sent to customer."
-        : "Booking approved successfully, but email failed to send. Please send payment link manually.",
-    };
-  } catch (error) {
-    console.error("Error approving booking:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to approve booking",
-    };
-  }
-}
-
-/** Deny a booking request - cancels with reason and emails customer */
-export async function denyBookingRequest(bookingId: string, reason: string) {
-  try {
-    const authResult = await getAdminSession();
-    if (authResult.error) return { success: false, error: authResult.error };
-    const session = authResult.session!;
-
-    if (!reason?.trim()) return { success: false, error: "Please provide a reason for denial" };
-
-    const booking = await bookingService.getBookingById(bookingId);
-    if (!booking) return { success: false, error: "Booking not found" };
-    if (booking.bookingType !== "REQUEST") {
-      return { success: false, error: "Only request bookings can be denied" };
-    }
-    if (booking.bookingStatus !== "PENDING") {
-      return { success: false, error: `Booking is already ${booking.bookingStatus.toLowerCase()}` };
-    }
-
-    await bookingStatusService.cancel(
-      bookingId,
-      `Request denied: ${reason.trim()}`,
-      session.user.id!
-    );
-    const emailSent = await sendBookingDenialEmail(booking as any, reason.trim());
-
-    revalidatePath("/admin/bookings");
-    revalidatePath(`/admin/bookings/${bookingId}`);
-
-    return {
-      success: true,
-      emailSent,
-      message: emailSent
-        ? "Booking denied successfully. Customer has been notified."
-        : "Booking denied successfully, but email failed to send. Please notify customer manually.",
-    };
-  } catch (error) {
-    console.error("Error denying booking:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to deny booking",
-    };
-  }
-}
 
 /** Assign admin to booking, or pass null to unassign */
 export async function assignAdminToBooking(bookingId: string, adminId: string | null) {

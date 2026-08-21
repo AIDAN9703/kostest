@@ -21,7 +21,6 @@ import {
   Ship,
   Trash2,
   UserCheck,
-  XCircle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -65,9 +64,7 @@ import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
 import { adminInitials } from "@/shared/lib/utils/people-display";
 import { differenceInHours, format } from "date-fns";
 import {
-  approveBookingRequest,
   assignAdminToBooking,
-  denyBookingRequest,
 } from "@/features/bookings/actions/admin-booking.actions";
 import { useDeleteBooking } from "@/features/bookings/hooks/useBookingMutations";
 import { useToast } from "@/shared/lib/hooks/use-toast";
@@ -197,12 +194,6 @@ export function AdminBookingsBoard({
                   booking={b}
                   admins={admins}
                   actionLoading={actionLoading}
-                  onApprove={(id) => runAction(() => approveBookingRequest(id), "Request approved", id)}
-                  onDeny={(id) => {
-                    const reason = prompt("Reason for denial:");
-                    if (!reason?.trim()) return;
-                    runAction(() => denyBookingRequest(id, reason), "Request denied", id);
-                  }}
                   onAssign={(id, adminId) =>
                     runAction(() => assignAdminToBooking(id, adminId), "Admin assigned", id)
                   }
@@ -386,8 +377,6 @@ function BookingRow({
   booking,
   admins,
   actionLoading,
-  onApprove,
-  onDeny,
   onAssign,
   onDelete,
   onOpen,
@@ -395,8 +384,6 @@ function BookingRow({
   booking: BookingListItem;
   admins: Admin[];
   actionLoading: string | null;
-  onApprove: (id: string) => void;
-  onDeny: (id: string) => void;
   onAssign: (id: string, adminId: string) => void;
   onDelete: (id: string) => void;
   onOpen: (id: string) => void;
@@ -405,8 +392,6 @@ function BookingRow({
   const KindIcon = kind.Icon;
   const isInquiry = booking.bookingStatus === "INQUIRY";
   const isLoading = actionLoading === booking.id;
-  const isPendingRequest =
-    booking.bookingType === "REQUEST" && booking.bookingStatus === "PENDING";
   const isLive = !booking.archivedAt && !SETTLED_STATUSES.has(booking.bookingStatus);
   const isNew = differenceInHours(new Date(), new Date(booking.createdAt)) < 48;
   // One boat of a multi-boat charter party.
@@ -639,27 +624,6 @@ function BookingRow({
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {isPendingRequest ? (
-              <>
-                <DropdownMenuItem
-                  onClick={() => onApprove(booking.id)}
-                  disabled={isLoading}
-                  className="cursor-pointer text-success"
-                >
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Approve
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onDeny(booking.id)}
-                  disabled={isLoading}
-                  className="cursor-pointer text-destructive"
-                >
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Deny
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            ) : null}
             <DropdownMenuItem onClick={() => onOpen(booking.id)} className="cursor-pointer">
               <Eye className="mr-2 h-4 w-4" />
               Open deal

@@ -74,8 +74,10 @@ export function BookingForm({
       numberOfPassengers: String(data.numberOfPassengers),
       needsCaptain: String(data.needsCaptain || false),
     });
-    // Add-ons are chosen on the next page ("Complete your charter"), not here.
-    router.push(`/bookings/${boat.id}/details?${params.toString()}`);
+    // Instant boats go to checkout ("Complete your charter"); everything else
+    // goes straight to the inquiry funnel — no /details bounce in between.
+    const target = variant === "instant" ? "details" : "inquiry";
+    router.push(`/bookings/${boat.id}/${target}?${params.toString()}`);
   };
 
   const currency = boat.currency ?? "USD";
