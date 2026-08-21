@@ -174,21 +174,27 @@ export async function cancelBooking(bookingId: string, reason: string) {
 }
 
 /**
- * Move every OTHER boat in this booking's charter party by the same time
- * delta the edited boat just moved. Delta on the absolute instants keeps any
- * deliberate stagger between boats intact; each sibling's own duration is
- * preserved. Runs through applyBookingSingleFieldUpdate so every sibling
+ * Apply the edited boat's start/end deltas to every OTHER boat in its
+ * charter party — start and end move independently, so an end-time-only
+ * change (longer/shorter trip) propagates just like a date move, and any
+ * deliberate stagger between boats stays intact. Runs through applyBookingSingleFieldUpdate so every sibling
  * gets the same availability re-check and timeline event a manual edit
  * would. Sequential and non-transactional (neon-http) — a mid-party failure
  * reports which boat stopped it, with earlier boats already moved.
  */
-export async function shiftCharterPartyWindows(bookingId: string, deltaMs: number) {
+export async function shiftCharterPartyWindows(
+  bookingId: string,
+  deltaStartMs: number,
+  deltaEndMs: number
+) {
   try {
     const authResult = await getAdminSession();
     if (authResult.error !== undefined) return { success: false, error: authResult.error };
     const adminId = authResult.session.user.id;
 
-    if (!Number.isFinite(deltaMs) || deltaMs === 0) {
+    if (!Number.isFinite(deltaStartMs)) deltaStartMs = 0;
+    if (!Number.isFinite(deltaEndMs)) deltaEndMs = 0;
+    if (deltaStartMs === 0 && deltaEndMs === 0) {
       return { success: true, moved: 0 };
     }
 
@@ -203,8 +209,8 @@ export async function shiftCharterPartyWindows(bookingId: string, deltaMs: numbe
 
     let moved = 0;
     for (const m of siblings) {
-      const start = new Date(new Date(m.booking.startDateTime as Date).getTime() + deltaMs);
-      const end = new Date(new Date(m.booking.endDateTime as Date).getTime() + deltaMs);
+      const start = new Date(new Date(m.booking.startDateTime as Date).getTime() + deltaStartMs);
+      const end = new Date(new Date(m.booking.endDateTime as Date).getTime() + deltaEndMs);
       try {
         await bookingService.applyBookingSingleFieldUpdate(
           m.booking.id,

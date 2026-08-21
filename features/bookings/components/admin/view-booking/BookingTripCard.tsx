@@ -159,23 +159,27 @@ export function BookingTripCard({
         }
       }
 
-      // Charter party: move the sibling boats by the same delta so a 4-boat
-      // date change is one edit, not four. Stagger between boats is kept.
-      if (startChanged && moveParty && partySize > 1) {
-        const oldStart = trip.startDateTime ? new Date(trip.startDateTime).getTime() : null;
-        const newStart = datetimeLocalInputToUtcISO(start, tz);
-        if (oldStart != null && newStart) {
-          const deltaMs = new Date(newStart).getTime() - oldStart;
-          const shifted = await shiftCharterPartyWindows(bookingId, deltaMs);
-          if (!shifted.success) {
-            toast({
-              title: "Party didn't fully move",
-              description: shifted.error,
-              variant: "destructive",
-            });
-            router.refresh();
-            return false;
-          }
+      // Charter party: apply the same start/end deltas to the sibling boats
+      // so a 4-boat change is one edit, not four. Start and end propagate
+      // independently — an end-time-only edit moves every boat's end time.
+      if ((startChanged || endChanged) && moveParty && partySize > 1) {
+        const deltaOf = (oldIso: string | null, input: string): number => {
+          const oldMs = oldIso ? new Date(oldIso).getTime() : null;
+          const newIso = datetimeLocalInputToUtcISO(input, tz);
+          if (oldMs == null || !newIso) return 0;
+          return new Date(newIso).getTime() - oldMs;
+        };
+        const deltaStartMs = startChanged ? deltaOf(trip.startDateTime, start) : 0;
+        const deltaEndMs = endChanged ? deltaOf(trip.endDateTime, end) : 0;
+        const shifted = await shiftCharterPartyWindows(bookingId, deltaStartMs, deltaEndMs);
+        if (!shifted.success) {
+          toast({
+            title: "Party didn't fully move",
+            description: shifted.error,
+            variant: "destructive",
+          });
+          router.refresh();
+          return false;
         }
       }
 
