@@ -22,6 +22,7 @@ import {
 } from "@/features/bookings/components/admin/view-booking/BookingTripCard";
 import {
   BookingEditModeProvider,
+  ProposalResendButton,
   BookingPageEditButton,
 } from "@/features/bookings/components/admin/view-booking/BookingEditMode";
 import { BookingPaymentsFinancialsCard } from "@/features/bookings/components/admin/view-booking/BookingPaymentsFinancialsCard";
@@ -282,26 +283,30 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
           // Same anatomy for both stages: one primary verb + the quiet ⋯
           // overflow. Inquiry's winning path is the proposal; a booking's is
           // editing the page.
-          <div className="flex shrink-0 items-center gap-2">
-            {isInquiry ? (
-              /* Same form as /admin/bookings/create?dealId=… — hosted in a
-                 modal so the admin never leaves the deal. */
-              <CreateProposalModal
-                pricingTiers={pricingTiers}
-                admins={admins}
-                dealPrefill={buildDealPrefillForBookingForm(booking)}
+          <div className="flex shrink-0 flex-col gap-2">
+            <div className="flex items-center gap-2">
+              {isInquiry ? (
+                /* Same form as /admin/bookings/create?dealId=… — hosted in a
+                   modal so the admin never leaves the deal. */
+                <CreateProposalModal
+                  pricingTiers={pricingTiers}
+                  admins={admins}
+                  dealPrefill={buildDealPrefillForBookingForm(booking)}
+                />
+              ) : (
+                <BookingPageEditButton />
+              )}
+              <DealActionsMenu
+                bookingId={id}
+                bookingStatus={booking.bookingStatus}
+                isArchived={booking.archivedAt != null}
+                assignedAdminId={booking.assignedAdminId}
+                admins={adminOptions}
+                currentUserId={session?.user?.id ?? null}
               />
-            ) : (
-              <BookingPageEditButton />
-            )}
-            <DealActionsMenu
-              bookingId={id}
-              bookingStatus={booking.bookingStatus}
-              isArchived={booking.archivedAt != null}
-              assignedAdminId={booking.assignedAdminId}
-              admins={adminOptions}
-              currentUserId={session?.user?.id ?? null}
-            />
+            </div>
+            {/* Spans the row above — the resend is the deal's second verb. */}
+            <ProposalResendButton />
           </div>
         }
         email={booking.customerEmail}

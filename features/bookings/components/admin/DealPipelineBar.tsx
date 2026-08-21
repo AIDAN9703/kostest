@@ -68,17 +68,19 @@ export function DealPipelineBar({ dealStatus, contacted = false }: DealPipelineB
 
   return (
     <div className="overflow-x-auto">
-      <ol className="flex min-w-0 items-center">
+      {/* w-max: labels never wrap/squash — the row scrolls instead.
+          min-w-full: on wide screens the connectors stretch to fill. */}
+      <ol className="flex w-max min-w-full items-center">
         {DEAL_STEPS.map((label, i) => {
           const isDone = currentIndex > i;
           const isCurrent = currentIndex === i;
           return (
-            <li key={label} className={cn("flex items-center", i > 0 && "min-w-0 flex-1")}>
+            <li key={label} className={cn("flex items-center", i > 0 && "flex-1")}>
               {i > 0 ? (
                 <span
                   aria-hidden
                   className={cn(
-                    "mx-1.5 h-px min-w-3 flex-1 sm:mx-2",
+                    "mx-1 h-px min-w-2.5 flex-1 sm:mx-1.5",
                     isDone || isCurrent ? "bg-primary/50" : "bg-border/70"
                   )}
                 />
@@ -100,7 +102,7 @@ export function DealPipelineBar({ dealStatus, contacted = false }: DealPipelineB
                 </span>
                 <span
                   className={cn(
-                    "whitespace-nowrap text-xs sm:text-sm",
+                    "whitespace-nowrap text-xs",
                     isCurrent
                       ? "font-semibold"
                       : isDone

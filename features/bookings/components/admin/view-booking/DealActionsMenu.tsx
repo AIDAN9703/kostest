@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Loader2,
   MoreHorizontal,
-  Send,
   UserCheck,
   XCircle,
 } from "lucide-react";
@@ -39,7 +38,6 @@ import {
   markBookingCompleted,
 } from "@/features/bookings/actions/admin-booking.actions";
 import { markDealLost, toggleDealArchived } from "@/features/bookings/actions/deal.actions";
-import { useProposalResend } from "@/features/bookings/components/admin/view-booking/BookingEditMode";
 
 export interface DealAdminOption {
   id: string;
@@ -69,7 +67,6 @@ export function DealActionsMenu({
   admins = [],
   currentUserId = null,
 }: DealActionsMenuProps) {
-  const { resend, openResend } = useProposalResend();
   const router = useRouter();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -113,15 +110,6 @@ export function DealActionsMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-60">
-        {resend ? (
-          <>
-            <DropdownMenuItem onClick={openResend}>
-              <Send className="mr-2 h-4 w-4" />
-              {resend.stage === "proposal" ? "Resend proposal link" : "Resend payment link"}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        ) : null}
           {!isSettled ? (
             <>
               <DropdownMenuSub>

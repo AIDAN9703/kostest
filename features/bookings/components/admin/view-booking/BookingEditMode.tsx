@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
-import { Check, Copy, Pencil, Send } from "lucide-react";
+import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+import { Check, Copy, Loader2, Pencil, Send } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
@@ -34,12 +34,25 @@ export interface ProposalResendContext {
   editsSinceSend: number;
 }
 
+/** A card's save handler: returns true when saved (or nothing to save). */
+type EditSaver = () => Promise<boolean>;
+
 const BookingEditModeContext = createContext<{
   editing: boolean;
+  saving: boolean;
   setEditing: (editing: boolean) => void;
+  /** Cards register their save here; "Done updating" runs them all. */
+  registerSaver: (id: string, saver: EditSaver) => () => void;
   resend: ProposalResendContext | null;
   openResend: () => void;
-}>({ editing: false, setEditing: () => {}, resend: null, openResend: () => {} });
+}>({
+  editing: false,
+  saving: false,
+  setEditing: () => {},
+  registerSaver: () => () => {},
+  resend: null,
+  openResend: () => {},
+});
 
 export function BookingEditModeProvider({
   children,
@@ -50,18 +63,48 @@ export function BookingEditModeProvider({
   resend?: ProposalResendContext | null;
 }) {
   const [editing, setEditingState] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const saversRef = useRef(new Map<string, EditSaver>());
 
-  // Finishing an edit session is the moment the customer's copy goes stale —
-  // offer the resend right there.
+  const registerSaver = useCallback((id: string, saver: EditSaver) => {
+    saversRef.current.set(id, saver);
+    return () => {
+      saversRef.current.delete(id);
+    };
+  }, []);
+
+  // "Done updating" = save everything, then offer to notify the customer.
+  // A failed save keeps edit mode open so nothing is silently lost.
   const setEditing = (next: boolean) => {
-    setEditingState(next);
-    if (!next && editing && resend) setDialogOpen(true);
+    if (next || !editing) {
+      setEditingState(next);
+      return;
+    }
+    void (async () => {
+      setSaving(true);
+      try {
+        for (const saver of saversRef.current.values()) {
+          if (!(await saver())) return; // card already toasted the error
+        }
+        setEditingState(false);
+        if (resend) setDialogOpen(true);
+      } finally {
+        setSaving(false);
+      }
+    })();
   };
 
   return (
     <BookingEditModeContext.Provider
-      value={{ editing, setEditing, resend, openResend: () => setDialogOpen(true) }}
+      value={{
+        editing,
+        saving,
+        setEditing,
+        registerSaver,
+        resend,
+        openResend: () => setDialogOpen(true),
+      }}
     >
       {children}
       {resend ? (
@@ -82,7 +125,7 @@ export function useProposalResend() {
 }
 
 export function BookingPageEditButton() {
-  const { editing, setEditing } = useBookingEditMode();
+  const { editing, saving, setEditing } = useBookingEditMode();
   return (
     <Button
       variant="outline"
@@ -90,11 +133,12 @@ export function BookingPageEditButton() {
       // Toolbar pill: visible gray fill (bg-muted blends into the card), gold text.
       className="shrink-0 gap-1.5 rounded-full border-0 bg-foreground/10 px-4 text-primary-strong hover:bg-foreground/15 hover:text-primary-strong"
       onClick={() => setEditing(!editing)}
+      disabled={saving}
     >
       {editing ? (
         <>
-          <Check className="h-3.5 w-3.5" />
-          Done updating
+          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+          {saving ? "Saving…" : "Done updating"}
         </>
       ) : (
         <>
@@ -102,6 +146,27 @@ export function BookingPageEditButton() {
           Update trip
         </>
       )}
+    </Button>
+  );
+}
+
+/**
+ * Standalone resend button — sits directly under the Update trip / ⋯ row in
+ * the page header, spanning their combined width. Renders nothing when the
+ * deal has no live link.
+ */
+export function ProposalResendButton() {
+  const { resend, openResend } = useProposalResend();
+  if (!resend) return null;
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="w-full gap-1.5 rounded-full border-0 bg-foreground/10 px-4 text-primary-strong hover:bg-foreground/15 hover:text-primary-strong"
+      onClick={openResend}
+    >
+      <Send className="h-3.5 w-3.5" />
+      {resend.stage === "proposal" ? "Resend proposal link" : "Resend payment link"}
     </Button>
   );
 }
@@ -159,9 +224,7 @@ function ProposalResendDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-2xl sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>
-            {isProposal ? "Send the updated proposal?" : "Resend the payment link?"}
-          </DialogTitle>
+          <DialogTitle>Notify customer of changes</DialogTitle>
           <DialogDescription>
             {isProposal
               ? "The customer keeps one link — it always shows the latest version of this trip."

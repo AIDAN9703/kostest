@@ -1,11 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 
-import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
@@ -88,10 +86,9 @@ export function BookingTripCard({
   bookingCrew,
   crewOptions,
 }: BookingTripCardProps) {
-  const { editing } = useBookingEditMode();
+  const { editing, registerSaver } = useBookingEditMode();
   const router = useRouter();
   const { toast } = useToast();
-  const [isPending, startTransition] = useTransition();
 
   // Edited in the BOAT's local time — an admin in another timezone must not
   // silently shift the trip by their own offset.
@@ -104,16 +101,17 @@ export function BookingTripCard({
   const [pickup, setPickup] = useState(trip.pickupLocation ?? "");
   const [dropoff, setDropoff] = useState(trip.dropoffLocation ?? "");
 
-  const dirty =
-    start !== toInput(trip.startDateTime) ||
-    end !== toInput(trip.endDateTime) ||
-    passengers !== trip.numberOfPassengers ||
-    needsCaptain !== Boolean(trip.needsCaptain) ||
-    pickup !== (trip.pickupLocation ?? "") ||
-    dropoff !== (trip.dropoffLocation ?? "");
+  // "Done updating" calls the latest save via ref — state closures go stale
+  // in a registry, refs don't.
+  const saveRef = useRef<() => Promise<boolean>>(async () => true);
+  useEffect(() => {
+    if (!editing) return;
+    return registerSaver("trip-details", () => saveRef.current());
+  }, [editing, registerSaver]);
 
-  function handleSave() {
-    startTransition(async () => {
+  // Runs when the admin clicks "Done updating" (registered below). Returns
+  // false on failure so edit mode stays open and nothing is silently lost.
+  async function handleSave(): Promise<boolean> {
       const updates: Array<{ field: string; value: unknown }> = [];
       // Dates save as ONE atomic window — sending start and end separately
       // let the DB see end-before-start mid-save and reject the edit.
@@ -123,7 +121,7 @@ export function BookingTripCard({
         const isoStart = datetimeLocalInputToUtcISO(start, tz);
         if (!isoStart) {
           toast({ title: "Invalid start date", variant: "destructive" });
-          return;
+          return false;
         }
         updates.push({
           field: "tripWindow",
@@ -143,6 +141,7 @@ export function BookingTripCard({
         updates.push({ field: "dropoffLocation", value: dropoff.trim() || null });
       }
 
+      if (updates.length === 0) return true;
       for (const update of updates) {
         const res = await updateBookingSingleField(bookingId, update);
         if (!res.success) {
@@ -151,13 +150,16 @@ export function BookingTripCard({
             description: res.error,
             variant: "destructive",
           });
-          return;
+          return false;
         }
       }
       toast({ title: "Trip details saved" });
       router.refresh();
-    });
+      return true;
   }
+  useEffect(() => {
+    saveRef.current = handleSave;
+  });
 
   return (
     <Card className="rounded-2xl border-border/60">
@@ -248,10 +250,6 @@ export function BookingTripCard({
                 />
               </div>
             </div>
-            <Button size="sm" className="gap-2" disabled={!dirty || isPending} onClick={handleSave}>
-              {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-              Save trip details
-            </Button>
           </div>
         ) : (
           <dl className="grid gap-x-6 gap-y-4 border-t border-border/50 pt-4 sm:grid-cols-2 lg:grid-cols-3">
