@@ -124,7 +124,7 @@ export function AdminBookingMakePaymentButton({
         variant="outline"
         size="sm"
         // Header-pill style (soft fill, no border), kept green — money in.
-        className="shrink-0 gap-1.5 rounded-full border-0 bg-success/10 px-4 text-success hover:bg-success/15 hover:text-success"
+        className="shrink-0 gap-1.5 rounded-full border-0 bg-success px-4 font-semibold text-success-foreground hover:bg-success/85"
         disabled={disabled}
         onClick={() => setOpen(true)}
       >

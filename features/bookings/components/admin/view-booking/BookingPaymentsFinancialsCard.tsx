@@ -17,7 +17,6 @@ import type { Payment } from "@/database/types";
 import { format } from "date-fns";
 import { AdminBookingMakePaymentButton } from "@/features/bookings/components/admin/view-booking/AdminBookingMakePaymentButton";
 import { BookingAddExpenseButton } from "@/features/bookings/components/admin/view-booking/BookingAddExpenseButton";
-import { PaymentLinkActions } from "@/features/bookings/components/admin/view-booking/PaymentLinkActions";
 
 interface BookingPaymentsFinancialsCardProps {
   bookingId: string;
@@ -31,10 +30,6 @@ interface BookingPaymentsFinancialsCardProps {
   commissionAgentCents: number | null;
   commissionKosCents: number | null;
   expenseLines: BookingExpenseLine[];
-  /** Stripe payment-link button — on while there's still money to collect. */
-  showPaymentLink?: boolean;
-  /** Public draft token for the copy-proposal-link button; null hides it. */
-  publicToken?: string | null;
 }
 
 const METHOD_LABELS: Record<string, string> = {
@@ -75,8 +70,6 @@ export function BookingPaymentsFinancialsCard({
   commissionAgentCents,
   commissionKosCents,
   expenseLines,
-  showPaymentLink = false,
-  publicToken = null,
 }: BookingPaymentsFinancialsCardProps) {
   const totalAmount = booking.totalAmountCents ?? 0;
   const totalPaid = booking.totalPaidCents ?? 0;
@@ -109,11 +102,6 @@ export function BookingPaymentsFinancialsCard({
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <CardTitle className="text-lg">Payments &amp; financials</CardTitle>
           <div className="flex flex-wrap items-center gap-2">
-            <PaymentLinkActions
-              bookingId={bookingId}
-              showPaymentLink={showPaymentLink}
-              publicToken={publicToken}
-            />
             <BookingAddExpenseButton
               bookingId={bookingId}
               totalAmountCents={booking.totalAmountCents ?? null}

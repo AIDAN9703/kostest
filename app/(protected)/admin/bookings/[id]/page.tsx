@@ -35,7 +35,6 @@ import {
   CharterPartyCard,
   type CharterPartyMember,
 } from "@/features/bookings/components/admin/view-booking/CharterPartyCard";
-import { ProposalCard } from "@/features/bookings/components/admin/view-booking/ProposalCard";
 import { BOOKING_EVENT_TYPES } from "@/features/bookings/booking-events.constants";
 
 import { bookingService } from "@/features/bookings/services/booking.service";
@@ -196,18 +195,31 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
         : null,
   };
 
-  // Hide the payment-link button once the booking is fully paid or has been
-  // refunded — nothing meaningful left to collect.
-  const allowPaymentLink =
-    (booking.totalAmountCents ?? 0) > 0 &&
-    (booking.totalPaidCents ?? 0) < (booking.totalAmountCents ?? 0) &&
-    booking.bookingStatus !== "CANCELLED";
-
   const isInquiry = booking.bookingStatus === "INQUIRY";
   // Settled deals are read-only history: no contact/note composer, no
   // customer-facing money links.
   const isSettled =
     booking.bookingStatus === "COMPLETED" || booking.bookingStatus === "CANCELLED";
+
+  // One customer link per deal; resendable while it exists and money/decision
+  // is still outstanding. Stage names what the link IS to the customer now.
+  const balanceDueCents = Math.max(
+    0,
+    (booking.totalAmountCents ?? 0) - (booking.totalPaidCents ?? 0)
+  );
+  const proposalResend =
+    booking.publicToken && !isSettled && (booking.bookingStatus === "DRAFT" || balanceDueCents > 0)
+      ? {
+          bookingId: id,
+          publicToken: booking.publicToken,
+          stage: (booking.bookingStatus === "DRAFT" ? "proposal" : "payment") as
+            | "proposal"
+            | "payment",
+          customerEmail: booking.customerEmail,
+          customerPhone: booking.customerPhone,
+          editsSinceSend: changesSinceLastSend,
+        }
+      : null;
   const dealStatus = computeDealStatusForBooking({
     bookingStatus: booking.bookingStatus,
     paymentDisplayStatus: booking.paymentDisplayStatus,
@@ -221,7 +233,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
   }));
 
   return (
-    <BookingEditModeProvider>
+    <BookingEditModeProvider resend={proposalResend}>
     <div className="flex w-full flex-1 flex-col">
       {/* Content left (header + cards share one width), activity rail running
           the FULL right side of the page. */}
@@ -320,30 +332,6 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
             /* Priority order: the trip and the money are what admins open
                this page for. */
             <>
-              {booking.bookingStatus === "DRAFT" && booking.publicToken ? (
-                <ProposalCard
-                  bookingId={id}
-                  publicToken={booking.publicToken}
-                  publishedAt={lastSentAt}
-                  changesSinceLastSend={changesSinceLastSend}
-                  customerEmail={booking.customerEmail}
-                  customerPhone={booking.customerPhone}
-                  boatLabel={
-                    partyMembers.length > 1
-                      ? booking.bookingGroupName ?? `${partyMembers.length} boats`
-                      : booking.boatName ?? "Boat TBD"
-                  }
-                  tripStart={booking.startDateTime}
-                  boatTimezone={booking.boatTimezone}
-                  guests={booking.numberOfPassengers}
-                  totalAmountCents={
-                    partyMembers.length > 1
-                      ? partyMembers.reduce((sum, m) => sum + (m.totalAmountCents ?? 0), 0)
-                      : booking.totalAmountCents
-                  }
-                  currency={booking.currency ?? "USD"}
-                />
-              ) : null}
               <BookingTripCard
                 bookingId={id}
                 trip={tripSnapshot}
@@ -373,8 +361,6 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
                 commissionAgentCents={ops?.commissionAgentCents ?? null}
                 commissionKosCents={ops?.commissionKosCents ?? null}
                 expenseLines={expenseLines}
-                showPaymentLink={allowPaymentLink && !isSettled}
-                publicToken={isSettled ? null : booking.publicToken}
               />
             </>
           )}

@@ -271,9 +271,12 @@ export async function sendProposalUpdate(
     if (!row?.publicToken) {
       return { success: false, error: "No proposal link exists for this booking" };
     }
-    if (row.bookingStatus !== "DRAFT") {
-      return { success: false, error: "Only draft proposals can be re-sent" };
+    // The link serves the whole funnel: proposal while DRAFT, payment page
+    // once accepted. Settled deals have nothing left to send.
+    if (!["DRAFT", "APPROVED", "CONFIRMED"].includes(row.bookingStatus)) {
+      return { success: false, error: "This deal is settled — nothing left to send" };
     }
+    const isPaymentStage = row.bookingStatus !== "DRAFT";
     if (channels.email && !row.customerEmail?.trim()) {
       return { success: false, error: "This customer has no email on file" };
     }
@@ -306,9 +309,11 @@ export async function sendProposalUpdate(
       sent.push("email");
     }
     if (channels.sms && row.customerPhone) {
-      const body = isFirstSend
-        ? `Kings Of The Sea: Your charter proposal is ready. View & accept: ${draftLink}`
-        : `Kings Of The Sea: Your charter proposal has been updated. Latest details: ${draftLink}`;
+      const body = isPaymentStage
+        ? `Kings Of The Sea: Complete your charter booking here: ${draftLink}`
+        : isFirstSend
+          ? `Kings Of The Sea: Your charter proposal is ready. View & accept: ${draftLink}`
+          : `Kings Of The Sea: Your charter proposal has been updated. Latest details: ${draftLink}`;
       const smsResult = await sendSms(row.customerPhone, body);
       if (!smsResult.success) {
         // Email may already be out — report the partial send honestly.
@@ -328,9 +333,11 @@ export async function sendProposalUpdate(
       actorType: "admin",
       actorId: session.user.id,
       channel: "admin_portal",
-      displayMessage: isFirstSend
-        ? `Proposal sent to the customer by ${sent.join(" and ")}`
-        : `Updated proposal re-sent by ${sent.join(" and ")}`,
+      displayMessage: isPaymentStage
+        ? `Payment link re-sent by ${sent.join(" and ")}`
+        : isFirstSend
+          ? `Proposal sent to the customer by ${sent.join(" and ")}`
+          : `Updated proposal re-sent by ${sent.join(" and ")}`,
       metadata: { publicToken: row.publicToken, channels: sent },
     });
 
