@@ -166,14 +166,14 @@ export default function HeroSearchDock() {
       {/* ── Location chips — plain flow content; they scroll under the bar ── */}
       <div className="relative z-10 mx-auto w-full max-w-2xl px-4 sm:px-0">
         <div className="mt-5 flex flex-nowrap items-center gap-2.5 overflow-x-auto pb-1 animate-fade-in-up [animation-delay:600ms] hide-scrollbar sm:flex-wrap sm:justify-center sm:overflow-visible sm:pb-0">
-          <span className="shrink-0 text-xs font-semibold uppercase tracking-wider text-white [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_2px_12px_rgba(0,0,0,0.85)]">
+          <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-white sm:text-xs [text-shadow:0_1px_3px_rgba(0,0,0,0.7),0_2px_12px_rgba(0,0,0,0.85)]">
             Popular
           </span>
           {QUICK_LOCATIONS.map((l) => (
             <Link
               key={l.label}
               href={locationHref(l)}
-              className="shrink-0 whitespace-nowrap rounded-full bg-white/70 px-3.5 py-1.5 text-sm font-semibold text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_2px_10px_rgba(15,40,60,0.18)] backdrop-blur-2xl backdrop-saturate-150 transition hover:-translate-y-0.5 hover:bg-white/85"
+              className="shrink-0 whitespace-nowrap rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-primary sm:px-3.5 sm:py-1.5 sm:text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.95),0_2px_10px_rgba(15,40,60,0.18)] backdrop-blur-2xl backdrop-saturate-150 transition hover:-translate-y-0.5 hover:bg-white/85"
             >
               {l.label}
             </Link>

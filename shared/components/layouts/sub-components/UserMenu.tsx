@@ -133,7 +133,7 @@ export default function UserMenu({ user, navigationData }: UserMenuProps) {
   return (
     <Link
       href="/sign-in"
-      className="text-base font-semibold text-primary transition-colors hover:opacity-80"
+      className="text-sm font-semibold text-primary transition-colors hover:opacity-80 sm:text-base"
     >
       Sign In
     </Link>

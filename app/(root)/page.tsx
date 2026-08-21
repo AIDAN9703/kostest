@@ -43,7 +43,7 @@ async function HomeContent() {
       <HeroSearchDock />
 
       {/* pt separates the first section from the hero's chip row. */}
-      <div className="w-full max-w-[1200px] mx-auto px-4 pt-10 sm:px-8">
+      <div className="w-full max-w-[1200px] mx-auto px-4 pt-16 sm:px-8 sm:pt-14">
         {boatsResponse.success && boatsResponse.data && boatsResponse.data.length > 0 && (
           <FeaturedFleet boats={boatsResponse.data} />
         )}

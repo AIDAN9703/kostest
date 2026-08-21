@@ -19,7 +19,7 @@ export default function ClientsShowcase() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section className="py-6 sm:py-16 relative overflow-hidden">
+    <section className="py-10 sm:py-16 relative overflow-hidden">
       <div className="w-full">
         {/* Header */}
         <motion.div

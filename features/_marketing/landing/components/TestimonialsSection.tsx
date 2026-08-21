@@ -79,7 +79,7 @@ export default function TestimonialsSection({ reviews }: TestimonialsSectionProp
   const spotlight = reviews[index];
 
   return (
-    <section className="relative overflow-hidden py-6 sm:py-16">
+    <section className="relative overflow-hidden py-10 sm:py-16">
       {/* Watermark crest, bottom-left */}
       <div className="pointer-events-none absolute -bottom-10 -left-10 h-56 w-56 opacity-[0.05] sm:h-72 sm:w-72">
         <Image

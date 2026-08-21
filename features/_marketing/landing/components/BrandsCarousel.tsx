@@ -31,7 +31,7 @@ export default function BrandsCarousel() {
   return (
     /* Extra bottom padding so the marquee doesn't butt straight into the
        navy inquiry band that follows. */
-    <section className="pt-6 pb-10 sm:pt-16 sm:pb-24">
+    <section className="pt-10 pb-12 sm:pt-16 sm:pb-24">
       <div className="w-full">
         {/* Header — right-aligned to alternate with Explore Destinations */}
         <motion.div

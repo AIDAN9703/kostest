@@ -117,7 +117,7 @@ export default function SearchBar({ variant = "default", size = "default" }: Sea
                 ? "h-10 min-h-10 text-sm leading-normal"
                 : isSlim
                   ? "h-12 text-base transition-[height] duration-300"
-                  : "h-11 text-base transition-none sm:h-14 md:text-lg"
+                  : "h-10 text-base transition-none sm:h-14 md:text-lg"
             )}
             containerClassName="w-full"
             defaultValue={currentLocation}
@@ -135,7 +135,7 @@ export default function SearchBar({ variant = "default", size = "default" }: Sea
               ? "m-1.5 h-8 w-8"
               : isSlim
                 ? "m-1.5 h-10 gap-1.5 px-4 text-sm font-semibold transition-all duration-300 sm:px-5"
-                : "m-2 h-11 gap-2 px-5 text-sm font-semibold transition-none sm:h-14 sm:px-7 sm:text-base"
+                : "m-1.5 h-10 gap-2 px-4 text-sm font-semibold transition-none sm:m-2 sm:h-14 sm:px-7 sm:text-base"
           )}
           aria-label="Search"
         >

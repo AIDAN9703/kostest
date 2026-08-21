@@ -28,7 +28,7 @@ const Navigation = () => {
     >
       <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <nav
-          className="flex min-h-[var(--header-h)] items-center justify-between gap-3 py-2"
+          className="flex min-h-14 items-center justify-between gap-3 py-1.5 sm:min-h-[var(--header-h)] sm:py-2"
           role="navigation"
           aria-label="Main navigation"
         >
@@ -45,7 +45,7 @@ const Navigation = () => {
                 alt="Logo"
                 width={48}
                 height={48}
-                className="filter-blue rounded-full"
+                className="filter-blue h-10 w-10 rounded-full sm:h-12 sm:w-12"
                 priority
               />
             </Link>

@@ -24,7 +24,7 @@ export default function FeaturedFleet({ boats }: FeaturedFleetProps) {
   const scrollNext = useCallback(() => api?.scrollNext(), [api]);
 
   return (
-    <section className="py-6 sm:py-16">
+    <section className="py-10 sm:py-16">
       <div className="w-full">
         {/* Header */}
         <motion.div

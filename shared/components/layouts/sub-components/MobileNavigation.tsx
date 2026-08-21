@@ -49,7 +49,7 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({ navigationData, use
           className="text-primary hover:text-primary/80 transition-colors lg:hidden"
           aria-label="Open menu"
         >
-          <Menu className="h-11 w-11 shrink-0" strokeWidth={2} />
+          <Menu className="h-6 w-6 shrink-0" strokeWidth={2} />
         </button>
       </SheetTrigger>
 
