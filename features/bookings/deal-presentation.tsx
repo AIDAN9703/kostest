@@ -67,11 +67,11 @@ const FALLBACK: DealKindPresentation = {
 const INQUIRY: DealKindPresentation = {
   label: "Inquiry",
   Icon: MessageSquareText,
-  rail: "bg-primary",
-  iconWrap: "bg-primary-soft text-primary-strong",
-  badge: "bg-primary-soft text-primary-strong",
-  rowHover: "hover:bg-primary-soft/40",
-  dot: "bg-primary",
+  rail: "bg-slate-400",
+  iconWrap: "bg-slate-500/10 text-slate-300",
+  badge: "bg-slate-500/10 text-slate-300",
+  rowHover: "hover:bg-muted/40",
+  dot: "bg-slate-400",
   isLead: true,
   group: "INQUIRY",
 };
@@ -85,11 +85,11 @@ export const DEAL_KIND_PRESENTATION: Record<string, DealKindPresentation> = {
   TERM_CHARTER: {
     label: "Term charter",
     Icon: CalendarRange,
-    rail: "bg-violet-500",
-    iconWrap: "bg-violet-500/10 text-violet-300",
-    badge: "bg-violet-500/10 text-violet-300",
-    rowHover: "hover:bg-violet-500/5",
-    dot: "bg-violet-500",
+    rail: "bg-sky-500",
+    iconWrap: "bg-sky-500/10 text-sky-300",
+    badge: "bg-sky-500/10 text-sky-300",
+    rowHover: "hover:bg-sky-500/5",
+    dot: "bg-sky-500",
     isLead: true,
     group: "TERM_CHARTER",
   },
@@ -136,17 +136,17 @@ export const PRICED_STATUSES = new Set([
 
 /**
  * Once an inquiry-family deal is priced, it IS a booking — and it changes
- * color: gold stays the lead color (inquiries need selling), deep indigo
- * marks the real thing.
+ * color. Booking-system convention: gray = incoming/unqualified (inquiry),
+ * brand gold = the live deal being worked, green = paid (instant book).
  */
 const BOOKING_STAGE: DealKindPresentation = {
   label: "Booking",
   Icon: CalendarCheck,
-  rail: "bg-indigo-500",
-  iconWrap: "bg-indigo-500/10 text-indigo-400",
-  badge: "bg-indigo-500/10 text-indigo-400",
-  rowHover: "hover:bg-indigo-500/5",
-  dot: "bg-indigo-500",
+  rail: "bg-primary",
+  iconWrap: "bg-primary-soft text-primary-strong",
+  badge: "bg-primary-soft text-primary-strong",
+  rowHover: "hover:bg-primary-soft/40",
+  dot: "bg-primary",
   isLead: false,
   group: "INQUIRY",
 };

@@ -389,7 +389,6 @@ function BookingRow({
   onOpen: (id: string) => void;
 }) {
   const kind = getDisplayKind(booking);
-  const KindIcon = kind.Icon;
   const isInquiry = booking.bookingStatus === "INQUIRY";
   const isLoading = actionLoading === booking.id;
   const isLive = !booking.archivedAt && !SETTLED_STATUSES.has(booking.bookingStatus);
@@ -468,10 +467,9 @@ function BookingRow({
       {/* Deal — type + hoverable status emblems, one glance for the row's state */}
       <TableCell className="relative py-3 pl-4 align-top">
         <span className={cn("absolute inset-y-0 left-0 w-1", kind.rail)} aria-hidden />
-        <div className="flex items-start gap-2.5">
-          <span className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", kind.iconWrap)}>
-            <KindIcon className="h-4.5 w-4.5" />
-          </span>
+        {/* No icon bubble — the colored rail on the cell edge carries the
+            type code; the freed width goes to customer/boat columns. */}
+        <div className="flex items-start">
           <div className="min-w-0">
             <Link
               href={`/admin/bookings/${booking.id}`}
