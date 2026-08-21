@@ -45,7 +45,6 @@ export const STATUS_COLORS = {
   // Booking / Blog / Misc
   DRAFT: "gray",
   PUBLISHED: "yellow",
-  ACCEPTED: "green",
 
   // Inquiry Outcome
   OPEN: "blue",

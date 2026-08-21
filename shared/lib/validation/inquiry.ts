@@ -4,8 +4,8 @@ import { emailSchema, phoneRequiredSchema } from "./common";
 
 /**
  * Shared inquiry validation schemas
- * Single source of truth for all inquiry forms (Request to Book, Term Charter, etc.)
- * Maps to GeneralInquiryInput / createGeneralInquiry (inquiry.actions)
+ * Single source of truth for all inquiry forms (Request to Book, Term Charter,
+ * boat page). Consumed by features/bookings/actions/lead-intake.actions.ts.
  */
 
 /** Base contact fields - shared across all inquiry types */
@@ -52,17 +52,6 @@ export const termCharterInquirySchema = baseContactSchema.extend({
   }),
 });
 
-/** Contact fields collected on the inquiry details page (step 2). */
-export const boatInquiryContactSchema = baseContactSchema.extend({
-  message: z.string().max(2000).optional(),
-  termsAgreed: z.boolean().refine((val) => val === true, {
-    message: "You must agree to the terms and conditions",
-  }),
-});
-
-/** Boat page inquiry — trip picker fields + contact (server action). */
-export const boatInquirySchema = bookingRequestSchema.merge(boatInquiryContactSchema);
-
 /**
  * Contact step for SIGNED-IN users: identity comes from the account, so the
  * form only carries notes + terms — and a phone number when the account
@@ -83,6 +72,4 @@ export const boatMemberInquirySchema = bookingRequestSchema.merge(
 
 export type RequestToBookFormData = z.infer<typeof requestToBookSchema>;
 export type TermCharterFormData = z.infer<typeof termCharterInquirySchema>;
-export type BoatInquiryContactFormData = z.infer<typeof boatInquiryContactSchema>;
-export type BoatInquiryFormData = z.infer<typeof boatInquirySchema>;
 export type BoatMemberInquiryContactFormData = z.infer<typeof boatMemberInquiryContactSchema>;

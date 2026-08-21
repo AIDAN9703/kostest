@@ -44,6 +44,10 @@ export function computeDealStatusForBooking(input: {
   if (bookingStatus === "DRAFT" || bookingStatus === "APPROVED") return "INVOICE_SENT";
   // PENDING = a formal request to book (boat + date + price) awaiting review.
   if (bookingStatus === "PENDING") return "BOOKING_INQUIRY";
+  // CONFIRMED normally resolves through paymentDisplayStatus above; if the
+  // payment rows are missing (external/manual confirms), it is still a booked
+  // trip — never show it back at the top of the funnel.
+  if (bookingStatus === "CONFIRMED") return "PAYMENT_COMPLETE";
   return "INQUIRY";
 }
 

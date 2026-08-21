@@ -16,7 +16,6 @@ import { db } from "@/database/db";
 import { bookings, boats, boatPricingTiers, users } from "@/database/schema";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
 import {
-  boatInquirySchema,
   boatMemberInquirySchema,
   requestToBookSchema,
   termCharterInquirySchema,
@@ -124,8 +123,9 @@ export async function createGeneralLead(data: GeneralLeadInput) {
 
     if (deal) {
       await logLeadCreated(deal.id, null);
-      // Branded "we got it" email — ours (Resend), not GHL's. Fire-and-forget.
-      void sendInquiryAcknowledgmentEmail({
+      // Branded "we got it" email — ours (Resend), not GHL's. Awaited so the
+      // serverless runtime can't kill it mid-send; failures only log.
+      await sendInquiryAcknowledgmentEmail({
         customerName: validated.name,
         customerEmail: validated.email,
         inquiryType: "CHARTER",
@@ -229,8 +229,9 @@ export async function createTermCharterLead(data: TermCharterLeadInput) {
 
     if (deal) {
       await logLeadCreated(deal.id, null);
-      // Branded "we got it" email — ours (Resend), not GHL's. Fire-and-forget.
-      void sendInquiryAcknowledgmentEmail({
+      // Branded "we got it" email — ours (Resend), not GHL's. Awaited so the
+      // serverless runtime can't kill it mid-send; failures only log.
+      await sendInquiryAcknowledgmentEmail({
         customerName: validated.name,
         customerEmail: validated.email,
         inquiryType: "TERM_CHARTER",
@@ -284,7 +285,6 @@ export async function createTermCharterLead(data: TermCharterLeadInput) {
 // ============================================================================
 
 export type BoatLeadInput = (
-  | z.input<typeof boatInquirySchema>
   | z.input<typeof boatMemberInquirySchema>
 ) & { boatId: string };
 
@@ -296,47 +296,38 @@ export type BoatLeadInput = (
  */
 export async function createBoatLead(data: BoatLeadInput) {
   try {
-    // Trip fields validate identically either way; the contact snapshot's
-    // source depends on who's asking. Signed-in users are the account — their
-    // name/email come from it (never the payload) and the lead links to them.
-    // Guests supply the full contact block.
+    // The boat-page funnel signs guests up in place (BookingAuthSection
+    // modal), so by the time this action runs there is always an account —
+    // name/email come from it (never the payload) and the lead links to it.
     const session = await auth();
-
-    let validated: z.infer<typeof boatMemberInquirySchema>;
-    let contact: { name: string; email: string; phone: string };
-    let userId: string | null = null;
-
-    if (session?.user?.id) {
-      const parsed = boatMemberInquirySchema.parse(data);
-      const [account] = await db
-        .select({
-          firstName: users.firstName,
-          lastName: users.lastName,
-          email: users.email,
-          phoneNumber: users.phoneNumber,
-        })
-        .from(users)
-        .where(eq(users.id, session.user.id))
-        .limit(1);
-      if (!account) {
-        return { success: false, error: "We couldn't load your account. Please sign in again." };
-      }
-      const phone = account.phoneNumber?.trim() || parsed.phone?.trim() || "";
-      if (!phone) {
-        return { success: false, error: "Add a phone number so our team can reach you." };
-      }
-      validated = parsed;
-      contact = {
-        name: [account.firstName, account.lastName].filter(Boolean).join(" ") || account.email,
-        email: account.email,
-        phone,
-      };
-      userId = session.user.id;
-    } else {
-      const parsed = boatInquirySchema.parse(data);
-      validated = parsed;
-      contact = { name: parsed.name, email: parsed.email, phone: parsed.phone };
+    if (!session?.user?.id) {
+      return { success: false, error: "Please sign in to send this inquiry." };
     }
+
+    const validated = boatMemberInquirySchema.parse(data);
+    const [account] = await db
+      .select({
+        firstName: users.firstName,
+        lastName: users.lastName,
+        email: users.email,
+        phoneNumber: users.phoneNumber,
+      })
+      .from(users)
+      .where(eq(users.id, session.user.id))
+      .limit(1);
+    if (!account) {
+      return { success: false, error: "We couldn't load your account. Please sign in again." };
+    }
+    const phone = account.phoneNumber?.trim() || validated.phone?.trim() || "";
+    if (!phone) {
+      return { success: false, error: "Add a phone number so our team can reach you." };
+    }
+    const contact = {
+      name: [account.firstName, account.lastName].filter(Boolean).join(" ") || account.email,
+      email: account.email,
+      phone,
+    };
+    const userId = session.user.id;
 
     const { boatId } = data;
 
@@ -344,6 +335,7 @@ export async function createBoatLead(data: BoatLeadInput) {
       .select({
         id: boats.id,
         name: boats.name,
+        ownerId: boats.ownerId,
         cleaningFee: boats.cleaningFee,
         crewRequired: boats.crewRequired,
       })
@@ -385,6 +377,7 @@ export async function createBoatLead(data: BoatLeadInput) {
         source: "BOAT_PAGE",
         userId,
         boatId,
+        boatOwnerId: boat.ownerId,
         pricingTierId: validated.pricingTierId,
         customerName: contact.name,
         customerEmail: contact.email,
@@ -402,6 +395,17 @@ export async function createBoatLead(data: BoatLeadInput) {
 
     if (deal) {
       await logLeadCreated(deal.id, null);
+      // Branded "we got it" email — same one the other intake flows send.
+      await sendInquiryAcknowledgmentEmail({
+        customerName: contact.name,
+        customerEmail: contact.email,
+        inquiryType: "CHARTER",
+        details: [
+          { label: "Boat", value: boat.name },
+          { label: "Date", value: startDateTime.toLocaleDateString("en-US") },
+          { label: "Guests", value: String(validated.numberOfPassengers) },
+        ],
+      }).catch((err) => console.error("Boat-lead ack email failed:", err));
       void ghlWebhookService.sendInquiry({
         name: contact.name,
         email: contact.email,

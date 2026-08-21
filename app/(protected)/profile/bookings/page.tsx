@@ -69,6 +69,7 @@ function transformBooking(dbBooking: {
 // Map database status to display status
 function getBookingDisplayStatus(dbStatus: string): string {
   const statusMap: Record<string, string> = {
+    INQUIRY: "pending",
     DRAFT: "pending",
     PENDING: "pending",
     APPROVED: "approved",

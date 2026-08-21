@@ -66,6 +66,7 @@ export default async function ProfileBookingDetailPage({
       : 0;
 
   const statusMap: Record<string, string> = {
+    INQUIRY: "Pending",
     DRAFT: "Pending",
     PENDING: "Pending",
     APPROVED: "Approved",
