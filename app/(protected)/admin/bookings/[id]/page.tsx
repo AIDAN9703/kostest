@@ -339,6 +339,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
             <>
               <BookingTripCard
                 bookingId={id}
+                partySize={partyMembers.length || 1}
                 trip={tripSnapshot}
                 captainUserId={booking.captainUserId}
                 captainFirstName={booking.captainFirstName}

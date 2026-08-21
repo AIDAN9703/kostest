@@ -11,8 +11,6 @@ import { getAdminSession } from "@/shared/lib/utils/auth-utils";
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { bookingCrewService } from "@/features/bookings/services/booking-crew.service";
 import { bookingStatusService } from "@/features/bookings/services/booking-status.service";
-import {
-} from "@/shared/lib/services/email.service";
 
 /** Assign admin to booking, or pass null to unassign */
 export async function assignAdminToBooking(bookingId: string, adminId: string | null) {
@@ -175,3 +173,64 @@ export async function cancelBooking(bookingId: string, reason: string) {
   }
 }
 
+/**
+ * Move every OTHER boat in this booking's charter party by the same time
+ * delta the edited boat just moved. Delta on the absolute instants keeps any
+ * deliberate stagger between boats intact; each sibling's own duration is
+ * preserved. Runs through applyBookingSingleFieldUpdate so every sibling
+ * gets the same availability re-check and timeline event a manual edit
+ * would. Sequential and non-transactional (neon-http) — a mid-party failure
+ * reports which boat stopped it, with earlier boats already moved.
+ */
+export async function shiftCharterPartyWindows(bookingId: string, deltaMs: number) {
+  try {
+    const authResult = await getAdminSession();
+    if (authResult.error !== undefined) return { success: false, error: authResult.error };
+    const adminId = authResult.session.user.id;
+
+    if (!Number.isFinite(deltaMs) || deltaMs === 0) {
+      return { success: true, moved: 0 };
+    }
+
+    const party = await bookingService.getChargeableParty(bookingId);
+    const siblings = (party ?? []).filter(
+      (m) =>
+        m.booking.id !== bookingId &&
+        m.booking.bookingStatus !== "CANCELLED" &&
+        m.booking.startDateTime != null &&
+        m.booking.endDateTime != null
+    );
+
+    let moved = 0;
+    for (const m of siblings) {
+      const start = new Date(new Date(m.booking.startDateTime as Date).getTime() + deltaMs);
+      const end = new Date(new Date(m.booking.endDateTime as Date).getTime() + deltaMs);
+      try {
+        await bookingService.applyBookingSingleFieldUpdate(
+          m.booking.id,
+          {
+            field: "tripWindow",
+            value: { startDateTime: start.toISOString(), endDateTime: end.toISOString() },
+          },
+          adminId
+        );
+        moved += 1;
+      } catch (error) {
+        console.error("Party shift failed on sibling:", m.booking.id, error);
+        const name = m.boat?.name ?? "one of the boats";
+        return {
+          success: false,
+          moved,
+          error: `${name} couldn't move (likely a calendar conflict). ${moved} of ${siblings.length} other boats were moved — fix ${name} on its own page.`,
+        };
+      }
+    }
+
+    revalidatePath("/admin/bookings");
+    revalidatePath(`/admin/bookings/${bookingId}`);
+    return { success: true, moved };
+  } catch (error) {
+    console.error("Error shifting charter party:", error);
+    return { success: false, moved: 0, error: "Failed to move the rest of the party" };
+  }
+}

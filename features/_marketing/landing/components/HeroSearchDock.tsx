@@ -146,6 +146,20 @@ export default function HeroSearchDock() {
           >
             <SearchBar size={docked ? "slim" : "default"} />
           </div>
+
+          {/* Right spacer mirrors the logo's width + animation, so the search
+              stays centered on the VIEWPORT (not the space right of the logo)
+              and expands outward evenly while docking — without this it lands
+              off-center and reads as a sideways glitch at the breakpoint. */}
+          <div
+            aria-hidden
+            className={cn(
+              "hidden shrink-0 sm:block",
+              docked
+                ? "w-12 transition-all delay-100 duration-300"
+                : "w-0 transition-none"
+            )}
+          />
         </div>
       </div>
 

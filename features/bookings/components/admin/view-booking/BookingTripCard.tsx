@@ -9,6 +9,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Switch } from "@/shared/components/ui/switch";
 import { updateBookingSingleField } from "@/features/bookings/booking.mutations";
+import { shiftCharterPartyWindows } from "@/features/bookings/actions/admin-booking.actions";
 import { useBookingEditMode } from "@/features/bookings/components/admin/view-booking/BookingEditMode";
 import {
   OpsCaptainAssignment,
@@ -52,6 +53,8 @@ export interface BookingTripDetailsSnapshot {
 
 interface BookingTripCardProps {
   bookingId: string;
+  /** Boats in this booking's charter party (1 = solo booking). */
+  partySize?: number;
   trip: BookingTripDetailsSnapshot;
   captainUserId: string | null;
   captainFirstName: string | null;
@@ -77,6 +80,7 @@ function formatTripDateTime(iso: string | null, timezone: string | null): string
  */
 export function BookingTripCard({
   bookingId,
+  partySize = 1,
   trip,
   captainUserId,
   captainFirstName,
@@ -100,6 +104,7 @@ export function BookingTripCard({
   const [needsCaptain, setNeedsCaptain] = useState(Boolean(trip.needsCaptain));
   const [pickup, setPickup] = useState(trip.pickupLocation ?? "");
   const [dropoff, setDropoff] = useState(trip.dropoffLocation ?? "");
+  const [moveParty, setMoveParty] = useState(true);
 
   // "Done updating" calls the latest save via ref — state closures go stale
   // in a registry, refs don't.
@@ -153,6 +158,27 @@ export function BookingTripCard({
           return false;
         }
       }
+
+      // Charter party: move the sibling boats by the same delta so a 4-boat
+      // date change is one edit, not four. Stagger between boats is kept.
+      if (startChanged && moveParty && partySize > 1) {
+        const oldStart = trip.startDateTime ? new Date(trip.startDateTime).getTime() : null;
+        const newStart = datetimeLocalInputToUtcISO(start, tz);
+        if (oldStart != null && newStart) {
+          const deltaMs = new Date(newStart).getTime() - oldStart;
+          const shifted = await shiftCharterPartyWindows(bookingId, deltaMs);
+          if (!shifted.success) {
+            toast({
+              title: "Party didn't fully move",
+              description: shifted.error,
+              variant: "destructive",
+            });
+            router.refresh();
+            return false;
+          }
+        }
+      }
+
       toast({ title: "Trip details saved" });
       router.refresh();
       return true;
@@ -220,6 +246,15 @@ export function BookingTripCard({
                   onChange={(e) => setEnd(e.target.value)}
                 />
               </div>
+              {partySize > 1 ? (
+                <div className="flex items-center gap-3 pt-1 sm:col-span-2">
+                  <Switch checked={moveParty} onCheckedChange={setMoveParty} />
+                  <Label className="text-sm">
+                    Move the other {partySize - 1} {partySize - 1 === 1 ? "boat" : "boats"} in this
+                    party by the same amount
+                  </Label>
+                </div>
+              ) : null}
               <div className="space-y-1.5">
                 <Label className="text-xs">Passengers</Label>
                 <Input
