@@ -153,3 +153,13 @@ ALL expense lines (owner payout + fuel/crew/dockage), so REV = GMV − every
 cost. Effective GMV falls back to quote total − service fee (fee-exclusive)
 on revenue/GMV surfaces; client-balance surfaces keep the fee-inclusive total
 because that's what the client owes. Backfill: scripts/backfill-expense-totals.sql.
+
+**Prod data reset (2026-08-19):** 227 test-era bookings (created before
+2026-07-15) + 15 test/orphaned payment rows deleted ahead of the go-live;
+full copies live in `backup_booking_20260819` / `backup_payment_20260819`
+(drop after a verification period). 14 real bookings kept. The legacy
+REQUEST flow is retired end to end (producer, approve/deny, emails); its two
+real stranded customers (Conor Horrigan, Jason Vonick) were converted to
+INQUIRY and need human follow-up. Deal language: INVOICE_SENT split into
+PROPOSAL_SENT / ACCEPTED — pipeline reads Inquiry → Contacted → Proposal
+sent → Accepted → Partial payment → Payment complete → Completed.
