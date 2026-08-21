@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronsUpDown, User, UserPlus, X } from "lucide-react";
+import { Check, ChevronsUpDown, User, X } from "lucide-react";
 import { useUsers, useUser } from "@/features/users/hooks/useUsers";
 import { cn } from "@/shared/lib/utils/general-utils";
 import { Button } from "@/shared/components/ui/button";
@@ -24,14 +24,12 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/shared/components/ui/avatar";
-import { CreateUserModal } from "@/features/users/components/CreateUserModal";
 
 interface UserSelectProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
-  allowCreate?: boolean;
 }
 
 export function UserSelect({
@@ -39,11 +37,9 @@ export function UserSelect({
   onChange,
   placeholder = "Select user or leave empty for guest",
   disabled,
-  allowCreate = false,
 }: UserSelectProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [createModalOpen, setCreateModalOpen] = useState(false);
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const { data: selectedUserData } = useUser(value || "");
@@ -78,14 +74,6 @@ export function UserSelect({
     onChange("");
     setSearchQuery("");
   };
-
-  const handleCreateSuccess = (userId: string) => {
-    onChange(userId);
-    setOpen(false);
-    setSearchQuery("");
-  };
-
-  const defaultEmailForCreate = searchQuery.includes("@") ? searchQuery : "";
 
   return (
     <div className="relative">
@@ -157,21 +145,10 @@ export function UserSelect({
               )}
               {!loading && users.length === 0 && searchQuery.length >= 2 && (
                 <CommandEmpty className="py-4 px-3">
-                  <p className="text-center text-sm text-muted-foreground mb-3">
-                    No users found for &quot;{searchQuery}&quot;
+                  <p className="text-center text-sm text-muted-foreground">
+                    No users found for &quot;{searchQuery}&quot; — book them as a
+                    guest instead.
                   </p>
-                  {allowCreate && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => setCreateModalOpen(true)}
-                    >
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      Create new user
-                    </Button>
-                  )}
                 </CommandEmpty>
               )}
               {!loading && users.length > 0 && (
@@ -227,14 +204,6 @@ export function UserSelect({
         </button>
       )}
 
-      {allowCreate && (
-        <CreateUserModal
-          open={createModalOpen}
-          onOpenChange={setCreateModalOpen}
-          onSuccess={handleCreateSuccess}
-          defaultEmail={defaultEmailForCreate}
-        />
-      )}
     </div>
   );
 }
