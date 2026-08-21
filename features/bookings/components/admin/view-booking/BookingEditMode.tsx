@@ -34,8 +34,9 @@ export interface ProposalResendContext {
   editsSinceSend: number;
 }
 
-/** A card's save handler: returns true when saved (or nothing to save). */
-type EditSaver = () => Promise<boolean>;
+/** A card's save handler. `ok:false` keeps edit mode open (save failed);
+ * `changed` says whether anything was actually written. */
+type EditSaver = () => Promise<{ ok: boolean; changed: boolean }>;
 
 const BookingEditModeContext = createContext<{
   editing: boolean;
@@ -65,6 +66,7 @@ export function BookingEditModeProvider({
   const [editing, setEditingState] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogReason, setDialogReason] = useState<"edited" | "resend">("resend");
   const saversRef = useRef(new Map<string, EditSaver>());
 
   const registerSaver = useCallback((id: string, saver: EditSaver) => {
@@ -84,11 +86,18 @@ export function BookingEditModeProvider({
     void (async () => {
       setSaving(true);
       try {
+        let anythingChanged = false;
         for (const saver of saversRef.current.values()) {
-          if (!(await saver())) return; // card already toasted the error
+          const result = await saver();
+          if (!result.ok) return; // card already toasted the error
+          anythingChanged = anythingChanged || result.changed;
         }
         setEditingState(false);
-        if (resend) setDialogOpen(true);
+        // Nothing changed → nothing to notify anyone about.
+        if (resend && anythingChanged) {
+          setDialogReason("edited");
+          setDialogOpen(true);
+        }
       } finally {
         setSaving(false);
       }
@@ -103,12 +112,20 @@ export function BookingEditModeProvider({
         setEditing,
         registerSaver,
         resend,
-        openResend: () => setDialogOpen(true),
+        openResend: () => {
+          setDialogReason("resend");
+          setDialogOpen(true);
+        },
       }}
     >
       {children}
       {resend ? (
-        <ProposalResendDialog resend={resend} open={dialogOpen} onOpenChange={setDialogOpen} />
+        <ProposalResendDialog
+          resend={resend}
+          reason={dialogReason}
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+        />
       ) : null}
     </BookingEditModeContext.Provider>
   );
@@ -177,10 +194,13 @@ export function ProposalResendButton() {
  */
 function ProposalResendDialog({
   resend,
+  reason,
   open,
   onOpenChange,
 }: {
   resend: ProposalResendContext;
+  /** "edited" = opened after a real change; "resend" = plain re-share. */
+  reason: "edited" | "resend";
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -224,11 +244,19 @@ function ProposalResendDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-2xl sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Notify customer of changes</DialogTitle>
+          <DialogTitle>
+            {reason === "edited"
+              ? "Notify customer of changes"
+              : isProposal
+                ? "Resend the proposal"
+                : "Resend the payment link"}
+          </DialogTitle>
           <DialogDescription>
-            {isProposal
+            {reason === "edited"
               ? "The customer keeps one link — it always shows the latest version of this trip."
-              : "Same link as the proposal — it now takes them straight to payment."}
+              : isProposal
+                ? "Send the customer their proposal link again — same link, always current."
+                : "Send the customer their payment link again — same link as the proposal."}
             {resend.editsSinceSend > 0 ? (
               <span className="mt-1.5 block text-warning">
                 {resend.editsSinceSend} {resend.editsSinceSend === 1 ? "change" : "changes"} since

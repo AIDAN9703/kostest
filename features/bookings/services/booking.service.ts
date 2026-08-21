@@ -1524,6 +1524,111 @@ export class BookingService {
   /**
    * Reprice booking after switching boats (tier affinity + default tier fallback).
    */
+  /**
+   * "Actually, we want a second boat" — grow an existing booking into a
+   * charter party (or grow the party). Creates the group on first use, then
+   * inserts a sibling row: same customer snapshot, same trip window by
+   * default, its own boat/tier/pricing. The sibling enters as DRAFT, so the
+   * calendar isn't blocked until the customer re-accepts — the lead's one
+   * proposal link now shows every boat, and the admin resends it.
+   */
+  async addBoatToParty(
+    bookingId: string,
+    input: { boatId: string; pricingTierId: string },
+    adminId: string | null
+  ): Promise<{ siblingId: string; groupId: string }> {
+    const lead = await this.getBookingById(bookingId);
+    if (!lead) throw new Error(`Booking not found: ${bookingId}`);
+    if (!["DRAFT", "APPROVED", "CONFIRMED"].includes(lead.bookingStatus)) {
+      throw new Error("Only a priced booking can grow into a charter party");
+    }
+    if (!lead.startDateTime) throw new Error("Set the trip dates before adding a boat");
+    if (!lead.customerName || !lead.customerEmail) {
+      throw new Error("Add the customer's name and email before adding a boat");
+    }
+
+    const { boatsById, tiersById } = await fetchBoatsAndTiersBulk(
+      [input.boatId],
+      [input.pricingTierId]
+    );
+    const boat = boatsById.get(input.boatId);
+    const tier = tiersById.get(input.pricingTierId);
+    if (!boat) throw new Error("Boat not found");
+    if (!tier || tier.boatId !== input.boatId) throw new Error("Pick a pricing option for this boat");
+
+    // First extra boat creates the container.
+    let groupId = lead.bookingGroupId ?? null;
+    if (!groupId) {
+      const group = await bookingGroupService.create({
+        name: `${lead.customerName ?? "Charter"} party`,
+        notes: null,
+        createdById: adminId,
+      });
+      groupId = group.id;
+      await db
+        .update(bookings)
+        .set({ bookingGroupId: groupId, updatedAt: new Date() })
+        .where(eq(bookings.id, bookingId));
+    }
+
+    const startDateTime = new Date(lead.startDateTime);
+    const endDateTime = lead.endDateTime
+      ? new Date(lead.endDateTime)
+      : calculateEndDateTime(startDateTime, tier.hours);
+
+    const [sibling] = await db
+      .insert(bookings)
+      .values({
+        bookingType: lead.bookingType as BookingType,
+        bookingStatus: "DRAFT",
+        source: "ADMIN" as BookingSource,
+        userId: lead.userId ?? null,
+        boatOwnerId: boat.ownerId,
+        boatId: boat.id,
+        pricingTierId: tier.id,
+        bookingGroupId: groupId,
+        customerName: lead.customerName,
+        customerEmail: lead.customerEmail,
+        customerPhone: lead.customerPhone ?? null,
+        isMultiDay: false,
+        startDateTime,
+        endDateTime,
+        numberOfPassengers: lead.numberOfPassengers,
+        pickupLocation: lead.pickupLocation ?? null,
+        dropoffLocation: lead.dropoffLocation ?? null,
+        needsCaptain: boat.crewRequired,
+        assignedAdminId: lead.assignedAdminId ?? adminId,
+        publicToken: null, // the lead's link shows the whole party
+        publishedAt: null,
+      })
+      .returning({ id: bookings.id });
+
+    await bookingStatusService.createInitialHistory(
+      sibling.id,
+      "DRAFT",
+      adminId,
+      "Boat added to charter party"
+    );
+    await bookingPricingService.createPricingWithCalculation(sibling.id, {
+      basePriceCents: dollarsToCents(tier.price),
+      addOnsCents: 0,
+      cleaningFeeCents: dollarsToCents(boat.cleaningFee ?? 0),
+      depositAmountCents: dollarsToCents(boat.depositAmount ?? 0) || undefined,
+      currency: boat.currency ?? "USD",
+    });
+    await bookingEventsService.logEvent({
+      bookingId,
+      eventType: BOOKING_EVENT_TYPES.UPDATED,
+      actorType: "admin",
+      actorId: adminId,
+      channel: "admin_portal",
+      displayMessage: `${boat.name} added to the charter party`,
+      metadata: { siblingBookingId: sibling.id, groupId },
+    });
+
+    return { siblingId: sibling.id, groupId };
+  }
+
   async applyBoatIdChange(
     bookingId: string,
     newBoatId: string,

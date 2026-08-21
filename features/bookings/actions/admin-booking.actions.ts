@@ -240,3 +240,33 @@ export async function shiftCharterPartyWindows(
     return { success: false, moved: 0, error: "Failed to move the rest of the party" };
   }
 }
+
+/**
+ * "Actually, we want another boat" — grow this booking into a charter party.
+ * The sibling joins as DRAFT under the same proposal link; resend it so the
+ * customer sees (and re-accepts) the bigger party.
+ */
+export async function addBoatToCharterParty(
+  bookingId: string,
+  input: { boatId: string; pricingTierId: string }
+) {
+  try {
+    const authResult = await getAdminSession();
+    if (authResult.error !== undefined) return { success: false, error: authResult.error };
+
+    const result = await bookingService.addBoatToParty(
+      bookingId,
+      input,
+      authResult.session.user.id
+    );
+    revalidatePath("/admin/bookings");
+    revalidatePath(`/admin/bookings/${bookingId}`);
+    return { success: true, siblingId: result.siblingId };
+  } catch (error) {
+    console.error("Error adding boat to party:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to add the boat",
+    };
+  }
+}

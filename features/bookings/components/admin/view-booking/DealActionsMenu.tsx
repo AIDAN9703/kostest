@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Loader2,
   MoreHorizontal,
+  Sailboat,
   UserCheck,
   XCircle,
 } from "lucide-react";
@@ -38,6 +39,7 @@ import {
   markBookingCompleted,
 } from "@/features/bookings/actions/admin-booking.actions";
 import { markDealLost, toggleDealArchived } from "@/features/bookings/actions/deal.actions";
+import { AddBoatToPartyDialog } from "@/features/bookings/components/admin/view-booking/AddBoatToPartyDialog";
 
 export interface DealAdminOption {
   id: string;
@@ -67,6 +69,7 @@ export function DealActionsMenu({
   admins = [],
   currentUserId = null,
 }: DealActionsMenuProps) {
+  const [addBoatOpen, setAddBoatOpen] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -110,6 +113,15 @@ export function DealActionsMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-60">
+        {["DRAFT", "APPROVED", "CONFIRMED"].includes(bookingStatus) ? (
+          <>
+            <DropdownMenuItem onClick={() => setAddBoatOpen(true)}>
+              <Sailboat className="mr-2 h-4 w-4" />
+              Add another boat
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        ) : null}
           {!isSettled ? (
             <>
               <DropdownMenuSub>
@@ -188,6 +200,11 @@ export function DealActionsMenu({
           ) : null}
         </DropdownMenuContent>
       </DropdownMenu>
+      <AddBoatToPartyDialog
+        bookingId={bookingId}
+        open={addBoatOpen}
+        onOpenChange={setAddBoatOpen}
+      />
 
       {/* Mark lost / cancel — same dialog shape, different verb */}
       <Dialog

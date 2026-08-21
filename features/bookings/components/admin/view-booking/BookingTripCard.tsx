@@ -10,6 +10,7 @@ import { Label } from "@/shared/components/ui/label";
 import { Switch } from "@/shared/components/ui/switch";
 import { updateBookingSingleField } from "@/features/bookings/booking.mutations";
 import { shiftCharterPartyWindows } from "@/features/bookings/actions/admin-booking.actions";
+import { BoatSelect } from "@/features/boats/components/BoatSelect";
 import { useBookingEditMode } from "@/features/bookings/components/admin/view-booking/BookingEditMode";
 import {
   OpsCaptainAssignment,
@@ -105,10 +106,14 @@ export function BookingTripCard({
   const [pickup, setPickup] = useState(trip.pickupLocation ?? "");
   const [dropoff, setDropoff] = useState(trip.dropoffLocation ?? "");
   const [moveParty, setMoveParty] = useState(true);
+  const [boatId, setBoatId] = useState(trip.boatId ?? "");
 
   // "Done updating" calls the latest save via ref — state closures go stale
   // in a registry, refs don't.
-  const saveRef = useRef<() => Promise<boolean>>(async () => true);
+  const saveRef = useRef<() => Promise<{ ok: boolean; changed: boolean }>>(async () => ({
+    ok: true,
+    changed: false,
+  }));
   useEffect(() => {
     if (!editing) return;
     return registerSaver("trip-details", () => saveRef.current());
@@ -116,8 +121,13 @@ export function BookingTripCard({
 
   // Runs when the admin clicks "Done updating" (registered below). Returns
   // false on failure so edit mode stays open and nothing is silently lost.
-  async function handleSave(): Promise<boolean> {
+  async function handleSave(): Promise<{ ok: boolean; changed: boolean }> {
       const updates: Array<{ field: string; value: unknown }> = [];
+      // Boat first: swapping reprices the booking, and the window below then
+      // availability-checks against the NEW boat's calendar.
+      if (boatId && boatId !== (trip.boatId ?? "")) {
+        updates.push({ field: "boatId", value: boatId });
+      }
       // Dates save as ONE atomic window — sending start and end separately
       // let the DB see end-before-start mid-save and reject the edit.
       const startChanged = start !== toInput(trip.startDateTime);
@@ -126,7 +136,7 @@ export function BookingTripCard({
         const isoStart = datetimeLocalInputToUtcISO(start, tz);
         if (!isoStart) {
           toast({ title: "Invalid start date", variant: "destructive" });
-          return false;
+          return { ok: false, changed: false };
         }
         updates.push({
           field: "tripWindow",
@@ -146,7 +156,7 @@ export function BookingTripCard({
         updates.push({ field: "dropoffLocation", value: dropoff.trim() || null });
       }
 
-      if (updates.length === 0) return true;
+      if (updates.length === 0) return { ok: true, changed: false };
       for (const update of updates) {
         const res = await updateBookingSingleField(bookingId, update);
         if (!res.success) {
@@ -155,7 +165,7 @@ export function BookingTripCard({
             description: res.error,
             variant: "destructive",
           });
-          return false;
+          return { ok: false, changed: true };
         }
       }
 
@@ -179,13 +189,13 @@ export function BookingTripCard({
             variant: "destructive",
           });
           router.refresh();
-          return false;
+          return { ok: false, changed: true };
         }
       }
 
       toast({ title: "Trip details saved" });
       router.refresh();
-      return true;
+      return { ok: true, changed: true };
   }
   useEffect(() => {
     saveRef.current = handleSave;
@@ -234,6 +244,20 @@ export function BookingTripCard({
         {editing ? (
           <div className="space-y-4 border-t border-border/50 pt-4">
             <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs">Boat</Label>
+                <BoatSelect
+                  value={boatId}
+                  selectedBoat={
+                    boatId === trip.boatId && trip.selectedBoat
+                      ? { ...trip.selectedBoat, timezone: trip.boatTimezone }
+                      : null
+                  }
+                  onChange={(id) => setBoatId(id)}
+                  showClearButton={false}
+                  placeholder="Pick a boat"
+                />
+              </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">From (boat local)</Label>
                 <Input
