@@ -129,8 +129,8 @@ export default function Footer() {
     <footer>
       <FooterLinkTabs />
 
-      <div className="border-t border-gray-200">
-        <div className="mx-auto max-w-[1200px] px-4 py-12 sm:px-8 lg:py-14">
+      <div>
+        <div className="mx-auto max-w-[1200px] px-4 pb-12 pt-2 sm:px-8 lg:pb-14">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[260px_1fr] lg:gap-14">
             {/* Brand + contact */}
             <div>
