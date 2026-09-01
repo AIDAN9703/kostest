@@ -156,8 +156,8 @@ because that's what the client owes. Backfill: scripts/backfill-expense-totals.s
 
 **Prod data reset (2026-08-19):** 227 test-era bookings (created before
 2026-07-15) + 15 test/orphaned payment rows deleted ahead of the go-live;
-full copies live in `backup_booking_20260819` / `backup_payment_20260819`
-(drop after a verification period). 14 real bookings kept. The legacy
+14 real bookings kept. Backup tables were dropped 2026-09-07 on the
+owner's call — history starts at the mid-July real-era rows, period. The legacy
 REQUEST flow is retired end to end (producer, approve/deny, emails); its two
 real stranded customers (Conor Horrigan, Jason Vonick) were converted to
 INQUIRY and need human follow-up. Deal language: INVOICE_SENT split into
