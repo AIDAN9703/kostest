@@ -423,6 +423,46 @@ function ExpenseCell({ booking, currency }: { booking: BookingListItem; currency
   );
 }
 
+/**
+ * The admin list, shared by every place a row can assign: the ⋯ menu's
+ * submenu and the unassigned "+" pill. One list, one behavior.
+ */
+function AssignAdminMenuItems({
+  admins,
+  assignedAdminId,
+  disabled,
+  onAssign,
+}: {
+  admins: Admin[];
+  assignedAdminId: string | null;
+  disabled: boolean;
+  onAssign: (adminId: string) => void;
+}) {
+  if (admins.length === 0) {
+    return <DropdownMenuItem disabled>No admins available</DropdownMenuItem>;
+  }
+  return (
+    <>
+      {admins.map((admin) => {
+        const name =
+          [admin.firstName, admin.lastName].filter(Boolean).join(" ").trim() || admin.email;
+        const isAssigned = assignedAdminId === admin.id;
+        return (
+          <DropdownMenuItem
+            key={admin.id}
+            onClick={() => onAssign(admin.id)}
+            disabled={disabled || isAssigned}
+            className={isAssigned ? "opacity-50" : ""}
+          >
+            {name}
+            {isAssigned ? <CheckCircle2 className="ml-auto h-4 w-4 text-success" /> : null}
+          </DropdownMenuItem>
+        );
+      })}
+    </>
+  );
+}
+
 function BookingRow({
   booking,
   admins,
@@ -630,11 +670,29 @@ function BookingRow({
             {adminInitials(adminName) || "?"}
           </span>
         ) : unassigned ? (
-          <span
-            title="Unassigned — open the deal to claim or assign"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-foreground/10 text-sm font-semibold text-muted-foreground"
-          >
-            +
+          <span onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  title="Assign an admin"
+                  disabled={isLoading}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-foreground/10 text-sm font-semibold text-muted-foreground transition-colors hover:bg-foreground/20 hover:text-foreground"
+                >
+                  +
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuLabel>Assign admin</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <AssignAdminMenuItems
+                  admins={admins}
+                  assignedAdminId={booking.assignedAdminId}
+                  disabled={isLoading}
+                  onAssign={(adminId) => onAssign(booking.id, adminId)}
+                />
+              </DropdownMenuContent>
+            </DropdownMenu>
           </span>
         ) : (
           <span className="text-xs text-muted-foreground/40">—</span>
@@ -683,26 +741,12 @@ function BookingRow({
                 Assign admin
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
-                {admins.length === 0 ? (
-                  <DropdownMenuItem disabled>No admins available</DropdownMenuItem>
-                ) : (
-                  admins.map((admin) => {
-                    const name =
-                      [admin.firstName, admin.lastName].filter(Boolean).join(" ").trim() || admin.email;
-                    const isAssigned = booking.assignedAdminId === admin.id;
-                    return (
-                      <DropdownMenuItem
-                        key={admin.id}
-                        onClick={() => onAssign(booking.id, admin.id)}
-                        disabled={isLoading || isAssigned}
-                        className={isAssigned ? "opacity-50" : ""}
-                      >
-                        {name}
-                        {isAssigned ? <CheckCircle2 className="ml-auto h-4 w-4 text-success" /> : null}
-                      </DropdownMenuItem>
-                    );
-                  })
-                )}
+                <AssignAdminMenuItems
+                  admins={admins}
+                  assignedAdminId={booking.assignedAdminId}
+                  disabled={isLoading}
+                  onAssign={(adminId) => onAssign(booking.id, adminId)}
+                />
               </DropdownMenuSubContent>
             </DropdownMenuSub>
             <DropdownMenuSeparator />
