@@ -42,6 +42,10 @@ export const bookingFilterSchema = z.object({
   // Date range
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
+
+  // Column sort (default: newest created first)
+  sortBy: z.enum(["date", "gmv"]).optional(),
+  sortOrder: z.enum(["asc", "desc"]).optional(),
   
   // Related entities
   boatId: z.string().uuid("Invalid boat ID").optional(),

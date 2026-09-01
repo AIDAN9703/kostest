@@ -79,6 +79,8 @@ export default async function BookingsPage({
       minAmount: params.minAmount ?? undefined,
       maxAmount: params.maxAmount ?? undefined,
       bookingGroupId: params.bookingGroupId ?? undefined,
+      sortBy: params.sortBy ?? undefined,
+      sortOrder: params.sortOrder ?? undefined,
       page: params.page,
       limit: params.limit,
     }),

@@ -991,7 +991,7 @@ export class BookingService {
         .where(whereClause)
         .limit(limit)
         .offset(offset)
-        .orderBy(desc(bookings.createdAt)),
+        .orderBy(resolveBoardOrder(filters)),
       db
         .select({ value: count() })
         .from(bookings)
@@ -1872,3 +1872,20 @@ export class BookingService {
 
 // Export singleton instance
 export const bookingService = new BookingService();
+
+/**
+ * Board column sort. Default stays newest-created-first; clicking Date or
+ * GMV sorts by trip start / effective GMV (ops override, else fee-exclusive
+ * quote, else the lead's estimate) with NULLs always last so dateless
+ * inquiries don't crowd the top.
+ */
+function resolveBoardOrder(filters?: BookingFilterInput) {
+  const dir = filters?.sortOrder === "asc" ? sql`ASC` : sql`DESC`;
+  if (filters?.sortBy === "date") {
+    return sql`${bookings.startDateTime} ${dir} NULLS LAST`;
+  }
+  if (filters?.sortBy === "gmv") {
+    return sql`COALESCE(${bookingOps.gmvCents}, ${bookingPricing.totalAmountCents} - COALESCE(${bookingPricing.serviceFeeCents}, 0), ${bookings.estimatedValueCents}, ${bookings.budgetCents}) ${dir} NULLS LAST`;
+  }
+  return desc(bookings.createdAt);
+}

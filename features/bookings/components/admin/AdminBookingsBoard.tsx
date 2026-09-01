@@ -6,6 +6,9 @@ import Link from "next/link";
 import {
   AlertTriangle,
   Anchor,
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   CalendarCheck,
   Check,
   CheckCircle2,
@@ -63,6 +66,8 @@ import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
 import { adminInitials } from "@/shared/lib/utils/people-display";
 import { differenceInHours, format } from "date-fns";
+import { useQueryStates } from "nuqs";
+import { bookingSearchParams } from "@/features/bookings/searchParams";
 import {
   assignAdminToBooking,
 } from "@/features/bookings/actions/admin-booking.actions";
@@ -107,6 +112,51 @@ const COLUMNS: { key: string; width: string }[] = [
 
 const HEAD_CLASS = "text-[11px] font-semibold uppercase tracking-wider";
 
+
+/** Click-to-sort header: desc → asc → back to default (newest first). */
+function SortableHead({
+  label,
+  column,
+  align,
+  className,
+}: {
+  label: string;
+  column: "date" | "gmv";
+  align?: "right";
+  className?: string;
+}) {
+  const [filters, setFilters] = useQueryStates(bookingSearchParams, { shallow: false });
+  const active = filters.sortBy === column;
+  const order = active ? (filters.sortOrder ?? "desc") : null;
+  const Icon = order === "asc" ? ArrowUp : order === "desc" ? ArrowDown : ArrowUpDown;
+
+  function cycle() {
+    if (!active) {
+      setFilters({ sortBy: column, sortOrder: "desc", page: 1 });
+    } else if (order === "desc") {
+      setFilters({ sortOrder: "asc", page: 1 });
+    } else {
+      setFilters({ sortBy: null, sortOrder: null, page: 1 });
+    }
+  }
+
+  return (
+    <TableHead className={cn(HEAD_CLASS, align === "right" && "text-right", className)}>
+      <button
+        type="button"
+        onClick={cycle}
+        className={cn(
+          "inline-flex items-center gap-1 whitespace-nowrap transition-colors hover:text-foreground",
+          active && "text-foreground",
+          align === "right" && "flex-row-reverse"
+        )}
+      >
+        {label}
+        <Icon className={cn("h-3 w-3", active ? "opacity-100" : "opacity-40")} />
+      </button>
+    </TableHead>
+  );
+}
 export function AdminBookingsBoard({
   bookings,
   admins = [],
@@ -177,8 +227,8 @@ export function AdminBookingsBoard({
                 <TableHead className={cn(HEAD_CLASS, "pl-4")}>Type</TableHead>
                 <TableHead className={HEAD_CLASS}>Customer</TableHead>
                 <TableHead className={HEAD_CLASS}>Boat</TableHead>
-                <TableHead className={HEAD_CLASS}>Date &amp; time</TableHead>
-                <TableHead className={cn(HEAD_CLASS, "text-right")}>GMV</TableHead>
+                <SortableHead label="Date &amp; time" column="date" />
+                <SortableHead label="GMV" column="gmv" align="right" />
                 <TableHead className={cn(HEAD_CLASS, "text-right")}>Expense</TableHead>
                 <TableHead className={cn(HEAD_CLASS, "text-right")}>Revenue</TableHead>
                 <TableHead className={cn(HEAD_CLASS, "pr-6 text-right")}>Comm.</TableHead>
@@ -462,7 +512,7 @@ function BookingRow({
   return (
     <TableRow
       onClick={() => onOpen(booking.id)}
-      className={cn("group cursor-pointer border-border/50", kind.rowHover)}
+      className={cn("group cursor-pointer border-border/50", kind.rowBg, kind.rowHover)}
     >
       {/* Deal — type + hoverable status emblems, one glance for the row's state */}
       <TableCell className="relative py-3 pl-4 align-top">
@@ -580,8 +630,11 @@ function BookingRow({
             {adminInitials(adminName) || "?"}
           </span>
         ) : unassigned ? (
-          <span className="inline-block whitespace-nowrap rounded-full bg-destructive-soft px-2 py-0.5 text-[10px] font-semibold text-destructive">
-            Unassigned
+          <span
+            title="Unassigned — open the deal to claim or assign"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-foreground/10 text-sm font-semibold text-muted-foreground"
+          >
+            +
           </span>
         ) : (
           <span className="text-xs text-muted-foreground/40">—</span>

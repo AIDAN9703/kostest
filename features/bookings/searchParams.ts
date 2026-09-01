@@ -51,6 +51,9 @@ export const bookingSearchParams = {
   view: parseAsStringEnum(["table", "calendar"] as const).withDefault("table"),
   /** Opens the new booking modal when true (e.g. from the dashboard CTA). */
   newBooking: parseAsBoolean,
+  /** Column sort — null keeps the default newest-first ordering. */
+  sortBy: parseAsStringEnum(["date", "gmv"] as const),
+  sortOrder: parseAsStringEnum(["asc", "desc"] as const),
   page: parseAsInteger.withDefault(1),
   limit: parseAsInteger.withDefault(ADMIN_LIST_DEFAULT_PAGE_SIZE),
 };

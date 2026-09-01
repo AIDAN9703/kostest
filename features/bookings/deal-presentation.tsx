@@ -31,6 +31,8 @@ export interface DealKindPresentation {
   badge: string;
   /** Subtle row hover tint matching the kind. */
   rowHover: string;
+  /** Whole-row background wash — the kind's color across the full row. */
+  rowBg: string;
   /** Solid dot (used in the command strip). */
   dot: string;
   /** True for pre-sale lead kinds (no boat/pricing guaranteed). */
@@ -51,6 +53,7 @@ const FALLBACK: DealKindPresentation = {
   iconWrap: "bg-slate-500/10 text-slate-300",
   badge: "bg-slate-500/10 text-slate-300",
   rowHover: "hover:bg-muted/40",
+  rowBg: "bg-slate-500/5",
   dot: "bg-slate-400",
   isLead: false,
   group: "OTHER",
@@ -71,6 +74,7 @@ const INQUIRY: DealKindPresentation = {
   iconWrap: "bg-slate-500/10 text-slate-300",
   badge: "bg-slate-500/10 text-slate-300",
   rowHover: "hover:bg-muted/40",
+  rowBg: "bg-slate-500/5",
   dot: "bg-slate-400",
   isLead: true,
   group: "INQUIRY",
@@ -88,7 +92,8 @@ export const DEAL_KIND_PRESENTATION: Record<string, DealKindPresentation> = {
     rail: "bg-sky-500",
     iconWrap: "bg-sky-500/10 text-sky-300",
     badge: "bg-sky-500/10 text-sky-300",
-    rowHover: "hover:bg-sky-500/5",
+    rowHover: "hover:bg-sky-500/10",
+    rowBg: "bg-sky-500/5",
     dot: "bg-sky-500",
     isLead: true,
     group: "TERM_CHARTER",
@@ -99,7 +104,8 @@ export const DEAL_KIND_PRESENTATION: Record<string, DealKindPresentation> = {
     rail: "bg-teal-500",
     iconWrap: "bg-teal-500/10 text-teal-300",
     badge: "bg-teal-500/10 text-teal-300",
-    rowHover: "hover:bg-teal-500/5",
+    rowHover: "hover:bg-teal-500/10",
+    rowBg: "bg-teal-500/5",
     dot: "bg-teal-500",
     isLead: true,
     group: "MARKETPLACE",
@@ -110,7 +116,8 @@ export const DEAL_KIND_PRESENTATION: Record<string, DealKindPresentation> = {
     rail: "bg-emerald-500",
     iconWrap: "bg-emerald-500/10 text-emerald-300",
     badge: "bg-emerald-500/10 text-emerald-300",
-    rowHover: "hover:bg-emerald-500/5",
+    rowHover: "hover:bg-emerald-500/10",
+    rowBg: "bg-emerald-500/5",
     dot: "bg-emerald-500",
     isLead: false,
     group: "INSTANT_BOOK",
@@ -146,6 +153,7 @@ const BOOKING_STAGE: DealKindPresentation = {
   iconWrap: "bg-primary-soft text-primary-strong",
   badge: "bg-primary-soft text-primary-strong",
   rowHover: "hover:bg-primary-soft/40",
+  rowBg: "bg-primary-soft/20",
   dot: "bg-primary",
   isLead: false,
   group: "INQUIRY",
