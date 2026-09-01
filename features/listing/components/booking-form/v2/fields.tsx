@@ -403,7 +403,7 @@ export function PriceBreakdown({
       <Line label={`${tier.hours} hr charter`} amount={fmt(b.basePrice)} />
       <div className="flex justify-between text-sm">
         <span className="text-muted-foreground">Crew</span>
-        <span className="font-medium text-emerald-600">Included</span>
+        <span className="font-medium text-emerald-600">Selection Included</span>
       </div>
       {b.cleaningFee > 0 && <Line label="Cleaning fee" amount={fmt(b.cleaningFee)} />}
       <Line

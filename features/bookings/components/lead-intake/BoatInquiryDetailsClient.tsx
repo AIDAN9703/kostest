@@ -241,7 +241,7 @@ export default function BoatInquiryDetailsClient({
       onClick={() => setAuthModal("menu")}
       className="h-12 w-full rounded-full bg-primary text-base font-semibold text-primary-foreground hover:bg-primary/90"
     >
-      Sign in to request
+      Continue
     </Button>
   );
 
@@ -271,8 +271,7 @@ export default function BoatInquiryDetailsClient({
               }}
             />
 
-            {/* Signed out, this section says nothing — the "Sign in to
-                request" button in the pricing rail (and the mobile bar) is
+            {/* Signed out, this section says nothing — the Continue button in the pricing rail (and the mobile bar) is
                 the one door into auth. */}
             {currentUser ? (
               <div className="mt-5 border-t border-gray-100 pt-5 sm:mt-6 sm:pt-6">
@@ -337,7 +336,7 @@ export default function BoatInquiryDetailsClient({
                 onClick={() => setAuthModal("menu")}
                 className="h-11 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
               >
-                Sign in
+                Continue
               </Button>
             )}
           </div>
