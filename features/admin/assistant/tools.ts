@@ -1,0 +1,242 @@
+import { tool } from "ai";
+import { z } from "zod";
+import { differenceInHours, format } from "date-fns";
+
+import { bookingService } from "@/features/bookings/services/booking.service";
+import {
+  getFleetLeaders,
+  getRevenueTrend,
+  getUnassignedLeads,
+  getUpcomingTrips,
+} from "@/features/admin/dashboard";
+import { PRETRIP_URGENT_HOURS } from "@/features/bookings/deal-status";
+import type { BookingListItem } from "@/features/bookings/booking.types";
+import { formatCentsAsWholeDollars } from "@/shared/lib/utils/money-utils";
+import { formatBoatLocal } from "@/shared/lib/utils/date-helpers";
+
+/**
+ * The assistant's toolbox = the admin's own service layer, thinly wrapped.
+ * Every tool runs the same admin-gated queries the board and dashboard use;
+ * the model never touches the database directly and never writes SQL.
+ * Outputs are pre-formatted (money as dollars, times boat-local) so the
+ * model reports numbers instead of computing them.
+ */
+
+const money = (cents: number | null | undefined) =>
+  cents == null ? null : formatCentsAsWholeDollars(cents);
+
+const when = (d: Date | string | null | undefined, tz: string | null | undefined) =>
+  d ? formatBoatLocal(d, tz, "EEE MMM d, yyyy · h:mm a zzz") : null;
+
+/** What's still missing before a trip can leave the dock. */
+function readiness(t: BookingListItem) {
+  const gaps: string[] = [];
+  if (t.needsCaptain && !t.captainUserId) gaps.push("captain");
+  if (!t.opsContractSigned) gaps.push("contract");
+  const due = (t.totalAmountCents ?? 0) - (t.totalPaidCents ?? 0);
+  if ((t.totalAmountCents ?? 0) > 0 && due > 0) gaps.push(`balance ${money(due)}`);
+  return gaps;
+}
+
+function rowSummary(b: BookingListItem) {
+  const admin = [b.assignedAdminFirstName, b.assignedAdminLastName].filter(Boolean).join(" ");
+  return {
+    id: b.id,
+    link: `/admin/bookings/${b.id}`,
+    customer: b.customerName,
+    email: b.customerEmail,
+    phone: b.customerPhone,
+    boat: b.boatName,
+    type: b.bookingType,
+    status: b.bookingStatus,
+    source: b.source,
+    tripStart: when(b.startDateTime, b.boatTimezone),
+    tripEnd: when(b.endDateTime, b.boatTimezone),
+    guests: b.numberOfPassengers,
+    total: money(b.totalAmountCents),
+    paid: money(b.totalPaidCents),
+    balanceDue: money(Math.max(0, (b.totalAmountCents ?? 0) - (b.totalPaidCents ?? 0))),
+    paymentStatus: b.paymentDisplayStatus,
+    gmv: money(b.opsGmvCents ?? null),
+    revenue: money(b.opsRevenueCents ?? null),
+    assignedAdmin: admin || null,
+    party: b.bookingGroupName ?? null,
+    readinessGaps: b.startDateTime ? readiness(b) : [],
+    createdAt: format(new Date(b.createdAt), "MMM d, yyyy"),
+  };
+}
+
+export const assistantTools = {
+  search_bookings: tool({
+    description:
+      "Search deals/bookings. Use for questions about specific customers, boats, statuses, or time windows. Returns up to `limit` rows, newest first.",
+    inputSchema: z.object({
+      query: z.string().optional().describe("Free text: customer name, email, phone, or boat name"),
+      status: z
+        .enum(["INQUIRY", "DRAFT", "APPROVED", "CONFIRMED", "COMPLETED", "CANCELLED"])
+        .optional()
+        .describe("INQUIRY=lead, DRAFT=proposal out, APPROVED=accepted awaiting payment, CONFIRMED=paid"),
+      kind: z
+        .enum(["INQUIRY", "BOOKING", "INSTANT_BOOK", "TERM_CHARTER", "MARKETPLACE"])
+        .optional()
+        .describe("INQUIRY = unpriced leads; BOOKING = priced deals; others are distinct products"),
+      time: z.enum(["upcoming", "past"]).optional().describe("Trip date relative to now"),
+      limit: z.number().int().min(1).max(50).default(15),
+    }),
+    execute: async ({ query, status, kind, time, limit }) => {
+      const now = new Date();
+      const result = await bookingService.getAllBookings({
+        search: query,
+        bookingStatus: status,
+        bookingType: kind,
+        dateFrom: time === "upcoming" ? now.toISOString() : undefined,
+        dateTo: time === "past" ? now.toISOString() : undefined,
+        limit,
+        page: 1,
+      });
+      return { totalMatching: result.totalCount, rows: result.bookings.map(rowSummary) };
+    },
+  }),
+
+  get_booking: tool({
+    description:
+      "Full detail for one booking by id: trip, customer, money, payments, captain/crew, and every other boat in its charter party.",
+    inputSchema: z.object({ bookingId: z.string().uuid() }),
+    execute: async ({ bookingId }) => {
+      const [booking, party] = await Promise.all([
+        bookingService.getBookingById(bookingId),
+        bookingService.getChargeableParty(bookingId),
+      ]);
+      if (!booking) return { error: "No booking with that id" };
+      return {
+        id: booking.id,
+        link: `/admin/bookings/${booking.id}`,
+        customer: {
+          name: booking.customerName,
+          email: booking.customerEmail,
+          phone: booking.customerPhone,
+        },
+        status: booking.bookingStatus,
+        type: booking.bookingType,
+        source: booking.source,
+        boat: booking.boatName,
+        tripStart: when(booking.startDateTime, booking.boatTimezone),
+        tripEnd: when(booking.endDateTime, booking.boatTimezone),
+        guests: booking.numberOfPassengers,
+        needsCaptain: booking.needsCaptain,
+        captain: [booking.captainFirstName, booking.captainLastName].filter(Boolean).join(" ") || null,
+        pickup: booking.pickupLocation,
+        dropoff: booking.dropoffLocation,
+        total: money(booking.totalAmountCents),
+        paid: money(booking.totalPaidCents),
+        balanceDue: money(Math.max(0, (booking.totalAmountCents ?? 0) - (booking.totalPaidCents ?? 0))),
+        paymentStatus: booking.paymentDisplayStatus,
+        customerMessage: booking.customerMessage,
+        charterParty:
+          party && party.length > 1
+            ? party.map((m) => ({
+                bookingId: m.booking.id,
+                boat: m.boat?.name ?? null,
+                status: m.booking.bookingStatus,
+                total: money(m.pricing ? Number(m.pricing.totalAmountCents) : null),
+              }))
+            : null,
+      };
+    },
+  }),
+
+  revenue_summary: tool({
+    description:
+      "Monthly charter volume (GMV), KOS commission, and trip counts for the trailing N months (current month last). Use for any 'how did we do' / revenue / money-over-time question.",
+    inputSchema: z.object({ months: z.number().int().min(1).max(24).default(6) }),
+    execute: async ({ months }) => {
+      const trend = await getRevenueTrend(months);
+      const totals = trend.reduce(
+        (a, m) => ({
+          gmvCents: a.gmvCents + m.gmvCents,
+          commissionCents: a.commissionCents + m.commissionCents,
+          trips: a.trips + m.trips,
+        }),
+        { gmvCents: 0, commissionCents: 0, trips: 0 }
+      );
+      return {
+        months: trend.map((m) => ({
+          month: m.monthName,
+          gmv: money(m.gmvCents),
+          commission: money(m.commissionCents),
+          trips: m.trips,
+        })),
+        totals: {
+          gmv: money(totals.gmvCents),
+          commission: money(totals.commissionCents),
+          trips: totals.trips,
+        },
+        note: "GMV excludes the card-processing fee; commission comes from the ops sheet per booking.",
+      };
+    },
+  }),
+
+  upcoming_departures: tool({
+    description:
+      "Real trips leaving in the next N days with readiness (captain, contract, balance) — the operational 'what's sailing' view. Times are boat-local.",
+    inputSchema: z.object({ days: z.number().int().min(1).max(90).default(7) }),
+    execute: async ({ days }) => {
+      const trips = await getUpcomingTrips(days);
+      const now = new Date();
+      return {
+        count: trips.length,
+        trips: trips.map((t) => ({
+          ...rowSummary(t),
+          hoursUntilStart: t.startDateTime
+            ? differenceInHours(new Date(t.startDateTime), now)
+            : null,
+          urgent:
+            t.startDateTime != null &&
+            differenceInHours(new Date(t.startDateTime), now) <= PRETRIP_URGENT_HOURS &&
+            readiness(t).length > 0,
+        })),
+      };
+    },
+  }),
+
+  action_queue: tool({
+    description:
+      "What needs a human right now: unclaimed new leads and confirmed trips that still owe money.",
+    inputSchema: z.object({}),
+    execute: async () => {
+      const [leads, trips] = await Promise.all([getUnassignedLeads(10), getUpcomingTrips(30)]);
+      const collect = trips.filter(
+        (t) =>
+          t.bookingStatus === "CONFIRMED" &&
+          (t.totalAmountCents ?? 0) > 0 &&
+          (t.totalPaidCents ?? 0) < (t.totalAmountCents ?? 0)
+      );
+      return {
+        unclaimedLeads: leads.map((l) => ({
+          id: l.id,
+          link: `/admin/bookings/${l.id}`,
+          customer: l.name,
+          source: l.source,
+          estimatedValue: money(l.estimatedValueCents ?? l.budgetCents),
+          receivedAt: format(new Date(l.createdAt), "MMM d, h:mm a"),
+        })),
+        balancesToCollect: collect.map(rowSummary),
+      };
+    },
+  }),
+
+  fleet_leaders: tool({
+    description: "This month's top boats by GMV — which hulls are earning.",
+    inputSchema: z.object({ limit: z.number().int().min(1).max(20).default(5) }),
+    execute: async ({ limit }) => {
+      const leaders = await getFleetLeaders(limit);
+      return leaders.map((l, i) => ({
+        rank: i + 1,
+        boat: l.name,
+        gmv: money(l.gmvCents),
+        charters: l.trips,
+        link: `/admin/boats/${l.boatId}`,
+      }));
+    },
+  }),
+};

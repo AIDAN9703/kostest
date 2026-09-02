@@ -21,7 +21,7 @@ import { cn } from "@/shared/lib/utils/general-utils";
 import { LogOut } from "lucide-react";
 
 const navItemButton =
-  "h-11 gap-3 rounded-lg px-3 text-base leading-snug text-sidebar-foreground/90 transition-[background-color,box-shadow,color] hover:bg-sidebar-accent/60 data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-sidebar-accent-foreground data-[active=true]:ring-1 data-[active=true]:ring-sidebar-ring/40 group-data-[collapsible=icon]:h-11 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:[&_.sidebar-label]:hidden";
+  "h-11 gap-3 rounded-lg px-3 text-base leading-snug text-sidebar-foreground/90 transition-[background-color,box-shadow,color] hover:bg-sidebar-foreground/[0.07] data-[active=true]:bg-sidebar-accent data-[active=true]:font-semibold data-[active=true]:text-sidebar-accent-foreground data-[active=true]:ring-1 data-[active=true]:ring-sidebar-ring/40 group-data-[collapsible=icon]:h-11 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:[&_.sidebar-label]:hidden";
 
 function isNavActive(pathname: string, href: string) {
   if (href === "/admin") return pathname === "/admin";
@@ -68,11 +68,56 @@ export default function AdminSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 pb-4 pt-2">
+      <SidebarContent className="gap-0 px-2 pb-4 pt-5">
+        {/* Spotlight group: featured items (the Assistant) sit above the nav
+            in their own violet treatment — a "what's this?" moment, not
+            another gold row. Its bottom margin equals SidebarContent's top
+            padding (20px each) so the button floats with even air above
+            and below — SidebarContent's default gap-2 is zeroed so nothing
+            else sneaks into the measurement. */}
+        <SidebarGroup className="mb-5 p-0">
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-0.5">
+              {ADMIN_NAV_ITEMS.filter((item) => item.featured).map((item) => {
+                const Icon = item.icon;
+                const isActive = isNavActive(pathname, item.href);
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      tooltip={item.label}
+                      isActive={isActive}
+                      size="lg"
+                      className={cn(
+                        "kos-featured-nav relative h-11 gap-3 overflow-hidden rounded-lg px-3 text-base leading-snug",
+                        "bg-linear-to-r from-violet-500/15 via-fuchsia-500/10 to-cyan-400/15 text-violet-100",
+                        "ring-1 ring-violet-400/30 transition-[box-shadow,background-color] hover:ring-violet-300/60 hover:shadow-[0_0_24px_-8px_rgb(167_139_250)]",
+                        "data-[active=true]:from-violet-500/30 data-[active=true]:via-fuchsia-500/20 data-[active=true]:to-cyan-400/25 data-[active=true]:font-semibold data-[active=true]:text-white data-[active=true]:ring-violet-300/70",
+                        "group-data-[collapsible=icon]:h-11 group-data-[collapsible=icon]:w-full group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:[&_.sidebar-label]:hidden"
+                      )}
+                    >
+                      <Link
+                        href={item.href}
+                        className="flex min-w-0 flex-1 items-center gap-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
+                      >
+                        <Icon className="kos-featured-icon h-5 w-5 shrink-0 text-fuchsia-300" />
+                        <span className="sidebar-label truncate">{item.label}</span>
+                        <span className="sidebar-label ml-auto rounded-full bg-fuchsia-500/20 px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-fuchsia-200">
+                          New
+                        </span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         <SidebarGroup className="p-0">
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              {ADMIN_NAV_ITEMS.map((item) => {
+              {ADMIN_NAV_ITEMS.filter((item) => !item.featured).map((item) => {
                 const Icon = item.icon;
                 const isActive = isNavActive(pathname, item.href);
                 return (

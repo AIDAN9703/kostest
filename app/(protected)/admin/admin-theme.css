@@ -93,3 +93,42 @@ html:has([data-admin-theme]) body {
 .admin-theme ::file-selector-button {
     border-color: var(--color-border);
 }
+
+/* ── KOS Command (admin assistant) ─────────────────────────────────
+   One gradient, one slow drift. A large soft-stop gradient panned
+   across the surface — no blobs, no scale pulsing. */
+@keyframes kos-sheen-drift {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
+.admin-theme .kos-sheen {
+  background-image:
+    radial-gradient(ellipse 80% 60% at 15% 10%, rgb(139 92 246 / 0.22), transparent 60%),
+    radial-gradient(ellipse 70% 55% at 85% 90%, rgb(34 211 238 / 0.16), transparent 60%),
+    radial-gradient(ellipse 50% 40% at 60% 40%, rgb(217 70 239 / 0.10), transparent 60%);
+  background-size: 160% 160%;
+  animation: kos-sheen-drift 40s ease-in-out infinite alternate;
+}
+
+/* ── Featured nav (Assistant): a light sweep every few seconds + a soft
+   breathing glow on the icon. Subtle enough to live in a sidebar. ── */
+@keyframes kos-nav-sweep {
+  0%, 70% { transform: translateX(-120%); }
+  100%    { transform: translateX(220%); }
+}
+@keyframes kos-nav-breathe {
+  0%, 100% { filter: drop-shadow(0 0 0 rgb(240 171 252 / 0)); }
+  50%      { filter: drop-shadow(0 0 6px rgb(240 171 252 / 0.9)); }
+}
+.admin-theme .kos-featured-nav::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.10), transparent);
+  animation: kos-nav-sweep 6s ease-in-out infinite;
+  pointer-events: none;
+}
+.admin-theme .kos-featured-icon {
+  animation: kos-nav-breathe 3.2s ease-in-out infinite;
+}

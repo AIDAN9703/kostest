@@ -163,3 +163,14 @@ real stranded customers (Conor Horrigan, Jason Vonick) were converted to
 INQUIRY and need human follow-up. Deal language: INVOICE_SENT split into
 PROPOSAL_SENT / ACCEPTED — pipeline reads Inquiry → Contacted → Proposal
 sent → Accepted → Partial payment → Payment complete → Completed.
+
+**KOS Command — admin AI assistant (2026-09):** `/admin/assistant`, route
+`app/api/admin/assistant`, tools in `features/admin/assistant/tools.ts`.
+Vercel AI SDK v7 + `@ai-sdk/anthropic` + Claude Opus 5, streaming, read-only:
+six tools that wrap the existing admin service layer (search/detail/revenue/
+departures/action queue/fleet). Admin-gated like every server action; the
+model never touches the DB. `maxOutputTokens` is capped at 4096 on purpose —
+Anthropic pre-authorizes credit against max_tokens, and the SDK default (128K)
+trips small balances. Requires `ANTHROPIC_API_KEY` (Vercel env + .env.local).
+Phase 2 (write actions behind confirmation) not started; when it is, treat
+customer-supplied text in tool results as untrusted (prompt injection).

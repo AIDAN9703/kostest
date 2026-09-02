@@ -10,6 +10,7 @@ import {
   Heart,
   PackagePlus,
   Settings,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -227,6 +228,8 @@ export interface AdminNavItem {
   href: string;
   iconClassName?: string;
   icon?: LucideIcon;
+  /** Rendered in its own spotlight group above the main nav (sidebar only). */
+  featured?: boolean;
 }
 
 /** Primary admin sidebar + command palette routes (each row has an icon). */
@@ -298,6 +301,13 @@ export const ADMIN_NAV_ITEMS: AdminMainNavItem[] = [
     href: "/admin/blog",
     icon: Newspaper,
     iconClassName: "h-5 w-5",
+  },
+  {
+    label: "Assistant",
+    href: "/admin/assistant",
+    icon: Sparkles,
+    iconClassName: "h-5 w-5",
+    featured: true,
   },
   {
     label: "Settings",
