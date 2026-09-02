@@ -438,20 +438,9 @@ export function BookingComposer({
 
           {customerMode === "existing" && !isDealMode ? (
             <div className="space-y-3">
-              <div className="grid gap-4 md:grid-cols-[1fr_10rem]">
-                <div className="space-y-2">
-                  <Label>Account</Label>
-                  <UserSelect value={selectedUserId} onChange={setSelectedUserId} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Guests</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    value={numberOfPassengers}
-                    onChange={(e) => setNumberOfPassengers(Math.max(1, Number(e.target.value)))}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label>Account</Label>
+                <UserSelect value={selectedUserId} onChange={setSelectedUserId} />
               </div>
               {selectedUser ? (
                 <div className="rounded-lg border border-border bg-muted/30 p-3 text-sm">
@@ -492,17 +481,43 @@ export function BookingComposer({
                   placeholder="Optional"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Guests</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  value={numberOfPassengers}
-                  onChange={(e) => setNumberOfPassengers(Math.max(1, Number(e.target.value)))}
-                />
-              </div>
             </div>
           )}
+
+          {/* ── Deal-level attribution ── */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Source</Label>
+              <Select value={source} onValueChange={setSource}>
+                <SelectTrigger className="h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SOURCE_OPTIONS.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Sales agent</Label>
+              <Select value={agentAdminId} onValueChange={setAgentAdminId}>
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="No agent" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_AGENT}>No agent</SelectItem>
+                  {admins.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {adminDisplayName(a)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
           <div className="space-y-2">
             <Label>Admin Notes</Label>
@@ -519,6 +534,19 @@ export function BookingComposer({
       {/* ── Step 2: Charter (one or more boats) ── */}
       {step === 1 && (
         <div className="space-y-5">
+          {/* Deal-level: one guest count for the whole charter (party or not). */}
+          <div className="grid gap-4 md:grid-cols-[10rem_1fr]">
+            <div className="space-y-2">
+              <Label>Guests</Label>
+              <Input
+                type="number"
+                min={1}
+                value={numberOfPassengers}
+                onChange={(e) => setNumberOfPassengers(Math.max(1, Number(e.target.value)))}
+              />
+            </div>
+          </div>
+
           {sections.map((section, index) => (
             <div
               key={section.key}
@@ -729,41 +757,6 @@ export function BookingComposer({
                 </div>
               );
             })}
-          </div>
-
-          {/* ── Deal-level attribution ── */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Source</Label>
-              <Select value={source} onValueChange={setSource}>
-                <SelectTrigger className="h-9">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SOURCE_OPTIONS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Sales agent</Label>
-              <Select value={agentAdminId} onValueChange={setAgentAdminId}>
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="No agent" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NO_AGENT}>No agent</SelectItem>
-                  {admins.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {adminDisplayName(a)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           {/* ── Rollup — mirrors the board: revenue = GMV − owner payout ── */}
