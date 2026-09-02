@@ -349,6 +349,37 @@ export async function sendProposalUpdate(
   }
 }
 
+/**
+ * Flip whether the proposal page shows a pay button. Off = "accept, we'll
+ * follow up on payment"; on = accept and pay in one motion.
+ */
+export async function setProposalAllowPayment(
+  bookingId: string,
+  allowPayment: boolean
+): Promise<DealActionResult> {
+  try {
+    const adminAuth = await getAdminSession();
+    if (adminAuth.error !== undefined) return { success: false, error: adminAuth.error };
+    await db
+      .update(bookings)
+      .set({ allowPayment, updatedAt: new Date() })
+      .where(eq(bookings.id, bookingId));
+    await bookingEventsService.logEvent({
+      bookingId,
+      eventType: BOOKING_EVENT_TYPES.UPDATED,
+      actorType: "admin",
+      actorId: adminAuth.session.user.id,
+      channel: "admin_portal",
+      displayMessage: allowPayment ? "Online payment turned on" : "Online payment turned off",
+    });
+    revalidateDeal(bookingId);
+    return { success: true };
+  } catch (error) {
+    console.error("Error toggling allowPayment:", error);
+    return { success: false, error: "Failed to update payment setting" };
+  }
+}
+
 /** Lose an INQUIRY-stage deal — status CANCELLED with the reason recorded. */
 export async function markDealLost(bookingId: string, reason: string): Promise<DealActionResult> {
   try {

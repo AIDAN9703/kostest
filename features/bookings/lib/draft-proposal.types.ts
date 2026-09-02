@@ -27,6 +27,8 @@ export interface DraftProposalBooking {
   cleaningFeeCents: number;
   /** 3.5% card processing fee (cents) */
   serviceFeeCents: number;
+  /** Card fee waived — the customer is settling off-card. */
+  serviceFeeWaived: boolean;
   /** Total for this booking (cents) */
   totalCents: number;
   addOns: DraftProposalAddOn[] | null;

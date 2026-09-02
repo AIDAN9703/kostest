@@ -64,6 +64,17 @@ export function formatCentsAsCurrency(
  * 1050 → "$11" (rounded)
  * 10000 → "$100"
  */
+/**
+ * Compact money for dense surfaces (stat tiles, chips, chart labels):
+ * $9,800 → "$9,800", $16,030 → "$16K", $1,650,000 → "$1.65M".
+ */
+export function formatCentsCompact(cents: number): string {
+  const dollars = cents / 100;
+  if (dollars >= 1_000_000) return `$${(dollars / 1_000_000).toFixed(2).replace(/\.?0+$/, "")}M`;
+  if (dollars >= 10_000) return `$${(dollars / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
+  return formatCentsAsWholeDollars(cents);
+}
+
 export function formatCentsAsWholeDollars(cents: number): string {
   return formatCentsAsCurrency(cents, { showCents: false });
 }

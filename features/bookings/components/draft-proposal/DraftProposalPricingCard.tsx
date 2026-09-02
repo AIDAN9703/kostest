@@ -9,9 +9,12 @@ interface DraftProposalPricingCardProps {
 }
 
 export function DraftProposalPricingCard({ bookings }: DraftProposalPricingCardProps) {
-  const grandTotalCents = bookings.reduce((sum, b) => sum + b.totalCents, 0);
   const subtotalCents = bookings.reduce((sum, b) => sum + b.totalCents - b.serviceFeeCents, 0);
   const totalServiceFeeCents = bookings.reduce((sum, b) => sum + b.serviceFeeCents, 0);
+  // Waived = settled off-card; the fee stays visible (struck) so the math is
+  // transparent, and the total drops to the subtotal.
+  const feeWaived = bookings.length > 0 && bookings.every((b) => b.serviceFeeWaived);
+  const grandTotalCents = feeWaived ? subtotalCents : subtotalCents + totalServiceFeeCents;
   // Derived from this proposal's own pricing snapshot — stays correct even if
   // the global fee setting changes after the proposal was created.
   const feePercentLabel =
@@ -56,8 +59,11 @@ export function DraftProposalPricingCard({ bookings }: DraftProposalPricingCardP
           </span>
         </div>
         <div className="flex justify-between text-sm">
-          <span className="text-slate-600">Card processing fee{feePercentLabel}</span>
-          <span className="font-medium text-primary">
+          <span className="text-slate-600">
+            Card processing fee{feePercentLabel}
+            {feeWaived ? <span className="ml-2 text-xs font-medium text-emerald-700">waived · paid off-card</span> : null}
+          </span>
+          <span className={feeWaived ? "text-slate-400 line-through" : "font-medium text-primary"}>
             {formatCentsAsCurrency(totalServiceFeeCents)}
           </span>
         </div>

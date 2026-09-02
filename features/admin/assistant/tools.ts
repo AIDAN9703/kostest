@@ -9,8 +9,9 @@ import {
   getUnassignedLeads,
   getUpcomingTrips,
 } from "@/features/admin/dashboard";
-import { PRETRIP_URGENT_HOURS } from "@/features/bookings/deal-status";
 import type { BookingListItem } from "@/features/bookings/booking.types";
+import { isTripUrgent, readinessGaps } from "@/features/bookings/lib/trip-readiness";
+import { effectiveTotalCents } from "@/features/bookings/lib/booking-money";
 import { formatCentsAsWholeDollars } from "@/shared/lib/utils/money-utils";
 import { formatBoatLocal } from "@/shared/lib/utils/date-helpers";
 
@@ -28,16 +29,6 @@ const money = (cents: number | null | undefined) =>
 const when = (d: Date | string | null | undefined, tz: string | null | undefined) =>
   d ? formatBoatLocal(d, tz, "EEE MMM d, yyyy · h:mm a zzz") : null;
 
-/** What's still missing before a trip can leave the dock. */
-function readiness(t: BookingListItem) {
-  const gaps: string[] = [];
-  if (t.needsCaptain && !t.captainUserId) gaps.push("captain");
-  if (!t.opsContractSigned) gaps.push("contract");
-  const due = (t.totalAmountCents ?? 0) - (t.totalPaidCents ?? 0);
-  if ((t.totalAmountCents ?? 0) > 0 && due > 0) gaps.push(`balance ${money(due)}`);
-  return gaps;
-}
-
 function rowSummary(b: BookingListItem) {
   const admin = [b.assignedAdminFirstName, b.assignedAdminLastName].filter(Boolean).join(" ");
   return {
@@ -53,15 +44,16 @@ function rowSummary(b: BookingListItem) {
     tripStart: when(b.startDateTime, b.boatTimezone),
     tripEnd: when(b.endDateTime, b.boatTimezone),
     guests: b.numberOfPassengers,
-    total: money(b.totalAmountCents),
+    total: money(effectiveTotalCents(b)),
+    cardFeeWaived: b.serviceFeeWaived || undefined,
     paid: money(b.totalPaidCents),
-    balanceDue: money(Math.max(0, (b.totalAmountCents ?? 0) - (b.totalPaidCents ?? 0))),
+    balanceDue: money(Math.max(0, effectiveTotalCents(b) - (b.totalPaidCents ?? 0))),
     paymentStatus: b.paymentDisplayStatus,
     gmv: money(b.opsGmvCents ?? null),
     revenue: money(b.opsRevenueCents ?? null),
     assignedAdmin: admin || null,
     party: b.bookingGroupName ?? null,
-    readinessGaps: b.startDateTime ? readiness(b) : [],
+    readinessGaps: b.startDateTime ? readinessGaps(b).map((g) => g.label.toLowerCase()) : [],
     createdAt: format(new Date(b.createdAt), "MMM d, yyyy"),
   };
 }
@@ -127,9 +119,10 @@ export const assistantTools = {
         captain: [booking.captainFirstName, booking.captainLastName].filter(Boolean).join(" ") || null,
         pickup: booking.pickupLocation,
         dropoff: booking.dropoffLocation,
-        total: money(booking.totalAmountCents),
+        total: money(effectiveTotalCents(booking)),
+        cardFeeWaived: booking.serviceFeeWaived || undefined,
         paid: money(booking.totalPaidCents),
-        balanceDue: money(Math.max(0, (booking.totalAmountCents ?? 0) - (booking.totalPaidCents ?? 0))),
+        balanceDue: money(Math.max(0, effectiveTotalCents(booking) - (booking.totalPaidCents ?? 0))),
         paymentStatus: booking.paymentDisplayStatus,
         customerMessage: booking.customerMessage,
         charterParty:
@@ -190,10 +183,7 @@ export const assistantTools = {
           hoursUntilStart: t.startDateTime
             ? differenceInHours(new Date(t.startDateTime), now)
             : null,
-          urgent:
-            t.startDateTime != null &&
-            differenceInHours(new Date(t.startDateTime), now) <= PRETRIP_URGENT_HOURS &&
-            readiness(t).length > 0,
+          urgent: isTripUrgent(t, now),
         })),
       };
     },
@@ -208,8 +198,8 @@ export const assistantTools = {
       const collect = trips.filter(
         (t) =>
           t.bookingStatus === "CONFIRMED" &&
-          (t.totalAmountCents ?? 0) > 0 &&
-          (t.totalPaidCents ?? 0) < (t.totalAmountCents ?? 0)
+          effectiveTotalCents(t) > 0 &&
+          (t.totalPaidCents ?? 0) < effectiveTotalCents(t)
       );
       return {
         unclaimedLeads: leads.map((l) => ({

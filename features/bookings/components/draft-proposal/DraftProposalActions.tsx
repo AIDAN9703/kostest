@@ -21,6 +21,8 @@ import {
 interface DraftProposalActionsProps {
   publicToken: string;
   allowPayment: boolean;
+  /** Card fee waived — balance is being settled off-card, so no card button. */
+  serviceFeeWaived: boolean;
   /** Admin's choice at proposal time: which charge secures the date. */
   paymentType: "DEPOSIT_ONLY" | "FULL_PAYMENT" | null;
   isAccepted: boolean;
@@ -44,6 +46,7 @@ interface DraftProposalActionsProps {
 export function DraftProposalActions({
   publicToken,
   allowPayment,
+  serviceFeeWaived,
   paymentType,
   isAccepted,
   totalPaidCents,
@@ -63,6 +66,7 @@ export function DraftProposalActions({
   const chargeType: "deposit" | "full" =
     paymentType === "DEPOSIT_ONLY" && hasDeposit ? "deposit" : "full";
   const chargeAmountCents = chargeType === "deposit" ? depositAmountCents! : totalAmountCents;
+  const canPayByCard = allowPayment && !serviceFeeWaived;
 
   const handlePay = () => {
     setError(null);
@@ -197,16 +201,18 @@ export function DraftProposalActions({
         <div className="flex items-center gap-3 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
           <CheckCircle2 className="h-5 w-5 shrink-0" />
           <span>
-            {allowPayment
+            {canPayByCard
               ? "Proposal accepted — complete your payment below to lock in your date."
-              : "Proposal accepted. Our team will follow up with payment details."}
+              : serviceFeeWaived
+                ? "Proposal accepted — your balance is being settled directly with our team."
+                : "Proposal accepted. Our team will follow up with payment details."}
           </span>
         </div>
         {error && (
           <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">{error}</p>
         )}
         {requestSentNote}
-        {allowPayment && (
+        {canPayByCard && (
           <Button size="lg" className="h-11 w-full gap-2 rounded-full" disabled={pending} onClick={handlePay}>
             {pending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -232,7 +238,7 @@ export function DraftProposalActions({
       )}
       {requestSentNote}
 
-      {allowPayment ? (
+      {canPayByCard ? (
         <>
           <Button size="lg" className="h-11 w-full gap-2 rounded-full" disabled={pending} onClick={handlePay}>
             {pending ? (

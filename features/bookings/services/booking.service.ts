@@ -65,11 +65,11 @@ import {
 import { type Booking, type BookingSource, type BookingType } from "@/database/types";
 import {
   calculateBookingPriceFromDollars,
-  calculateBookingPriceCents,
 } from "@/shared/lib/utils/pricing-utils";
 import { dollarsToCents } from "@/shared/lib/utils/money-utils";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { computePaymentDisplayStatus } from "@/shared/lib/utils/payment-display";
+import { effectiveTotalCents } from "@/features/bookings/lib/booking-money";
 import { resolveAdminListPagination } from "@/shared/admin/list-pagination";
 import { bookingGroupService } from "@/features/booking-groups/booking-group.service";
 import { bookingPricingService } from "@/features/bookings/services/booking-pricing.service";
@@ -326,10 +326,15 @@ export class BookingService {
     const pricingByBooking = new Map(pricingRows.map((p) => [p.bookingId, p]));
 
     const first = draftBookings[0];
-    const totalCents = draftBookings.reduce(
-      (sum, b) => sum + Number(pricingByBooking.get(b.id)?.totalAmountCents ?? 0),
-      0
-    );
+    // Fee-aware: a waived card fee drops out of what the customer owes.
+    const totalCents = draftBookings.reduce((sum, b) => {
+      const pr = pricingByBooking.get(b.id);
+      return pr ? sum + effectiveTotalCents({
+        totalAmountCents: Number(pr.totalAmountCents),
+        serviceFeeCents: pr.serviceFeeCents != null ? Number(pr.serviceFeeCents) : null,
+        serviceFeeWaived: pr.serviceFeeWaived,
+      }) : sum;
+    }, 0);
 
     // Paid so far across the group — drives the public page's state
     // (unpaid → pay buttons, paid → confirmation).
@@ -395,6 +400,7 @@ export class BookingService {
         const cleaningFeeCents = pricing ? Number(pricing.cleaningFeeCents ?? 0) : 0;
         const serviceFeeCents = pricing ? Number(pricing.serviceFeeCents ?? 0) : 0;
         const totalCents = pricing ? Number(pricing.totalAmountCents) : 0;
+        const serviceFeeWaived = Boolean(pricing?.serviceFeeWaived);
         return {
           id: b.id,
           boatId: b.boatId,
@@ -406,6 +412,7 @@ export class BookingService {
           basePriceCents,
           cleaningFeeCents,
           serviceFeeCents,
+          serviceFeeWaived,
           totalCents,
           addOns: addOns ?? null,
         };
@@ -917,6 +924,7 @@ export class BookingService {
       // Pricing from booking_pricing table (in cents)
       totalAmountCents: bookingPricing.totalAmountCents,
       serviceFeeCents: bookingPricing.serviceFeeCents,
+      serviceFeeWaived: bookingPricing.serviceFeeWaived,
       currency: bookingPricing.currency,
       // stripePaymentLinkId removed - stored in payments table
       needsCaptain: bookings.needsCaptain,
@@ -1006,17 +1014,21 @@ export class BookingService {
       const hasRefund = Boolean(b.hasRefund);
       const latestPaymentStatus = b.paymentStatus ?? null;
 
+      const serviceFeeCents = b.serviceFeeCents != null ? Number(b.serviceFeeCents) : null;
+      const serviceFeeWaived = Boolean(b.serviceFeeWaived);
       return {
         ...b,
         totalAmountCents,
-        serviceFeeCents: b.serviceFeeCents != null ? Number(b.serviceFeeCents) : null,
+        serviceFeeCents,
+        serviceFeeWaived,
         totalPaidCents,
         hasRefund,
         currency: b.currency ?? "USD",
         paymentStatus: latestPaymentStatus,
+        // "Paid" means the customer paid what they OWE — fee-aware.
         paymentDisplayStatus: computePaymentDisplayStatus({
           totalPaidCents,
-          totalAmountCents,
+          totalAmountCents: effectiveTotalCents({ totalAmountCents, serviceFeeCents, serviceFeeWaived }),
           latestPaymentStatus,
           hasRefund,
         }),
@@ -1162,6 +1174,8 @@ export class BookingService {
         captainFeeCents: bookingPricing.captainFeeCents,
         cleaningFeeCents: bookingPricing.cleaningFeeCents,
         serviceFeeCents: bookingPricing.serviceFeeCents,
+        serviceFeeWaived: bookingPricing.serviceFeeWaived,
+        allowPayment: bookings.allowPayment,
         taxAmountCents: bookingPricing.taxAmountCents,
         discountAmountCents: bookingPricing.discountAmountCents,
         totalAmountCents: bookingPricing.totalAmountCents,
@@ -1243,9 +1257,15 @@ export class BookingService {
       currency: booking.currency ?? "USD",
       paymentStatus: latestPaymentStatus,
       paymentMethod: booking.paymentMethod ?? null,
+      serviceFeeWaived: Boolean(booking.serviceFeeWaived),
+      allowPayment: Boolean(booking.allowPayment),
       paymentDisplayStatus: computePaymentDisplayStatus({
         totalPaidCents,
-        totalAmountCents,
+        totalAmountCents: effectiveTotalCents({
+          totalAmountCents,
+          serviceFeeCents: booking.serviceFeeCents != null ? Number(booking.serviceFeeCents) : null,
+          serviceFeeWaived: Boolean(booking.serviceFeeWaived),
+        }),
         latestPaymentStatus,
         hasRefund,
       }),

@@ -273,6 +273,8 @@ export interface BookingListItem {
   totalAmountCents: number;
   /** Fee on top of GMV — needed so GMV fallbacks stay fee-exclusive. */
   serviceFeeCents: number | null;
+  /** Card fee waived (paid off-card) — the effective total drops the fee. */
+  serviceFeeWaived: boolean;
   currency: string;
 
   needsCaptain: boolean | null;
@@ -357,6 +359,8 @@ export interface BookingListItem {
 export interface BookingDetails extends BookingListItem {
   pricingTierId: string | null;
   paymentMethod: string | null;
+  /** Proposal page shows a pay button when true. */
+  allowPayment: boolean;
   /** Channel the deal came through (bookings.source). */
   source: string | null;
   updatedAt: Date;

@@ -50,6 +50,11 @@ export async function createCheckoutSessionForBooking(
     throw new Error("This deal has no trip date yet — price and schedule it before charging.");
   }
   for (const member of party) {
+    if (member.pricing?.serviceFeeWaived) {
+      throw new Error(
+        "The card fee on this booking was waived for an off-card payment — collect the balance manually, or un-waive it before charging a card."
+      );
+    }
     const total = Number(member.pricing?.totalAmountCents ?? 0);
     if (total <= 0) {
       throw new Error(

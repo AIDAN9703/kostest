@@ -25,7 +25,8 @@ import {
   ProposalResendButton,
   BookingPageEditButton,
 } from "@/features/bookings/components/admin/view-booking/BookingEditMode";
-import { BookingPaymentsFinancialsCard } from "@/features/bookings/components/admin/view-booking/BookingPaymentsFinancialsCard";
+import { DealEconomicsCard } from "@/features/bookings/components/admin/view-booking/DealEconomicsCard";
+import { customerMoney, dealEconomics } from "@/features/bookings/lib/booking-money";
 import { DealActionsMenu } from "@/features/bookings/components/admin/view-booking/DealActionsMenu";
 import { CreateProposalModal } from "@/features/bookings/components/admin/view-booking/CreateProposalModal";
 import { ActivityComposer } from "@/features/bookings/components/admin/view-booking/ActivityComposer";
@@ -202,23 +203,47 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
   const isSettled =
     booking.bookingStatus === "COMPLETED" || booking.bookingStatus === "CANCELLED";
 
+  // ONE place for the money math — both cards read from these.
+  const money = customerMoney({
+    totalAmountCents: booking.totalAmountCents,
+    serviceFeeCents: booking.serviceFeeCents,
+    serviceFeeWaived: booking.serviceFeeWaived,
+    totalPaidCents: booking.totalPaidCents,
+    depositAmountCents: booking.depositAmountCents,
+    latestPaymentStatus: booking.paymentStatus,
+    hasRefund: booking.hasRefund,
+  });
+  const economics = dealEconomics({
+    totalAmountCents: booking.totalAmountCents,
+    serviceFeeCents: booking.serviceFeeCents,
+    serviceFeeWaived: booking.serviceFeeWaived,
+    opsGmvCents: ops?.gmvCents ?? null,
+    opsExpenseCents: ops?.expenseCents ?? null,
+    commissionAgentCents: ops?.commissionAgentCents ?? null,
+    commissionKosCents: ops?.commissionKosCents ?? null,
+  });
+
   // One customer link per deal; resendable while it exists and money/decision
   // is still outstanding. Stage names what the link IS to the customer now.
-  const balanceDueCents = Math.max(
-    0,
-    (booking.totalAmountCents ?? 0) - (booking.totalPaidCents ?? 0)
-  );
   const proposalResend =
-    booking.publicToken && !isSettled && (booking.bookingStatus === "DRAFT" || balanceDueCents > 0)
+    booking.publicToken && !isSettled && (booking.bookingStatus === "DRAFT" || money.balanceCents > 0)
       ? {
           bookingId: id,
           publicToken: booking.publicToken,
-          stage: (booking.bookingStatus === "DRAFT" ? "proposal" : "payment") as
-            | "proposal"
-            | "payment",
+          stage: (booking.bookingStatus === "DRAFT" ? "proposal" : "payment") as "proposal" | "payment",
           customerEmail: booking.customerEmail,
           customerPhone: booking.customerPhone,
           editsSinceSend: changesSinceLastSend,
+          allowPayment: booking.allowPayment,
+          currency: booking.currency ?? "USD",
+          money,
+          lines: {
+            boatName: booking.boatName,
+            basePriceCents: booking.basePriceCents ?? 0,
+            captainFeeCents: booking.captainFeeCents ?? 0,
+            cleaningFeeCents: booking.cleaningFeeCents ?? 0,
+            addOns: booking.addOns ?? [],
+          },
         }
       : null;
   const dealStatus = computeDealStatusForBooking({
@@ -234,7 +259,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
   }));
 
   return (
-    <BookingEditModeProvider resend={proposalResend}>
+    <BookingEditModeProvider proposal={proposalResend}>
     <div className="flex w-full flex-1 flex-col">
       {/* Content left (header + cards share one width), activity rail running
           the FULL right side of the page. */}
@@ -305,7 +330,7 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
                 currentUserId={session?.user?.id ?? null}
               />
             </div>
-            {/* Spans the row above — the resend is the deal's second verb. */}
+            {/* Spans the row above — opens the proposal dialog. */}
             <ProposalResendButton />
           </div>
         }
@@ -358,15 +383,16 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
                 />
               ) : null}
 
-              <BookingPaymentsFinancialsCard
+              <DealEconomicsCard
                 bookingId={id}
-                booking={booking}
+                money={money}
+                economics={economics}
                 payments={bookingPayments}
-                opsGmvCents={ops?.gmvCents ?? null}
-                opsExpenseCents={ops?.expenseCents ?? null}
-                commissionAgentCents={ops?.commissionAgentCents ?? null}
-                commissionKosCents={ops?.commissionKosCents ?? null}
                 expenseLines={expenseLines}
+                opsGmvCents={ops?.gmvCents ?? null}
+                totalAmountCents={booking.totalAmountCents ?? null}
+                serviceFeeCents={booking.serviceFeeCents ?? null}
+                currency={booking.currency ?? "USD"}
               />
             </>
           )}

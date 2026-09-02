@@ -1,4 +1,5 @@
-import { pgTable, uuid, text, bigint, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean, pgTable, uuid, text, bigint, timestamp } from "drizzle-orm/pg-core";
 import { bookings } from "./bookings.table";
 
 /**
@@ -25,6 +26,10 @@ export const bookingPricing = pgTable("booking_pricing", {
   captainFeeCents: bigint("captain_fee_cents", { mode: "number" }),
   cleaningFeeCents: bigint("cleaning_fee_cents", { mode: "number" }),
   serviceFeeCents: bigint("service_fee_cents", { mode: "number" }),
+  /** Card-processing fee waived — set when the balance is paid off-card
+      (Zelle / wire / cash). The fee stays stored for the record; the
+      effective total drops it. */
+  serviceFeeWaived: boolean("service_fee_waived").default(false).notNull(),
   taxAmountCents: bigint("tax_amount_cents", { mode: "number" }),
   discountAmountCents: bigint("discount_amount_cents", { mode: "number" }),
   discountCode: text("discount_code"),
