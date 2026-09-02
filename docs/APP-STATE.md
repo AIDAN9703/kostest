@@ -174,3 +174,15 @@ Anthropic pre-authorizes credit against max_tokens, and the SDK default (128K)
 trips small balances. Requires `ANTHROPIC_API_KEY` (Vercel env + .env.local).
 Phase 2 (write actions behind confirmation) not started; when it is, treat
 customer-supplied text in tool results as untrusted (prompt injection).
+
+**Money model (2026-09-02):** `features/bookings/lib/booking-money.ts` is the ONE
+place for money math — `customerMoney()` (subtotal / card fee / effective total /
+paid / balance / status) and `dealEconomics()` (GMV / expenses / revenue /
+commission). `booking_pricing.service_fee_waived` (migration 0059, applied dev +
+prod) marks off-card payments: the fee stays stored, the effective total drops it,
+so a Zelle payer reads "Paid" instead of owing 3.5% forever. Stripe checkout
+refuses a waived booking (collect manually or un-waive). Booking page: the
+ProposalPanel (customer's exact breakdown + online-payment switch + send
+email/text + copy link) sits above Activity; DealEconomicsCard holds GMV/
+expenses/revenue + payment ledger + Record payment (method picker, fee-waive).
+Manual payments record method in `payment_method_detail`.
