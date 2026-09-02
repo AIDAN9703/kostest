@@ -2,10 +2,11 @@ import { auth } from "@/auth";
 import { boatService } from "@/features/boats/boat.service";
 import { userService } from "@/features/users/user.service";
 import {
+  getAdminWorkload,
   getFleetLeaders,
-  getMyOpenDeals,
+  getLeadIntake,
+  getRecentActivity,
   getRevenueTrend,
-  getUnassignedLeads,
   getUpcomingTrips,
 } from "@/features/admin/dashboard";
 import { AdminDashboardView } from "@/features/admin/dashboard/AdminDashboardView";
@@ -13,23 +14,24 @@ import { AdminDashboardView } from "@/features/admin/dashboard/AdminDashboardVie
 export default async function AdminDashboardPage() {
   const session = await auth();
   const firstName = session?.user?.name?.split(/\s+/)[0] ?? null;
-  const adminId = session?.user?.id ?? null;
 
   const [
-    unassignedLeads,
     upcomingTrips,
-    myDeals,
     pricingTiers,
     trend,
+    intake,
     leaders,
+    workload,
+    activity,
     admins,
   ] = await Promise.all([
-    getUnassignedLeads(6),
     getUpcomingTrips(30),
-    adminId ? getMyOpenDeals(adminId, 6) : Promise.resolve([]),
     boatService.getAllActivePricingTiers(),
     getRevenueTrend(12),
+    getLeadIntake(30),
     getFleetLeaders(5),
+    getAdminWorkload(),
+    getRecentActivity(20),
     userService.getAdmins(),
   ]);
 
@@ -37,11 +39,12 @@ export default async function AdminDashboardPage() {
     <AdminDashboardView
       firstName={firstName}
       pricingTiers={pricingTiers}
-      unassignedLeads={unassignedLeads}
       upcomingTrips={upcomingTrips}
-      myDeals={myDeals}
       trend={trend}
+      intake={intake}
       leaders={leaders}
+      workload={workload}
+      activity={activity}
       admins={admins}
     />
   );

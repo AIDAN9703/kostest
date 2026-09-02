@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/database/db";
-import { boats, bookingOps, bookingPricing, bookings } from "@/database/schema";
+import { boats, bookingEvents, bookingOps, bookingPricing, bookings, users } from "@/database/schema";
 import { and, desc, eq, gte, isNull, lte, notInArray, sql } from "drizzle-orm";
 import { cache } from "react";
 import {
@@ -10,8 +10,10 @@ import {
   startOfMonth,
   endOfMonth,
   addDays,
+  eachDayOfInterval,
   eachMonthOfInterval,
   format,
+  subDays,
   subMonths,
 } from "date-fns";
 import { bookingService } from "@/features/bookings/services/booking.service";
@@ -117,29 +119,6 @@ export const getUpcomingTrips = cache(
   }
 );
 
-/**
- * The signed-in admin's own live deals — their desk. Excludes completed work
- * and anything archived; sorted by how long it's been sitting untouched so
- * the stalest deal is always on top.
- */
-export const getMyOpenDeals = cache(
-  async (adminId: string, limit = 6): Promise<BookingListItem[]> => {
-    await assertAdmin();
-    const result = await bookingService.getAllBookings({
-      assignedAdminId: adminId,
-      archivedView: false,
-      limit: 50,
-    });
-    // "Last touch" = when we last spoke to them, else when it landed.
-    const lastTouch = (b: BookingListItem) =>
-      new Date(b.firstContactedAt ?? b.createdAt).getTime();
-    return result.bookings
-      .filter((b) => b.bookingStatus !== "COMPLETED")
-      .sort((a, b) => lastTouch(a) - lastTouch(b))
-      .slice(0, limit);
-  }
-);
-
 /** GMV expression shared by trend + leaderboard: ops override, else quote
  *  total minus the service fee — GMV is fee-exclusive everywhere. */
 const GMV = sql`COALESCE(SUM(COALESCE(${bookingOps.gmvCents}, ${bookingPricing.totalAmountCents} - COALESCE(${bookingPricing.serviceFeeCents}, 0))), 0)`;
@@ -222,4 +201,125 @@ export const getFleetLeaders = cache(async (limit = 5): Promise<FleetLeader[]> =
     gmvCents: Number(r.gmvCents),
     trips: Number(r.trips),
   }));
+});
+
+const LIVE = sql`${bookings.archivedAt} IS NULL`;
+
+/* ── Lead intake ───────────────────────────────────────────────────── */
+
+/** New deals landing per day and per channel — where business comes from. */
+export interface LeadIntake {
+  days: { key: string; label: string; count: number }[];
+  bySource: { source: string; count: number }[];
+  total: number;
+  previousTotal: number;
+}
+
+export const getLeadIntake = cache(async (days = 30): Promise<LeadIntake> => {
+  await assertAdmin();
+  const now = new Date();
+  const from = startOfDay(subDays(now, days - 1));
+  const prevFrom = startOfDay(subDays(now, days * 2 - 1));
+  const dayExpr = sql`to_char(date_trunc('day', ${bookings.createdAt}), 'YYYY-MM-DD')`;
+
+  const [perDay, perSource, [prev]] = await Promise.all([
+    db
+      .select({ key: sql<string>`${dayExpr}`, count: sql<number>`COUNT(*)::int` })
+      .from(bookings)
+      .where(gte(bookings.createdAt, from))
+      .groupBy(dayExpr),
+    db
+      .select({ source: bookings.source, count: sql<number>`COUNT(*)::int` })
+      .from(bookings)
+      .where(gte(bookings.createdAt, from))
+      .groupBy(bookings.source)
+      .orderBy(desc(sql`COUNT(*)`)),
+    db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(bookings)
+      .where(and(gte(bookings.createdAt, prevFrom), lte(bookings.createdAt, from))),
+  ]);
+
+  const byKey = new Map(perDay.map((r) => [r.key, Number(r.count)]));
+  const series = eachDayOfInterval({ start: from, end: now }).map((d) => {
+    const key = format(d, "yyyy-MM-dd");
+    return { key, label: format(d, "MMM d"), count: byKey.get(key) ?? 0 };
+  });
+
+  return {
+    days: series,
+    bySource: perSource.map((r) => ({ source: r.source ?? "UNKNOWN", count: Number(r.count) })),
+    total: series.reduce((a, d) => a + d.count, 0),
+    previousTotal: Number(prev?.count ?? 0),
+  };
+});
+
+/* ── Team workload ─────────────────────────────────────────────────── */
+
+export interface AdminWorkload {
+  adminId: string | null;
+  name: string;
+  liveDeals: number;
+  /** Value of their open deals (quote total, else lead estimate). */
+  valueCents: number;
+}
+
+/** Live (non-settled, non-archived) deals per admin, unassigned last. */
+export const getAdminWorkload = cache(async (): Promise<AdminWorkload[]> => {
+  await assertAdmin();
+  const rows = await db
+    .select({
+      adminId: bookings.assignedAdminId,
+      firstName: users.firstName,
+      lastName: users.lastName,
+      liveDeals: sql<number>`COUNT(*)::int`,
+      valueCents: sql<number>`COALESCE(SUM(COALESCE(${bookingPricing.totalAmountCents}, ${bookings.estimatedValueCents}, ${bookings.budgetCents})), 0)`,
+    })
+    .from(bookings)
+    .leftJoin(users, eq(bookings.assignedAdminId, users.id))
+    .leftJoin(bookingPricing, eq(bookings.id, bookingPricing.bookingId))
+    .where(and(LIVE, notInArray(bookings.bookingStatus, ["CANCELLED", "COMPLETED"])))
+    .groupBy(bookings.assignedAdminId, users.firstName, users.lastName)
+    .orderBy(desc(sql`COUNT(*)`));
+
+  return rows
+    .map((r) => ({
+      adminId: r.adminId,
+      name: r.adminId ? [r.firstName, r.lastName].filter(Boolean).join(" ") || "Admin" : "Unassigned",
+      liveDeals: Number(r.liveDeals),
+      valueCents: Number(r.valueCents),
+    }))
+    .sort((a, b) => (a.adminId === null ? 1 : b.adminId === null ? -1 : 0));
+});
+
+/* ── Activity ──────────────────────────────────────────────────────── */
+
+export interface ActivityItem {
+  id: string;
+  bookingId: string;
+  customerName: string | null;
+  eventType: string;
+  message: string | null;
+  actorType: string;
+  createdAt: Date;
+}
+
+/** The desk's pulse: the latest events across every deal. */
+export const getRecentActivity = cache(async (limit = 12): Promise<ActivityItem[]> => {
+  await assertAdmin();
+  const rows = await db
+    .select({
+      id: bookingEvents.id,
+      bookingId: bookingEvents.bookingId,
+      customerName: bookings.customerName,
+      eventType: bookingEvents.eventType,
+      message: bookingEvents.displayMessage,
+      actorType: bookingEvents.actorType,
+      createdAt: bookingEvents.createdAt,
+    })
+    .from(bookingEvents)
+    .innerJoin(bookings, eq(bookingEvents.bookingId, bookings.id))
+    .orderBy(desc(bookingEvents.createdAt))
+    .limit(limit);
+  return rows.map((r) => ({ ...r, createdAt: new Date(r.createdAt) }));
 });
