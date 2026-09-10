@@ -12,36 +12,6 @@ import { bookingSingleFieldUpdateSchema } from "@/features/bookings/booking-sing
 import type { BookingDetails } from "@/features/bookings/booking.types";
 import { getOrCreateCheckoutUrl } from "@/features/bookings/actions/stripe-checkout";
 
-// ========================================
-// CORE CUD OPERATIONS
-// ========================================
-
-/**
- * Delete booking
- */
-export async function deleteBooking(id: string): Promise<ActionResponse<{ message: string }>> {
-  const session = await auth();
-
-  if (!session?.user) {
-    return { success: false, error: "Authentication required" };
-  }
-
-  // Only admins can delete bookings
-  if (!session?.user?.isAdmin) {
-    return { success: false, error: "Admin access required" };
-  }
-
-  try {
-    await bookingService.deleteBooking(id);
-    revalidatePath("/admin/bookings");
-    revalidatePath(`/admin/bookings/${id}`);
-    return { success: true, data: { message: "Booking deleted successfully" } };
-  } catch (error) {
-    console.error("Error deleting booking:", error);
-    return { success: false, error: "Failed to delete booking" };
-  }
-}
-
 /**
  * Admin: update exactly one booking column (validated per-field).
  */

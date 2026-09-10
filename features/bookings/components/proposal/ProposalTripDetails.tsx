@@ -2,10 +2,10 @@
 
 import { CalendarDays, Clock, MapPin, MapPinned, Users } from "lucide-react";
 import { formatBoatLocal } from "@/shared/lib/utils/date-helpers";
-import type { DraftProposalData } from "@/features/bookings/lib/draft-proposal.types";
+import type { ProposalData } from "@/features/bookings/lib/proposal.types";
 
-interface DraftProposalTripDetailsProps {
-  data: DraftProposalData;
+interface ProposalTripDetailsProps {
+  data: ProposalData;
 }
 
 function Detail({
@@ -30,7 +30,7 @@ function Detail({
   );
 }
 
-export function DraftProposalTripDetails({ data }: DraftProposalTripDetailsProps) {
+export function ProposalTripDetails({ data }: ProposalTripDetailsProps) {
   // Boat-local, always: the charter leaves a physical dock, so every viewer
   // sees the same departure hour no matter where they're reading from.
   const tz = data.timezone;

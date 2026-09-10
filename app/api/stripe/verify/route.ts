@@ -6,6 +6,8 @@ import { paymentService } from "@/features/payments/payment.service";
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
 import { sendBookingConfirmationEmail } from "@/shared/lib/services/email.service";
+import { alertTeam } from "@/features/bookings/lib/team-alerts";
+import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import type { BookingStatus } from "@/database/types";
 import { getStripe } from "@/shared/lib/services/stripe.service";
 import { fulfillInstantCheckoutSession } from "@/features/bookings/services/instant-checkout-fulfillment.service";
@@ -167,23 +169,23 @@ async function buildVerifyResponse(
       .from(bookings)
       .where(eq(bookings.id, id))
       .limit(1);
-    if (!row || row.bookingStatus === "CONFIRMED") continue;
+    if (!row || row.bookingStatus === "BOOKED") continue;
 
     await db
       .update(bookings)
-      .set({ bookingStatus: "CONFIRMED", updatedAt: new Date() })
+      .set({ bookingStatus: "BOOKED", updatedAt: new Date() })
       .where(eq(bookings.id, id));
 
     await db.insert(bookingStatusHistory).values({
       bookingId: id,
       fromStatus: row.bookingStatus as BookingStatus,
-      toStatus: "CONFIRMED",
+      toStatus: "BOOKED",
       reason: "Payment verified",
     });
     await bookingEventsService.logStatusChange({
       bookingId: id,
       fromStatus: row.bookingStatus as BookingStatus,
-      toStatus: "CONFIRMED",
+      toStatus: "BOOKED",
       actorType: "system",
       reason: "Payment verified",
       channel: "stripe",
@@ -221,6 +223,18 @@ async function buildVerifyResponse(
       await sendBookingConfirmationEmail(fullBooking).catch((e) =>
         console.warn("[Verify] Confirmation email failed:", e)
       );
+      const settledCents = sessionPayments.reduce((sum, p) => sum + Number(p.amountCents), 0);
+      await alertTeam({
+        subject: `Payment received — ${fullBooking.customerName}${fullBooking.boatName ? ` · ${fullBooking.boatName}` : ""}`,
+        heading: "Payment received (card)",
+        booking: fullBooking,
+        extraLines: [
+          {
+            label: "Amount",
+            value: settledCents > 0 ? formatCentsAsCurrency(settledCents, { currency: fullBooking.currency ?? "USD" }) : null,
+          },
+        ],
+      });
     }
   }
 
@@ -252,7 +266,7 @@ async function buildVerifyResponse(
   return NextResponse.json({
     success: true,
     bookingId,
-    status: "CONFIRMED",
+    status: "BOOKED",
     booking: details
       ? {
           id: details.id,

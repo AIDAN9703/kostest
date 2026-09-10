@@ -43,7 +43,7 @@ function deriveUsername(email: string): string {
 }
 
 /**
- * Quick-create user from minimal fields (e.g. draft booking form modal).
+ * Quick-create user from minimal fields (e.g. the booking composer).
  * Auto-generates username and temp password.
  */
 export async function createUserQuick(

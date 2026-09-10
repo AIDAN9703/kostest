@@ -74,10 +74,11 @@ function formatTripDateTime(iso: string | null, timezone: string | null): string
 }
 
 /**
- * The trip itself. Read-only facts until the page-level Edit mode is on —
- * then dates, passengers, captain flag, and locations become a single form
- * with one Save. Captain/crew assignment stays live in both modes (it's an
- * assignment control, not a field). Boat changes go through their own flow.
+ * The trip, most important first: which boat and who runs it on the top
+ * row (captain/crew assignment is live in both modes — it's a control, not a
+ * field), then when, then the rest. Read-only until the page-level Edit mode
+ * is on — then the trip fields become one form with one Save. Money lives in
+ * Finances / Commission, so nothing here is repeated elsewhere on the page.
  */
 export function BookingTripCard({
   bookingId,
@@ -207,13 +208,12 @@ export function BookingTripCard({
         <CardTitle className="text-lg">Trip details</CardTitle>
       </CardHeader>
       <CardContent className="space-y-5">
-        {/* Boat + people — live controls in both modes. Captain and Crew get
-            their own labeled cells with matching person-chip affordances. */}
-        <div className="grid gap-x-6 gap-y-4 sm:grid-cols-3">
+        {/* Row 1 — the boat and who runs it. Live controls in both modes. */}
+        <div className="grid gap-x-8 gap-y-5 sm:grid-cols-3">
           <Fact label="Boat">
             {trip.boatId ? (
               <Link
-                href={`/boats/${trip.boatId}`}
+                href={`/admin/boats/${trip.boatId}`}
                 className="text-sm font-medium text-primary-strong hover:underline"
               >
                 {trip.boatName ?? "View boat"}
@@ -242,7 +242,7 @@ export function BookingTripCard({
         </div>
 
         {editing ? (
-          <div className="space-y-4 border-t border-border/50 pt-4">
+          <div className="space-y-4 border-t border-border/50 pt-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5 sm:col-span-2">
                 <Label className="text-xs">Boat</Label>
@@ -291,7 +291,7 @@ export function BookingTripCard({
               </div>
               <div className="flex items-center gap-3 pt-5">
                 <Switch checked={needsCaptain} onCheckedChange={setNeedsCaptain} />
-                <Label className="text-sm">Captain requested</Label>
+                <Label className="text-sm">Captain needed</Label>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Pickup</Label>
@@ -312,39 +312,40 @@ export function BookingTripCard({
             </div>
           </div>
         ) : (
-          <dl className="grid gap-x-6 gap-y-4 border-t border-border/50 pt-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Fact label="From">
-              <span className="text-sm font-medium tabular-nums">
-                {formatTripDateTime(trip.startDateTime, trip.boatTimezone)}
-              </span>
-            </Fact>
-            <Fact label="To">
-              <span className="text-sm font-medium tabular-nums">
-                {formatTripDateTime(trip.endDateTime, trip.boatTimezone)}
-              </span>
-            </Fact>
-            <Fact label="Passengers">
-              <span className="text-sm font-medium tabular-nums">{trip.numberOfPassengers}</span>
-            </Fact>
-            <Fact label="Captain requested">
-              <span className="text-sm font-medium">{trip.needsCaptain ? "Yes" : "No"}</span>
-            </Fact>
-            <Fact label="Pickup">
-              <span className="text-sm font-medium">
-                {trip.pickupLocation || <span className="text-muted-foreground/50">—</span>}
-              </span>
-            </Fact>
-            <Fact label="Drop-off">
-              <span className="text-sm font-medium">
-                {trip.dropoffLocation || <span className="text-muted-foreground/50">—</span>}
-              </span>
-            </Fact>
-            <Fact label="Booking ID">
-              <span className="break-all font-mono text-xs text-muted-foreground">
-                {bookingId}
-              </span>
-            </Fact>
-          </dl>
+          <>
+            {/* Row 2 — when. */}
+            <dl className="grid gap-x-8 gap-y-5 border-t border-border/50 pt-5 sm:grid-cols-2">
+              <Fact label="From">
+                <span className="text-sm font-medium tabular-nums">
+                  {formatTripDateTime(trip.startDateTime, trip.boatTimezone)}
+                </span>
+              </Fact>
+              <Fact label="To">
+                <span className="text-sm font-medium tabular-nums">
+                  {formatTripDateTime(trip.endDateTime, trip.boatTimezone)}
+                </span>
+              </Fact>
+            </dl>
+            {/* Row 3 — the rest. */}
+            <dl className="grid grid-cols-2 gap-x-8 gap-y-5 border-t border-border/50 pt-5 sm:grid-cols-4">
+              <Fact label="Passengers">
+                <span className="text-sm font-medium tabular-nums">{trip.numberOfPassengers ?? "—"}</span>
+              </Fact>
+              <Fact label="Captain needed">
+                <span className="text-sm font-medium">{trip.needsCaptain ? "Yes" : "No"}</span>
+              </Fact>
+              <Fact label="Pickup">
+                <span className="text-sm font-medium">
+                  {trip.pickupLocation || <span className="text-muted-foreground/50">—</span>}
+                </span>
+              </Fact>
+              <Fact label="Drop-off">
+                <span className="text-sm font-medium">
+                  {trip.dropoffLocation || <span className="text-muted-foreground/50">—</span>}
+                </span>
+              </Fact>
+            </dl>
+          </>
         )}
       </CardContent>
     </Card>

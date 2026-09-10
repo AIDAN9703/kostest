@@ -28,7 +28,7 @@ import {
 export interface ProposalDialogData {
   bookingId: string;
   publicToken: string;
-  /** "proposal" while DRAFT; "payment" once accepted with money owed. */
+  /** "proposal" while PROPOSED; "payment" once booked with money owed. */
   stage: "proposal" | "payment";
   customerEmail: string | null;
   customerPhone: string | null;
@@ -101,7 +101,7 @@ export function ProposalDialog({
   }
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(`${window.location.origin}/bookings/draft/${publicToken}`);
+    await navigator.clipboard.writeText(`${window.location.origin}/bookings/proposal/${publicToken}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 1500);
     void shareProposalLink(bookingId);

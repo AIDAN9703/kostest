@@ -16,13 +16,10 @@ import {
   Copy,
   DollarSign,
   Eye,
-  FileCheck2,
-  FileX2,
   MoreVertical,
   Plus,
   RotateCcw,
   Ship,
-  Trash2,
   UserCheck,
   type LucideIcon,
 } from "lucide-react";
@@ -71,7 +68,6 @@ import { bookingSearchParams } from "@/features/bookings/searchParams";
 import {
   assignAdminToBooking,
 } from "@/features/bookings/actions/admin-booking.actions";
-import { useDeleteBooking } from "@/features/bookings/hooks/useBookingMutations";
 import { useToast } from "@/shared/lib/hooks/use-toast";
 
 interface Admin {
@@ -163,7 +159,6 @@ export function AdminBookingsBoard({
 }: AdminBookingsBoardProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const deleteBooking = useDeleteBooking();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const runAction = useCallback(
@@ -188,14 +183,6 @@ export function AdminBookingsBoard({
       }
     },
     [toast, router]
-  );
-
-  const handleDelete = useCallback(
-    (id: string) => {
-      if (!confirm("Delete this deal? This cannot be undone.")) return;
-      deleteBooking.mutate(id);
-    },
-    [deleteBooking]
   );
 
   if (bookings.length === 0) {
@@ -247,7 +234,6 @@ export function AdminBookingsBoard({
                   onAssign={(id, adminId) =>
                     runAction(() => assignAdminToBooking(id, adminId), "Admin assigned", id)
                   }
-                  onDelete={handleDelete}
                   onOpen={(id) => router.push(`/admin/bookings/${id}`)}
                 />
               ))}
@@ -282,7 +268,7 @@ const PAYMENT_EMBLEMS: Record<string, EmblemSpec> = {
 };
 
 /**
- * Tone for a pre-trip requirement emblem (captain, contract): green when
+ * Tone for a pre-trip requirement emblem (captain): green when
  * resolved, yellow while pending, red once the trip is inside the
  * PRETRIP_URGENT_HOURS window with the item still open.
  */
@@ -468,14 +454,12 @@ function BookingRow({
   admins,
   actionLoading,
   onAssign,
-  onDelete,
   onOpen,
 }: {
   booking: BookingListItem;
   admins: Admin[];
   actionLoading: string | null;
   onAssign: (id: string, adminId: string) => void;
-  onDelete: (id: string) => void;
   onOpen: (id: string) => void;
 }) {
   const kind = getDisplayKind(booking);
@@ -505,7 +489,7 @@ function BookingRow({
   }
 
   // Status emblems — payment once an invoice could exist (or money moved),
-  // captain/contract once the deal is locked in.
+  // captain once the deal is locked in.
   const paymentEmblem =
     (PRICED_STATUSES.has(booking.bookingStatus) ||
       booking.totalPaidCents > 0 ||
@@ -513,10 +497,7 @@ function BookingRow({
     booking.paymentDisplayStatus
       ? PAYMENT_EMBLEMS[booking.paymentDisplayStatus]
       : null;
-  const showCaptain =
-    Boolean(booking.needsCaptain) &&
-    (booking.bookingStatus === "APPROVED" || booking.bookingStatus === "CONFIRMED");
-  const showContract = ["APPROVED", "CONFIRMED", "COMPLETED"].includes(booking.bookingStatus);
+  const showCaptain = Boolean(booking.needsCaptain) && booking.bookingStatus === "BOOKED";
   // Unresolved pre-trip items are pending (yellow) until the trip is inside
   // the urgency window, then red — see PRETRIP_URGENT_HOURS in deal-status.
   const tripImminent = isTripImminent(booking.startDateTime);
@@ -584,8 +565,8 @@ function BookingRow({
               </span>
             ) : null}
           </div>
-          {/* Row 2: status EMBLEMS (payment / captain / contract) beneath. */}
-          {paymentEmblem || showCaptain || showContract ? (
+          {/* Row 2: status EMBLEMS (payment / captain) beneath. */}
+          {paymentEmblem || showCaptain ? (
             <div className="mt-1.5 flex items-center gap-1">
               {paymentEmblem ? <StatusEmblem {...paymentEmblem} /> : null}
               {showCaptain ? (
@@ -593,13 +574,6 @@ function BookingRow({
                   label={preTripLabel("Captain", booking.captainUserId ? "assigned" : "needed", !booking.captainUserId && tripImminent)}
                   className={preTripTone(Boolean(booking.captainUserId), tripImminent)}
                   Icon={Anchor}
-                />
-              ) : null}
-              {showContract ? (
-                <StatusEmblem
-                  label={preTripLabel("Contract", booking.opsContractSigned ? "signed" : "unsigned", !booking.opsContractSigned && tripImminent)}
-                  className={preTripTone(Boolean(booking.opsContractSigned), tripImminent)}
-                  Icon={booking.opsContractSigned ? FileCheck2 : FileX2}
                 />
               ) : null}
             </div>
@@ -749,14 +723,6 @@ function BookingRow({
                 />
               </DropdownMenuSubContent>
             </DropdownMenuSub>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => onDelete(booking.id)}
-              className="cursor-pointer text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>

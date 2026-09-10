@@ -14,17 +14,17 @@ export const bookingTypeEnum = pgEnum("BookingType", [
   "MARKETPLACE", // Ingested from a marketplace (Boatsetter/GetMyBoat)
 ]);
 
-// Booking status — ONE deal lifecycle from first contact to completion.
-// Contacted/proposal-sent/paid sub-steps are derived (firstContactedAt,
-// publishedAt, payments ledger), not separate statuses.
+// Booking status — ONE deal lifecycle, each value answering "where does the
+// customer stand with this trip?". Contacted / sent / paid are DERIVED
+// (firstContactedAt, publishedAt, the payments ledger), never stored.
+// Migration 0060 mapped the old vocabulary: DRAFT + PENDING → PROPOSED,
+// APPROVED + CONFIRMED → BOOKED.
 export const bookingStatusEnum = pgEnum("BookingStatus", [
-  "INQUIRY", // A lead — no boat/dates/pricing required yet
-  "DRAFT", // Priced proposal, sent (publishedAt) or being prepared
-  "PENDING", // Initial state for booking requests (legacy path)
-  "APPROVED", // Accepted/approved, waiting for payment
-  "CONFIRMED", // Payment received, booking confirmed
-  "CANCELLED", // Cancelled/lost (see cancellationReason)
-  "COMPLETED", // Trip completed
+  "INQUIRY", // They asked. Nothing priced yet.
+  "PROPOSED", // Priced and on their link (publishedAt says whether it was sent).
+  "BOOKED", // The trip is theirs — date locked, calendar blocked. Paid or not.
+  "COMPLETED", // The trip happened.
+  "CANCELLED", // It didn't — cancellationReason says why (lost inquiries included).
 ]);
 
 // Booking source — the CHANNEL the deal came through.

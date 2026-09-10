@@ -11,6 +11,11 @@ import { getAdminSession } from "@/shared/lib/utils/auth-utils";
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { bookingCrewService } from "@/features/bookings/services/booking-crew.service";
 import { bookingStatusService } from "@/features/bookings/services/booking-status.service";
+import {
+  availabilityService,
+  isOverlapConstraintError,
+  SlotUnavailableError,
+} from "@/features/availability/services/availability.service";
 
 /** Assign admin to booking, or pass null to unassign */
 export async function assignAdminToBooking(bookingId: string, adminId: string | null) {
@@ -127,8 +132,81 @@ export async function assignCaptainToBooking(bookingId: string, captainUserId: s
   }
 }
 
-/** Mark booking as contacted (creates admin note) */
-/** Mark a payment-confirmed booking as completed (charter happened). */
+/**
+ * "They said yes on the phone" — PROPOSED → BOOKED without the customer
+ * clicking anything. Books every open boat in the party. Checks each slot
+ * first; the DB's no-overlap constraint is the backstop.
+ */
+export async function markBookingBooked(bookingId: string) {
+  try {
+    const authResult = await getAdminSession();
+    if (authResult.error !== undefined) return { success: false, error: authResult.error };
+    const adminId = authResult.session.user.id;
+
+    const party = await bookingService.getChargeableParty(bookingId);
+    if (!party || party.length === 0) return { success: false, error: "Booking not found" };
+    const open = party.filter((m) => m.booking.bookingStatus === "PROPOSED");
+    if (open.length === 0) {
+      return { success: false, error: "Only a proposal can be marked booked." };
+    }
+
+    for (const m of open) {
+      const b = m.booking;
+      if (b.boatId && b.startDateTime && b.endDateTime) {
+        try {
+          await availabilityService.assertSlotAvailable(
+            b.boatId,
+            new Date(b.startDateTime),
+            new Date(b.endDateTime),
+            b.id
+          );
+        } catch (error) {
+          if (error instanceof SlotUnavailableError) {
+            return {
+              success: false,
+              error: `${m.boat?.name ?? "That boat"} is taken on the calendar for this window — move the trip first.`,
+            };
+          }
+          throw error;
+        }
+      }
+    }
+
+    let booked = 0;
+    for (const m of open) {
+      try {
+        await bookingStatusService.markBooked(m.booking.id, {
+          changedByUserId: adminId,
+          reason: "Marked as booked by admin",
+          actorType: "admin",
+          channel: "admin_portal",
+        });
+        booked += 1;
+      } catch (error) {
+        if (isOverlapConstraintError(error)) {
+          return {
+            success: false,
+            error: `${m.boat?.name ?? "A boat"} was taken at the same moment — ${booked} of ${open.length} booked; move that trip and retry.`,
+          };
+        }
+        throw error;
+      }
+    }
+
+    revalidatePath("/admin/bookings");
+    revalidatePath(`/admin/bookings/${bookingId}`);
+    revalidatePath("/admin");
+    return { success: true, message: booked > 1 ? `Booked — ${booked} boats locked in` : "Booked — the date is locked in" };
+  } catch (error) {
+    console.error("Error marking booking booked:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to mark as booked",
+    };
+  }
+}
+
+/** Mark a booked trip as completed (the charter happened). */
 export async function markBookingCompleted(bookingId: string) {
   try {
     const authResult = await getAdminSession();
@@ -243,7 +321,7 @@ export async function shiftCharterPartyWindows(
 
 /**
  * "Actually, we want another boat" — grow this booking into a charter party.
- * The sibling joins as DRAFT under the same proposal link; resend it so the
+ * The sibling joins as PROPOSED under the same proposal link; resend it so the
  * customer sees (and re-accepts) the bigger party.
  */
 export async function addBoatToCharterParty(

@@ -44,12 +44,11 @@ export interface StatusHistoryEntry {
  * Maps current status to array of valid next statuses
  */
 const VALID_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
-  // A lead becomes a priced proposal (DRAFT) or dies (CANCELLED = lost).
-  INQUIRY: ["DRAFT", "CANCELLED"],
-  DRAFT: ["PENDING", "APPROVED", "CANCELLED"],
-  PENDING: ["APPROVED", "CANCELLED"],
-  APPROVED: ["CONFIRMED", "CANCELLED"],
-  CONFIRMED: ["COMPLETED", "CANCELLED"],
+  // A lead gets priced into a proposal, or dies (CANCELLED = lost).
+  INQUIRY: ["PROPOSED", "CANCELLED"],
+  // The customer accepts / admin marks booked / money lands → BOOKED.
+  PROPOSED: ["BOOKED", "CANCELLED"],
+  BOOKED: ["COMPLETED", "CANCELLED"],
   COMPLETED: ["CANCELLED"],
   CANCELLED: [],
 };
@@ -270,34 +269,7 @@ export class BookingStatusService {
   // ============================================================================
 
   /**
-   * Approve a pending booking request
-   */
-  async approve(
-    bookingId: string,
-    adminId: string,
-    reason?: string
-  ): Promise<BookingStatusHistory> {
-    return this.transitionStatus({
-      bookingId,
-      newStatus: "APPROVED",
-      changedByUserId: adminId,
-      reason: reason ?? "Booking request approved",
-    });
-  }
-
-  /**
-   * Confirm a booking (payment received)
-   */
-  async confirm(bookingId: string, reason?: string): Promise<BookingStatusHistory> {
-    return this.transitionStatus({
-      bookingId,
-      newStatus: "CONFIRMED",
-      reason: reason ?? "Payment received",
-    });
-  }
-
-  /**
-   * Mark booking as completed
+   * Mark booking as completed (BOOKED → COMPLETED)
    */
   async complete(bookingId: string, adminId?: string): Promise<BookingStatusHistory> {
     return this.transitionStatus({
@@ -335,25 +307,30 @@ export class BookingStatusService {
   }
 
   /**
-   * Accept a draft booking (customer accepted via link)
-   * Uses forceSetStatus since DRAFT → APPROVED bypasses normal transition rules
+   * The trip is theirs: PROPOSED → BOOKED. One verb for every road in —
+   * the customer accepting on their link (acceptedAt + note), an admin
+   * marking it booked after a phone yes, or money landing. Availability is
+   * the caller's job; the exclusion constraint is the last line of defense.
    */
-  async acceptDraft(
+  async markBooked(
     bookingId: string,
     options?: {
       changedByUserId?: string | null;
       acceptedAt?: Date;
       acceptedCustomerNote?: string | null;
+      reason?: string;
+      actorType?: "user" | "admin" | "system";
+      channel?: string;
     }
   ): Promise<BookingStatusHistory> {
     const currentStatus = await this.getCurrentStatus(bookingId);
     if (currentStatus === null) throw new Error(`Booking not found: ${bookingId}`);
-    if (currentStatus !== "DRAFT")
-      throw new Error(`Cannot accept non-draft booking (status: ${currentStatus})`);
+    if (currentStatus !== "PROPOSED")
+      throw new Error(`Only a proposal can be marked booked (status: ${currentStatus})`);
 
     const now = new Date();
     const updateData: Record<string, unknown> = {
-      bookingStatus: "APPROVED",
+      bookingStatus: "BOOKED",
       updatedAt: now,
     };
     if (options?.acceptedAt !== undefined) updateData.acceptedAt = options.acceptedAt;
@@ -365,25 +342,26 @@ export class BookingStatusService {
       .set(updateData as Record<string, Date | string | null>)
       .where(eq(bookings.id, bookingId));
 
+    const reason = options?.reason ?? "Booked";
     const [historyEntry] = await db
       .insert(bookingStatusHistory)
       .values({
         bookingId,
-        fromStatus: "DRAFT",
-        toStatus: "APPROVED",
+        fromStatus: "PROPOSED",
+        toStatus: "BOOKED",
         changedByUserId: options?.changedByUserId ?? null,
-        reason: "Customer accepted",
+        reason,
       })
       .returning();
 
     await bookingEventsService.logStatusChange({
       bookingId,
-      fromStatus: "DRAFT",
-      toStatus: "APPROVED",
-      actorType: options?.changedByUserId ? "user" : "system",
+      fromStatus: "PROPOSED",
+      toStatus: "BOOKED",
+      actorType: options?.actorType ?? (options?.changedByUserId ? "admin" : "system"),
       actorId: options?.changedByUserId ?? null,
-      reason: "Customer accepted",
-      channel: "web",
+      reason,
+      channel: options?.channel,
     });
 
     return historyEntry;

@@ -34,8 +34,11 @@ export const STATUS_COLORS = {
   PENDING_VERIFICATION: "yellow",
   BANNED: "red",
 
-  // Booking Status
+  // Booking Status (PENDING is also a captain / crew / payment status)
   PENDING: "yellow",
+  INQUIRY: "gray",
+  PROPOSED: "yellow",
+  BOOKED: "green",
 
   // Inquiry Stage
   NEEDS_CONTACT: "yellow",
@@ -54,8 +57,6 @@ export const STATUS_COLORS = {
 
   // Inquiry Status (legacy)
   ARCHIVED: "gray",
-  APPROVED: "blue",
-  CONFIRMED: "green",
   CANCELLED: "red",
   COMPLETED: "purple",
 

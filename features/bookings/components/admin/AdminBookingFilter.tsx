@@ -46,6 +46,7 @@ const ENUM_LABEL_OVERRIDES: Record<string, string> = {
   INSTANT_BOOK: "Instant",
   EXTERNAL_BOOKING: "Admin-created",
   DEPOSIT_PAID: "Deposit paid",
+  PROPOSED: "Proposal",
 };
 
 /**

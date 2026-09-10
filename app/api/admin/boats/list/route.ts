@@ -5,7 +5,7 @@ import { apiSuccess, apiError } from "@/shared/lib/utils/api-helpers";
 
 /**
  * GET /api/admin/boats/list
- * Boats for admin dropdowns (BoatSelect, draft bookings, bookings).
+ * Boats for admin dropdowns (BoatSelect, the booking composer).
  * Query params: search (optional, min 2 chars) - filters by name, make, model, location.
  * Returns BoatForAdminSelect format.
  */

@@ -1,9 +1,9 @@
 /**
- * Types for the public draft booking proposal page.
+ * Types for the public proposal page.
  * Used when customers open the SMS/link to view and accept their charter proposal.
  */
 
-export interface DraftProposalAddOn {
+export interface ProposalAddOn {
   name: string;
   description?: string | null;
   unitPrice: number;
@@ -11,7 +11,7 @@ export interface DraftProposalAddOn {
   total: number;
 }
 
-export interface DraftProposalBooking {
+export interface ProposalBooking {
   id: string;
   boatId: string;
   boatName: string;
@@ -31,10 +31,10 @@ export interface DraftProposalBooking {
   serviceFeeWaived: boolean;
   /** Total for this booking (cents) */
   totalCents: number;
-  addOns: DraftProposalAddOn[] | null;
+  addOns: ProposalAddOn[] | null;
 }
 
-export interface DraftProposalData {
+export interface ProposalData {
   /** Latest admin edit across the party — the page's freshness stamp. */
   updatedAt: Date | null;
   id: string;
@@ -53,5 +53,5 @@ export interface DraftProposalData {
   totalPaidCents: number;
   depositAmountCents: number | null;
   totalAmountCents: number;
-  bookings: DraftProposalBooking[];
+  bookings: ProposalBooking[];
 }

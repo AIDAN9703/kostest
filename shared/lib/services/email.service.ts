@@ -9,6 +9,7 @@ import { formatCentsAsCurrency } from '@/shared/lib/utils/money-utils';
 import { format } from 'date-fns';
 import { parseDateTimeInBoatTimezone } from '@/shared/lib/utils/date-helpers';
 import { formatTime12Hour } from '@/shared/lib/utils/general-utils';
+import { getBaseUrl } from '@/shared/lib/utils/base-url';
 
 // Initialize Resend (will fail gracefully if API key not set)
 const resend = process.env.RESEND_API_KEY
@@ -39,7 +40,7 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * Extra styles for draft charter proposal email only (paired with baseEmailStyles).
+ * Extra styles for the charter proposal email only (paired with baseEmailStyles).
  */
 const proposalEmailStyles = `
   <style>
@@ -354,26 +355,26 @@ const baseEmailStyles = `
 `;
 
 /**
- * Send draft booking proposal email with link to accept
+ * Send the charter proposal email with the link to view and accept
  * Called automatically when admin creates a booking/group
  */
-export async function sendDraftBookingEmail(params: {
+export async function sendProposalEmail(params: {
   customerName: string;
   customerEmail: string;
-  draftLink: string;
+  proposalLink: string;
   boatName?: string;
   isGroup?: boolean;
   /** Re-send after edits: same link, "updated" subject + lead copy. */
   isUpdate?: boolean;
 }): Promise<boolean> {
   if (!resend) {
-    console.warn('Resend not configured. Draft email not sent.');
+    console.warn('Resend not configured. Proposal email not sent.');
     return false;
   }
 
-  const { customerName, customerEmail, draftLink, boatName, isGroup, isUpdate } = params;
+  const { customerName, customerEmail, proposalLink, boatName, isGroup, isUpdate } = params;
   if (!customerEmail) {
-    console.error('No email address for draft notification');
+    console.error('No email address for proposal email');
     return false;
   }
 
@@ -424,7 +425,7 @@ export async function sendDraftBookingEmail(params: {
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;">
                   <tr>
                     <td align="center" style="border-radius:10px;background:${BRAND_NAVY};box-shadow:0 4px 16px rgba(39,68,92,0.28);">
-                      <a href="${draftLink}" target="_blank" rel="noopener noreferrer"
+                      <a href="${proposalLink}" target="_blank" rel="noopener noreferrer"
                         style="display:inline-block;padding:16px 36px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:15px;font-weight:600;color:#ffffff !important;text-decoration:none;border-radius:10px;">
                         View full proposal
                       </a>
@@ -450,13 +451,13 @@ export async function sendDraftBookingEmail(params: {
     });
 
     if (error) {
-      console.error('Failed to send draft proposal email:', error);
+      console.error('Failed to send proposal email:', error);
       return false;
     }
-    console.log('Draft proposal email sent:', data?.id);
+    console.log('Proposal email sent:', data?.id);
     return true;
   } catch (error) {
-    console.error('Error sending draft proposal email:', error);
+    console.error('Error sending proposal email:', error);
     return false;
   }
 }
@@ -729,6 +730,86 @@ export async function sendBookingConfirmationEmail(
     return true;
   } catch (error) {
     console.error('Error sending confirmation email:', error);
+    return false;
+  }
+}
+
+// ============================================================================
+// TEAM ALERTS — internal "something happened" emails to the admin inbox
+// ============================================================================
+
+/** Comma-separated ADMIN_ALERT_EMAIL; falls back to the public contact inbox. */
+const ADMIN_ALERT_RECIPIENTS = (process.env.ADMIN_ALERT_EMAIL || EMAIL_CONTACT)
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+export interface AdminAlertEmailParams {
+  subject: string;
+  heading: string;
+  /** Label/value rows; empty values are skipped. */
+  lines: { label: string; value: string | null | undefined }[];
+  /** Deep-links the button to /admin/bookings/[id] (else the board). */
+  bookingId?: string | null;
+  /** Optional callout under the rows — why this needs a human. */
+  note?: string;
+}
+
+/**
+ * Plain internal alert to the team (replaces the old GoHighLevel admin
+ * notifications). Deliberately unbranded and dense: it's for staff, not
+ * customers. Never throws — an alert must never break the flow that fired it.
+ */
+export async function sendAdminAlertEmail(params: AdminAlertEmailParams): Promise<boolean> {
+  if (!resend) {
+    console.warn('Resend not configured. Admin alert not sent:', params.subject);
+    return false;
+  }
+  try {
+    const rows = params.lines
+      .filter((l) => l.value != null && String(l.value).trim() !== '')
+      .map(
+        (l) => `
+              <tr>
+                <td style="padding:6px 14px 6px 0;color:${TEXT_SECONDARY};font-size:13px;white-space:nowrap;vertical-align:top;">${escapeHtml(l.label)}</td>
+                <td style="padding:6px 0;color:${TEXT_PRIMARY};font-size:14px;font-weight:500;line-height:1.45;">${escapeHtml(String(l.value)).replace(/\n/g, '<br>')}</td>
+              </tr>`
+      )
+      .join('');
+    const base = getBaseUrl();
+    const link = params.bookingId ? `${base}/admin/bookings/${params.bookingId}` : `${base}/admin/bookings`;
+    const note = params.note
+      ? `<p style="margin:16px 0 0;padding:12px 14px;background:${BG_WARM};border-left:3px solid ${BRAND_GOLD};color:${TEXT_PRIMARY};font-size:13px;line-height:1.5;">${escapeHtml(params.note)}</p>`
+      : '';
+    const html = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+        <body style="margin:0;padding:24px 16px;background:${BG_LIGHT};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+          <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid ${BORDER_COLOR};border-radius:12px;padding:28px 28px 24px;">
+            <p style="margin:0 0 4px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:${BRAND_GOLD};font-weight:600;">KOS admin</p>
+            <h1 style="margin:0 0 16px;font-size:20px;color:${BRAND_NAVY};">${escapeHtml(params.heading)}</h1>
+            <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;">${rows}</table>
+            ${note}
+            <p style="margin:24px 0 0;">
+              <a href="${link}" style="display:inline-block;background:${BRAND_NAVY};color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:10px 18px;border-radius:999px;">Open in admin</a>
+            </p>
+          </div>
+        </body>
+        </html>`;
+    const { error } = await resend.emails.send({
+      from: `${FROM_NAME} <${FROM_EMAIL}>`,
+      to: ADMIN_ALERT_RECIPIENTS,
+      subject: params.subject,
+      html,
+    });
+    if (error) {
+      console.error('Admin alert email failed:', error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Admin alert email error:', error);
     return false;
   }
 }

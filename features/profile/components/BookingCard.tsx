@@ -12,11 +12,8 @@ interface BookingCardProps {
 }
 
 const statusConfig = {
-  confirmed: { color: "bg-emerald-100 text-emerald-800", label: "Confirmed" },
-  approved: {
-    color: "bg-blue-100 text-white",
-    label: "Approved - Awaiting Payment",
-  },
+  booked: { color: "bg-emerald-100 text-emerald-800", label: "Booked" },
+  proposal: { color: "bg-blue-100 text-blue-800", label: "Proposal sent" },
   pending: { color: "bg-yellow-100 text-yellow-800", label: "Pending" },
   cancelled: { color: "bg-red-100 text-red-800", label: "Cancelled" },
   completed: { color: "bg-gray-100 text-gray-800", label: "Completed" },

@@ -1,39 +1,15 @@
-import { notFound } from "next/navigation";
-import { bookingService } from "@/features/bookings/services/booking.service";
-import PublicDraftBookingClient from "@/features/bookings/components/PublicDraftBookingClient";
-import type { DraftProposalData } from "@/features/bookings/lib/draft-proposal.types";
+import { permanentRedirect } from "next/navigation";
 
-type Props = {
+/**
+ * Proposal links sent before September 2026 used /bookings/draft/…. They live
+ * in customers' inboxes and texts, so they keep working — one permanent hop
+ * to the current address.
+ */
+export default async function LegacyProposalLinkPage({
+  params,
+}: {
   params: Promise<{ token: string }>;
-};
-
-export default async function PublicDraftBookingPage({ params }: Props) {
+}) {
   const { token } = await params;
-  const raw = await bookingService.getDraftBookingsForPublicDisplay(token);
-
-  if (!raw) {
-    notFound();
-  }
-
-  const data: DraftProposalData = {
-    id: raw.id,
-    updatedAt: raw.updatedAt,
-    customerName: raw.customerName,
-    customerEmail: raw.customerEmail,
-    startDateTime: raw.startDateTime,
-    endDateTime: raw.endDateTime,
-    numberOfPassengers: raw.numberOfPassengers ?? 1,
-    pickupLocation: raw.pickupLocation,
-    dropoffLocation: raw.dropoffLocation,
-    timezone: raw.timezone,
-    allowPayment: raw.allowPayment,
-    paymentType: (raw.paymentType as "DEPOSIT_ONLY" | "FULL_PAYMENT" | null) ?? null,
-    acceptedAt: raw.acceptedAt,
-    totalPaidCents: raw.totalPaidCents ?? 0,
-    depositAmountCents: raw.depositAmountCents ?? null,
-    totalAmountCents: raw.totalAmountCents ?? 0,
-    bookings: raw.bookings,
-  };
-
-  return <PublicDraftBookingClient data={data} publicToken={token} />;
+  permanentRedirect(`/bookings/proposal/${token}`);
 }

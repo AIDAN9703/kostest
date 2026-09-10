@@ -3,7 +3,7 @@
  *
  * Creates Checkout Sessions for all non-instant booking payments:
  * - Admin request bookings (admin creates booking, sends payment link to customer)
- * - Draft pay-now bookings (customer accepts draft and pays immediately)
+ * - Proposal pay-now (customer accepts the proposal and pays immediately)
  *
  * NOTE: All amounts are stored in CENTS in the database.
  * Stripe also expects amounts in cents, so no conversion is needed.

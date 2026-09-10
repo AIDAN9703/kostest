@@ -2,14 +2,14 @@
 
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { dollarsToCents } from "@/shared/lib/utils/money-utils";
-import type { DraftProposalBooking } from "@/features/bookings/lib/draft-proposal.types";
+import type { ProposalBooking } from "@/features/bookings/lib/proposal.types";
 
-interface DraftProposalAddOnsProps {
-  bookings: DraftProposalBooking[];
+interface ProposalAddOnsProps {
+  bookings: ProposalBooking[];
 }
 
 /** Flat add-on rows — hairlines come from the page's divide-y container. */
-export function DraftProposalAddOns({ bookings }: DraftProposalAddOnsProps) {
+export function ProposalAddOns({ bookings }: ProposalAddOnsProps) {
   const allAddOns = bookings.flatMap((b) =>
     (b.addOns ?? []).map((a) => ({ ...a, boatName: b.boatName }))
   );

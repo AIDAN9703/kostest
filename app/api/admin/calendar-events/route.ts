@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     const bookingWhere = [
       lt(bookings.startDateTime, endDate),
       gt(bookings.endDateTime, startDate),
-      inArray(bookings.bookingStatus, ['CONFIRMED', 'APPROVED', 'PENDING'])
+      inArray(bookings.bookingStatus, ['BOOKED'])
     ];
 
     if (boatId) {
@@ -137,14 +137,11 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** Only CONFIRMED / APPROVED / PENDING are ever queried above. */
+/** Only BOOKED is ever queried above. */
 function getBookingColor(status: string) {
   switch (status) {
-    case 'CONFIRMED':
-    case 'APPROVED':
+    case 'BOOKED':
       return '#22c55e'; // Green
-    case 'PENDING':
-      return '#f59e0b'; // Amber
     default:
       return '#6b7280'; // Gray
   }

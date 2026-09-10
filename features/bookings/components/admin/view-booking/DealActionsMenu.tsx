@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Archive,
+  CalendarCheck,
   CheckCircle2,
   Loader2,
   MoreHorizontal,
@@ -36,6 +37,7 @@ import { useToast } from "@/shared/lib/hooks/use-toast";
 import {
   assignAdminToBooking,
   cancelBooking,
+  markBookingBooked,
   markBookingCompleted,
 } from "@/features/bookings/actions/admin-booking.actions";
 import { markDealLost, toggleDealArchived } from "@/features/bookings/actions/deal.actions";
@@ -58,7 +60,8 @@ interface DealActionsMenuProps {
 
 /**
  * The quiet header overflow (⋯) — ownership and lifecycle verbs that don't
- * deserve their own button: assign, complete, archive, lost/cancel. The
+ * deserve their own button: assign, mark booked, complete, archive,
+ * lost/cancel. The
  * everyday verbs live on the cards they belong to (Activity, Payments).
  */
 export function DealActionsMenu({
@@ -113,7 +116,7 @@ export function DealActionsMenu({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-60">
-        {["DRAFT", "APPROVED", "CONFIRMED"].includes(bookingStatus) ? (
+        {["PROPOSED", "BOOKED"].includes(bookingStatus) ? (
           <>
             <DropdownMenuItem onClick={() => setAddBoatOpen(true)}>
               <Sailboat className="mr-2 h-4 w-4" />
@@ -164,7 +167,19 @@ export function DealActionsMenu({
             </>
           ) : null}
 
-          {bookingStatus === "CONFIRMED" ? (
+          {bookingStatus === "PROPOSED" ? (
+            /* "They said yes on the phone" — locks the date without a click
+               from the customer. Money is recorded separately. */
+            <DropdownMenuItem
+              onClick={() => run(() => markBookingBooked(bookingId))}
+              className="cursor-pointer gap-2"
+            >
+              <CalendarCheck className="h-4 w-4" />
+              Mark as booked
+            </DropdownMenuItem>
+          ) : null}
+
+          {bookingStatus === "BOOKED" ? (
             <DropdownMenuItem
               onClick={() => run(() => markBookingCompleted(bookingId))}
               className="cursor-pointer gap-2"

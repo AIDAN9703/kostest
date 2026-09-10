@@ -11,6 +11,8 @@ import {
 } from "@/features/availability/services/availability.service";
 import { paymentService } from "@/features/payments/payment.service";
 import { sendBookingConfirmationEmail } from "@/shared/lib/services/email.service";
+import { alertTeam } from "@/features/bookings/lib/team-alerts";
+import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { dollarsToCents } from "@/shared/lib/utils/money-utils";
 import type { BookingAddOn } from "@/features/bookings/booking.types";
 import type { BookingStatus } from "@/database/types";
@@ -20,31 +22,31 @@ export type InstantCheckoutFulfillmentResult =
   | { status: "already_processed"; bookingId: string }
   | { status: "skipped"; reason: string };
 
-async function ensureBookingConfirmed(bookingId: string, reason: string) {
+async function ensureBookingBooked(bookingId: string, reason: string) {
   const [booking] = await db
     .select({ id: bookings.id, bookingStatus: bookings.bookingStatus })
     .from(bookings)
     .where(eq(bookings.id, bookingId))
     .limit(1);
 
-  if (!booking || booking.bookingStatus === "CONFIRMED") return;
+  if (!booking || booking.bookingStatus === "BOOKED") return;
 
   await db
     .update(bookings)
-    .set({ bookingStatus: "CONFIRMED", updatedAt: new Date() })
+    .set({ bookingStatus: "BOOKED", updatedAt: new Date() })
     .where(eq(bookings.id, bookingId));
 
   await db.insert(bookingStatusHistory).values({
     bookingId,
     fromStatus: booking.bookingStatus,
-    toStatus: "CONFIRMED",
+    toStatus: "BOOKED",
     reason,
   });
 
   await bookingEventsService.logStatusChange({
     bookingId,
     fromStatus: booking.bookingStatus as BookingStatus,
-    toStatus: "CONFIRMED",
+    toStatus: "BOOKED",
     actorType: "system",
     reason,
     channel: "stripe",
@@ -79,9 +81,9 @@ export async function fulfillInstantCheckoutSession(
 
   if (existingPayment) {
     try {
-      await ensureBookingConfirmed(existingPayment.payableId, "Payment received (instant book)");
+      await ensureBookingBooked(existingPayment.payableId, "Payment received (instant book)");
     } catch (error) {
-      // A held overlap booking must not be force-confirmed by a webhook retry.
+      // A held overlap booking must not be force-booked by a webhook retry.
       if (!isOverlapConstraintError(error)) throw error;
       console.error(
         "[InstantCheckout] Confirm blocked by overlap constraint — booking stays held:",
@@ -98,7 +100,7 @@ export async function fulfillInstantCheckoutSession(
   const endDateTime = metadata.endDateTime ? new Date(metadata.endDateTime) : null;
 
   // If the slot was taken while the customer sat in Stripe checkout, their
-  // money is already captured — so the booking is created as a PENDING
+  // money is already captured — so the booking is created as a PROPOSED
   // "overlap hold" (doesn't block the calendar, can't violate the DB
   // constraint) and flagged loudly for manual resolution: refund, move, or
   // rebook. It is NEVER silently stacked on top of another charter.
@@ -178,7 +180,7 @@ export async function fulfillInstantCheckoutSession(
     });
   }
 
-  // A held booking is NOT confirmed — the customer must not get a
+  // A held booking is NOT booked — the customer must not get a
   // confirmation email until an admin resolves the conflict.
   if (!holdReason && options?.sendConfirmationEmail !== false) {
     const fullBooking = await bookingService.getBookingById(newBooking.id);
@@ -187,6 +189,34 @@ export async function fulfillInstantCheckoutSession(
         console.warn("[InstantCheckout] Confirmation email failed:", e)
       );
     }
+  }
+
+  // Team alert: an instant booking sells a slot with nobody on the desk
+  // involved, and a conflict hold needs a human right now. Fires once — the
+  // other of webhook/verify sees "already_processed".
+  const created = await bookingService.getBookingById(newBooking.id);
+  if (created) {
+    await alertTeam({
+      subject: holdReason
+        ? `Instant booking needs attention — ${created.customerName}`
+        : `Instant booking — ${created.customerName}${created.boatName ? ` · ${created.boatName}` : ""}`,
+      heading: holdReason ? "Instant booking landed on a conflicting slot" : "New instant booking (paid)",
+      booking: created,
+      extraLines: [
+        {
+          label: "Paid",
+          value:
+            session.amount_total != null
+              ? formatCentsAsCurrency(session.amount_total, {
+                  currency: (session.currency ?? "usd").toUpperCase(),
+                })
+              : null,
+        },
+      ],
+      note: holdReason
+        ? `Slot conflict: ${holdReason}. The money is captured — refund, move, or rebook.`
+        : undefined,
+    });
   }
 
   return { status: "created", bookingId: newBooking.id };

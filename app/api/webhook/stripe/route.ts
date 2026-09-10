@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { db } from "@/database/db";
-import { bookings, boats, bookingStatusHistory, payments } from "@/database/schema";
+import { bookings, bookingStatusHistory, payments } from "@/database/schema";
 import { eq, and } from "drizzle-orm";
 import config from "@/shared/lib/config";
 import type { BookingStatus } from "@/database/types";
-import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
 import { getStripe, getInvoicePaymentIntentId } from "@/shared/lib/services/stripe.service";
 import { bookingService } from "@/features/bookings/services/booking.service";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
 import { paymentService } from "@/features/payments/payment.service";
 import { sendBookingConfirmationEmail } from "@/shared/lib/services/email.service";
+import { alertTeam } from "@/features/bookings/lib/team-alerts";
+import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { fulfillInstantCheckoutSession } from "@/features/bookings/services/instant-checkout-fulfillment.service";
 
 export const runtime = "nodejs";
@@ -131,7 +132,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
   if (metadata.bookingType === "INSTANT_BOOK") {
     await handleInstantBooking(session, existingPayments[0] ?? null);
   } else {
-    // Request bookings, draft pay-now, or payment link flows
+    // Proposal pay-now or payment-link flows
     await handleBookingPayment(session, existingPayments);
   }
 }
@@ -145,16 +146,13 @@ async function handleInstantBooking(
   existingPayment: Awaited<ReturnType<typeof paymentService.getPaymentByStripeCheckoutSessionId>>
 ) {
   try {
-    const metadata = session.metadata || {};
+    // Fulfillment creates the row, sends the customer confirmation, and
+    // alerts the team (once, from whichever of webhook/verify gets there first).
     const result = await fulfillInstantCheckoutSession(session, existingPayment);
 
     if (result.status === "skipped") {
       console.error(`[Webhook] Instant booking skipped: ${result.reason}`);
       return;
-    }
-
-    if (result.status === "created" || result.status === "already_processed") {
-      await sendGHLWebhookForInstantBooking(metadata, session.id);
     }
   } catch (error) {
     console.error("[Webhook] handleInstantBooking error:", error);
@@ -163,7 +161,7 @@ async function handleInstantBooking(
 }
 
 // ============================================================================
-// BOOKING PAYMENT (request bookings, draft pay-now, any checkout-based payment)
+// BOOKING PAYMENT (proposal pay-now, any checkout-based payment)
 // ============================================================================
 
 async function handleBookingPayment(
@@ -231,10 +229,10 @@ async function handleBookingPayment(
       }
     }
 
-    // Confirm the WHOLE party: the paid rows plus any group sibling (a boat
+    // Book the WHOLE party: the paid rows plus any group sibling (a boat
     // with no deposit configured has no payment row in deposit mode, but its
     // slot is just as sold).
-    const bookingIdsToConfirm = new Set<string>([
+    const bookingIdsToBook = new Set<string>([
       bookingId,
       ...existingPayments.map((p) => p.payableId),
     ]);
@@ -248,22 +246,40 @@ async function handleBookingPayment(
         .select({ id: bookings.id })
         .from(bookings)
         .where(eq(bookings.bookingGroupId, leadRow.bookingGroupId));
-      for (const s of siblings) bookingIdsToConfirm.add(s.id);
+      for (const s of siblings) bookingIdsToBook.add(s.id);
     }
-    for (const id of bookingIdsToConfirm) {
-      await ensureBookingConfirmed(id, "Payment received");
+    for (const id of bookingIdsToBook) {
+      await ensureBookingBooked(id, "Payment received");
     }
 
     console.log(
-      `[Webhook] ${bookingIdsToConfirm.size} booking(s) confirmed via checkout ${session.id}`
+      `[Webhook] ${bookingIdsToBook.size} booking(s) booked via checkout ${session.id}`
     );
 
-    // Send ONE confirmation email, for the lead booking
+    // Send ONE confirmation email, for the lead booking — and ONE team alert.
     const booking = await bookingService.getBookingById(bookingId);
     if (booking) {
       await sendBookingConfirmationEmail(booking).catch((e) =>
         console.warn("[Webhook] Confirmation email failed:", e)
       );
+      await alertTeam({
+        subject: `Payment received — ${booking.customerName}${booking.boatName ? ` · ${booking.boatName}` : ""}`,
+        heading: "Payment received (card)",
+        booking,
+        extraLines: [
+          {
+            label: "Amount",
+            value:
+              session.amount_total != null
+                ? formatCentsAsCurrency(session.amount_total, {
+                    currency: (session.currency ?? "usd").toUpperCase(),
+                  })
+                : null,
+          },
+          { label: "Type", value: metadata.paymentRecordType === "DEPOSIT" ? "Deposit" : "Full payment" },
+          { label: "Boats", value: bookingIdsToBook.size > 1 ? `${bookingIdsToBook.size} (charter party)` : null },
+        ],
+      });
     }
   } catch (error) {
     console.error("[Webhook] handleBookingPayment error:", error);
@@ -297,7 +313,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
     if (payment.payableType !== "BOOKING" || !payment.payableId) return;
 
-    // Get the booking and its group (draft booking flow can have multiple bookings)
+    // Get the booking and its group (a charter party has several bookings)
     const [firstBooking] = await db
       .select({
         id: bookings.id,
@@ -309,7 +325,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
     if (!firstBooking) return;
 
-    const bookingsToConfirm = firstBooking.bookingGroupId
+    const bookingsToBook = firstBooking.bookingGroupId
       ? await db
           .select({ id: bookings.id, bookingStatus: bookings.bookingStatus })
           .from(bookings)
@@ -319,16 +335,29 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
           .from(bookings)
           .where(eq(bookings.id, firstBooking.id));
 
-    for (const b of bookingsToConfirm) {
-      await ensureBookingConfirmed(b.id, "Payment received via invoice");
+    for (const b of bookingsToBook) {
+      await ensureBookingBooked(b.id, "Payment received via invoice");
       const full = await bookingService.getBookingById(b.id);
       if (full) {
         await sendBookingConfirmationEmail(full).catch(() => {});
+        await alertTeam({
+          subject: `Payment received — ${full.customerName}${full.boatName ? ` · ${full.boatName}` : ""}`,
+          heading: "Payment received (invoice)",
+          booking: full,
+          extraLines: [
+            {
+              label: "Amount",
+              value: formatCentsAsCurrency(invoice.amount_paid, {
+                currency: (invoice.currency ?? "usd").toUpperCase(),
+              }),
+            },
+          ],
+        });
       }
     }
 
     console.log(
-      `[Webhook] Invoice ${invoice.id} paid — ${bookingsToConfirm.length} booking(s) confirmed`
+      `[Webhook] Invoice ${invoice.id} paid — ${bookingsToBook.length} booking(s) booked`
     );
   } catch (error) {
     console.error("[Webhook] handleInvoicePaid error:", error);
@@ -452,73 +481,35 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
 // ============================================================================
 
 /**
- * Idempotently set a booking to CONFIRMED with status history + event log.
+ * Idempotently set a booking to BOOKED with status history + event log.
  */
-async function ensureBookingConfirmed(bookingId: string, reason: string) {
+async function ensureBookingBooked(bookingId: string, reason: string) {
   const [booking] = await db
     .select({ id: bookings.id, bookingStatus: bookings.bookingStatus })
     .from(bookings)
     .where(eq(bookings.id, bookingId))
     .limit(1);
 
-  if (!booking || booking.bookingStatus === "CONFIRMED") return;
+  if (!booking || booking.bookingStatus === "BOOKED") return;
 
   await db
     .update(bookings)
-    .set({ bookingStatus: "CONFIRMED", updatedAt: new Date() })
+    .set({ bookingStatus: "BOOKED", updatedAt: new Date() })
     .where(eq(bookings.id, bookingId));
 
   await db.insert(bookingStatusHistory).values({
     bookingId,
     fromStatus: booking.bookingStatus,
-    toStatus: "CONFIRMED",
+    toStatus: "BOOKED",
     reason,
   });
 
   await bookingEventsService.logStatusChange({
     bookingId,
     fromStatus: booking.bookingStatus as BookingStatus,
-    toStatus: "CONFIRMED",
+    toStatus: "BOOKED",
     actorType: "system",
     reason,
     channel: "stripe",
   });
-}
-
-async function sendGHLWebhookForInstantBooking(
-  metadata: Record<string, string>,
-  sessionId: string
-) {
-  try {
-    const [boat] = await db
-      .select({ id: boats.id, name: boats.name, mainImage: boats.mainImage })
-      .from(boats)
-      .where(eq(boats.id, metadata.boatId));
-
-    if (!boat) return;
-
-    ghlWebhookService
-      .sendInstantBooking({
-        name: metadata.customerName || "",
-        email: metadata.customerEmail || "",
-        phone: metadata.customerPhone || "",
-        boat_name: boat.name,
-        boat_id: boat.id,
-        start_date_time: metadata.startDateTime,
-        end_date_time: metadata.endDateTime,
-        hours: metadata.hours || "0",
-        number_of_passengers: metadata.numberOfPassengers,
-        needs_captain: metadata.needsCaptain === "true",
-        base_price: parseFloat(metadata.basePrice || "0"),
-        cleaning_fee: parseFloat(metadata.cleaningFee || "0"),
-        service_fee: parseFloat(metadata.serviceFee || "0"),
-        total_amount: parseFloat(metadata.totalAmount || "0"),
-        booking_id: sessionId,
-        source: "KOS Yacht Club - Instant Booking",
-        submitted_at: new Date().toISOString(),
-      })
-      .catch((e) => console.warn("[Webhook] GHL webhook failed:", e));
-  } catch (error) {
-    console.error("[Webhook] GHL webhook error:", error);
-  }
 }

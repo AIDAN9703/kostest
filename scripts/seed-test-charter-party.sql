@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────────────
--- DEV SEED: a 2-boat charter party (DRAFT, published, payable) for testing
+-- DEV SEED: a 2-boat charter party (PROPOSED, published, payable) for testing
 -- Phase 1 (group checkout/webhook/verify/refund) and Phase 2 (board chip +
 -- Charter party card). Safe to run repeatedly — each run creates a fresh
 -- party. Run: psql $DATABASE_URL -f scripts/seed-test-charter-party.sql
@@ -20,7 +20,7 @@ lead_booking AS (
     allow_payment, payment_type, terms_accepted
   )
   SELECT
-    'EXTERNAL_BOOKING', 'DRAFT', 'ADMIN', grp.id,
+    'EXTERNAL_BOOKING', 'PROPOSED', 'ADMIN', grp.id,
     '8e60d7cf-a5c5-499e-9ed4-8fa1f3431a8a', -- 52ft Prestige (2017)
     'Party Tester', 'aidanalexander97@gmail.com', '7246889698',
     8, '2026-10-15 20:00:00+00', '2026-10-16 00:00:00+00', false,
@@ -38,7 +38,7 @@ second_booking AS (
     allow_payment, payment_type, terms_accepted
   )
   SELECT
-    'EXTERNAL_BOOKING', 'DRAFT', 'ADMIN', grp.id,
+    'EXTERNAL_BOOKING', 'PROPOSED', 'ADMIN', grp.id,
     'b74488b2-7e7e-4b5b-bd2c-600088c6e70d', -- 62ft Beneteau
     'Party Tester', 'aidanalexander97@gmail.com', '7246889698',
     8, '2026-10-15 20:00:00+00', '2026-10-16 00:00:00+00', false,
@@ -64,7 +64,7 @@ second_pricing AS (
   RETURNING booking_id
 )
 SELECT
-  'http://localhost:3000/bookings/draft/' || lead_booking.public_token AS proposal_url,
+  'http://localhost:3000/bookings/proposal/' || lead_booking.public_token AS proposal_url,
   lead_booking.id AS lead_booking_id,
   (SELECT id FROM second_booking) AS second_booking_id
 FROM lead_booking, lead_pricing, second_pricing;

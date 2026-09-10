@@ -18,7 +18,8 @@ function isPublicGuestBookingPath(pathname: string): boolean {
   // /bookings/:boatId/inquiry — non-instant boats redirect guests HERE from
   // /details; without this the whole public boat-lead funnel dead-ends at sign-in.
   if (/^\/bookings\/[^/]+\/inquiry$/.test(pathname)) return true;
-  // Public draft acceptance links
+  // Public proposal links (and the pre-2026-09 /draft/ address, which redirects)
+  if (pathname.startsWith("/bookings/proposal/")) return true;
   if (pathname.startsWith("/bookings/draft/")) return true;
   // Stripe return URL
   if (pathname.startsWith("/bookings/payment-success")) return true;

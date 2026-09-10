@@ -23,7 +23,7 @@ import type { AdminOption } from "@/shared/lib/utils/people-display";
  * so no account picker), hosted in a dialog so the admin never leaves the
  * deal. Hosts the same BookingComposer as every other creation door — add a
  * second boat to propose a charter party. On success the deal row itself
- * upgrades to a priced DRAFT, so we just close and refresh this page.
+ * upgrades to PROPOSED, so we just close and refresh this page.
  */
 export function CreateProposalModal({
   pricingTiers,

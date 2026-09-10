@@ -15,7 +15,8 @@ import { eq, and, ne, lt, gt, inArray } from "drizzle-orm";
  */
 
 /** Booking statuses that hold the calendar. Must match migration 0056. */
-const CALENDAR_BLOCKING_STATUSES = ["APPROVED", "CONFIRMED"] as const;
+// BOOKED is the one status that holds a slot; proposals never block.
+const CALENDAR_BLOCKING_STATUSES = ["BOOKED"] as const;
 
 export interface AvailabilityConflict {
   type: "booking" | "blocking" | "external" | "validation";

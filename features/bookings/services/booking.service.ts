@@ -64,6 +64,7 @@ import {
 } from "@/features/bookings/booking.types";
 import { type Booking, type BookingSource, type BookingType } from "@/database/types";
 import {
+  calculateBookingPriceCents,
   calculateBookingPriceFromDollars,
 } from "@/shared/lib/utils/pricing-utils";
 import { dollarsToCents } from "@/shared/lib/utils/money-utils";
@@ -92,13 +93,41 @@ import {
  * deal-presentation.tsx; requires booking_pricing to be joined.
  */
 function pricedPastInquirySql() {
-  return sql`(${bookings.bookingStatus} IN ('PENDING', 'DRAFT', 'APPROVED', 'CONFIRMED', 'COMPLETED')
+  return sql`(${bookings.bookingStatus} IN ('PROPOSED', 'BOOKED', 'COMPLETED')
     OR (${bookings.bookingStatus} = 'CANCELLED' AND COALESCE(${bookingPricing.totalAmountCents}, 0) > 0))`;
 }
 
 // ============================================================================
 // BOOKING SERVICE CLASS
 // ============================================================================
+
+/**
+ * Availability gate with a message an admin can act on: WHICH boat and WHY,
+ * not just "slot unavailable". Wraps assertSlotAvailable (bookings that block
+ * the calendar, owner blocks, external calendar events).
+ */
+async function assertBoatWindowFree(
+  boatId: string,
+  boatName: string,
+  start: Date,
+  end: Date,
+  excludeBookingId?: string
+): Promise<void> {
+  try {
+    await availabilityService.assertSlotAvailable(boatId, start, end, excludeBookingId);
+  } catch (error) {
+    if (error instanceof SlotUnavailableError) {
+      const why = error.conflicts
+        .map((c) => c.reason)
+        .filter(Boolean)
+        .join("; ");
+      throw new Error(
+        `${boatName} isn't available for that window${why ? ` (${why})` : ""}. Pick another time or boat.`
+      );
+    }
+    throw error;
+  }
+}
 
 export class BookingService {
   // ==========================================================================
@@ -116,6 +145,35 @@ export class BookingService {
     const boatIds = [...new Set(input.bookings.map((b) => b.boatId))];
     const tierIds = input.bookings.map((b) => b.pricingTierId).filter((id): id is string => !!id);
     const { boatsById, tiersById } = await fetchBoatsAndTiersBulk(boatIds, tierIds);
+
+    // Resolve every boat's window and refuse the WHOLE create if any slot is
+    // already sold (BOOKED, owner blocks, external calendars). A
+    // proposal doesn't block the calendar itself, so this is the only gate
+    // between "admin proposes a sold slot" and "customer finds out at Accept".
+    // Runs before any write: a mid-party failure would otherwise leave the
+    // earlier boats (and the group) created.
+    const windows: { startDateTime: Date; endDateTime: Date }[] = [];
+    for (const b of input.bookings) {
+      const boat = boatsById.get(b.boatId);
+      const tier = b.pricingTierId ? tiersById.get(b.pricingTierId) : null;
+      if (!boat) throw new Error(`Boat not found: ${b.boatId}`);
+      if (b.pricingTierId && !tier) throw new Error(`Pricing tier not found: ${b.pricingTierId}`);
+      const startDateTime = new Date(b.startDateTime);
+      const endDateTime = b.endDateTime
+        ? new Date(b.endDateTime)
+        : tier
+          ? calculateEndDateTime(startDateTime, tier.hours)
+          : null;
+      if (!endDateTime) throw new Error("End date & time is required for custom pricing");
+      await assertBoatWindowFree(
+        boat.id,
+        boat.name,
+        startDateTime,
+        endDateTime,
+        input.dealId ?? undefined
+      );
+      windows.push({ startDateTime, endDateTime });
+    }
 
     let groupId: string | null = null;
     if (input.bookings.length > 1 || input.groupName) {
@@ -143,13 +201,7 @@ export class BookingService {
       if (basePrice == null || basePrice < 0)
         throw new Error("Base price is required and must be positive");
 
-      const startDateTime = new Date(b.startDateTime);
-      const endDateTime = b.endDateTime
-        ? new Date(b.endDateTime)
-        : tier
-          ? calculateEndDateTime(startDateTime, tier.hours)
-          : null;
-      if (!endDateTime) throw new Error("End date & time is required for custom pricing");
+      const { startDateTime, endDateTime } = windows[i];
 
       const addOnsForThisBooking = b.addOns ?? [];
       const addOnsTotalDollars = addOnsForThisBooking.reduce(
@@ -177,7 +229,7 @@ export class BookingService {
       const publishNow = input.publishNow ?? false;
 
       // One-table flow: pricing an INQUIRY deal UPGRADES that same row to a
-      // DRAFT proposal — its id, entry type/source, and history stay intact.
+      // PROPOSED — its id, entry type/source, and history stay intact.
       // Extra group sections (and creates without a deal) insert new rows.
       const upgradeDealId = i === 0 ? (input.dealId ?? null) : null;
 
@@ -230,7 +282,7 @@ export class BookingService {
         }
         await bookingStatusService.transitionStatus({
           bookingId: upgraded.id,
-          newStatus: "DRAFT",
+          newStatus: "PROPOSED",
           changedByUserId: assignedAdminId ?? null,
           reason: "Priced into a proposal",
         });
@@ -243,7 +295,7 @@ export class BookingService {
             // Party siblings inherit the lead's type; scratch creates stay
             // EXTERNAL_BOOKING.
             bookingType: leadBookingType ?? "EXTERNAL_BOOKING",
-            bookingStatus: "DRAFT",
+            bookingStatus: "PROPOSED",
             source: "ADMIN" as BookingSource,
             needsCaptain: boat.crewRequired,
             ...dealFields,
@@ -251,7 +303,7 @@ export class BookingService {
           .returning({ id: bookings.id });
         await bookingStatusService.createInitialHistory(
           created.id,
-          "DRAFT",
+          "PROPOSED",
           assignedAdminId,
           "Booking created"
         );
@@ -270,9 +322,9 @@ export class BookingService {
     }
 
     // Only log "published" when the proposal actually went out — saving a
-    // draft without sending must not fabricate a timeline entry.
+    // proposal without sending must not fabricate a timeline entry.
     if (publicToken && bookingIds.length > 0 && (input.publishNow ?? false)) {
-      await bookingEventsService.logDraftPublished({
+      await bookingEventsService.logProposalPublished({
         bookingId: bookingIds[0],
         actorId: assignedAdminId ?? null,
         publicToken,
@@ -289,19 +341,19 @@ export class BookingService {
   }
 
   /**
-   * Get draft bookings with boat and pricing for public display
+   * The proposal (one booking or a whole party) with boats and pricing, for the public page
    */
-  async getDraftBookingsForPublicDisplay(token: string) {
-    const rawDrafts = await this.getDraftBookingsByPublicToken(token);
+  async getProposalForPublicDisplay(token: string) {
+    const rawRows = await this.getProposalBookingsByPublicToken(token);
     // A proposal is only presentable once it's priced against a real boat and
     // trip window — INQUIRY-phase rows can never leak to the public page.
-    const draftBookings = (rawDrafts ?? []).filter(
+    const proposalBookings = (rawRows ?? []).filter(
       (b): b is typeof b & { boatId: string; startDateTime: Date } =>
         b.boatId != null && b.startDateTime != null
     );
-    if (draftBookings.length === 0) return null;
+    if (proposalBookings.length === 0) return null;
 
-    const boatIds = [...new Set(draftBookings.map((b) => b.boatId))];
+    const boatIds = [...new Set(proposalBookings.map((b) => b.boatId))];
     const [boatsRows, pricingRows] = await Promise.all([
       db
         .select({
@@ -318,16 +370,16 @@ export class BookingService {
         .where(
           inArray(
             bookingPricing.bookingId,
-            draftBookings.map((b) => b.id)
+            proposalBookings.map((b) => b.id)
           )
         ),
     ]);
     const boatsById = new Map(boatsRows.map((b) => [b.id, b]));
     const pricingByBooking = new Map(pricingRows.map((p) => [p.bookingId, p]));
 
-    const first = draftBookings[0];
+    const first = proposalBookings[0];
     // Fee-aware: a waived card fee drops out of what the customer owes.
-    const totalCents = draftBookings.reduce((sum, b) => {
+    const totalCents = proposalBookings.reduce((sum, b) => {
       const pr = pricingByBooking.get(b.id);
       return pr ? sum + effectiveTotalCents({
         totalAmountCents: Number(pr.totalAmountCents),
@@ -348,7 +400,7 @@ export class BookingService {
           eq(payments.payableType, "BOOKING"),
           inArray(
             payments.payableId,
-            draftBookings.map((b) => b.id)
+            proposalBookings.map((b) => b.id)
           ),
           eq(payments.status, "SUCCEEDED"),
           ne(payments.paymentType, "REFUND")
@@ -360,7 +412,7 @@ export class BookingService {
       customerName: first.customerName,
       customerEmail: first.customerEmail,
       // Freshness stamp for the public page — latest edit across the party.
-      updatedAt: draftBookings.reduce<Date | null>(
+      updatedAt: proposalBookings.reduce<Date | null>(
         (latest, b) =>
           b.updatedAt && (!latest || b.updatedAt > latest) ? b.updatedAt : latest,
         null
@@ -379,14 +431,14 @@ export class BookingService {
       // Deposit to secure the date = SUM of per-boat deposits across the
       // party (checkout charges the same sum in deposit mode).
       depositAmountCents: (() => {
-        const sum = draftBookings.reduce(
+        const sum = proposalBookings.reduce(
           (acc, b) => acc + Number(pricingByBooking.get(b.id)?.depositAmountCents ?? 0),
           0
         );
         return sum > 0 ? sum : null;
       })(),
       totalAmountCents: totalCents,
-      bookings: draftBookings.map((b) => {
+      bookings: proposalBookings.map((b) => {
         const boat = boatsById.get(b.boatId);
         const pricing = pricingByBooking.get(b.id);
         const addOns = (b.addOns ?? null) as Array<{
@@ -475,10 +527,10 @@ export class BookingService {
   }
 
   /**
-   * Get draft bookings by public token (for customer view/accept page)
-   * Returns all draft bookings - single or group (via first booking's group)
+   * The rows behind a proposal link — single booking or the whole party.
+   * Null when the link isn't live (settled deal, or never published).
    */
-  async getDraftBookingsByPublicToken(token: string) {
+  async getProposalBookingsByPublicToken(token: string) {
     const [first] = await db
       .select()
       .from(bookings)
@@ -486,10 +538,10 @@ export class BookingService {
       .limit(1);
 
     if (!first) return null;
-    // DRAFT = open proposal, APPROVED = accepted, CONFIRMED = paid — the link
+    // PROPOSED = open proposal, BOOKED = accepted (paid or not) — the link
     // stays a living booking page through the whole journey.
-    if (!["DRAFT", "APPROVED", "CONFIRMED"].includes(first.bookingStatus)) return null;
-    // Unsent proposals are private: the token only works once the draft has
+    if (!["PROPOSED", "BOOKED"].includes(first.bookingStatus)) return null;
+    // Unsent proposals are private: the token only works once the proposal has
     // actually been published (emailed/SMS'd or link explicitly shared).
     if (!first.publishedAt) return null;
 
@@ -506,28 +558,29 @@ export class BookingService {
   }
 
   /**
-   * Accept draft booking(s) - customer confirms, status moves to APPROVED
+   * Customer accepts the proposal — every open row in it becomes BOOKED
    */
-  async acceptDraftBookings(input: {
+  async acceptProposal(input: {
     publicToken: string;
     customerNote?: string | null;
     payNow?: boolean;
     chargeType?: "deposit" | "full";
-  }): Promise<{ bookingIds: string[]; checkoutUrl?: string | null }> {
-    const draftBookings = await this.getDraftBookingsByPublicToken(input.publicToken);
-    if (!draftBookings || draftBookings.length === 0) {
-      throw new Error("Draft booking not found or already accepted");
+  }): Promise<{ bookingIds: string[]; checkoutUrl?: string | null; accepted: number }> {
+    const proposalBookings = await this.getProposalBookingsByPublicToken(input.publicToken);
+    if (!proposalBookings || proposalBookings.length === 0) {
+      throw new Error("Proposal not found or no longer open");
     }
 
     const now = new Date();
     const bookingIds: string[] = [];
+    let accepted = 0;
 
-    for (const b of draftBookings) {
+    for (const b of proposalBookings) {
       // Idempotent: a retried submit or a mixed-status group must not blow
-      // up — rows already past DRAFT are kept as-is.
-      if (b.bookingStatus === "DRAFT") {
+      // up — rows already past PROPOSED are kept as-is.
+      if (b.bookingStatus === "PROPOSED") {
         // The proposal may have been out for days — re-check the slot at the
-        // moment of acceptance, since APPROVED starts blocking the calendar.
+        // moment of acceptance, since BOOKED starts blocking the calendar.
         if (b.boatId && b.startDateTime && b.endDateTime) {
           await availabilityService.assertSlotAvailable(
             b.boatId,
@@ -537,23 +590,27 @@ export class BookingService {
           );
         }
         try {
-          await bookingStatusService.acceptDraft(b.id, {
+          await bookingStatusService.markBooked(b.id, {
             acceptedAt: now,
             acceptedCustomerNote: input.customerNote ?? null,
+            reason: "Customer accepted the proposal",
+            actorType: "user",
+            channel: "web",
           });
         } catch (error) {
-          // Race loser: the overlap constraint rejected the APPROVED flip.
+          // Race loser: the overlap constraint rejected the BOOKED flip.
           if (isOverlapConstraintError(error)) {
             throw new SlotUnavailableError([]);
           }
           throw error;
         }
+        accepted += 1;
       }
       bookingIds.push(b.id);
     }
 
     let checkoutUrl: string | null = null;
-    if (input.payNow && draftBookings[0].allowPayment && bookingIds.length > 0) {
+    if (input.payNow && proposalBookings[0].allowPayment && bookingIds.length > 0) {
       try {
         const { createCheckoutSessionForBooking } = await import(
           "@/features/bookings/actions/stripe-checkout"
@@ -562,24 +619,27 @@ export class BookingService {
           chargeType: input.chargeType,
         });
       } catch (err) {
-        console.error("Failed to create checkout session for draft:", err);
+        console.error("Failed to create checkout session for proposal:", err);
       }
     }
 
-    return { bookingIds, checkoutUrl };
+    return { bookingIds, checkoutUrl, accepted };
   }
 
   /**
    * Customer asked for changes from the public proposal page — lands on the
    * deal timeline (loud amber marker) so the admin sees it and edits the trip.
    */
-  async requestProposalChanges(publicToken: string, message: string): Promise<void> {
-    const draftBookings = await this.getDraftBookingsByPublicToken(publicToken);
-    if (!draftBookings || draftBookings.length === 0) {
+  async requestProposalChanges(
+    publicToken: string,
+    message: string
+  ): Promise<{ bookingId: string; customerName: string }> {
+    const proposalBookings = await this.getProposalBookingsByPublicToken(publicToken);
+    if (!proposalBookings || proposalBookings.length === 0) {
       throw new Error("Proposal not found");
     }
 
-    for (const b of draftBookings) {
+    for (const b of proposalBookings) {
       await bookingEventsService.logEvent({
         bookingId: b.id,
         eventType: BOOKING_EVENT_TYPES.CHANGE_REQUESTED,
@@ -589,6 +649,7 @@ export class BookingService {
         content: message,
       });
     }
+    return { bookingId: proposalBookings[0].id, customerName: proposalBookings[0].customerName };
   }
 
 
@@ -622,7 +683,7 @@ export class BookingService {
     };
     /**
      * The paid-but-conflicting escape hatch: the customer's money is already
-     * captured but the slot is taken, so the booking lands as PENDING (which
+     * captured but the slot is taken, so the booking lands as PROPOSED (which
      * does NOT block the calendar and cannot violate the overlap constraint)
      * flagged for manual resolution — refund, move, or rebook.
      */
@@ -665,7 +726,7 @@ export class BookingService {
       .insert(bookings)
       .values({
         bookingType: "INSTANT_BOOK",
-        bookingStatus: input.holdForReview ? "PENDING" : "CONFIRMED",
+        bookingStatus: input.holdForReview ? "PROPOSED" : "BOOKED",
         adminNotes: input.holdForReview
           ? `⚠ OVERLAP — paid instant booking held for manual resolution: ${input.holdForReview.reason}`
           : null,
@@ -705,7 +766,7 @@ export class BookingService {
     // Create status history
     await bookingStatusService.createInitialHistory(
       newBooking.id,
-      input.holdForReview ? "PENDING" : "CONFIRMED",
+      input.holdForReview ? "PROPOSED" : "BOOKED",
       input.userId,
       input.holdForReview
         ? "Instant booking — PAID but slot conflict, held for manual resolution"
@@ -972,7 +1033,6 @@ export class BookingService {
       opsBalanceOwnerCents: bookingOps.balanceOwnerCents,
       opsBalanceClientCents: bookingOps.balanceClientCents,
       opsCrewName: bookingOps.crewName,
-      opsContractSigned: bookingOps.contractSigned,
       opsConnected: bookingOps.connected,
       opsClientPaid: bookingOps.clientPaid,
       opsCaptainPaid: bookingOps.captainPaid,
@@ -1548,7 +1608,7 @@ export class BookingService {
    * "Actually, we want a second boat" — grow an existing booking into a
    * charter party (or grow the party). Creates the group on first use, then
    * inserts a sibling row: same customer snapshot, same trip window by
-   * default, its own boat/tier/pricing. The sibling enters as DRAFT, so the
+   * default, its own boat/tier/pricing. The sibling enters as PROPOSED, so the
    * calendar isn't blocked until the customer re-accepts — the lead's one
    * proposal link now shows every boat, and the admin resends it.
    */
@@ -1559,7 +1619,7 @@ export class BookingService {
   ): Promise<{ siblingId: string; groupId: string }> {
     const lead = await this.getBookingById(bookingId);
     if (!lead) throw new Error(`Booking not found: ${bookingId}`);
-    if (!["DRAFT", "APPROVED", "CONFIRMED"].includes(lead.bookingStatus)) {
+    if (!["PROPOSED", "BOOKED"].includes(lead.bookingStatus)) {
       throw new Error("Only a priced booking can grow into a charter party");
     }
     if (!lead.startDateTime) throw new Error("Set the trip dates before adding a boat");
@@ -1596,11 +1656,14 @@ export class BookingService {
       ? new Date(lead.endDateTime)
       : calculateEndDateTime(startDateTime, tier.hours);
 
+    // Same gate as the composer: never grow a party onto a sold slot.
+    await assertBoatWindowFree(boat.id, boat.name, startDateTime, endDateTime);
+
     const [sibling] = await db
       .insert(bookings)
       .values({
         bookingType: lead.bookingType as BookingType,
-        bookingStatus: "DRAFT",
+        bookingStatus: "PROPOSED",
         source: "ADMIN" as BookingSource,
         userId: lead.userId ?? null,
         boatOwnerId: boat.ownerId,
@@ -1625,7 +1688,7 @@ export class BookingService {
 
     await bookingStatusService.createInitialHistory(
       sibling.id,
-      "DRAFT",
+      "PROPOSED",
       adminId,
       "Boat added to charter party"
     );
@@ -1705,11 +1768,17 @@ export class BookingService {
     const captainFeeDollars = (before.captainFeeCents ?? 0) / 100;
     const cleaningFeeDollars = boat.cleaningFee ?? 0;
 
+    // Add-ons ride along on a swap: their JSON lines stay on the booking, so
+    // the new total must keep counting them (it used to silently drop them).
+    const addOnsCents = dollarsToCents(
+      (before.addOns ?? []).reduce((sum, a) => sum + (Number(a.total) || 0), 0)
+    );
     const { serviceFeeRate } = await getAppSettings();
-    const breakdown = calculateBookingPriceFromDollars(
-      basePriceDollars,
-      cleaningFeeDollars,
-      captainFeeDollars,
+    const breakdown = calculateBookingPriceCents(
+      dollarsToCents(basePriceDollars),
+      dollarsToCents(cleaningFeeDollars),
+      dollarsToCents(captainFeeDollars),
+      addOnsCents,
       serviceFeeRate
     );
 
@@ -1760,12 +1829,12 @@ export class BookingService {
       const rowPatch = bookingRowPatchFromSingleFieldUpdate(update);
 
       // The trip window arrives as an atomic pair (end-after-start already
-      // validated in the patch builder). APPROVED/CONFIRMED hold the
+      // validated in the patch builder). BOOKED holds the
       // calendar, so recheck the new window — friendly refusal instead of a
       // constraint blast.
       if (
         update.field === "tripWindow" &&
-        (current.bookingStatus === "APPROVED" || current.bookingStatus === "CONFIRMED") &&
+        current.bookingStatus === "BOOKED" &&
         current.boatId &&
         rowPatch.startDateTime &&
         rowPatch.endDateTime

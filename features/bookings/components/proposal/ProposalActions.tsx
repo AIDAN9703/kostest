@@ -14,11 +14,11 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { Label } from "@/shared/components/ui/label";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import {
-  acceptDraftBookingAction,
-  requestDraftChangesAction,
-} from "@/features/bookings/actions/draft-booking-actions";
+  acceptProposalAction,
+  requestProposalChangesAction,
+} from "@/features/bookings/actions/proposal.actions";
 
-interface DraftProposalActionsProps {
+interface ProposalActionsProps {
   publicToken: string;
   allowPayment: boolean;
   /** Card fee waived — balance is being settled off-card, so no card button. */
@@ -43,7 +43,7 @@ interface DraftProposalActionsProps {
  * One payment button, honoring the admin's deposit-vs-full choice. Change
  * requests send immediately and land on the admin's activity timeline.
  */
-export function DraftProposalActions({
+export function ProposalActions({
   publicToken,
   allowPayment,
   serviceFeeWaived,
@@ -52,7 +52,7 @@ export function DraftProposalActions({
   totalPaidCents,
   depositAmountCents,
   totalAmountCents,
-}: DraftProposalActionsProps) {
+}: ProposalActionsProps) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [requestModalOpen, setRequestModalOpen] = useState(false);
@@ -76,7 +76,7 @@ export function DraftProposalActions({
       formData.set("payNow", "true");
       formData.set("chargeType", chargeType);
 
-      const result = await acceptDraftBookingAction({ success: false }, formData);
+      const result = await acceptProposalAction({ success: false }, formData);
       if (result.success && result.data?.checkoutUrl) {
         window.location.href = result.data.checkoutUrl;
       } else if (result.error) {
@@ -94,7 +94,7 @@ export function DraftProposalActions({
       formData.set("publicToken", publicToken);
       formData.set("payNow", "false");
 
-      const result = await acceptDraftBookingAction({ success: false }, formData);
+      const result = await acceptProposalAction({ success: false }, formData);
       if (result.success) {
         window.location.reload();
       } else if (result.error) {
@@ -109,7 +109,7 @@ export function DraftProposalActions({
       formData.set("publicToken", publicToken);
       formData.set("message", requestNote);
 
-      const result = await requestDraftChangesAction({ success: false }, formData);
+      const result = await requestProposalChangesAction({ success: false }, formData);
       if (result.success) {
         setRequestSent(true);
         setRequestNote("");

@@ -32,7 +32,7 @@ interface TierOption {
 /**
  * "Add another boat" — grows a booking into a charter party (or grows the
  * party). Pick a boat, pick its pricing option; the new boat copies the
- * trip window and customer, joins as Draft under the same proposal link.
+ * trip window and customer, joins as Proposed under the same proposal link.
  */
 export function AddBoatToPartyDialog({
   bookingId,
@@ -86,7 +86,7 @@ export function AddBoatToPartyDialog({
       if (result.success) {
         toast({
           title: "Boat added",
-          description: "It joined the party as a draft — resend the proposal so the customer sees it.",
+          description: "It joined the party — resend the proposal so the customer sees it.",
         });
         onOpenChange(false);
         setBoatId("");
@@ -105,7 +105,7 @@ export function AddBoatToPartyDialog({
         <DialogHeader>
           <DialogTitle>Add another boat</DialogTitle>
           <DialogDescription>
-            Same trip, same customer — the new boat joins this charter party as a draft under the
+            Same trip, same customer — the new boat joins this charter party as a proposal under the
             same proposal link.
           </DialogDescription>
         </DialogHeader>

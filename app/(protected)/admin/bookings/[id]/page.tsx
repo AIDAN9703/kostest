@@ -1,21 +1,13 @@
 import { notFound } from "next/navigation";
 
-import Link from "next/link";
-import { format, formatDistanceToNowStrict } from "date-fns";
-import { Ship } from "lucide-react";
+import { formatDistanceToNowStrict } from "date-fns";
 import { auth } from "@/auth";
 import { DealHeaderCard } from "@/features/bookings/components/admin/view-booking/DealHeaderCard";
 import { DealRequestCard } from "@/features/bookings/components/admin/view-booking/DealRequestCard";
-import {
-  computeDealStatusForBooking,
-  DEAL_SOURCE_LABELS,
-} from "@/features/bookings/deal-status";
 import { getDisplayKind } from "@/features/bookings/deal-presentation";
 import { adminInitials } from "@/shared/lib/utils/people-display";
+import { cn } from "@/shared/lib/utils/general-utils";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
-import { parseDateTimeInBoatTimezone } from "@/shared/lib/utils/date-helpers";
-import type { BookingDetails } from "@/features/bookings/booking.types";
-import { DealPipelineBar } from "@/features/bookings/components/admin/DealPipelineBar";
 import {
   BookingTripCard,
   type BookingTripDetailsSnapshot,
@@ -25,7 +17,9 @@ import {
   ProposalResendButton,
   BookingPageEditButton,
 } from "@/features/bookings/components/admin/view-booking/BookingEditMode";
-import { DealEconomicsCard } from "@/features/bookings/components/admin/view-booking/DealEconomicsCard";
+import { CommissionCard } from "@/features/bookings/components/admin/view-booking/CommissionCard";
+import { DealContactBand } from "@/features/bookings/components/admin/view-booking/DealContactBand";
+import { FinancesCard } from "@/features/bookings/components/admin/view-booking/FinancesCard";
 import { customerMoney, dealEconomics } from "@/features/bookings/lib/booking-money";
 import { DealActionsMenu } from "@/features/bookings/components/admin/view-booking/DealActionsMenu";
 import { CreateProposalModal } from "@/features/bookings/components/admin/view-booking/CreateProposalModal";
@@ -55,6 +49,13 @@ interface BookingDetailsPageProps {
   params: Promise<{ id: string }>;
 }
 
+/**
+ * ONE page for every deal. The same cards in the same places at every stage;
+ * a card appears when it has something to show. Inquiry: header, what they
+ * asked for, finances (estimate), activity. Booking: header, the trip (with
+ * crew), commission, party (if any), finances (full), activity. Nothing is
+ * shown twice.
+ */
 export default async function BookingDetailsPage({ params }: BookingDetailsPageProps) {
   const { id } = await params;
   const booking = await bookingService.getBookingById(id);
@@ -105,9 +106,9 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
       : [];
 
   // Proposal freshness: when did the customer last get the link, and how
-  // many admin edits have landed since? Drives the ProposalCard nudge.
+  // many admin edits have landed since? Drives the resend dialog's nudge.
   const SEND_EVENT_TYPES = new Set<string>([
-    BOOKING_EVENT_TYPES.DRAFT_PUBLISHED,
+    BOOKING_EVENT_TYPES.PROPOSAL_PUBLISHED,
     BOOKING_EVENT_TYPES.PROPOSAL_UPDATE_SENT,
   ]);
   // rawEvents are newest-first.
@@ -202,8 +203,17 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
   // customer-facing money links.
   const isSettled =
     booking.bookingStatus === "COMPLETED" || booking.bookingStatus === "CANCELLED";
+  const isPriced = booking.totalAmountCents > 0;
+  const ownerName = booking.assignedAdminId
+    ? [booking.assignedAdminFirstName, booking.assignedAdminLastName]
+        .filter(Boolean)
+        .join(" ")
+        .trim() ||
+      booking.assignedAdminEmail ||
+      "Admin"
+    : null;
 
-  // ONE place for the money math — both cards read from these.
+  // ONE place for the money math — header, finances, and dialog read these.
   const money = customerMoney({
     totalAmountCents: booking.totalAmountCents,
     serviceFeeCents: booking.serviceFeeCents,
@@ -222,232 +232,206 @@ export default async function BookingDetailsPage({ params }: BookingDetailsPageP
     commissionAgentCents: ops?.commissionAgentCents ?? null,
     commissionKosCents: ops?.commissionKosCents ?? null,
   });
+  const currency = booking.currency ?? "USD";
+  const fmt = (c: number) => formatCentsAsCurrency(c, { currency });
+
+  // The customer's exact line items — shared by Finances and the resend dialog.
+  const lines = {
+    boatName: booking.boatName,
+    basePriceCents: booking.basePriceCents ?? 0,
+    captainFeeCents: booking.captainFeeCents ?? 0,
+    cleaningFeeCents: booking.cleaningFeeCents ?? 0,
+    addOns: booking.addOns ?? [],
+  };
 
   // One customer link per deal; resendable while it exists and money/decision
   // is still outstanding. Stage names what the link IS to the customer now.
   const proposalResend =
-    booking.publicToken && !isSettled && (booking.bookingStatus === "DRAFT" || money.balanceCents > 0)
+    booking.publicToken &&
+    !isSettled &&
+    (booking.bookingStatus === "PROPOSED" || money.balanceCents > 0)
       ? {
           bookingId: id,
           publicToken: booking.publicToken,
-          stage: (booking.bookingStatus === "DRAFT" ? "proposal" : "payment") as "proposal" | "payment",
+          stage: (booking.bookingStatus === "PROPOSED" ? "proposal" : "payment") as
+            | "proposal"
+            | "payment",
           customerEmail: booking.customerEmail,
           customerPhone: booking.customerPhone,
           editsSinceSend: changesSinceLastSend,
           allowPayment: booking.allowPayment,
-          currency: booking.currency ?? "USD",
+          currency,
           money,
-          lines: {
-            boatName: booking.boatName,
-            basePriceCents: booking.basePriceCents ?? 0,
-            captainFeeCents: booking.captainFeeCents ?? 0,
-            cleaningFeeCents: booking.cleaningFeeCents ?? 0,
-            addOns: booking.addOns ?? [],
-          },
+          lines,
         }
       : null;
-  const dealStatus = computeDealStatusForBooking({
-    bookingStatus: booking.bookingStatus,
-    paymentDisplayStatus: booking.paymentDisplayStatus,
-    hasRefund: booking.hasRefund,
-    archivedAt: booking.archivedAt,
-  });
+
   const adminOptions = admins.map((a) => ({
     id: a.id,
     name:
       [a.firstName, a.lastName].filter(Boolean).join(" ").trim() || a.email || "Unknown admin",
   }));
 
+  // Headline money: the one number for this stage. Inquiry = what it might be
+  // worth; proposal = what we asked for; booked = what's still owed (or Paid).
+  const headline = isInquiry
+    ? booking.estimatedValueCents != null
+      ? { label: "Est. value", text: fmt(booking.estimatedValueCents) }
+      : booking.budgetCents != null
+        ? { label: "Budget", text: fmt(booking.budgetCents) }
+        : null
+    : !isPriced
+      ? null
+      : booking.bookingStatus === "PROPOSED"
+        ? { label: "Total", text: fmt(money.totalCents) }
+        : money.balanceCents > 0
+          ? { label: "Balance due", text: fmt(money.balanceCents) }
+          : { label: "Paid", text: fmt(money.paidCents) };
+
+  const kind = getDisplayKind(booking);
+  const KindIcon = kind.Icon;
+
+  // Stripe deep links follow the key in use, so test payments open in test mode.
+  const stripeDashboardBase = process.env.STRIPE_SECRET_KEY?.startsWith("sk_live")
+    ? "https://dashboard.stripe.com"
+    : "https://dashboard.stripe.com/test";
+
   return (
     <BookingEditModeProvider proposal={proposalResend}>
-    <div className="flex w-full flex-1 flex-col">
-      {/* Content left (header + cards share one width), activity rail running
-          the FULL right side of the page. */}
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
-        <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
-          {/* Identity header — one face for every deal status */}
-          <DealHeaderCard
-        eyebrow={`Booking #${booking.id.slice(0, 6).toUpperCase()}`}
-        name={booking.customerName || "Unnamed customer"}
-        avatarInitials={adminInitials(booking.customerName ?? "") || "?"}
-        avatarClassName="bg-primary-soft text-primary-strong"
-        typeChip={
-          <span className="inline-block rounded-full bg-muted px-2.5 py-1 text-[10px] font-semibold text-muted-foreground">
-            {getDisplayKind(booking).label}
-          </span>
-        }
-        meta={
-          isInquiry ? (
-            <>
-              {DEAL_SOURCE_LABELS[booking.source ?? ""] ?? booking.source}
-              {" · received "}
-              <span className="tabular-nums">
-                {formatDistanceToNowStrict(new Date(booking.createdAt))} ago
-              </span>
-            </>
-          ) : (
-            <BookingHeaderMeta booking={booking} />
-          )
-        }
-        value={
-          booking.totalAmountCents > 0
-            ? {
-                label: "Total",
-                text: formatCentsAsCurrency(booking.totalAmountCents, {
-                  currency: booking.currency ?? "USD",
-                }),
+      <div className="flex w-full flex-1 flex-col">
+        {/* Left: who + the trip + who runs it. Right: the money, then the
+            story so far (sticky). Same grid on both faces. */}
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
+          <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
+            <DealHeaderCard
+              eyebrow={`Booking #${booking.id.slice(0, 6).toUpperCase()}`}
+              name={booking.customerName || "Unnamed customer"}
+              avatarInitials={adminInitials(booking.customerName ?? "") || "?"}
+              avatarImage={booking.userProfileImage}
+              avatarClassName="bg-primary-soft text-primary-strong"
+              typeChip={
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold",
+                    kind.badge
+                  )}
+                >
+                  <KindIcon className="h-3 w-3" />
+                  {kind.label}
+                </span>
               }
-            : booking.estimatedValueCents != null
-              ? {
-                  label: "Est. value",
-                  text: formatCentsAsCurrency(booking.estimatedValueCents),
-                }
-              : null
-        }
-        actions={
-          // Same anatomy for both stages: one primary verb + the quiet ⋯
-          // overflow. Inquiry's winning path is the proposal; a booking's is
-          // editing the page.
-          <div className="flex shrink-0 flex-col gap-2">
-            <div className="flex items-center gap-2">
-              {isInquiry ? (
-                /* Same form as /admin/bookings/create?dealId=… — hosted in a
-                   modal so the admin never leaves the deal. */
-                <CreateProposalModal
-                  pricingTiers={pricingTiers}
-                  admins={admins}
-                  dealPrefill={buildDealPrefillForBookingForm(booking)}
+              meta={
+                // Just when. The source sits on the board; the trip is below.
+                <>
+                  Created{" "}
+                  <span className="tabular-nums">
+                    {formatDistanceToNowStrict(new Date(booking.createdAt))} ago
+                  </span>
+                </>
+              }
+              contact={
+                <DealContactBand
+                  bookingId={id}
+                  name={booking.customerName}
+                  email={booking.customerEmail}
+                  phone={booking.customerPhone}
+                  ownerName={ownerName}
                 />
-              ) : (
-                <BookingPageEditButton />
-              )}
-              <DealActionsMenu
-                bookingId={id}
-                bookingStatus={booking.bookingStatus}
-                isArchived={booking.archivedAt != null}
-                assignedAdminId={booking.assignedAdminId}
-                admins={adminOptions}
-                currentUserId={session?.user?.id ?? null}
-              />
-            </div>
-            {/* Spans the row above — opens the proposal dialog. */}
-            <ProposalResendButton />
+              }
+              value={headline}
+              actions={
+                // Same anatomy for both stages: one primary verb + Edit + the
+                // quiet ⋯ overflow. Inquiry's winning path is the proposal;
+                // its Edit covers contact details only.
+                <div className="flex shrink-0 flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    {isInquiry ? (
+                      <>
+                        <CreateProposalModal
+                          pricingTiers={pricingTiers}
+                          admins={admins}
+                          dealPrefill={buildDealPrefillForBookingForm(booking)}
+                        />
+                        <BookingPageEditButton label="Edit contact" />
+                      </>
+                    ) : (
+                      <BookingPageEditButton />
+                    )}
+                    <DealActionsMenu
+                      bookingId={id}
+                      bookingStatus={booking.bookingStatus}
+                      isArchived={booking.archivedAt != null}
+                      assignedAdminId={booking.assignedAdminId}
+                      admins={adminOptions}
+                      currentUserId={session?.user?.id ?? null}
+                    />
+                  </div>
+                  {/* Spans the row above — opens the proposal dialog. */}
+                  <ProposalResendButton />
+                </div>
+              }
+            />
+
+            {isInquiry ? (
+              <DealRequestCard deal={booking} />
+            ) : (
+              <>
+                <BookingTripCard
+                  bookingId={id}
+                  partySize={partyMembers.length || 1}
+                  trip={tripSnapshot}
+                  captainUserId={booking.captainUserId}
+                  captainFirstName={booking.captainFirstName}
+                  captainLastName={booking.captainLastName}
+                  captainEmail={booking.captainEmail}
+                  captainOptions={captainOptions}
+                  bookingCrew={bookingCrew}
+                  crewOptions={crewOptions}
+                />
+                <CommissionCard
+                  economics={economics}
+                  expenseLines={expenseLines}
+                  commissionAgentCents={ops?.commissionAgentCents ?? null}
+                  commissionKosCents={ops?.commissionKosCents ?? null}
+                  currency={currency}
+                />
+                {partyMembers.length > 1 ? (
+                  <CharterPartyCard
+                    members={partyMembers}
+                    currentBookingId={id}
+                    groupName={booking.bookingGroupName ?? null}
+                  />
+                ) : null}
+              </>
+            )}
           </div>
-        }
-        email={booking.customerEmail}
-        phone={booking.customerPhone}
-        ownerName={
-          booking.assignedAdminId
-            ? [booking.assignedAdminFirstName, booking.assignedAdminLastName]
-                .filter(Boolean)
-                .join(" ")
-                .trim() ||
-              booking.assignedAdminEmail ||
-              "Admin"
-            : null
-        }
-            pipeline={
-              <DealPipelineBar
-                dealStatus={dealStatus}
-                contacted={booking.firstContactedAt != null}
-              />
-            }
-          />
 
-          {isInquiry ? (
-            /* Lead phase: what the customer asked for. Contact info lives in
-               the header; trip + money appear once the deal is priced. */
-            <DealRequestCard deal={booking} />
-          ) : (
-            /* Priority order: the trip and the money are what admins open
-               this page for. */
-            <>
-              <BookingTripCard
-                bookingId={id}
-                partySize={partyMembers.length || 1}
-                trip={tripSnapshot}
-                captainUserId={booking.captainUserId}
-                captainFirstName={booking.captainFirstName}
-                captainLastName={booking.captainLastName}
-                captainEmail={booking.captainEmail}
-                captainOptions={captainOptions}
-                bookingCrew={bookingCrew}
-                crewOptions={crewOptions}
-              />
-
-              {partyMembers.length > 1 ? (
-                <CharterPartyCard
-                  members={partyMembers}
-                  currentBookingId={id}
-                  groupName={booking.bookingGroupName ?? null}
-                />
-              ) : null}
-
-              <DealEconomicsCard
-                bookingId={id}
-                money={money}
-                economics={economics}
-                payments={bookingPayments}
-                expenseLines={expenseLines}
-                opsGmvCents={ops?.gmvCents ?? null}
-                totalAmountCents={booking.totalAmountCents ?? null}
-                serviceFeeCents={booking.serviceFeeCents ?? null}
-                currency={booking.currency ?? "USD"}
-              />
-            </>
-          )}
+          <div className="flex min-w-0 flex-col gap-6">
+            <FinancesCard
+              bookingId={id}
+              isInquiry={isInquiry}
+              money={money}
+              lines={lines}
+              payments={bookingPayments}
+              expenseLines={expenseLines}
+              opsGmvCents={ops?.gmvCents ?? null}
+              totalAmountCents={booking.totalAmountCents ?? null}
+              serviceFeeCents={booking.serviceFeeCents ?? null}
+              currency={currency}
+              estimatedValueCents={booking.estimatedValueCents ?? null}
+              budgetCents={booking.budgetCents ?? null}
+              stripeDashboardBase={stripeDashboardBase}
+            />
+            {/* lg:top-0 — sticky enforces its top value even at rest; any
+                positive offset misaligns the rail. Zero never can. */}
+            <BookingActivityTimeline
+              events={activityEvents}
+              className="lg:sticky lg:top-0"
+              actions={!isSettled ? <ActivityComposer bookingId={id} /> : undefined}
+            />
+          </div>
         </div>
-
-        {/* lg:top-0 — the rail's natural offset from the scrollport is ~0px
-            (proven by screenshot), and sticky enforces its top value even at
-            rest. Any positive offset pushes the card below the header card;
-            zero is the only value that can never misalign it. */}
-        <BookingActivityTimeline
-          events={activityEvents}
-          className="lg:sticky lg:top-0"
-          actions={!isSettled ? <ActivityComposer bookingId={id} /> : undefined}
-        />
       </div>
-    </div>
     </BookingEditModeProvider>
-  );
-}
-
-/** Boat link + trip date line under the customer name. */
-function BookingHeaderMeta({
-  booking,
-}: {
-  booking: Pick<BookingDetails, "boatId" | "boatName" | "boatTimezone" | "startDateTime">;
-}) {
-  const parsed = booking.startDateTime
-    ? parseDateTimeInBoatTimezone(
-        typeof booking.startDateTime === "string"
-          ? booking.startDateTime
-          : booking.startDateTime.toISOString(),
-        { timezone: booking.boatTimezone ?? undefined }
-      )
-    : null;
-  const tripDate = parsed?.date ? format(parsed.date, "EEE, MMM d, yyyy") : null;
-
-  if (!booking.boatName && !tripDate) return null;
-  return (
-    <span className="inline-flex flex-wrap items-center gap-x-2">
-      {booking.boatId && booking.boatName ? (
-        <Link
-          href={`/admin/boats/${booking.boatId}`}
-          className="inline-flex items-center gap-1 hover:text-foreground hover:underline"
-        >
-          <Ship className="h-3.5 w-3.5" />
-          {booking.boatName}
-        </Link>
-      ) : booking.boatName ? (
-        <span className="inline-flex items-center gap-1">
-          <Ship className="h-3.5 w-3.5" />
-          {booking.boatName}
-        </span>
-      ) : null}
-      {booking.boatName && tripDate ? <span aria-hidden>·</span> : null}
-      {tripDate ? <span>{tripDate}</span> : null}
-    </span>
   );
 }

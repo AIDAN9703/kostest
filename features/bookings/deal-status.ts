@@ -1,22 +1,19 @@
+import type { BookingStatus } from "@/database/types";
+
 /**
- * The unified deal lifecycle — one status vocabulary for every row in the
- * master bookings list: Inquiry → Booking inquiry → Proposal sent → Accepted
- * → Partial payment → Payment complete, with Dispute (orange) and Cancelled
- * off to the side. Completed (trip happened) and Archived are the two
- * housekeeping states. Two approvals gate every deal — the admin's (sending
- * the proposal they vetted) and the customer's (accepting it) — and the
- * stages name exactly whose turn it is. Every stage is DERIVED —
- * bookingStatus + the payments ledger stay the source of truth; nothing
- * here is stored.
+ * The deal lifecycle in one vocabulary. STORED (booking.bookingStatus):
+ * Inquiry → Proposed → Booked → Completed, Cancelled off to the side. DERIVED
+ * here for the pipeline: Contacted (firstContactedAt), Paid (the payments
+ * ledger), Dispute (refund / chargeback / failed), Archived. Payment is a
+ * label beside Booked — "Deposit paid" / "Paid" — never a status of its own.
+ * Nothing in this file is stored.
  */
 
 export type DealStatus =
   | "INQUIRY"
-  | "BOOKING_INQUIRY"
-  | "PROPOSAL_SENT"
-  | "ACCEPTED"
-  | "PARTIAL_PAYMENT"
-  | "PAYMENT_COMPLETE"
+  | "PROPOSED"
+  | "BOOKED"
+  | "PAID"
   | "DISPUTE"
   | "COMPLETED"
   | "CANCELLED"
@@ -28,7 +25,8 @@ export function computeDealStatusForBooking(input: {
   hasRefund?: boolean | null;
   archivedAt?: Date | string | null;
 }): DealStatus {
-  const { bookingStatus, paymentDisplayStatus, hasRefund, archivedAt } = input;
+  const { paymentDisplayStatus, hasRefund, archivedAt } = input;
+  const bookingStatus = canonicalBookingStatus(input.bookingStatus);
   if (archivedAt) return "ARCHIVED";
   if (bookingStatus === "CANCELLED") return "CANCELLED";
   if (bookingStatus === "COMPLETED") return "COMPLETED";
@@ -40,23 +38,46 @@ export function computeDealStatusForBooking(input: {
   ) {
     return "DISPUTE";
   }
-  if (paymentDisplayStatus === "PAID") return "PAYMENT_COMPLETE";
-  if (paymentDisplayStatus === "DEPOSIT_PAID") return "PARTIAL_PAYMENT";
-  // APPROVED = the customer accepted and owes payment; DRAFT = a priced
-  // proposal exists (sent or being finished — publishedAt isn't in list rows).
-  if (bookingStatus === "APPROVED") return "ACCEPTED";
-  if (bookingStatus === "DRAFT") return "PROPOSAL_SENT";
-  // PENDING = a formal request to book (boat + date + price) awaiting review.
-  if (bookingStatus === "PENDING") return "BOOKING_INQUIRY";
-  // CONFIRMED normally resolves through paymentDisplayStatus above; if the
-  // payment rows are missing (external/manual confirms), it is still a booked
-  // trip — never show it back at the top of the funnel.
-  if (bookingStatus === "CONFIRMED") return "PAYMENT_COMPLETE";
+  if (paymentDisplayStatus === "PAID") return "PAID";
+  // Deposit paid is still "Booked" on the pipeline; the payment label says
+  // how much of it is in.
+  if (bookingStatus === "BOOKED") return "BOOKED";
+  if (bookingStatus === "PROPOSED") return "PROPOSED";
   return "INQUIRY";
 }
 
+/** Admin-facing words for the stored statuses. Change words here, nowhere else. */
+export const BOOKING_STATUS_LABELS: Record<BookingStatus, string> = {
+  INQUIRY: "Inquiry",
+  PROPOSED: "Proposal",
+  BOOKED: "Booked",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+};
+
 /**
- * Hours before trip start when unresolved pre-trip items (captain, contract)
+ * The pre-0060 vocabulary still lives in history rows and event payloads
+ * (DRAFT / PENDING / APPROVED / CONFIRMED). Read it as today's words so old
+ * timeline entries render correctly. This is the ONLY place those names exist.
+ */
+const LEGACY_STATUS_ALIASES: Record<string, BookingStatus> = {
+  DRAFT: "PROPOSED",
+  PENDING: "PROPOSED",
+  APPROVED: "BOOKED",
+  CONFIRMED: "BOOKED",
+};
+
+export function canonicalBookingStatus(value: string): string {
+  return LEGACY_STATUS_ALIASES[value] ?? value;
+}
+
+export function bookingStatusLabel(value: string): string {
+  const canonical = canonicalBookingStatus(value) as BookingStatus;
+  return BOOKING_STATUS_LABELS[canonical] ?? value;
+}
+
+/**
+ * Hours before trip start when unresolved pre-trip items (captain, balance)
  * flip from "pending" (yellow) to "urgent" (red).
  */
 export const PRETRIP_URGENT_HOURS = 48;
@@ -119,4 +140,3 @@ export const TIME_OF_DAY_LABELS: Record<string, string> = {
   EVENING: "Evening",
   FLEXIBLE: "Flexible",
 };
-

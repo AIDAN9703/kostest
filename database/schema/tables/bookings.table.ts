@@ -15,7 +15,7 @@ export const bookings = pgTable(
     // ==========================================================================
     id: uuid("id").defaultRandom().notNull().primaryKey(),
     bookingType: bookingTypeEnum("booking_type").default("EXTERNAL_BOOKING").notNull(),
-    bookingStatus: bookingStatusEnum("booking_status").default("PENDING").notNull(),
+    bookingStatus: bookingStatusEnum("booking_status").default("INQUIRY").notNull(),
     source: bookingSourceEnum("source").default("WEBSITE"),
 
     // ==========================================================================
@@ -82,7 +82,7 @@ export const bookings = pgTable(
     legacyInquiryId: uuid("legacy_inquiry_id"),
 
     // ==========================================================================
-    // DRAFT FLOW (sent to customer, awaiting acceptance)
+    // PROPOSAL FLOW (sent to customer, awaiting acceptance)
     // ==========================================================================
     publicToken: uuid("public_token"), // Shareable link; set when "sent to customer"
     allowPayment: boolean("allow_payment").default(false).notNull(),

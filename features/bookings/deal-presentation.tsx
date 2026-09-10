@@ -128,18 +128,8 @@ export function getDealKind(bookingType: string): DealKindPresentation {
   return DEAL_KIND_PRESENTATION[bookingType] ?? FALLBACK;
 }
 
-/**
- * Statuses where a deal has been priced past the inquiry stage. PENDING is
- * included: a website request-to-book arrives with boat, date, and price
- * already chosen — it awaits approval, but it is no longer a lead.
- */
-export const PRICED_STATUSES = new Set([
-  "PENDING",
-  "DRAFT",
-  "APPROVED",
-  "CONFIRMED",
-  "COMPLETED",
-]);
+/** Statuses where a deal has been priced past the inquiry stage. */
+export const PRICED_STATUSES = new Set(["PROPOSED", "BOOKED", "COMPLETED"]);
 
 /**
  * Once an inquiry-family deal is priced, it IS a booking — and it changes

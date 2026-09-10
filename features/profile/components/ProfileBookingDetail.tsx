@@ -24,6 +24,8 @@ interface ProfileBookingDetailProps {
     captain: boolean | null;
     totalAmountCents: number;
     depositAmountCents: number | null;
+    /** Total minus what's been paid — the Pay button shows while this is > 0. */
+    balanceCents: number;
     status: string;
   };
 }
@@ -32,7 +34,7 @@ const DEFAULT_IMAGE = "/images/herooption22.jpg";
 
 export default function ProfileBookingDetail({ booking }: ProfileBookingDetailProps) {
   const [payLoading, setPayLoading] = useState(false);
-  const needsPayment = booking.bookingStatus === "APPROVED";
+  const needsPayment = booking.bookingStatus === "BOOKED" && booking.balanceCents > 0;
 
   const handlePay = async () => {
     setPayLoading(true);
@@ -69,9 +71,9 @@ export default function ProfileBookingDetail({ booking }: ProfileBookingDetailPr
         <div className="mb-6 flex items-center justify-between">
           <span
             className={`rounded-full px-3 py-1 text-sm font-medium ${
-              booking.status === "Approved"
+              booking.status === "Proposal sent"
                 ? "bg-blue-100 text-blue-800"
-                : booking.status === "Confirmed"
+                : booking.status === "Booked"
                   ? "bg-emerald-100 text-emerald-800"
                   : "bg-gray-100 text-gray-800"
             }`}

@@ -11,7 +11,7 @@ import {
   createBookingFullSchema,
   type CreateBookingFullInput,
 } from "@/features/bookings/booking.validation";
-import { sendDraftBookingEmail } from "@/shared/lib/services/email.service";
+import { sendProposalEmail as emailProposalToCustomer } from "@/shared/lib/services/email.service";
 import { sendSms } from "@/shared/lib/services/twilio.service";
 import { getBaseUrl } from "@/shared/lib/utils/base-url";
 import type { ActionResponse } from "@/shared/lib/types/types";
@@ -45,7 +45,11 @@ type CreateBookingFullResult = {
   bookingId: string;
   publicToken: string | null;
   groupId: string | null;
+  /** True when the admin asked to send by at least one channel. */
   proposalSent: boolean;
+  /** Per-channel outcome: null = not requested, false = requested but failed. */
+  emailSent: boolean | null;
+  smsSent: boolean | null;
 };
 
 /**
@@ -191,13 +195,17 @@ export async function createBookingFull(
       });
     }
 
-    // 5. Proposal send (only the Stripe-link path is wired).
+    // 5. Proposal send. AWAITED on purpose: the admin's toast must tell the
+    //    truth. A failed send is logged on the timeline so the desk can see
+    //    the customer never got it and hit Resend.
     const baseUrl = getBaseUrl();
-    const draftLink = result.publicToken
-      ? `${baseUrl}/bookings/draft/${result.publicToken}`
+    const proposalLink = result.publicToken
+      ? `${baseUrl}/bookings/proposal/${result.publicToken}`
       : null;
 
-    if (draftLink && publishNow) {
+    let emailSent: boolean | null = null;
+    let smsSent: boolean | null = null;
+    if (proposalLink && publishNow) {
       const b = input.bookings[0];
       if (sendProposalEmail) {
         const leadBoatName = await getBoatName(b.boatId);
@@ -207,19 +215,42 @@ export async function createBookingFull(
             ? `${leadBoatName} + ${input.bookings.length - 1} more`
             : undefined
           : leadBoatName;
-        sendDraftBookingEmail({
+        emailSent = await emailProposalToCustomer({
           customerName: b.customerName,
           customerEmail: b.customerEmail,
-          draftLink,
+          proposalLink,
           boatName,
           isGroup: isParty,
-        }).catch((err) => console.error("Draft email failed:", err));
+        }).catch((err) => {
+          console.error("Proposal email failed:", err);
+          return false;
+        });
       }
-      if (sendProposalSms && b.customerPhone?.trim()) {
-        sendSms(
-          b.customerPhone,
-          `Kings Of The Sea: Your charter proposal is ready. View & accept: ${draftLink}`
-        ).catch((err) => console.error("Draft SMS failed:", err));
+      if (sendProposalSms) {
+        smsSent = b.customerPhone?.trim()
+          ? await sendSms(
+              b.customerPhone,
+              `Kings Of The Sea: Your charter proposal is ready. View & accept: ${proposalLink}`
+            )
+              .then((r) => r.success)
+              .catch((err) => {
+                console.error("Proposal SMS failed:", err);
+                return false;
+              })
+          : false;
+      }
+      const failed = [emailSent === false ? "email" : null, smsSent === false ? "text" : null].filter(
+        (c): c is string => c !== null
+      );
+      if (failed.length > 0) {
+        await bookingEventsService.logEvent({
+          bookingId,
+          eventType: BOOKING_EVENT_TYPES.UPDATED,
+          actorType: "system",
+          channel: "admin_portal",
+          displayMessage: `Proposal ${failed.join(" and ")} failed to send — resend from this page`,
+          metadata: { emailSent, smsSent },
+        });
       }
     }
 
@@ -230,6 +261,8 @@ export async function createBookingFull(
         publicToken: result.publicToken,
         groupId: result.groupId,
         proposalSent: publishNow,
+        emailSent,
+        smsSent,
       },
     };
   } catch (error) {

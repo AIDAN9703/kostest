@@ -171,7 +171,7 @@ export class BookingEventsService {
     });
   }
 
-  async logDraftPublished(params: {
+  async logProposalPublished(params: {
     bookingId: string;
     actorId: string | null;
     publicToken: string;
@@ -180,11 +180,11 @@ export class BookingEventsService {
   }): Promise<void> {
     await this.logEvent({
       bookingId: params.bookingId,
-      eventType: BOOKING_EVENT_TYPES.DRAFT_PUBLISHED,
+      eventType: BOOKING_EVENT_TYPES.PROPOSAL_PUBLISHED,
       actorType: params.actorId ? "admin" : "system",
       actorId: params.actorId ?? null,
       channel: "admin_portal",
-      displayMessage: "Draft published (customer link)",
+      displayMessage: "Proposal published (customer link)",
       metadata: {
         publicToken: params.publicToken,
         groupId: params.groupId,

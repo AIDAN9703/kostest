@@ -1,6 +1,7 @@
 import { db } from "@/database/db";
 import { bookings } from "@/database/schema";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
+import { sendAdminAlertEmail } from "@/shared/lib/services/email.service";
 import { revalidatePath } from "next/cache";
 
 type MarketplaceSourceValue = "BOATSETTER" | "GETMYBOAT";
@@ -259,6 +260,31 @@ export async function processMarketplaceEmail(
     displayMessage: "Inquiry received",
     metadata: { ingestedFrom: content.source, parseMethod: method },
   });
+
+  // Team alert — marketplace leads used to be invisible until someone opened
+  // the board. Awaited (serverless) and non-fatal.
+  await sendAdminAlertEmail({
+    subject: `New ${label} inquiry — ${name}`,
+    heading: `New inquiry from ${label}`,
+    bookingId: created.id,
+    lines: [
+      { label: "Customer", value: name },
+      { label: "Email", value: lead.email?.trim() || content.fromAddress },
+      { label: "Phone", value: lead.phone ?? "" },
+      { label: "Date", value: lead.preferredDate ?? "" },
+      { label: "Guests", value: lead.guests ? String(lead.guests) : "" },
+      { label: "Boat", value: lead.boatName ?? "" },
+      {
+        label: "Parsed by",
+        value:
+          method === "PARSED" ? "template" : method === "FALLBACK_LLM" ? "AI fallback" : "FAILED",
+      },
+    ],
+    note:
+      method === "FAILED"
+        ? "We couldn't read this email automatically — open the deal and fix the contact details."
+        : undefined,
+  }).catch((e) => console.error("Team alert (marketplace lead) failed:", e));
 
   revalidatePath("/admin/bookings");
   revalidatePath("/admin");

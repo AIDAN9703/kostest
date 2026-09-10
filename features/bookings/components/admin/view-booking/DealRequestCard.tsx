@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { TIME_OF_DAY_LABELS } from "@/features/bookings/deal-status";
-import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { formatDate, formatPlainDate } from "@/shared/lib/utils/general-utils";
 import type { BookingDetails } from "@/features/bookings/booking.types";
 
@@ -24,20 +23,9 @@ export function DealRequestCard({ deal }: { deal: BookingDetails }) {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Same reading order as the booking face: when first, then which boat,
+            then everything else. */}
         <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
-          <Fact
-            label="Boat requested"
-            value={
-              deal.boatId ? (
-                <Link
-                  href={`/admin/boats/${deal.boatId}`}
-                  className="text-primary-strong hover:underline"
-                >
-                  {deal.boatName ?? "View boat"}
-                </Link>
-              ) : null
-            }
-          />
           <Fact
             label="Date"
             value={
@@ -60,22 +48,23 @@ export function DealRequestCard({ deal }: { deal: BookingDetails }) {
             label="Duration"
             value={deal.requestedDurationDays ? `${deal.requestedDurationDays}+ days` : null}
           />
+          <Fact
+            label="Boat requested"
+            value={
+              deal.boatId ? (
+                <Link
+                  href={`/admin/boats/${deal.boatId}`}
+                  className="text-primary-strong hover:underline"
+                >
+                  {deal.boatName ?? "View boat"}
+                </Link>
+              ) : null
+            }
+          />
           <Fact label="Destination" value={deal.destination} />
           <Fact
             label="Guests"
             value={deal.numberOfPassengers != null ? `${deal.numberOfPassengers}` : null}
-          />
-          <Fact
-            label="Customer budget"
-            value={deal.budgetCents != null ? formatCentsAsCurrency(deal.budgetCents) : null}
-          />
-          <Fact
-            label="Est. charter value"
-            value={
-              deal.estimatedValueCents != null
-                ? formatCentsAsCurrency(deal.estimatedValueCents)
-                : null
-            }
           />
           <Fact
             label="Captain"

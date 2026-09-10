@@ -20,8 +20,10 @@ import {
   requestToBookSchema,
   termCharterInquirySchema,
 } from "@/shared/lib/validation/inquiry";
-import { ghlWebhookService } from "@/shared/lib/services/ghl-webhook.service";
-import { sendInquiryAcknowledgmentEmail } from "@/shared/lib/services/email.service";
+import {
+  sendAdminAlertEmail,
+  sendInquiryAcknowledgmentEmail,
+} from "@/shared/lib/services/email.service";
 import { calculateEndDateTime } from "@/shared/lib/utils/date-helpers";
 import { calculateBookingPriceFromDollars } from "@/shared/lib/utils/pricing-utils";
 import { getAppSettings } from "@/features/app-settings/app-settings.service";
@@ -48,6 +50,39 @@ async function logLeadCreated(
     displayMessage: "Inquiry received",
     metadata: metadata ?? null,
   });
+}
+
+/**
+ * Ping the team inbox about a new lead (replaces the old GoHighLevel admin
+ * notification). Awaited so the serverless runtime can't kill it mid-send;
+ * never throws — an alert must never fail the customer's submission.
+ */
+async function alertTeamNewInquiry(
+  bookingId: string,
+  input: {
+    customer: string;
+    email: string;
+    phone?: string | null;
+    source: string;
+    details: { label: string; value: string }[];
+  }
+) {
+  try {
+    await sendAdminAlertEmail({
+      subject: `New inquiry — ${input.customer} (${input.source})`,
+      heading: "New inquiry",
+      bookingId,
+      lines: [
+        { label: "Customer", value: input.customer },
+        { label: "Email", value: input.email },
+        { label: "Phone", value: input.phone ?? "" },
+        { label: "Source", value: input.source },
+        ...input.details,
+      ],
+    });
+  } catch (error) {
+    console.error("Team alert (new inquiry) failed:", error);
+  }
 }
 
 /**
@@ -123,7 +158,7 @@ export async function createGeneralLead(data: GeneralLeadInput) {
 
     if (deal) {
       await logLeadCreated(deal.id, null);
-      // Branded "we got it" email — ours (Resend), not GHL's. Awaited so the
+      // Branded "we got it" email — ours (Resend). Awaited so the
       // serverless runtime can't kill it mid-send; failures only log.
       await sendInquiryAcknowledgmentEmail({
         customerName: validated.name,
@@ -136,24 +171,18 @@ export async function createGeneralLead(data: GeneralLeadInput) {
           { label: "Budget", value: validated.budget || "" },
         ],
       });
-      // CRM sync is server-side, fire-and-forget: a closed tab can't lose the
-      // record and the webhook URL never ships in the client bundle.
-      void ghlWebhookService.sendInquiry({
-        name: validated.name,
+      await alertTeamNewInquiry(deal.id, {
+        customer: validated.name,
         email: validated.email,
         phone: validated.phone,
-        date: validated.date || "",
-        time: validated.timeOfDay || "",
-        budget: validated.budget || "",
-        guests: validated.guests || "",
-        message: validated.message || "",
-        sms_consent: validated.smsConsent,
-        source:
-          validated.source === "CONTACT_PAGE"
-            ? "KOS Yacht Club - Contact Page Form"
-            : "KOS Yacht Club - Request to Book Form",
-        lead_type: "Charter Inquiry",
-        submitted_at: new Date().toISOString(),
+        source: validated.source === "CONTACT_PAGE" ? "Contact page" : "Home page",
+        details: [
+          { label: "Date", value: validated.date || "" },
+          { label: "Time", value: validated.timeOfDay || "" },
+          { label: "Guests", value: validated.guests || "" },
+          { label: "Budget", value: validated.budget || "" },
+          { label: "Message", value: validated.message || "" },
+        ],
       });
     }
     revalidateDealSurfaces();
@@ -229,7 +258,7 @@ export async function createTermCharterLead(data: TermCharterLeadInput) {
 
     if (deal) {
       await logLeadCreated(deal.id, null);
-      // Branded "we got it" email — ours (Resend), not GHL's. Awaited so the
+      // Branded "we got it" email — ours (Resend). Awaited so the
       // serverless runtime can't kill it mid-send; failures only log.
       await sendInquiryAcknowledgmentEmail({
         customerName: validated.name,
@@ -243,20 +272,20 @@ export async function createTermCharterLead(data: TermCharterLeadInput) {
           { label: "Budget", value: validated.budget || "" },
         ],
       });
-      void ghlWebhookService.sendInquiry({
-        name: validated.name,
+      await alertTeamNewInquiry(deal.id, {
+        customer: validated.name,
         email: validated.email,
         phone: validated.phone,
-        source: "KOS - Term Charter Form",
-        lead_type: "Term Charter",
-        submitted_at: new Date().toISOString(),
-        start_date: validated.startDate || "",
-        duration: validated.duration || "",
-        destination: validated.destination || "",
-        guests: validated.guests || "",
-        budget: validated.budget || "",
-        accommodations: validated.accommodations || "",
-        message: validated.message || "",
+        source: "Term charter page",
+        details: [
+          { label: "Start date", value: validated.startDate || "" },
+          { label: "Duration", value: validated.duration || "" },
+          { label: "Destination", value: validated.destination || "" },
+          { label: "Guests", value: validated.guests || "" },
+          { label: "Budget", value: validated.budget || "" },
+          { label: "Accommodations", value: validated.accommodations || "" },
+          { label: "Message", value: validated.message || "" },
+        ],
       });
     }
     revalidateDealSurfaces();
@@ -406,21 +435,19 @@ export async function createBoatLead(data: BoatLeadInput) {
           { label: "Guests", value: String(validated.numberOfPassengers) },
         ],
       }).catch((err) => console.error("Boat-lead ack email failed:", err));
-      void ghlWebhookService.sendInquiry({
-        name: contact.name,
+      await alertTeamNewInquiry(deal.id, {
+        customer: contact.name,
         email: contact.email,
         phone: contact.phone,
-        date: validated.startDateTime,
-        guests: String(validated.numberOfPassengers),
-        message: validated.message || "",
-        boat_id: boat.id,
-        boat_name: boat.name,
-        lead_type: "BOAT_REQUEST",
-        source: "BOAT_PAGE",
-        pricing_tier_hours: String(pricingTier.hours),
-        needs_captain: String(needsCaptain),
-        submitted_at: new Date().toISOString(),
-        source_label: `KOS Yacht Club - ${boat.name} Inquiry`,
+        source: "Boat page",
+        details: [
+          { label: "Boat", value: boat.name },
+          { label: "Date", value: startDateTime.toLocaleDateString("en-US") },
+          { label: "Duration", value: `${pricingTier.hours} hrs` },
+          { label: "Guests", value: String(validated.numberOfPassengers) },
+          { label: "Captain", value: needsCaptain ? "Needed" : "Not needed" },
+          { label: "Message", value: validated.message || "" },
+        ],
       });
     }
     revalidateDealSurfaces();

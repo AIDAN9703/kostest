@@ -42,7 +42,7 @@ export default async function AdminBookingCreatePage({ searchParams }: Props) {
         <p className="mt-1 text-sm text-muted-foreground">
           {dealPrefill
             ? "Price the trip and send it — the customer accepts and pays from their link."
-            : "Create a draft booking, optionally sending it to the customer as a proposal."}
+            : "Build the trip and send the proposal, or save it and send later."}
         </p>
       </header>
       {/* One composer for every mode — deal upgrade, calendar-date scratch,

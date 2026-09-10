@@ -41,19 +41,16 @@ function readBool(raw: string | null): boolean | undefined {
 /** Booking status → swatch color. Tailwind tokens aren't available here (string output), so hex values. */
 function colorForStatus(status: string): string {
   switch (status) {
-    case "CONFIRMED":
-    case "APPROVED":
-      return "#10b981"; // emerald-500
-    case "PENDING":
-      return "#f59e0b"; // amber-500
+    case "BOOKED":
+      return "#10b981"; // emerald-500 — holds the slot
+    case "PROPOSED":
+      return "#f59e0b"; // amber-500 — tentative, awaiting the customer
     case "CANCELLED":
       return "#ef4444"; // red-500
     case "COMPLETED":
       return "#64748b"; // slate-500
-    case "DRAFT":
-      return "#94a3b8"; // slate-400
     default:
-      return "#6b7280"; // gray-500
+      return "#6b7280"; // gray-500 (inquiries with a requested date)
   }
 }
 

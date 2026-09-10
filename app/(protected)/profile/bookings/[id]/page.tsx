@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { paymentService } from "@/features/payments/payment.service";
 import { notFound } from "next/navigation";
 import { db } from "@/database/db";
 import { bookings, boats, bookingPricing } from "@/database/schema";
@@ -45,6 +46,14 @@ export default async function ProfileBookingDetailPage({
 
   if (!row) notFound();
 
+  // What they still owe — drives the Pay button (a booked trip can be paid).
+  const paidCents = (await paymentService.getBookingPayments(id)).reduce(
+    (sum, p) =>
+      p.status !== "SUCCEEDED" || p.paymentType === "REFUND" ? sum : sum + Number(p.amountCents),
+    0
+  );
+  const balanceCents = Math.max(0, (row.totalAmountCents ? Number(row.totalAmountCents) : 0) - paidCents);
+
   const { date: startDate } = parseDateTimeInBoatTimezone(row.startDateTime, {
     timezone: row.boatTimezone,
   });
@@ -67,10 +76,8 @@ export default async function ProfileBookingDetailPage({
 
   const statusMap: Record<string, string> = {
     INQUIRY: "Pending",
-    DRAFT: "Pending",
-    PENDING: "Pending",
-    APPROVED: "Approved",
-    CONFIRMED: "Confirmed",
+    PROPOSED: "Proposal sent",
+    BOOKED: "Booked",
     CANCELLED: "Cancelled",
     COMPLETED: "Completed",
   };
@@ -101,6 +108,7 @@ export default async function ProfileBookingDetailPage({
           captain: row.needsCaptain,
           totalAmountCents: row.totalAmountCents ? Number(row.totalAmountCents) : 0,
           depositAmountCents: row.depositAmountCents ? Number(row.depositAmountCents) : null,
+          balanceCents,
           status: statusMap[row.bookingStatus] || "Pending",
         }}
       />

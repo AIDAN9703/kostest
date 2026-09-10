@@ -1,64 +1,59 @@
 import type { ReactNode } from "react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { cn } from "@/shared/lib/utils/general-utils";
-import { adminInitials } from "@/shared/lib/utils/people-display";
 
 /**
  * The one deal identity header — both faces of /admin/bookings/[id]
- * (lead-phase and booking-phase) render this exact card so a sales agent
- * never feels a page switch: who + how to reach them + where the deal is.
- *
- * Band A: avatar · name + type chip · meta line · value stat + actions
- * Band B: contact strip (plain values with mail/call/WhatsApp affordances)
- * Band C: the pipeline (or terminal-outcome band), passed in as a slot
+ * (inquiry and booking) render this exact card so an admin never feels a
+ * page switch. Just the person: booking number, name + kind chip, where they
+ * came from, how to reach them, who owns the deal, one headline number, and
+ * the verbs. Trip facts live in Trip details, money in Finances — nothing is
+ * repeated here.
  */
 export function DealHeaderCard({
   eyebrow,
   name,
   avatarInitials,
+  avatarImage,
   avatarClassName,
   typeChip,
   meta,
+  contact,
   value,
   actions,
-  email,
-  phone,
-  ownerName,
-  extraContact,
-  pipeline,
 }: {
   eyebrow?: string;
   name: string;
   avatarInitials: string;
+  /** Profile picture when the booking is linked to an account. */
+  avatarImage?: string | null;
   avatarClassName?: string;
   typeChip?: ReactNode;
   meta?: ReactNode;
+  /** The DealContactBand — email / phone / assigned to, editable in edit mode. */
+  contact?: ReactNode;
   value?: { label: string; text: string } | null;
   actions?: ReactNode;
-  email?: string | null;
-  phone?: string | null;
-  /** Assigned admin display name; null renders the red Unassigned chip. */
-  ownerName?: string | null;
-  /** Extra labeled fields for the contact strip (e.g. SMS consent). */
-  extraContact?: ReactNode;
-  pipeline: ReactNode;
 }) {
   return (
-    // Not a <Card> (multi-band header element) but wears the same shell:
-    // rounded-2xl border-border/60 bg-card shadow-sm + px-6 bands.
+    // Not a <Card> (the actions column needs its own alignment) but wears the
+    // same shell: rounded-2xl border-border/60 bg-card shadow-sm, px-6.
     <header className="min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
-      {/* Who */}
-      <div className="flex flex-wrap items-start justify-between gap-4 px-6 py-5">
-        <div className="flex min-w-0 items-start gap-4">
-          <div
-            className={cn(
-              "flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-lg font-semibold ring-1 ring-border/60",
-              avatarClassName ?? "bg-muted text-muted-foreground"
-            )}
-          >
-            {avatarInitials || "?"}
-          </div>
-          <div className="min-w-0">
+      <div className="flex flex-wrap items-start justify-between gap-4 px-6 pt-5">
+        <div className="flex min-w-0 flex-1 items-start gap-4">
+          <Avatar className="h-14 w-14 shrink-0 rounded-2xl ring-1 ring-border/60">
+            {avatarImage ? <AvatarImage src={avatarImage} alt="" className="object-cover" /> : null}
+            <AvatarFallback
+              className={cn(
+                "rounded-2xl text-lg font-semibold",
+                avatarClassName ?? "bg-muted text-muted-foreground"
+              )}
+            >
+              {avatarInitials || "?"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
             {eyebrow ? (
               <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
                 {eyebrow}
@@ -85,59 +80,9 @@ export function DealHeaderCard({
         </div>
       </div>
 
-      {/* How to reach them — tinted band separates people-info from deal-info */}
-      <div className="flex flex-wrap items-center gap-x-8 gap-y-3 border-t border-border/50 bg-muted/20 px-6 py-3">
-        <ContactField
-          label="Email"
-          value={email}
-        />
-        <ContactField label="Phone" value={phone} />
-        {/* Who owns this deal — same band, always visible */}
-        <div className="flex min-w-0 items-center gap-2">
-          <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              Assigned admin
-            </p>
-            <div className="mt-0.5 flex items-center gap-1.5">
-              {ownerName ? (
-                <>
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 text-[9px] font-semibold text-foreground">
-                    {adminInitials(ownerName) || "?"}
-                  </span>
-                  <p className="truncate text-sm font-medium">{ownerName}</p>
-                </>
-              ) : (
-                <span className="rounded-full bg-destructive-soft px-2 py-0.5 text-[10px] font-semibold text-destructive">
-                  Unassigned
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-        {extraContact}
-      </div>
-
-      {/* Where the deal is */}
-      <div className="border-t border-border/50 px-6 py-3">{pipeline}</div>
+      {/* Contact row gets the FULL width under the top row, flush left with
+          the card edge, so Email · Phone · Assigned to stay on one line. */}
+      {contact ? <div className="px-6 pb-5 pt-3">{contact}</div> : null}
     </header>
-  );
-}
-
-function ContactField({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | null | undefined;
-}) {
-  return (
-    <div className="min-w-0">
-      <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-0.5 truncate text-sm font-medium">
-        {value || <span className="text-muted-foreground/40">—</span>}
-      </p>
-    </div>
   );
 }

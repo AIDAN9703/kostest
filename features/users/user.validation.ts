@@ -47,7 +47,7 @@ export const createUserSchema = userBaseSchema.extend({
   password: passwordSchema,
 });
 
-// Minimal schema for quick-create (e.g. from draft booking form modal)
+// Minimal schema for quick-create (e.g. from the booking composer)
 export const quickCreateUserSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),

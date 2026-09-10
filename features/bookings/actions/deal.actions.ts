@@ -14,7 +14,7 @@ import { db } from "@/database/db";
 import { boats, bookings } from "@/database/schema";
 import { bookingEventsService } from "@/features/bookings/services/booking-events.service";
 import { BOOKING_EVENT_TYPES } from "@/features/bookings/booking-events.constants";
-import { sendDraftBookingEmail } from "@/shared/lib/services/email.service";
+import { sendProposalEmail } from "@/shared/lib/services/email.service";
 import { sendSms } from "@/shared/lib/services/twilio.service";
 import { getBaseUrl } from "@/shared/lib/utils/base-url";
 import { bookingStatusService } from "@/features/bookings/services/booking-status.service";
@@ -191,7 +191,7 @@ export async function toggleDealArchived(bookingId: string): Promise<DealActionR
 
 /**
  * Copying the proposal link IS publishing it — the customer is about to hold
- * a working URL. Stamps publishedAt on first share so the public draft page
+ * a working URL. Stamps publishedAt on first share so the public proposal page
  * (which refuses unpublished tokens) accepts it, and logs the share once.
  */
 export async function shareProposalLink(bookingId: string): Promise<DealActionResult> {
@@ -217,7 +217,7 @@ export async function shareProposalLink(bookingId: string): Promise<DealActionRe
         .where(eq(bookings.id, bookingId));
       await bookingEventsService.logEvent({
         bookingId,
-        eventType: "booking.draft_published",
+        eventType: BOOKING_EVENT_TYPES.PROPOSAL_PUBLISHED,
         actorType: "admin",
         actorId: session.user.id,
         channel: "admin_portal",
@@ -271,12 +271,12 @@ export async function sendProposalUpdate(
     if (!row?.publicToken) {
       return { success: false, error: "No proposal link exists for this booking" };
     }
-    // The link serves the whole funnel: proposal while DRAFT, payment page
+    // The link serves the whole funnel: proposal while PROPOSED, payment page
     // once accepted. Settled deals have nothing left to send.
-    if (!["DRAFT", "APPROVED", "CONFIRMED"].includes(row.bookingStatus)) {
+    if (!["PROPOSED", "BOOKED"].includes(row.bookingStatus)) {
       return { success: false, error: "This deal is settled — nothing left to send" };
     }
-    const isPaymentStage = row.bookingStatus !== "DRAFT";
+    const isPaymentStage = row.bookingStatus === "BOOKED";
     if (channels.email && !row.customerEmail?.trim()) {
       return { success: false, error: "This customer has no email on file" };
     }
@@ -284,7 +284,7 @@ export async function sendProposalUpdate(
       return { success: false, error: "This customer has no phone number on file" };
     }
 
-    const draftLink = `${getBaseUrl()}/bookings/draft/${row.publicToken}`;
+    const proposalLink = `${getBaseUrl()}/bookings/proposal/${row.publicToken}`;
     const isFirstSend = !row.publishedAt;
 
     // Sending IS publishing — the customer is about to hold a working URL.
@@ -297,10 +297,10 @@ export async function sendProposalUpdate(
 
     const sent: string[] = [];
     if (channels.email && row.customerEmail) {
-      const ok = await sendDraftBookingEmail({
+      const ok = await sendProposalEmail({
         customerName: row.customerName ?? "there",
         customerEmail: row.customerEmail,
-        draftLink,
+        proposalLink,
         boatName: row.boatName ?? undefined,
         isGroup: row.bookingGroupId != null,
         isUpdate: !isFirstSend,
@@ -310,10 +310,10 @@ export async function sendProposalUpdate(
     }
     if (channels.sms && row.customerPhone) {
       const body = isPaymentStage
-        ? `Kings Of The Sea: Complete your charter booking here: ${draftLink}`
+        ? `Kings Of The Sea: Complete your charter booking here: ${proposalLink}`
         : isFirstSend
-          ? `Kings Of The Sea: Your charter proposal is ready. View & accept: ${draftLink}`
-          : `Kings Of The Sea: Your charter proposal has been updated. Latest details: ${draftLink}`;
+          ? `Kings Of The Sea: Your charter proposal is ready. View & accept: ${proposalLink}`
+          : `Kings Of The Sea: Your charter proposal has been updated. Latest details: ${proposalLink}`;
       const smsResult = await sendSms(row.customerPhone, body);
       if (!smsResult.success) {
         // Email may already be out — report the partial send honestly.
@@ -328,7 +328,7 @@ export async function sendProposalUpdate(
     await bookingEventsService.logEvent({
       bookingId,
       eventType: isFirstSend
-        ? BOOKING_EVENT_TYPES.DRAFT_PUBLISHED
+        ? BOOKING_EVENT_TYPES.PROPOSAL_PUBLISHED
         : BOOKING_EVENT_TYPES.PROPOSAL_UPDATE_SENT,
       actorType: "admin",
       actorId: session.user.id,

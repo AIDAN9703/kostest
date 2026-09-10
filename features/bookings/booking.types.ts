@@ -338,7 +338,6 @@ export interface BookingListItem {
   /** Stored copy of client balance (GMV − PAID); recomputed on save. GMV uses ops field or quote total. */
   opsBalanceClientCents?: number | null;
   opsCrewName?: string | null;
-  opsContractSigned?: boolean | null;
   opsConnected?: boolean | null;
   opsClientPaid?: boolean | null;
   opsCaptainPaid?: boolean | null;
@@ -383,7 +382,7 @@ export interface BookingDetails extends BookingListItem {
   cancellationReason: string | null;
   cancelledAt: Date | null;
   expiresAt: Date | null;
-  /** Draft-proposal share token — null once the booking is past the proposal stage or never had one. */
+  /** Proposal share token — null once the booking is past the proposal stage or never had one. */
   publicToken: string | null;
   /** When the proposal link first went to the customer; null = never sent. */
   publishedAt: Date | null;

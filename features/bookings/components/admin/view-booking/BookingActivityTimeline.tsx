@@ -30,6 +30,7 @@ import {
 import { cn } from "@/shared/lib/utils/general-utils";
 import type { BookingActivityEventEntry } from "@/features/bookings/booking.types";
 import { BOOKING_EVENT_TYPES } from "@/features/bookings/booking-events.constants";
+import { bookingStatusLabel, canonicalBookingStatus } from "@/features/bookings/deal-status";
 
 const CONTACT_LABELS: Record<string, string> = {
   EMAIL: "Email",
@@ -72,7 +73,7 @@ const EVENT_STYLES: Record<string, EventStyle> = {
   "lead.created": { Icon: Sparkles, bubble: MILESTONE, major: true },
   [BOOKING_EVENT_TYPES.STATUS_CHANGED]: { Icon: GitBranch, bubble: MILESTONE, major: true },
   "lead.stage_change": { Icon: GitBranch, bubble: MILESTONE, major: true },
-  [BOOKING_EVENT_TYPES.DRAFT_PUBLISHED]: { Icon: Send, bubble: MILESTONE, major: true },
+  [BOOKING_EVENT_TYPES.PROPOSAL_PUBLISHED]: { Icon: Send, bubble: MILESTONE, major: true },
   // Money — green ring
   [BOOKING_EVENT_TYPES.PAYMENT_RECEIVED]: {
     Icon: DollarSign,
@@ -161,8 +162,8 @@ const TRANSITION_EVENTS = new Set<string>([
 
 /** Chip tint by what the destination MEANS: wins green, losses red. */
 function toneFor(value: string): string {
-  const v = value.toUpperCase();
-  if (["WON", "APPROVED", "CONFIRMED", "COMPLETED", "PAID"].includes(v))
+  const v = canonicalBookingStatus(value.toUpperCase());
+  if (["WON", "BOOKED", "COMPLETED", "PAID"].includes(v))
     return "bg-success-soft text-success";
   if (["LOST", "CANCELLED", "DENIED", "ABANDONED", "SPAM"].includes(v))
     return "bg-destructive-soft text-destructive";
@@ -260,7 +261,7 @@ function buildEventTitle(event: BookingActivityEventEntry): EventTitleResult {
     case "lead.note":
     case BOOKING_EVENT_TYPES.NOTE_ADDED:
       return withActor(Actor ? <>{Actor} added a note</> : <>Note added</>);
-    case BOOKING_EVENT_TYPES.DRAFT_PUBLISHED:
+    case BOOKING_EVENT_TYPES.PROPOSAL_PUBLISHED:
       return withActor(
         Actor ? (
           <>{Actor} sent the {gold("proposal")} to the client</>
@@ -303,24 +304,22 @@ function buildEventTitle(event: BookingActivityEventEntry): EventTitleResult {
       break;
     }
     case BOOKING_EVENT_TYPES.STATUS_CHANGED: {
-      if (T === "DRAFT")
+      // Old events carry the pre-0060 words; read them as today's.
+      const S = T ? canonicalBookingStatus(T) : null;
+      if (S === "PROPOSED")
         return withActor(
           Actor ? <>{Actor} priced this into a {gold("proposal")}</> : <>Priced into a {gold("proposal")}</>
         );
-      if (T === "APPROVED")
+      if (S === "BOOKED")
         return withActor(
-          Actor ? <>{Actor} {good("approved")} this booking</> : <>Booking {good("approved")}</>
+          Actor ? <>{Actor} marked this {good("booked")}</> : <>Trip {good("booked")}</>
         );
-      if (T === "CONFIRMED")
-        return withActor(
-          Actor ? <>{Actor} {good("confirmed")} this booking</> : <>Booking {good("confirmed")}</>
-        );
-      if (T === "CANCELLED")
+      if (S === "CANCELLED")
         return withActor(
           Actor ? <>{Actor} {bad("cancelled")} this booking</> : <>Booking {bad("cancelled")}</>
         );
-      if (T === "COMPLETED") return { node: <>Trip {good("completed")}</>, actorShown: false };
-      if (to) return { node: <>Status moved to {gold(humanize(to))}</>, actorShown: false };
+      if (S === "COMPLETED") return { node: <>Trip {good("completed")}</>, actorShown: false };
+      if (to) return { node: <>Status moved to {gold(bookingStatusLabel(to))}</>, actorShown: false };
       break;
     }
   }
@@ -533,7 +532,7 @@ export function BookingActivityTimeline({
                                 </p>
                               )}
 
-                            {event.eventType === BOOKING_EVENT_TYPES.DRAFT_PUBLISHED &&
+                            {event.eventType === BOOKING_EVENT_TYPES.PROPOSAL_PUBLISHED &&
                               event.metadata?.publicToken != null && (
                                 <p className="mt-1 font-mono text-[11px] text-muted-foreground">
                                   Link token …{String(event.metadata.publicToken).slice(-8)}

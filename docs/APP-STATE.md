@@ -19,8 +19,11 @@ search, blog, add-ons, auth, admin, booking-groups, app-settings, `_marketing`.
 
 ### Three conventions that matter
 
-1. **One bookings table for the whole funnel.** An `INQUIRY` row is UPGRADED IN PLACE
-   to `DRAFT` → `APPROVED` → `CONFIRMED`. Same id, same history — never a second row.
+1. **One bookings table, one vocabulary.** An `INQUIRY` row is UPGRADED IN PLACE to
+   `PROPOSED` → `BOOKED` → `COMPLETED` (`CANCELLED` off to the side). Same id, same
+   history — never a second row. Payment (unpaid / deposit paid / paid) is a label
+   derived from the payments ledger, never a status. `BOOKED` is the one status that
+   blocks the calendar. (Migration 0060 retired DRAFT / PENDING / APPROVED / CONFIRMED.)
 2. **Guest-first.** `bookings.userId` is nullable; every booking carries its own
    contact snapshot. Customers inquire, accept, and pay without an account.
 3. **Money in cents** everywhere; dollars only at the display edge.
@@ -101,11 +104,9 @@ set them with `scripts/backfill-boat-timezones.sql` as a template.
 
 **🟠 Legacy REQUEST flow undecided.** Approve/deny emails still use the old template.
 
-**🟠 SMS unwired.** Twilio creds exist and OTP works; proposal SMS blocked on a decision:
-if the team answers texts in GoHighLevel, transactional SMS should route through GHL.
-
-**🟡 GHL webhook URLs are hardcoded, not env-gated** (`shared/lib/services/ghl-webhook.service.ts`)
-— dev inquiries fire at live GoHighLevel workflows.
+**🟢 SMS.** Proposal / payment-link texts go out through Twilio (on create and on
+resend); OTP too. GoHighLevel is disconnected (2026-09-04), so Twilio is the only
+SMS sender and the "two phone numbers" problem is gone with it.
 
 **🟡 Party editing incomplete.** Can't add/remove a boat after creation; group name is
 auto-generated and not editable; partial refunds record against the lead booking only.
@@ -141,7 +142,8 @@ production. Leave them unless drizzle-kit is upgraded for other reasons.
 
 ## Before deploying
 
-1. Disable the GHL email steps for general + term-charter workflows (double-send risk).
+1. Set `ADMIN_ALERT_EMAIL` in Vercel (comma-separated) — the team-alert inbox. Falls
+   back to contact@kosyachts.com when unset.
 2. Confirm the Stripe webhook is registered for the prod domain — **refunds only sync
    via webhook**; the verify fallback covers checkout only.
 3. Decide the SMS provider question.
@@ -186,3 +188,72 @@ ProposalPanel (customer's exact breakdown + online-payment switch + send
 email/text + copy link) sits above Activity; DealEconomicsCard holds GMV/
 expenses/revenue + payment ledger + Record payment (method picker, fee-waive).
 Manual payments record method in `payment_method_detail`.
+
+**Admin-flow cleanup (2026-09-04)** — first pass before handing the admin to the team:
+- **GoHighLevel removed entirely.** Service deleted, every webhook call gone
+  (3 web intakes, instant booking). Nothing syncs to GHL any more.
+- **Team alert emails** (`sendAdminAlertEmail` in email.service, `alertTeam` in
+  `features/bookings/lib/team-alerts.ts`) to `ADMIN_ALERT_EMAIL` on: new inquiry
+  (home/contact, term charter, boat page, marketplace), customer requested changes,
+  proposal accepted (only on a real DRAFT→APPROVED flip), payment received (checkout
+  webhook, invoice, verify fallback), instant booking created (loud when it landed on a
+  conflicting slot). Plain internal template, "Open in admin" deep link, never throws.
+- **Availability gate at proposal creation.** `createBookings` resolves every boat's
+  window and asserts it against APPROVED/CONFIRMED bookings, owner blocks and external
+  calendars BEFORE any write (no transactions), with a per-boat message. Same gate in
+  `addBoatToParty`. A proposal can no longer be sent for a sold slot.
+- **Contact details editable** at every stage: ⋯ → "Edit contact details" (name /
+  email / phone, audited through the single-field update). Phone can be corrected but
+  not blanked.
+- **Boat swap keeps add-ons in the total** (`applyBoatIdChange` passed 0 add-on cents
+  and silently dropped them).
+- **Proposal sends on create are awaited**; the composer toast says which channel
+  failed and the timeline logs it. Copy no longer calls an unsent booking a "draft".
+- **Status follows the money on off-card payments.** Recording a Zelle/wire/cash
+  payment on a DRAFT proposal checks the slot, then moves it to APPROVED (calendar
+  blocked); paid in full moves it to CONFIRMED and sends the customer confirmation.
+  Before this a Zelle-paid trip stayed DRAFT forever — never blocking the calendar,
+  never completable. Interim until the status-vocabulary rebuild.
+- **Board row "Delete" removed** (it was a hard delete on any status, orphaning payment
+  rows). Archive / Cancel / Mark lost are the parking verbs. Dead hook + action deleted;
+  `bookingService.deleteBooking` kept for scripts.
+- **Contract readiness dropped** from trip-readiness, the board emblem and the list
+  type — nothing could ever set `booking_ops.contract_signed`, so every trip showed a
+  permanent "Contract" gap. Column stays in the DB for when e-signature exists.
+- Still open (agreed direction, not built yet): admin "mark booked" verb + status
+  vocabulary rebuild (retire DRAFT / PENDING / accept-vs-confirm), price editing after
+  creation, contact-only "save as inquiry", customer vs user model, customer lifecycle
+  emails.
+
+**Status vocabulary rebuild (2026-09-04, migration 0060 — NOT YET APPLIED to dev or
+prod):** stored statuses are now INQUIRY / PROPOSED / BOOKED / COMPLETED / CANCELLED.
+DRAFT and PENDING became PROPOSED; APPROVED and CONFIRMED became BOOKED; the
+no-overlap constraint fires on BOOKED only; `booking_status_history` remapped too.
+Code is already on the new words, so **apply 0060 to dev before running the app, then
+to prod before deploying** (`npm run db:migrate:dev` / `:prod`; pre/post-flight queries
+are in the file). Derived pipeline: Inquiry → Contacted → Proposal → Booked → Paid →
+Completed. One "booked" verb everywhere (`bookingStatusService.markBooked`): the
+customer accepting, an admin's ⋯ → "Mark as booked" (checks the slot, books the whole
+party), or a recorded payment. Old event payloads still carry the old words; the
+timeline reads them through `canonicalBookingStatus` in `deal-status.ts` — the ONLY
+place the retired names exist. "Draft" is gone from code and copy: the public link is
+`/bookings/proposal/[token]` (`/bookings/draft/…` permanently redirects for links
+already in customers' inboxes); components live in `features/bookings/components/
+proposal/`, actions in `actions/proposal.actions.ts`, email is `sendProposalEmail`.
+Instant-book overlap holds (paid, but the slot sold during checkout) land as PROPOSED
+with the warning note + team alert instead of the retired PENDING.
+
+**Booking page layout (2026-09-04, round 4):** `/admin/bookings/[id]` is one template
+for every stage. Left column: header (booking number, name + colored kind chip, a
+"Created X ago" line, [primary verb][Edit trip][⋯] + Resend on the right, stage-aware
+headline money, and a full-width, left-flush contact row underneath: Email · Phone ·
+**Assigned to** on one line),
+then ONE Trip details card (row 1 Boat · Captain · Crew with live assignment controls;
+row 2 From · To; row 3 Passengers · Captain needed · Pickup · Drop-off), then
+Commission (charter value · expenses · commission split · KOS keeps), then Charter
+party when applicable. Right column: Finances (customer line items → total / paid /
+balance, compact payment rows that open in Stripe; Add expense + Record payment in its
+header) above the sticky Activity rail. "Edit trip" turns the trip fields AND the
+header's contact row into forms; "Done" saves both. Inquiries show the same header
+("Edit contact"), "Trip details · Requested", and Finances with the estimate. No status
+stepper or status chip on the page, by Aidan's call.

@@ -3,7 +3,7 @@ import type { BookingDetails } from "@/features/bookings/booking.types";
 /**
  * Passed from the create/proposal page when `?dealId=` is present — maps an
  * INQUIRY-status deal into initial BookingComposer state so pricing it
- * UPGRADES that same row into a DRAFT proposal (one table, one id, one
+ * UPGRADES that same row to PROPOSED (one table, one id, one
  * history — see docs/UNIFIED_BOOKINGS_PLAN.md).
  */
 export type DealPrefill = {

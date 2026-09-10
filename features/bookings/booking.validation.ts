@@ -145,8 +145,8 @@ export const bookingSectionSchema = z
  * Unified create bookings schema - one or more bookings in a group
  */
 export const createBookingsSchema = z.object({
-  /** INQUIRY-status deal being priced — that row is UPGRADED to the DRAFT
-   *  proposal in place (same id, same history) instead of a new row. */
+  /** INQUIRY-status deal being priced — that row is UPGRADED to PROPOSED
+   *  in place (same id, same history) instead of a new row. */
   dealId: z.string().uuid().nullable().optional(),
   numberOfPassengers: z.number().int().min(1, "Must have at least 1 passenger"),
   pickupLocation: z.string().nullable().optional(),
@@ -170,8 +170,8 @@ export type CreateBookingsInput = z.infer<typeof createBookingsSchema>;
  * other expenses, GMV, source, sales agent) captured up front.
  */
 export const createBookingFullSchema = z.object({
-  /** INQUIRY-status deal being priced — that row is UPGRADED to the DRAFT
-   *  proposal in place (same id, same history) instead of a new row. */
+  /** INQUIRY-status deal being priced — that row is UPGRADED to PROPOSED
+   *  in place (same id, same history) instead of a new row. */
   dealId: z.string().uuid().nullable().optional(),
   bookings: z.array(bookingSectionSchema).min(1, "At least one boat is required"),
   numberOfPassengers: z.number().int().min(1, "Must have at least 1 passenger"),

@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
 Today is ${format(new Date(), "EEEE, MMMM d, yyyy")}.
 
-How the business works: a deal is one row that moves through stages — INQUIRY (lead, unpriced) → DRAFT (proposal sent) → APPROVED (customer accepted, awaiting payment) → CONFIRMED (paid) → COMPLETED. Multi-boat trips are a "charter party": one booking row per boat sharing a group. Instant Book trips are born CONFIRMED. GMV = charter value excluding the card fee; revenue = GMV minus all expenses (owner payout, fuel, crew, dockage).
+How the business works: a deal is one row that moves through statuses — INQUIRY (lead, unpriced) → PROPOSED (priced; publishedAt says whether the customer has the link) → BOOKED (the trip is theirs: they accepted, an admin marked it booked, or money landed; payment is a separate label — unpaid / deposit paid / paid) → COMPLETED, with CANCELLED off to the side. Multi-boat trips are a "charter party": one booking row per boat sharing a group. Instant Book trips are born BOOKED and paid. GMV = charter value excluding the card fee; revenue = GMV minus all expenses (owner payout, fuel, crew, dockage).
 
 Rules:
 - Answer ONLY from tool results. Never invent names, numbers, or dates. If a tool returns nothing, say so plainly.

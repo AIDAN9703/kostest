@@ -11,8 +11,8 @@
  * - Only bookings the URL is scoped to are returned — boatId, captainId, or
  *   boat-ownership (ownerId). At least one of those must be present.
  *
- * Returned events are CONFIRMED + APPROVED + PENDING (operational subset),
- * skipping CANCELLED / DRAFT to keep external calendars clean. We can layer
+ * Returned events are BOOKED trips (operational subset),
+ * only BOOKED trips, to keep external calendars clean. We can layer
  * status filters into the signed-URL later if needed.
  */
 
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
   const conditions = [
     gte(bookings.startDateTime, start),
     lte(bookings.startDateTime, end),
-    inArray(bookings.bookingStatus, ["CONFIRMED", "APPROVED", "PENDING"]),
+    inArray(bookings.bookingStatus, ["BOOKED"]),
   ];
 
   // Boat-scoped feed → exact match on boatId.
@@ -152,10 +152,8 @@ export async function GET(request: NextRequest) {
     }),
     location: r.pickupLocation ?? undefined,
     url: `${origin}/admin/bookings/${r.id}`,
-    status:
-      r.bookingStatus === "CONFIRMED" || r.bookingStatus === "APPROVED"
-        ? "CONFIRMED"
-        : "TENTATIVE",
+    // Only BOOKED rows are queried, and a booked trip is a firm calendar entry.
+    status: "CONFIRMED",
   }));
 
   const calendarName = boatId

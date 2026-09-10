@@ -3,21 +3,21 @@
 import Image from "next/image";
 import { format } from "date-fns";
 import {
-  DraftProposalTripDetails,
-  DraftProposalBoatsList,
-  DraftProposalAddOns,
-  DraftProposalPricingCard,
-  DraftProposalActions,
-} from "./draft-proposal";
-import type { DraftProposalData } from "@/features/bookings/lib/draft-proposal.types";
+  ProposalTripDetails,
+  ProposalBoatsList,
+  ProposalAddOns,
+  ProposalPricingCard,
+  ProposalActions,
+} from "./proposal";
+import type { ProposalData } from "@/features/bookings/lib/proposal.types";
 
 const DEFAULT_IMAGE = "/images/herooption22.jpg";
 
-export default function PublicDraftBookingClient({
+export default function PublicProposalClient({
   data,
   publicToken,
 }: {
-  data: DraftProposalData;
+  data: ProposalData;
   publicToken: string;
 }) {
   const heroImage = data.bookings[0]?.boatMainImage ?? DEFAULT_IMAGE;
@@ -62,7 +62,7 @@ export default function PublicDraftBookingClient({
               <section>
                 <h2 className="text-lg font-semibold text-primary">Trip Details</h2>
                 <div className="mt-4">
-                  <DraftProposalTripDetails data={data} />
+                  <ProposalTripDetails data={data} />
                 </div>
               </section>
 
@@ -73,7 +73,7 @@ export default function PublicDraftBookingClient({
                     Boats
                   </p>
                   <div className="mt-1 divide-y divide-border/60">
-                    <DraftProposalBoatsList bookings={data.bookings} />
+                    <ProposalBoatsList bookings={data.bookings} />
                   </div>
                 </div>
                 {hasAddOns && (
@@ -82,7 +82,7 @@ export default function PublicDraftBookingClient({
                       Add-ons
                     </p>
                     <div className="mt-1 divide-y divide-border/60">
-                      <DraftProposalAddOns bookings={data.bookings} />
+                      <ProposalAddOns bookings={data.bookings} />
                     </div>
                   </div>
                 )}
@@ -94,10 +94,10 @@ export default function PublicDraftBookingClient({
               <section>
                 <h2 className="text-lg font-semibold text-primary">Payment Summary</h2>
                 <div className="mt-4">
-                  <DraftProposalPricingCard bookings={data.bookings} />
+                  <ProposalPricingCard bookings={data.bookings} />
                 </div>
                 <div className="mt-8">
-                  <DraftProposalActions
+                  <ProposalActions
                     publicToken={publicToken}
                     allowPayment={data.allowPayment}
                     serviceFeeWaived={data.bookings.some((b) => b.serviceFeeWaived)}

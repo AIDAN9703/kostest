@@ -8,8 +8,8 @@ import { ProposalDialog, type ProposalDialogData } from "./ProposalDialog";
 
 /**
  * Page-level edit mode for the booking detail page, plus the one proposal
- * dialog. "Update trip" flips the editable cards into forms; "Done updating"
- * runs every registered save and, if anything actually changed, opens the
+ * dialog. "Edit trip" flips the editable cards (and the contact band) into
+ * forms; "Done" runs every registered save and, if anything actually changed, opens the
  * dialog ("Notify customer of changes"). The Resend button under the header
  * opens the same dialog in plain-resend mode. One deal = one link.
  */
@@ -103,7 +103,7 @@ export function useBookingEditMode() {
   return useContext(Ctx);
 }
 
-export function BookingPageEditButton() {
+export function BookingPageEditButton({ label = "Edit trip" }: { label?: string }) {
   const { editing, saving, setEditing } = useBookingEditMode();
   return (
     <Button
@@ -116,19 +116,19 @@ export function BookingPageEditButton() {
       {editing ? (
         <>
           {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-          {saving ? "Saving…" : "Done updating"}
+          {saving ? "Saving…" : "Done"}
         </>
       ) : (
         <>
           <Pencil className="h-3.5 w-3.5" />
-          Update trip
+          {label}
         </>
       )}
     </Button>
   );
 }
 
-/** Full-width pill under the [Update trip][⋯] row — opens the proposal dialog. */
+/** Full-width pill under the [Edit trip][⋯] row — opens the proposal dialog. */
 export function ProposalResendButton() {
   const { proposal, openResend } = useBookingEditMode();
   if (!proposal) return null;

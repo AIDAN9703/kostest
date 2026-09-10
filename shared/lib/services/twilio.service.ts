@@ -1,7 +1,7 @@
 /**
  * Twilio API client
  * - Verify API: OTP verification codes
- * - Messages API: SMS (e.g. draft booking links)
+ * - Messages API: SMS (e.g. proposal links)
  */
 
 import { formatPhoneNumberE164 } from '../utils/general-utils';

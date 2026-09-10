@@ -65,9 +65,9 @@ export const assistantTools = {
     inputSchema: z.object({
       query: z.string().optional().describe("Free text: customer name, email, phone, or boat name"),
       status: z
-        .enum(["INQUIRY", "DRAFT", "APPROVED", "CONFIRMED", "COMPLETED", "CANCELLED"])
+        .enum(["INQUIRY", "PROPOSED", "BOOKED", "COMPLETED", "CANCELLED"])
         .optional()
-        .describe("INQUIRY=lead, DRAFT=proposal out, APPROVED=accepted awaiting payment, CONFIRMED=paid"),
+        .describe("INQUIRY=lead, PROPOSED=priced proposal, BOOKED=trip is theirs (paymentStatus says what is paid), COMPLETED, CANCELLED"),
       kind: z
         .enum(["INQUIRY", "BOOKING", "INSTANT_BOOK", "TERM_CHARTER", "MARKETPLACE"])
         .optional()
@@ -171,7 +171,7 @@ export const assistantTools = {
 
   upcoming_departures: tool({
     description:
-      "Real trips leaving in the next N days with readiness (captain, contract, balance) — the operational 'what's sailing' view. Times are boat-local.",
+      "Real trips leaving in the next N days with readiness (captain, balance) — the operational 'what's sailing' view. Times are boat-local.",
     inputSchema: z.object({ days: z.number().int().min(1).max(90).default(7) }),
     execute: async ({ days }) => {
       const trips = await getUpcomingTrips(days);
@@ -191,13 +191,13 @@ export const assistantTools = {
 
   action_queue: tool({
     description:
-      "What needs a human right now: unclaimed new leads and confirmed trips that still owe money.",
+      "What needs a human right now: unclaimed new leads and booked trips that still owe money.",
     inputSchema: z.object({}),
     execute: async () => {
       const [leads, trips] = await Promise.all([getUnassignedLeads(10), getUpcomingTrips(30)]);
       const collect = trips.filter(
         (t) =>
-          t.bookingStatus === "CONFIRMED" &&
+          t.bookingStatus === "BOOKED" &&
           effectiveTotalCents(t) > 0 &&
           (t.totalPaidCents ?? 0) < effectiveTotalCents(t)
       );

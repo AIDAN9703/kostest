@@ -4,10 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { formatBoatLocal } from "@/shared/lib/utils/date-helpers";
-import type { DraftProposalBooking } from "@/features/bookings/lib/draft-proposal.types";
+import type { ProposalBooking } from "@/features/bookings/lib/proposal.types";
 
-interface DraftProposalBoatsListProps {
-  bookings: DraftProposalBooking[];
+interface ProposalBoatsListProps {
+  bookings: ProposalBooking[];
 }
 
 const DEFAULT_IMAGE = "/images/herooption22.jpg";
@@ -19,7 +19,7 @@ function formatWindow(start: Date | null, timezone: string | null): string | nul
 }
 
 /** Flat boat rows — hairlines come from the page's divide-y container. */
-export function DraftProposalBoatsList({ bookings }: DraftProposalBoatsListProps) {
+export function ProposalBoatsList({ bookings }: ProposalBoatsListProps) {
   // Charter parties can sail different windows per boat — call out any boat
   // whose start differs from the lead's (the one in Trip Details above).
   const leadStart = bookings[0]?.startDateTime

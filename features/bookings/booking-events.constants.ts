@@ -18,8 +18,9 @@ export const BOOKING_EVENT_TYPES = {
   CREW_MEMBER_ADDED: "booking.crew_member_added",
   /** booking_crew row removed */
   CREW_MEMBER_REMOVED: "booking.crew_member_removed",
-  /** Shareable draft link published */
-  DRAFT_PUBLISHED: "booking.draft_published",
+  /** Proposal link published (emailed / texted / copied). The stored value
+   *  predates the 2026-09 vocabulary change and stays for history's sake. */
+  PROPOSAL_PUBLISHED: "booking.draft_published",
   /** Updated proposal re-sent to the customer (same link) */
   PROPOSAL_UPDATE_SENT: "booking.proposal_update_sent",
   /** Customer asked for changes from the public proposal page */

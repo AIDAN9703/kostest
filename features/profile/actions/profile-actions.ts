@@ -196,7 +196,7 @@ export async function getUserStats() {
       .select({
         totalBookings: sql<number>`COUNT(*)`,
         completedBookings: sql<number>`COUNT(CASE WHEN ${bookings.bookingStatus} = 'COMPLETED' THEN 1 END)`,
-        upcomingBookings: sql<number>`COUNT(CASE WHEN ${bookings.bookingStatus} IN ('PENDING', 'CONFIRMED') AND ${bookings.startDateTime} > NOW() THEN 1 END)`,
+        upcomingBookings: sql<number>`COUNT(CASE WHEN ${bookings.bookingStatus} = 'BOOKED' AND ${bookings.startDateTime} > NOW() THEN 1 END)`,
         totalSpent: sql<number>`COALESCE(SUM(CASE WHEN ${bookings.bookingStatus} = 'COMPLETED' THEN ${bookingPricing.totalAmountCents} ELSE 0 END), 0)`,
       })
       .from(bookings)

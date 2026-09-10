@@ -13,12 +13,23 @@ import { BOOKING_EVENT_TYPES } from "@/features/bookings/booking-events.constant
 import { effectiveTotalCents } from "@/features/bookings/lib/booking-money";
 import { MANUAL_PAYMENT_METHOD_LABELS, type ManualPaymentMethod } from "@/features/bookings/lib/manual-payment";
 import { paymentService } from "@/features/payments/payment.service";
+import { bookingStatusService } from "@/features/bookings/services/booking-status.service";
+import {
+  availabilityService,
+  isOverlapConstraintError,
+  SlotUnavailableError,
+} from "@/features/availability/services/availability.service";
+import { sendBookingConfirmationEmail } from "@/shared/lib/services/email.service";
 
 /**
  * Records an off-platform payment. Optionally waives the card-processing fee
  * (the fee is a cost of paying by card — a Zelle payer never owed it), which
  * lowers the effective total so "paid in full" means what the customer
  * actually paid. Syncs ops PAID / client-paid against the effective total.
+ *
+ * Status follows the money: a payment means the customer is in, so a
+ * PROPOSED row becomes BOOKED (calendar blocked), and paid-in-full sends the
+ * same confirmation email a card payer gets.
  */
 export async function recordBookingManualPaymentAction(
   bookingId: string,
@@ -66,6 +77,30 @@ export async function recordBookingManualPaymentAction(
     }
 
     const newRecordedTotal = recordedCents + amountCents;
+    const label = MANUAL_PAYMENT_METHOD_LABELS[method];
+
+    // Locking in a proposal claims the slot — check it BEFORE recording money
+    // so we never hold a payment against a date that just sold elsewhere.
+    const locksIn = booking.bookingStatus === "PROPOSED";
+    if (locksIn && booking.boatId && booking.startDateTime && booking.endDateTime) {
+      try {
+        await availabilityService.assertSlotAvailable(
+          booking.boatId,
+          new Date(booking.startDateTime),
+          new Date(booking.endDateTime),
+          bookingId
+        );
+      } catch (error) {
+        if (error instanceof SlotUnavailableError) {
+          return {
+            success: false as const,
+            error: "That slot was just taken on the calendar — move the trip before recording a payment.",
+          };
+        }
+        throw error;
+      }
+    }
+
     await paymentService.createPayment({
       payableType: "BOOKING",
       payableId: bookingId,
@@ -73,8 +108,8 @@ export async function recordBookingManualPaymentAction(
       amountCents,
       status: "SUCCEEDED",
       paymentMethodType: "MANUAL",
-      paymentMethodDetail: MANUAL_PAYMENT_METHOD_LABELS[method],
-      notes: `Recorded via admin — ${MANUAL_PAYMENT_METHOD_LABELS[method]}${waiveServiceFee ? ", card fee waived" : ""}`,
+      paymentMethodDetail: label,
+      notes: `Recorded via admin — ${label}${waiveServiceFee ? ", card fee waived" : ""}`,
       processedAt: new Date(),
     });
 
@@ -90,8 +125,41 @@ export async function recordBookingManualPaymentAction(
         actorType: "admin",
         actorId: authResult.session.user.id,
         channel: "admin_portal",
-        displayMessage: `Card fee waived — paid by ${MANUAL_PAYMENT_METHOD_LABELS[method]}`,
+        displayMessage: `Card fee waived — paid by ${label}`,
       });
+    }
+
+    // Status follows the money.
+    const paidInFull = newRecordedTotal >= targetCents;
+    try {
+      if (locksIn) {
+        await bookingStatusService.markBooked(bookingId, {
+          changedByUserId: authResult.session.user.id,
+          reason: `Payment recorded (${label}) — booked`,
+          actorType: "admin",
+          channel: "admin_portal",
+        });
+      }
+      if (paidInFull && (locksIn || booking.bookingStatus === "BOOKED")) {
+        const paid = await bookingService.getBookingById(bookingId);
+        if (paid) {
+          await sendBookingConfirmationEmail(paid).catch((e) =>
+            console.error("Confirmation email failed:", e)
+          );
+        }
+      }
+    } catch (error) {
+      // Race loser on the no-overlap constraint: the payment IS recorded, the
+      // slot isn't ours. Say so instead of pretending.
+      if (isOverlapConstraintError(error)) {
+        revalidatePath(`/admin/bookings/${bookingId}`);
+        return {
+          success: false as const,
+          error:
+            "Payment recorded, but the slot was taken at the same moment — move the trip, then mark it booked.",
+        };
+      }
+      throw error;
     }
 
     revalidatePath(`/admin/bookings/${bookingId}`);

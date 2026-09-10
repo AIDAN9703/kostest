@@ -276,7 +276,7 @@ export function BookingComposer({
   const [allowPayment, setAllowPayment] = useState(false);
   const [paymentType, setPaymentType] = useState<"DEPOSIT_ONLY" | "FULL_PAYMENT">("FULL_PAYMENT");
   // Coming from a lead, the point is to SEND — default the channels on
-  // (SMS only with consent) instead of silently saving a draft.
+  // (SMS only with consent) instead of silently saving it unsent.
   const [sendProposalEmail, setSendProposalEmail] = useState(
     Boolean(dealPrefill?.customerEmail)
   );
@@ -356,18 +356,35 @@ export function BookingComposer({
       if (result.success && result.data) {
         const bookingId = result.data.bookingId;
         const isParty = sections.length > 1;
-        toast({
-          title: isDealMode ? "Proposal created." : "Booking created.",
-          description: result.data.proposalSent
-            ? `Proposal${isParty ? ` for ${sections.length} boats` : ""} sent to the customer.`
-            : `Saved as a draft${isParty ? ` charter party (${sections.length} boats)` : ""}.`,
-          variant: "success",
-          action: (
-            <ToastAction asChild altText="View booking">
-              <Link href={`/admin/bookings/${bookingId}`}>View booking</Link>
-            </ToastAction>
-          ),
-        });
+        const viewAction = (
+          <ToastAction asChild altText="View booking">
+            <Link href={`/admin/bookings/${bookingId}`}>View booking</Link>
+          </ToastAction>
+        );
+        // The row is saved either way; only claim "sent" when it actually went.
+        const failedChannels = [
+          sendProposalEmail && result.data.emailSent === false ? "email" : null,
+          sendProposalSms && result.data.smsSent === false ? "text" : null,
+        ].filter((c): c is string => c !== null);
+        if (failedChannels.length > 0) {
+          toast({
+            title: isDealMode
+              ? "Proposal saved, but it didn't send"
+              : "Booking created, but the proposal didn't send",
+            description: `The ${failedChannels.join(" and ")} failed. Open the booking and use Resend.`,
+            variant: "destructive",
+            action: viewAction,
+          });
+        } else {
+          toast({
+            title: isDealMode ? "Proposal created." : "Booking created.",
+            description: result.data.proposalSent
+              ? `Proposal${isParty ? ` for ${sections.length} boats` : ""} sent to the customer.`
+              : `Saved${isParty ? ` as a charter party (${sections.length} boats)` : ""} — not sent yet.`,
+            variant: "success",
+            action: viewAction,
+          });
+        }
         if (onSuccess) onSuccess(bookingId);
         else router.push(`/admin/bookings/${bookingId}`);
       } else {
@@ -864,7 +881,7 @@ export function BookingComposer({
               : sendProposalEmail || sendProposalSms
                 ? "Create & send proposal"
                 : isDealMode
-                  ? "Save draft proposal"
+                  ? "Save proposal"
                   : "Create booking"}
           </Button>
         )}

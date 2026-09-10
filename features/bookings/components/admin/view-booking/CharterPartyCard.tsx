@@ -17,9 +17,8 @@ export interface CharterPartyMember {
 }
 
 const STATUS_BADGE: Partial<Record<BookingStatus, string>> = {
-  DRAFT: "bg-warning-soft text-warning",
-  APPROVED: "bg-sky-500/10 text-sky-400",
-  CONFIRMED: "bg-success-soft text-success",
+  PROPOSED: "bg-warning-soft text-warning",
+  BOOKED: "bg-success-soft text-success",
   CANCELLED: "bg-destructive-soft text-destructive",
   COMPLETED: "bg-muted text-muted-foreground",
 };

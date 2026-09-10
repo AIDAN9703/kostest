@@ -2,13 +2,13 @@
 
 import { formatCentsAsCurrency } from "@/shared/lib/utils/money-utils";
 import { dollarsToCents } from "@/shared/lib/utils/money-utils";
-import type { DraftProposalBooking } from "@/features/bookings/lib/draft-proposal.types";
+import type { ProposalBooking } from "@/features/bookings/lib/proposal.types";
 
-interface DraftProposalPricingCardProps {
-  bookings: DraftProposalBooking[];
+interface ProposalPricingCardProps {
+  bookings: ProposalBooking[];
 }
 
-export function DraftProposalPricingCard({ bookings }: DraftProposalPricingCardProps) {
+export function ProposalPricingCard({ bookings }: ProposalPricingCardProps) {
   const subtotalCents = bookings.reduce((sum, b) => sum + b.totalCents - b.serviceFeeCents, 0);
   const totalServiceFeeCents = bookings.reduce((sum, b) => sum + b.serviceFeeCents, 0);
   // Waived = settled off-card; the fee stays visible (struck) so the math is
